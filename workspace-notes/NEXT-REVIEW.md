@@ -13,11 +13,13 @@ Proceed to browser-safe local serving plus screenshot verification for the Local
 
 ## Session Resume
 
-Start from the independent local git baseline, keep `.gpao-t/` runtime state ignored, and avoid public push/deploy unless explicitly approved.
+Closeout is ready. Resume from local git commit `82ccf96`, keep `.gpao-t/` and `.beai-harness/` ignored, and avoid public push/deploy unless explicitly approved.
 
 ## Recent Evidence
 
-- git: Initialized independent local repository for GPAO-T.
-- commit: `29afc38 chore: establish gpao-t local source baseline`.
-- verify: `npm run verify` passed with 66 tests after source-control baseline work.
-- hardening: `ops hardening` reports `rollbackSubstrate: git_available`.
+- preflight: Read-only workspace check completed for gpao-t.
+- route: Routed work as standard.
+- plan: Saved build plan.
+- verify: Executed 2 checks.
+- closeout: Closeout decision: ready.
+- hardening: `ops hardening` reports `rollbackSubstrate: git_available` and `sourceControlBaseline.mode: independent_local_git_repository`.

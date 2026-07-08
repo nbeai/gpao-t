@@ -4,9 +4,9 @@ The first real user can route a vague request, see the plan, run checks, and und
 
 ## Current Phase
 
-- Phase: rollback substrate baseline
-- Command: local git baseline
-- Status: source-controlled locally
+- Phase: closeout
+- Command: closeout
+- Status: ready
 
 ## User Mode
 
@@ -35,4 +35,4 @@ AI does the work. User keeps authority.
 
 ## Latest Summary
 
-Initialized GPAO-T as an independent local git repository and established source-control/rollback substrate boundaries before browser-safe Control Center verification.
+Closeout decision: ready. GPAO-T now has an independent local git source-control baseline and can proceed to browser-safe Control Center serving and screenshot verification.
