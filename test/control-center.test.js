@@ -39,6 +39,7 @@ const CLI = fileURLToPath(new URL("../bin/gpao-t.js", import.meta.url));
 const ROOT = fileURLToPath(new URL("..", import.meta.url));
 const DATA_SCHEMA_PATH = fileURLToPath(new URL("../schema/gpao-t-runtime-data-schema.json", import.meta.url));
 const UI_SCHEMA_PATH = fileURLToPath(new URL("../schema/gpao-t-control-center-ui-schema.json", import.meta.url));
+const VERIFY_DOC_PATH = fileURLToPath(new URL("../docs/03-verification/VERIFY.md", import.meta.url));
 const TAURI_CONFIG_PATH = fileURLToPath(new URL("../src-tauri/tauri.conf.json", import.meta.url));
 const TAURI_CAPABILITY_PATH = fileURLToPath(new URL("../src-tauri/capabilities/default.json", import.meta.url));
 const TAURI_SHELL_HTML_PATH = fileURLToPath(new URL("../tauri-shell/index.html", import.meta.url));
@@ -56,6 +57,14 @@ const TAURI_SHELL_BASELINE_JSON = fileURLToPath(new URL(
 ));
 const TAURI_SHELL_BASELINE_DOC = fileURLToPath(new URL(
   "../docs/03-verification/evidence/TAURI-SHELL-VISUAL-QA-BASELINE-2026-07-09.md",
+  import.meta.url,
+));
+const CONTROL_APPROVAL_PREVIEW_QA_JSON = fileURLToPath(new URL(
+  "../docs/03-verification/evidence/control-center-approval-preview-ux-qa-2026-07-09.json",
+  import.meta.url,
+));
+const CONTROL_APPROVAL_PREVIEW_QA_DOC = fileURLToPath(new URL(
+  "../docs/03-verification/evidence/CONTROL-CENTER-APPROVAL-PREVIEW-UX-QA-2026-07-09.md",
   import.meta.url,
 ));
 
@@ -94,6 +103,11 @@ describe("GPAO-T Local Control Center readiness", () => {
       && panel.data.stages.length === 5
       && panel.data.blockedActions.includes("approval record write")
       && panel.data.blockedActions.includes("dry-run invocation")
+      && panel.data.blockedActionViews.some((action) => action.label === "승인 기록 쓰기")
+      && panel.data.userUnderstanding.includes("아직 실행된 것은 없음")
+      && panel.data.visualQaEvidence.json.endsWith("control-center-approval-preview-ux-qa-2026-07-09.json")
+      && panel.data.visualQaEvidence.screenshots.length === 4
+      && panel.data.stages.every((stage) => Number.isInteger(stage.step))
       && panel.data.safetyInvariants.writesApprovalRecord === false
       && panel.data.safetyInvariants.invokesDryRunExecutor === false
     ));
@@ -255,8 +269,17 @@ describe("GPAO-T Local Control Center readiness", () => {
     assert.match(html, /Approval \/ Preview/);
     assert.match(html, /data-approval-stage="plan"/);
     assert.match(html, /data-approval-stage="write-gate"/);
-    assert.match(html, /approval record write/);
-    assert.match(html, /dry-run invocation/);
+    assert.match(html, /data-approval-safe-note="preview-only"/);
+    assert.match(html, /아직 실행된 것은 없음/);
+    assert.match(html, /승인 전 미리보기/);
+    assert.match(html, /data-approval-step="1"/);
+    assert.match(html, /data-approval-step="5"/);
+    assert.match(html, /아직 잠겨 있는 행동/);
+    assert.match(html, /승인 기록 쓰기/);
+    assert.match(html, /아직 저장하지 않음/);
+    assert.match(html, /외부 호출 없음/);
+    assert.match(html, /blocked-action-label/);
+    assert.match(html, /blocked-action-detail/);
     assert.match(html, /data-group="Context"/);
     assert.match(html, /href="#panel-memory"/);
     assert.match(html, /id="panel-memory"/);
@@ -316,6 +339,8 @@ describe("GPAO-T Local Control Center readiness", () => {
     assert.match(htmlOutput, /workflow-state-view/);
     assert.match(htmlOutput, /state-ribbon/);
     assert.match(htmlOutput, /approval-flow/);
+    assert.match(htmlOutput, /approval-safe-note/);
+    assert.match(htmlOutput, /approval-stage-number/);
     assert.match(htmlOutput, /blocked-actions/);
     assert.equal(render.schema, "gpao_t.local_control_center_render.v0_1");
     assert.equal(existsSync(render.outputPath), true);
@@ -380,6 +405,9 @@ describe("GPAO-T Local Control Center readiness", () => {
     assert.match(html, /\.workflow-state-view \{[\s\S]*grid-template-columns: repeat\(4, minmax\(0, 1fr\)\)/);
     assert.match(html, /\.state-card \{[\s\S]*min-height: 82px/);
     assert.match(html, /\.state-ribbon \{[\s\S]*grid-template-columns: repeat\(4, minmax\(0, 1fr\)\)/);
+    assert.match(html, /\.panel\[data-panel="approval-preview"\] \{[\s\S]*grid-column: 1 \/ -1/);
+    assert.match(html, /\.approval-flow \{[\s\S]*grid-template-columns: repeat\(5, minmax\(0, 1fr\)\)/);
+    assert.match(html, /\.blocked-actions \{[\s\S]*grid-template-columns: repeat\(5, minmax\(0, 1fr\)\)/);
     assert.match(html, /\.state-pill \{[\s\S]*overflow-wrap: anywhere/);
     assert.match(html, /\.topbar \{[\s\S]*position: sticky/);
     assert.match(html, /\.topbar \{[\s\S]*position: fixed/);
@@ -387,6 +415,8 @@ describe("GPAO-T Local Control Center readiness", () => {
     assert.match(html, /\.topbar-action \{[\s\S]*-webkit-line-clamp: 2/);
     assert.match(html, /\.workflow-state-view \{[\s\S]*grid-template-columns: repeat\(2, minmax\(0, 1fr\)\)/);
     assert.match(html, /\.state-ribbon \{[\s\S]*grid-template-columns: repeat\(2, minmax\(0, 1fr\)\)/);
+    assert.match(html, /\.approval-flow \{[\s\S]*grid-template-columns: 1fr/);
+    assert.match(html, /\.blocked-actions \{[\s\S]*grid-template-columns: 1fr/);
     assert.match(html, /\.panel-actions \{[\s\S]*grid-template-columns: repeat\(3, minmax\(0, 1fr\)\)/);
     assert.match(html, /\.panel-action \{[\s\S]*overflow-wrap: anywhere/);
     assert.match(html, /\.inspector \{[\s\S]*scroll-margin-top: 242px/);
@@ -722,6 +752,69 @@ describe("GPAO-T Local Control Center readiness", () => {
     assert.match(baselineDoc, /Tauri Shell Visual QA Baseline/);
     assert.match(baselineDoc, /tauri-shell-visual-qa-2026-07-09-desktop-viewport-1440x960\.jpg/);
     assert.match(baselineDoc, /tauri-shell-visual-qa-2026-07-09-mobile-viewport-390x844\.jpg/);
+  });
+
+  it("keeps approval preview UX visual QA evidence replayable and preview-only", () => {
+    const qa = JSON.parse(readFileSync(CONTROL_APPROVAL_PREVIEW_QA_JSON, "utf8"));
+    const qaDoc = readFileSync(CONTROL_APPROVAL_PREVIEW_QA_DOC, "utf8");
+    const verifyDoc = readFileSync(VERIFY_DOC_PATH, "utf8");
+    const screenshotPaths = Object.values(qa.evidenceFiles);
+    const screenshots = screenshotPaths.map((filePath) => readFileSync(filePath));
+    const focusedChecks = qa.checks.filter((check) => check.id.endsWith("focused"));
+
+    assert.equal(qa.schema, "gpao_t.control_center_approval_preview_ux_qa.v0_1");
+    assert.equal(qa.status, "ready");
+    assert.equal(qa.target, "/control-center#panel-approval-preview");
+    assert.equal(qa.fileFormat, "png");
+    assert.equal(qa.invariants.previewOnly, true);
+    assert.equal(qa.invariants.noApprovalRecordWrite, true);
+    assert.equal(qa.invariants.noDryRunInvocation, true);
+    assert.equal(qa.invariants.noCommandOrFileMutation, true);
+    assert.equal(qa.invariants.noTauriBuild, true);
+    assert.equal(qa.invariants.noDependencyInstall, true);
+    assert.equal(qa.invariants.noInstallUpdateRollback, true);
+    assert.equal(qa.invariants.noIpcExternalNetwork, true);
+    assert.equal(qa.invariants.noConnectorModelToolActivation, true);
+    assert.equal(qa.invariants.noScript, true);
+    assert.equal(qa.invariants.noForm, true);
+    assert.equal(qa.invariants.noExternalActivation, true);
+    assert.equal(qa.invariants.noHorizontalOverflow, true);
+    assert.equal(qa.invariants.authorityBoundaryVisible, true);
+    assert.equal(qa.invariants.nextSafeActionVisible, true);
+    assert.equal(qa.invariants.mobileFixedTopbarActionLineVisible, true);
+    assert.equal(qa.checks.length, 4);
+    assert.equal(qa.checks.every((check) => check.nonblankViewport), true);
+    assert.equal(qa.checks.every((check) => check.approvalPanelVisible), true);
+    assert.equal(qa.checks.every((check) => check.stageCount === 5), true);
+    assert.equal(qa.checks.every((check) => check.lockedCount === 10), true);
+    assert.equal(qa.checks.every((check) => check.safeNoteVisible), true);
+    assert.equal(qa.checks.every((check) => check.nextSafeActionVisible), true);
+    assert.equal(qa.checks.every((check) => check.noHorizontalOverflow), true);
+    assert.equal(qa.checks.every((check) => !check.hasScript && !check.hasForm), true);
+    assert.equal(qa.checks.every((check) => check.externalLinks.length === 0), true);
+    assert.equal(qa.checks.every((check) => check.understandsPreviewOnly), true);
+    assert.equal(qa.checks.every((check) => check.hasKoreanBlockedLabels), true);
+    assert.equal(qa.checks.every((check) => check.blockedToneCalm), true);
+    assert.equal(focusedChecks.length, 2);
+    assert.equal(focusedChecks.every((check) => check.approvalPanelInViewport), true);
+    assert.equal(focusedChecks.every((check) => check.stageLabels.join(" / ") === "계획 / 프리뷰 / 승인 범위 / 기록 위치 / 쓰기 게이트"), true);
+    assert.equal(focusedChecks.every((check) => check.stageSteps.join("") === "12345"), true);
+    assert.equal(focusedChecks.every((check) => check.safeNoteText.includes("아직 실행된 것은 없음")), true);
+    assert.equal(focusedChecks.every((check) => check.firstLocked.includes("승인 기록 쓰기")), true);
+    assert.equal(focusedChecks.every((check) => check.lastLocked.includes("커넥터/모델/도구 활성화")), true);
+    assert.equal(qa.checks.some((check) => check.id === "mobile-viewport" && check.topbarActionVisible), true);
+    assert.equal(qa.checks.some((check) => check.id === "mobile-focused" && check.topbarActionVisible), true);
+    assert.equal(qa.blockedActionsRemainClosed.includes("approval record write"), true);
+    assert.equal(qa.blockedActionsRemainClosed.includes("connector/model/tool activation"), true);
+    assert.equal(screenshotPaths.every((filePath) => existsSync(filePath)), true);
+    assert.equal(screenshots.every((bytes) => bytes[0] === 0x89 && bytes[1] === 0x50), true);
+    assert.match(qaDoc, /Control Center Approval Preview UX QA/);
+    assert.match(qaDoc, /아직 실행된 것은 없음/);
+    assert.match(qaDoc, /control-center-approval-preview-ux-2026-07-09-desktop-focused-1440x960\.png/);
+    assert.match(qaDoc, /control-center-approval-preview-ux-2026-07-09-mobile-focused-390x844\.png/);
+    assert.match(verifyDoc, /control-center-approval-preview-ux-qa-2026-07-09\.json/);
+    assert.match(verifyDoc, /아직 실행된 것은 없음/);
+    assert.match(verifyDoc, /mobile fixed topbar action line/);
   });
 
   it("serves the static Control Center over loopback and verifies page content", async () => {

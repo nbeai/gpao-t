@@ -1,6 +1,6 @@
 # What Is Not Done
 
-## Still Excluded
+## Still Intentionally Closed
 
 - Approval-record write.
 - Approval-store directory creation, read, append, or mutation.
@@ -18,8 +18,8 @@
 
 ## Current Completion Boundary
 
-This slice is complete as an approval/preview UX integration gate. It makes dry-run plan, user preview, invocation approval, approval storage, and write-gate states easier to inspect in Control Center. It does not open approval-record writes, approval-store reads, dry-run invocation, command execution, file mutation, Tauri build, dependency install, IPC, external network, connector/model/tool activation, or install/update/rollback execution.
+This slice refines the approval/preview UX inside Control Center. It makes dry-run plan, user preview, invocation approval, approval storage, and write-gate states easier to understand as a pre-approval preview where nothing has executed yet. It does not open approval-record writes, approval-store reads, dry-run invocation, command execution, file mutation, Tauri build, dependency install, IPC, external network, connector/model/tool activation, or install/update/rollback execution.
 
-## Blockers
+## Open Authority Gates
 
-No unresolved technical blocker is recorded for the current UX integration slice. The next authority boundary remains explicit user approval before implementing any actual approval-record write path or dry-run invocation path.
+No unresolved technical stop condition is recorded for the current UX refinement slice. Future approval-record write or dry-run invocation work still requires an explicit later gate because those actions cross user-authority boundaries.

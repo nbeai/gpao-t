@@ -282,6 +282,9 @@ export function buildControlCenterHtml({ snapshot, designContract } = {}) {
       min-height: 142px;
       scroll-margin-top: 78px;
     }
+    .panel[data-panel="approval-preview"] {
+      grid-column: 1 / -1;
+    }
     .panel:target {
       outline: 2px solid var(--approval);
       outline-offset: 2px;
@@ -351,13 +354,25 @@ export function buildControlCenterHtml({ snapshot, designContract } = {}) {
     .approval-flow {
       display: grid;
       grid-template-columns: repeat(5, minmax(0, 1fr));
-      gap: 7px;
+      gap: 8px;
       margin-top: 10px;
+    }
+    .approval-safe-note {
+      margin-top: 10px;
+      padding: 9px 10px;
+      border: 1px solid #b7d2c5;
+      border-radius: 6px;
+      background: #f0f8f4;
+      color: #1e5d43;
+      font-size: 12px;
+      font-weight: 700;
+      line-height: 1.35;
+      overflow-wrap: anywhere;
     }
     .approval-stage {
       min-width: 0;
-      min-height: 86px;
-      padding: 7px;
+      min-height: 112px;
+      padding: 9px;
       border: 1px solid var(--line);
       border-radius: 6px;
       background: #fbfcfd;
@@ -365,16 +380,34 @@ export function buildControlCenterHtml({ snapshot, designContract } = {}) {
       line-height: 1.25;
       overflow-wrap: anywhere;
     }
-    .approval-stage strong,
+    .approval-stage-number {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 22px;
+      height: 22px;
+      margin-bottom: 5px;
+      border-radius: 50%;
+      background: var(--approval);
+      color: #fff;
+      font-size: 11px;
+      font-weight: 800;
+    }
+    .approval-stage strong {
+      display: block;
+      color: var(--text);
+      font-size: 12px;
+    }
     .blocked-actions strong {
       display: block;
       color: var(--muted);
       font-size: 10px;
       text-transform: uppercase;
     }
-    .approval-stage span {
+    .approval-stage-status {
       display: block;
       margin-top: 3px;
+      color: var(--ready);
       font-weight: 700;
     }
     .approval-stage small {
@@ -385,21 +418,38 @@ export function buildControlCenterHtml({ snapshot, designContract } = {}) {
       line-height: 1.25;
     }
     .blocked-actions {
-      display: flex;
-      flex-wrap: wrap;
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
       gap: 5px;
       margin-top: 8px;
     }
+    .blocked-actions strong {
+      grid-column: 1 / -1;
+      text-transform: none;
+    }
     .blocked-action {
       min-width: 0;
-      padding: 4px 6px;
+      padding: 6px 7px;
       border: 1px solid var(--line);
-      border-radius: 999px;
-      background: #fff;
-      color: var(--blocked);
+      border-radius: 6px;
+      background: #fffaf0;
+      color: #725200;
       font-size: 10px;
       font-weight: 700;
       overflow-wrap: anywhere;
+    }
+    .blocked-action-detail {
+      display: block;
+      margin-top: 2px;
+      color: var(--muted);
+      font-size: 9px;
+      font-weight: 600;
+    }
+    .blocked-action-label {
+      display: block;
+      color: var(--muted);
+      font-size: 9px;
+      text-transform: uppercase;
     }
     .panel-action {
       display: inline-flex;
@@ -670,6 +720,12 @@ export function buildControlCenterHtml({ snapshot, designContract } = {}) {
       .approval-stage {
         min-height: 0;
       }
+      .approval-safe-note {
+        font-size: 11px;
+      }
+      .blocked-actions {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
       .panel-action {
         min-height: 34px;
         padding: 6px;
@@ -709,6 +765,9 @@ export function buildControlCenterHtml({ snapshot, designContract } = {}) {
       .inspector-row {
         grid-template-columns: 1fr;
         gap: 2px;
+      }
+      .blocked-actions {
+        grid-template-columns: 1fr;
       }
     }
   </style>
@@ -884,20 +943,25 @@ function panelHtml(panel) {
 function approvalPreviewHtml(panel) {
   if (panel.id !== "approval-preview" || !panel.data) return "";
   const stages = panel.data.stages || [];
-  const blockedActions = panel.data.blockedActions || [];
+  const blockedActions = panel.data.blockedActionViews || (panel.data.blockedActions || []).map((action) => ({
+    label: action,
+    detail: "blocked",
+  }));
   return `
+            <p class="approval-safe-note" data-approval-safe-note="preview-only">${escapeHtml(panel.data.userUnderstanding)}</p>
             <div class="approval-flow" aria-label="Approval preview stages">
               ${stages.map((stage) => `
               <div class="approval-stage" data-approval-stage="${escapeHtml(stage.id)}">
+                <span class="approval-stage-number" data-approval-step="${escapeHtml(stage.step)}">${escapeHtml(stage.step)}</span>
                 <strong>${escapeHtml(stage.label)}</strong>
-                <span>${escapeHtml(STATUS_LABELS[stage.status] || stage.status)}</span>
+                <span class="approval-stage-status">${escapeHtml(stage.executionState || STATUS_LABELS[stage.status] || stage.status)}</span>
                 <small>${escapeHtml(stage.visibleState)}</small>
                 <small>${escapeHtml(stage.blockedState)}</small>
               </div>`).join("")}
             </div>
             <div class="blocked-actions" aria-label="Blocked approval preview actions">
-              <strong>Blocked</strong>
-              ${blockedActions.map((action) => `<span class="blocked-action">${escapeHtml(action)}</span>`).join("")}
+              <strong>아직 잠겨 있는 행동</strong>
+              ${blockedActions.map((action) => `<span class="blocked-action"><span class="blocked-action-label">잠김</span>${escapeHtml(action.label)}<span class="blocked-action-detail">${escapeHtml(action.detail)}</span></span>`).join("")}
             </div>`;
 }
 
@@ -905,6 +969,7 @@ function approvalInspectorRows(panel) {
   if (panel.id !== "approval-preview" || !panel.data) return "";
   return [
     inspectorRow("Flow Mode", panel.data.flowMode),
+    inspectorRow("Preview State", panel.data.userUnderstanding),
     inspectorRow("Stages", (panel.data.stages || []).map((stage) => `${stage.label}:${stage.status}`).join(" · ")),
     inspectorRow("Still Blocked", (panel.data.blockedActions || []).join(" · ")),
   ].join("");
