@@ -598,6 +598,217 @@ export function verifyTauriInstallDryRunPreview({
   };
 }
 
+export function buildTauriInstallDryRunInvocationApprovalContract({
+  root = PROJECT_ROOT,
+  preview = renderTauriInstallDryRunPreview({ root }),
+  previewVerification = verifyTauriInstallDryRunPreview({ root, preview }),
+} = {}) {
+  const findings = [];
+  if (previewVerification.status !== "ready") findings.push("dry_run_preview_not_ready");
+
+  return {
+    schema: "gpao_t.tauri_install_dry_run_invocation_approval_contract.v0_1",
+    status: findings.length ? "blocked" : "ready",
+    contractKind: "future_dry_run_invocation_approval_contract",
+    contractMode: "approval_contract_only_no_invocation",
+    invocationStatus: "not_invoked",
+    findings,
+    preview: {
+      schema: preview.schema,
+      status: preview.status,
+      verificationStatus: previewVerification.status,
+      sourceCommit: preview.sourceCommit,
+    },
+    approvalScope: {
+      approvalRequiredBeforeInvocation: true,
+      approvalCanOnlyAllow: [
+        "future dry-run executor invocation",
+        "future local dry-run audit preview write",
+        "future local dry-run preview artifact write",
+      ],
+      approvalCannotAllow: [
+        "real install execution",
+        "real update execution",
+        "real rollback execution",
+        "Tauri build",
+        "dependency install",
+        "external network",
+        "IPC activation",
+        "connector/model/tool activation",
+        "deployment",
+        "messenger",
+        "automation",
+      ],
+      approvalStateValues: [
+        "not_requested",
+        "requested",
+        "approved_for_dry_run_invocation_only",
+        "rejected",
+        "expired",
+      ],
+    },
+    requiredApprovalPacket: {
+      requiredFields: [
+        "requestId",
+        "requestedOperation",
+        "sourceCommit",
+        "previewSchema",
+        "previewVerificationStatus",
+        "allowedWriteRoots",
+        "allowedCommands",
+        "blockedActions",
+        "rollbackPlan",
+        "auditPreview",
+        "approvalState",
+        "expiresAt",
+      ],
+      allowedOperations: ["install", "update", "rollback"],
+      allowedWriteRoots: [
+        ".gpao-t/tauri-dry-run/",
+        ".gpao-t/audit/",
+      ],
+      allowedCommandKinds: [
+        "read_only_source_status_check",
+        "project_verification_check",
+      ],
+      approvalState: "not_requested",
+    },
+    invocationPreconditions: [
+      {
+        id: "source_commit_matches_preview",
+        status: "required_before_future_invocation",
+      },
+      {
+        id: "preview_verification_ready",
+        status: previewVerification.status === "ready" ? "satisfied_for_contract" : "blocked",
+      },
+      {
+        id: "explicit_user_approval_recorded",
+        status: "missing_by_design",
+      },
+      {
+        id: "executor_exists_and_is_no_real_operation",
+        status: "missing_by_design",
+      },
+      {
+        id: "audit_and_rollback_preview_present",
+        status: "required_before_future_invocation",
+      },
+    ],
+    rejectionRules: [
+      "reject_if_user_approval_missing",
+      "reject_if_approval_expired",
+      "reject_if_source_commit_changed",
+      "reject_if_operation_not_install_update_or_rollback",
+      "reject_if_command_not_read_only_or_verification",
+      "reject_if_write_root_outside_gpao_t_runtime_state",
+      "reject_if_real_install_update_or_rollback_present",
+      "reject_if_tauri_build_present",
+      "reject_if_dependency_install_present",
+      "reject_if_external_network_present",
+      "reject_if_ipc_activation_present",
+      "reject_if_connector_model_tool_activation_present",
+      "reject_if_rollback_plan_missing",
+      "reject_if_audit_preview_missing",
+    ],
+    auditContract: {
+      writesAuditNow: false,
+      futureAuditEventType: "tauri_dry_run_invocation_approval",
+      requiredAuditFields: [
+        "requestId",
+        "operation",
+        "approvalState",
+        "sourceCommit",
+        "plannedCommands",
+        "plannedWrites",
+        "blockedActions",
+        "rollbackPlan",
+      ],
+    },
+    failureRecoveryStates: [
+      {
+        id: "approval_missing",
+        recovery: "Return this approval contract and keep dry-run invocation blocked.",
+      },
+      {
+        id: "source_commit_changed",
+        recovery: "Rebuild the pure dry-run plan and preview against the current source checkpoint.",
+      },
+      {
+        id: "approval_scope_exceeded",
+        recovery: "Reject invocation and remove any action outside dry-run-only approval scope.",
+      },
+      {
+        id: "executor_attempts_real_operation",
+        recovery: "Reject invocation because real install/update/rollback remains a separate future gate.",
+      },
+    ],
+    safetyInvariants: {
+      ...pureDryRunSafetyInvariants(),
+      invokesDryRunExecutor: false,
+      approvalContractWritesAuditNow: false,
+      approvalContractWritesPreviewNow: false,
+    },
+    authorityBoundary: blockedAuthorityBoundary(),
+    nextSafeAction: findings.length
+      ? "Fix dry-run preview findings before trusting the invocation approval contract."
+      : "Use this contract to design a future approval-record flow; do not invoke dry-run, write files, run commands, install/update/rollback, build Tauri, open IPC, call external network, or activate connectors/models/tools.",
+  };
+}
+
+export function verifyTauriInstallDryRunInvocationApprovalContract({
+  root = PROJECT_ROOT,
+  contract = buildTauriInstallDryRunInvocationApprovalContract({ root }),
+} = {}) {
+  const findings = [];
+
+  if (contract.schema !== "gpao_t.tauri_install_dry_run_invocation_approval_contract.v0_1") findings.push("invalid_schema");
+  if (contract.contractMode !== "approval_contract_only_no_invocation") findings.push("contract_mode_invalid");
+  if (contract.invocationStatus !== "not_invoked") findings.push("invocation_status_invalid");
+  if (contract.preview.verificationStatus !== "ready") findings.push("preview_verification_not_ready");
+  if (contract.approvalScope.approvalRequiredBeforeInvocation !== true) findings.push("approval_required_missing");
+  if (!contract.approvalScope.approvalCanOnlyAllow.includes("future dry-run executor invocation")) {
+    findings.push("dry_run_only_scope_missing");
+  }
+  if (!contract.approvalScope.approvalCannotAllow.includes("real install execution")) {
+    findings.push("real_install_block_missing");
+  }
+  if (contract.requiredApprovalPacket.approvalState !== "not_requested") findings.push("approval_state_not_initial");
+  if (!contract.requiredApprovalPacket.allowedWriteRoots.every((rootPath) => rootPath.startsWith(".gpao-t/"))) {
+    findings.push("write_root_outside_runtime_state");
+  }
+  if (!contract.invocationPreconditions.some((item) => item.id === "explicit_user_approval_recorded" && item.status === "missing_by_design")) {
+    findings.push("approval_missing_precondition_invalid");
+  }
+  if (!contract.invocationPreconditions.some((item) => item.id === "executor_exists_and_is_no_real_operation" && item.status === "missing_by_design")) {
+    findings.push("executor_missing_precondition_invalid");
+  }
+  if (!contract.rejectionRules.includes("reject_if_real_install_update_or_rollback_present")) {
+    findings.push("real_operation_rejection_missing");
+  }
+  if (!contract.rejectionRules.includes("reject_if_external_network_present")) findings.push("external_network_rejection_missing");
+  if (!contract.rejectionRules.includes("reject_if_ipc_activation_present")) findings.push("ipc_rejection_missing");
+  if (contract.auditContract.writesAuditNow !== false) findings.push("audit_write_enabled");
+  if (contract.safetyInvariants.invokesDryRunExecutor !== false) findings.push("dry_run_invocation_enabled");
+  if (contract.authorityBoundary.dryRunExecution !== "blocked_until_future_approval_and_executor_exists") {
+    findings.push("dry_run_execution_boundary_invalid");
+  }
+  if (contract.authorityBoundary.installExecution !== "blocked") findings.push("install_execution_not_blocked");
+  if (contract.authorityBoundary.updateExecution !== "blocked") findings.push("update_execution_not_blocked");
+  if (contract.authorityBoundary.rollbackExecution !== "blocked") findings.push("rollback_execution_not_blocked");
+
+  return {
+    schema: "gpao_t.tauri_install_dry_run_invocation_approval_contract_verification.v0_1",
+    status: findings.length ? "blocked" : "ready",
+    findings,
+    approvalScope: contract.approvalScope,
+    authorityBoundary: contract.authorityBoundary,
+    nextSafeAction: findings.length
+      ? "Fix invocation approval contract findings before any future approval-record design."
+      : "Next gate may design approval-record storage for future dry-run invocation; do not invoke dry-run or execute install/update/rollback.",
+  };
+}
+
 function buildOperationPlan({ operation }) {
   return {
     operation,

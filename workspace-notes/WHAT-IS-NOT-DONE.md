@@ -2,8 +2,9 @@
 
 ## Still Excluded
 
+- Approval-record storage or approval write.
 - Dry-run executor invocation.
-- Real dry-run executor implementation beyond pure object builders.
+- Real dry-run executor implementation beyond pure object builders and approval contract.
 - Install/update/rollback execution.
 - Tauri dependency installation, Cargo/Tauri build, bundle, signing, packaged installer creation, or release channel activation.
 - Local IPC command activation.
@@ -15,8 +16,8 @@
 
 ## Current Completion Boundary
 
-This slice is complete only as pure JSON plan/verify/preview objects. It shows planned commands and planned writes for approval preparation, but all planned commands remain `not_executed`, all planned writes remain `not_written`, and all install/update/rollback execution remains blocked.
+This slice is complete only as a future invocation approval contract. It defines required approval packet fields, allowed approval scope, rejection rules, audit contract, and recovery states. Approval state remains `not_requested`, invocation remains `not_invoked`, and audit writes remain disabled.
 
 ## Blockers
 
-No unresolved technical blocker is recorded for the current pure-object slice. The next authority boundary is explicit user approval before designing or implementing any future dry-run invocation gate.
+No unresolved technical blocker is recorded for the current approval-contract slice. The next authority boundary is explicit user approval before designing or implementing approval-record storage.

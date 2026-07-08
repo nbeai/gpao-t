@@ -22,11 +22,13 @@ import {
   buildTauriInstallDryRunPlan,
   buildTauriInstallDryRunExecutorContract,
   buildTauriInstallDryRunImplementationDesign,
+  buildTauriInstallDryRunInvocationApprovalContract,
   buildTauriInstallPrerequisiteDoctor,
   renderTauriInstallDryRunPreview,
   verifyTauriInstallDryRunPlan,
   verifyTauriInstallDryRunExecutorContract,
   verifyTauriInstallDryRunImplementationDesign,
+  verifyTauriInstallDryRunInvocationApprovalContract,
   verifyTauriInstallDryRunPreview,
   verifyTauriInstallPrerequisiteDoctor,
 } from "./tauri-install-execution-contracts.js";
@@ -291,6 +293,22 @@ export function handleGatewayRequest({ method = "GET", path = "/", body = {}, ro
       schema: "gpao_t.gateway_response.v0_1",
       status: 200,
       body: verifyTauriInstallDryRunPreview({ root }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/app-shell/tauri-dry-run-invocation-approval") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: buildTauriInstallDryRunInvocationApprovalContract({ root }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/app-shell/tauri-dry-run-invocation-approval/verify") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: verifyTauriInstallDryRunInvocationApprovalContract({ root }),
     };
   }
 

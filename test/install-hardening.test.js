@@ -12,6 +12,7 @@ import {
   buildTauriInstallDryRunPlan,
   buildTauriInstallDryRunExecutorContract,
   buildTauriInstallDryRunImplementationDesign,
+  buildTauriInstallDryRunInvocationApprovalContract,
   buildTauriInstallPrerequisiteDoctor,
   buildTauriInstallReadinessGate,
   handleGatewayRequest,
@@ -20,6 +21,7 @@ import {
   verifyTauriInstallDryRunPlan,
   verifyTauriInstallDryRunExecutorContract,
   verifyTauriInstallDryRunImplementationDesign,
+  verifyTauriInstallDryRunInvocationApprovalContract,
   verifyTauriInstallDryRunPreview,
   verifyTauriInstallPrerequisiteDoctor,
   verifyTauriInstallReadinessGate,
@@ -315,5 +317,57 @@ describe("GPAO-T install/update/rollback hardening", () => {
     assert.equal(gatewayPreview.status, 200);
     assert.equal(gatewayPreview.body.schema, preview.schema);
     assert.equal(gatewayPreviewCheck.body.status, "ready");
+  });
+
+  it("defines future dry-run invocation approval without invoking dry-run", () => {
+    const contract = buildTauriInstallDryRunInvocationApprovalContract({ root: ROOT });
+    const contractCheck = verifyTauriInstallDryRunInvocationApprovalContract({ root: ROOT, contract });
+    const cliContract = JSON.parse(execFileSync(process.execPath, [CLI, "control", "tauri-dry-run-invocation-approval"], {
+      cwd: ROOT,
+      encoding: "utf8",
+    }));
+    const cliContractCheck = JSON.parse(execFileSync(process.execPath, [CLI, "control", "tauri-dry-run-invocation-approval-check"], {
+      cwd: ROOT,
+      encoding: "utf8",
+    }));
+    const gatewayContract = handleGatewayRequest({
+      root: ROOT,
+      method: "GET",
+      path: "/app-shell/tauri-dry-run-invocation-approval",
+    });
+    const gatewayContractCheck = handleGatewayRequest({
+      root: ROOT,
+      method: "GET",
+      path: "/app-shell/tauri-dry-run-invocation-approval/verify",
+    });
+
+    assert.equal(contract.schema, "gpao_t.tauri_install_dry_run_invocation_approval_contract.v0_1");
+    assert.equal(contract.status, "ready");
+    assert.equal(contract.contractMode, "approval_contract_only_no_invocation");
+    assert.equal(contract.invocationStatus, "not_invoked");
+    assert.equal(contract.approvalScope.approvalRequiredBeforeInvocation, true);
+    assert.equal(contract.approvalScope.approvalCanOnlyAllow.includes("future dry-run executor invocation"), true);
+    assert.equal(contract.approvalScope.approvalCannotAllow.includes("real install execution"), true);
+    assert.equal(contract.approvalScope.approvalCannotAllow.includes("Tauri build"), true);
+    assert.equal(contract.requiredApprovalPacket.approvalState, "not_requested");
+    assert.equal(contract.requiredApprovalPacket.allowedOperations.includes("install"), true);
+    assert.equal(contract.requiredApprovalPacket.allowedWriteRoots.every((path) => path.startsWith(".gpao-t/")), true);
+    assert.equal(contract.invocationPreconditions.some((item) => item.id === "explicit_user_approval_recorded" && item.status === "missing_by_design"), true);
+    assert.equal(contract.invocationPreconditions.some((item) => item.id === "executor_exists_and_is_no_real_operation" && item.status === "missing_by_design"), true);
+    assert.equal(contract.rejectionRules.includes("reject_if_real_install_update_or_rollback_present"), true);
+    assert.equal(contract.rejectionRules.includes("reject_if_external_network_present"), true);
+    assert.equal(contract.auditContract.writesAuditNow, false);
+    assert.equal(contract.safetyInvariants.invokesDryRunExecutor, false);
+    assert.equal(contract.safetyInvariants.writesFiles, false);
+    assert.equal(contract.safetyInvariants.runsCommands, false);
+    assert.equal(contract.authorityBoundary.installExecution, "blocked");
+    assert.equal(contract.authorityBoundary.updateExecution, "blocked");
+    assert.equal(contract.authorityBoundary.rollbackExecution, "blocked");
+    assert.equal(contractCheck.status, "ready");
+    assert.equal(cliContract.schema, contract.schema);
+    assert.equal(cliContractCheck.status, "ready");
+    assert.equal(gatewayContract.status, 200);
+    assert.equal(gatewayContract.body.schema, contract.schema);
+    assert.equal(gatewayContractCheck.body.status, "ready");
   });
 });

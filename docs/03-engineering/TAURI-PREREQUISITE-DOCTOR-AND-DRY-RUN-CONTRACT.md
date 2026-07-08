@@ -1,9 +1,9 @@
 # Tauri Prerequisite Doctor And Dry-Run Executor Contract
 
-Status: pure plan/verify/preview objects added, invocation blocked
-Scope: packaged desktop install/update/rollback prerequisite doctor, dry-run executor contract, approval-gated implementation design, and pure dry-run plan/verify/preview objects
+Status: invocation approval contract added, invocation blocked
+Scope: packaged desktop install/update/rollback prerequisite doctor, dry-run executor contract, approval-gated implementation design, pure dry-run plan/verify/preview objects, and future invocation approval contract
 
-This stage does not install dependencies, run Cargo, run Tauri, build a package, create an installer, open IPC, write files as a dry-run, download externally, invoke a dry-run executor, or execute install/update/rollback. It defines what must be inspected before a future dry-run executor may exist, and now exposes pure JSON plan/verify/preview objects that can be shown before any future invocation gate.
+This stage does not install dependencies, run Cargo, run Tauri, build a package, create an installer, open IPC, write files as a dry-run, write approval records, download externally, invoke a dry-run executor, or execute install/update/rollback. It defines what must be inspected before a future dry-run executor may exist, exposes pure JSON plan/verify/preview objects, and now defines the approval contract that must exist before any future invocation gate.
 
 ## Machine Contract
 
@@ -18,6 +18,8 @@ node bin/gpao-t.js control tauri-dry-run-plan
 node bin/gpao-t.js control tauri-dry-run-plan-check
 node bin/gpao-t.js control tauri-dry-run-preview
 node bin/gpao-t.js control tauri-dry-run-preview-check
+node bin/gpao-t.js control tauri-dry-run-invocation-approval
+node bin/gpao-t.js control tauri-dry-run-invocation-approval-check
 node bin/gpao-t.js gateway GET /app-shell/tauri-prerequisite-doctor
 node bin/gpao-t.js gateway GET /app-shell/tauri-prerequisite-doctor/verify
 node bin/gpao-t.js gateway GET /app-shell/tauri-dry-run-contract
@@ -28,6 +30,8 @@ node bin/gpao-t.js gateway GET /app-shell/tauri-dry-run-plan
 node bin/gpao-t.js gateway GET /app-shell/tauri-dry-run-plan/verify
 node bin/gpao-t.js gateway GET /app-shell/tauri-dry-run-preview
 node bin/gpao-t.js gateway GET /app-shell/tauri-dry-run-preview/verify
+node bin/gpao-t.js gateway GET /app-shell/tauri-dry-run-invocation-approval
+node bin/gpao-t.js gateway GET /app-shell/tauri-dry-run-invocation-approval/verify
 ```
 
 Loopback preview also exposes:
@@ -42,6 +46,8 @@ Loopback preview also exposes:
 - `GET /app-shell/tauri-dry-run-plan/verify`
 - `GET /app-shell/tauri-dry-run-preview`
 - `GET /app-shell/tauri-dry-run-preview/verify`
+- `GET /app-shell/tauri-dry-run-invocation-approval`
+- `GET /app-shell/tauri-dry-run-invocation-approval/verify`
 
 ## Prerequisite Doctor
 
@@ -147,10 +153,60 @@ Required invariant:
 
 The preview may show future command names and future local artifact paths, but those entries must remain marked as planned and not executed or written.
 
+## Future Invocation Approval Contract
+
+The invocation approval contract is still contract-only. It defines what a later approval-record flow must capture before a dry-run executor can be invoked, but it does not record approval and does not invoke the executor.
+
+Current surfaces:
+
+- `buildTauriInstallDryRunInvocationApprovalContract`: returns the future invocation approval boundary.
+- `verifyTauriInstallDryRunInvocationApprovalContract`: rejects any contract that enables invocation, audit writes, real operations, IPC, external network, or tool/model/connector activation.
+
+Required approval packet fields:
+
+- request id
+- requested operation
+- source commit
+- preview schema
+- preview verification status
+- allowed write roots
+- allowed commands
+- blocked actions
+- rollback plan
+- audit preview
+- approval state
+- expiration
+
+Approval can only ever allow:
+
+- future dry-run executor invocation
+- future local dry-run audit preview write
+- future local dry-run preview artifact write
+
+Approval cannot allow:
+
+- real install/update/rollback execution
+- Tauri build
+- dependency install
+- external network
+- IPC activation
+- connector/model/tool activation
+- deployment, messenger, or automation
+
+Current contract boundary:
+
+- contract mode: `approval_contract_only_no_invocation`
+- invocation status: `not_invoked`
+- approval state: `not_requested`
+- explicit user approval: `missing_by_design`
+- executor existence: `missing_by_design`
+- audit writes now: `false`
+
 ## Blocked Now
 
 - dry-run execution
 - dry-run executor invocation
+- approval record write
 - real dry-run executor implementation beyond the pure object builders
 - real install/update/rollback execution
 - dependency installation
@@ -173,4 +229,4 @@ The preview may show future command names and future local artifact paths, but t
 
 ## Next Safe Action
 
-After these pure plan/verify/preview objects remain verified, the next gate may design a future dry-run invocation approval contract. Dry-run invocation and real install/update/rollback, Tauri build, IPC, external download, deployment, messenger, and automation remain blocked.
+After this invocation approval contract remains verified, the next gate may design approval-record storage for a future dry-run invocation. Dry-run invocation and real install/update/rollback, Tauri build, IPC, external download, deployment, messenger, and automation remain blocked.
