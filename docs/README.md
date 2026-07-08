@@ -12,6 +12,10 @@ Development guidance is maintained in `docs/DEVELOPMENT-PRINCIPLES.md`: GPAO-T s
 
 Local Control Center design guidance is maintained in `docs/LOCAL-CONTROL-CENTER-DESIGN-RECIPE.md`. It adapts BEAI Harness `design.md` into the GPAO-T visual UI contract before any desktop/web surface is built.
 
+Control Center human-readability QA is maintained in `docs/03-verification/CONTROL-CENTER-HUMAN-READABILITY-CHECK.md`. It keeps first-scan clarity, state comprehension, authority visibility, next-safe-action visibility, mobile action visibility, and no-script/no-external-activation boundaries explicit before app-shell work.
+
+The app-shell transition is governed by `docs/03-engineering/APP-SHELL-DECISION-GATE.md`. GPAO-T must close the shell technology, local server or IPC boundary, authority model, rollback substrate, screenshot verification, and failure/recovery decisions before desktop shell implementation begins.
+
 Skill ecosystem guidance is maintained in `docs/04-skill-ecosystem/GPAO-T-SKILL-ECOSYSTEM-MASTER-PLAN-ko.md`. GPAO-T skills must be research-grounded, practical, T-cell-shaped operating units, not prompt decorations or copied marketplace catalogs.
 
 ## First Slice
@@ -30,6 +34,8 @@ The first slice implements a local, dependency-free runtime skeleton:
 - `Install / Update / Rollback Hardening`: local operational readiness and recovery contract
 - `Local Control Center Contract`: one snapshot for runtime, ops, memory, recovery, growth, adapters, connectors, and authority
 - `Local Control Center Design Recipe`: BEAI design doctrine adapted to GPAO-T UI implementation
+- `Control Center Human Readability Check`: first-scan clarity and no-script/local-inspection QA before app-shell transition
+- `App Shell Decision Gate`: technology, authority, rollback, IPC/local-serving, screenshot, and recovery decisions before desktop shell implementation
 - `Skill Ecosystem Registry`: research-grounded base skill packs, manifest standard, routing, readiness, and future runtime integration contract
 - `Skill Candidate Atlas`: full skill production field, phased roadmap, and build queue before individual pack production
 - `Skill Production Status`: phase-1 production gate for registry, routing, execution contract, quality gate, replay, growth signal, and authority boundary

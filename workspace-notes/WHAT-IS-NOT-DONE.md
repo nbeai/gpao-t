@@ -9,10 +9,10 @@
 
 ## Current Completion Boundary
 
-- Do not call this complete unless verification evidence and completion language guard pass.
-- Do not ask the user to test before AI/developer scenario verification covers success, empty, and failure states when applicable.
-- Current status: completed
+- Human-readability and app-shell decision documents have verification evidence.
+- Desktop shell implementation has not started.
+- Current status: decision gate open
 
 ## Blockers
 
-- No unresolved session blocker is recorded.
+- App-shell technology, local serving or IPC boundary, threat model, rollback policy, and screenshot verification plan still need an explicit decision before code.

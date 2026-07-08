@@ -1,12 +1,12 @@
 # What We Are Building
 
-The first real user can route a vague request, see the plan, run checks, and understand the result without reading the whole codebase so that a user can move from vague request to safer implementation with visible gates and evidence.
+GPAO-T is moving from the no-script Local Control Center reader toward an app-shell decision gate while preserving local-first operation, authority visibility, next safe action visibility, and no external activation.
 
 ## Current Phase
 
-- Phase: verify
-- Command: verify
-- Status: completed
+- Phase: app-shell decision gate
+- Command: docs/test gate
+- Status: implementation not started
 
 ## User Mode
 
@@ -15,7 +15,7 @@ The first real user can route a vague request, see the plan, run checks, and und
 
 ## First Workflow
 
-Guided First Workflow
+Control Center human-readability -> app-shell decision gate
 
 ## Companion Principle
 
@@ -30,9 +30,9 @@ AI does the work. User keeps authority.
 
 ## User Authority
 
-- Confirm whether "Guided First Workflow" feels like the intended product direction.
+- Choose the first app-shell technology and runtime boundary.
 - Approve any taste, brand, operating policy, or business decision that AI cannot know.
 
 ## Latest Summary
 
-Executed 2 checks: 2 passed, 0 failed.
+Human-readability check and app-shell decision gate are documented and test-covered. BEAI closeout remains conservative because the new docs intentionally define future implementation work.

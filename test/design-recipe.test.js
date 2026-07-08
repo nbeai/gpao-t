@@ -13,6 +13,8 @@ const CLI = fileURLToPath(new URL("../bin/gpao-t.js", import.meta.url));
 const DESIGN_RECIPE = `${ROOT}/docs/LOCAL-CONTROL-CENTER-DESIGN-RECIPE.md`;
 const README = `${ROOT}/docs/README.md`;
 const PRINCIPLES = `${ROOT}/docs/DEVELOPMENT-PRINCIPLES.md`;
+const HUMAN_READABILITY_CHECK = `${ROOT}/docs/03-verification/CONTROL-CENTER-HUMAN-READABILITY-CHECK.md`;
+const APP_SHELL_DECISION_GATE = `${ROOT}/docs/03-engineering/APP-SHELL-DECISION-GATE.md`;
 
 describe("GPAO-T Local Control Center design recipe", () => {
   it("adapts BEAI design.md into a GPAO-T UI implementation contract", () => {
@@ -49,6 +51,24 @@ describe("GPAO-T Local Control Center design recipe", () => {
     assert.match(readme, /Work \/ Context \/ Evidence \/ Growth \/ Authority/);
     assert.match(principles, /BEAI Harness `design\.md`/);
     assert.match(principles, /LOCAL-CONTROL-CENTER-DESIGN-RECIPE\.md/);
+  });
+
+  it("keeps human-readability and app-shell decision gates explicit before implementation", () => {
+    const readme = readFileSync(README, "utf8");
+    const readability = readFileSync(HUMAN_READABILITY_CHECK, "utf8");
+    const appShell = readFileSync(APP_SHELL_DECISION_GATE, "utf8");
+
+    assert.match(readme, /CONTROL-CENTER-HUMAN-READABILITY-CHECK\.md/);
+    assert.match(readme, /APP-SHELL-DECISION-GATE\.md/);
+    assert.match(readability, /Status: passed/);
+    assert.match(readability, /Mobile fixed topbar action line or decision strip remains visible/);
+    assert.match(readability, /no `<script>`, no external activation, and no hidden mutation path/);
+    assert.match(readability, /This is not an app-shell implementation approval/);
+    assert.match(appShell, /Status: ready for decision, not approved for implementation/);
+    assert.match(appShell, /Loopback-only or local IPC/);
+    assert.match(appShell, /No OAuth setup, token storage, external model call/);
+    assert.match(appShell, /Technology decision record/);
+    assert.match(appShell, /app-shell decision gate open, implementation not started/);
   });
 
   it("exposes the design recipe as a runtime design contract", () => {
