@@ -240,6 +240,24 @@ describe("GPAO-T Local Control Center readiness", () => {
     assert.equal(existsSync(render.outputPath), true);
   });
 
+  it("keeps responsive visual hardening rules in the static Control Center reader", () => {
+    const html = buildControlCenterHtml();
+
+    assert.match(html, /@media \(max-width: 640px\)/);
+    assert.match(html, /overflow-x: hidden/);
+    assert.match(html, /max-width: 100vw/);
+    assert.match(html, /mobile-next-action/);
+    assert.match(html, /aria-label="Mobile next safe action"/);
+    assert.match(html, /\.topbar \{[\s\S]*position: sticky/);
+    assert.match(html, /nav \{ order: 3; \}/);
+    assert.match(html, /main \{ order: 1; \}/);
+    assert.match(html, /aside \{ order: 2; \}/);
+    assert.match(html, /grid-template-columns: repeat\(2, minmax\(0, 1fr\)\)/);
+    assert.match(html, /width: calc\(50% - 5px\)/);
+    assert.match(html, /white-space: normal/);
+    assert.match(html, /overflow-wrap: anywhere/);
+  });
+
   it("defines browser-safe local serving and screenshot verification boundaries", () => {
     const contract = buildControlCenterServingContract();
 

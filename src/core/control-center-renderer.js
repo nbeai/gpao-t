@@ -66,12 +66,18 @@ export function buildControlCenterHtml({ snapshot, designContract } = {}) {
       --shadow: 0 1px 2px rgba(23, 32, 42, 0.08);
     }
     * { box-sizing: border-box; }
+    html {
+      max-width: 100%;
+      overflow-x: hidden;
+    }
     body {
       margin: 0;
       background: var(--bg);
       color: var(--text);
       font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       line-height: 1.45;
+      max-width: 100%;
+      overflow-x: hidden;
     }
     .shell {
       min-height: 100vh;
@@ -86,6 +92,10 @@ export function buildControlCenterHtml({ snapshot, designContract } = {}) {
       padding: 14px 20px;
       border-bottom: 1px solid var(--line);
       background: var(--surface);
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      max-width: 100vw;
     }
     .brand {
       display: flex;
@@ -109,11 +119,14 @@ export function buildControlCenterHtml({ snapshot, designContract } = {}) {
       display: grid;
       grid-template-columns: 180px minmax(0, 1fr) 320px;
       min-height: 0;
+      max-width: 100vw;
+      overflow-x: hidden;
     }
     nav {
       border-right: 1px solid var(--line);
       padding: 16px 12px;
       background: var(--surface-muted);
+      min-width: 0;
     }
     .nav-title {
       color: var(--muted);
@@ -130,6 +143,11 @@ export function buildControlCenterHtml({ snapshot, designContract } = {}) {
       border-radius: 6px;
       font-size: 13px;
       color: var(--text);
+      min-width: 0;
+    }
+    .nav-item span {
+      min-width: 0;
+      overflow-wrap: anywhere;
     }
     main {
       padding: 18px;
@@ -147,9 +165,13 @@ export function buildControlCenterHtml({ snapshot, designContract } = {}) {
       gap: 10px;
       margin-bottom: 14px;
     }
+    .mobile-next-action {
+      display: none;
+    }
     .metric,
     .panel,
-    .authority-row {
+    .authority-row,
+    .mobile-next-action {
       border: 1px solid var(--line);
       border-radius: 8px;
       background: var(--surface);
@@ -158,6 +180,7 @@ export function buildControlCenterHtml({ snapshot, designContract } = {}) {
     .metric {
       padding: 12px;
       min-width: 0;
+      min-height: 74px;
     }
     .metric b {
       display: block;
@@ -176,6 +199,7 @@ export function buildControlCenterHtml({ snapshot, designContract } = {}) {
     .panel {
       padding: 14px;
       min-width: 0;
+      min-height: 142px;
     }
     .panel-head {
       display: flex;
@@ -266,6 +290,9 @@ export function buildControlCenterHtml({ snapshot, designContract } = {}) {
         border: 0;
         border-bottom: 1px solid var(--line);
       }
+      nav { order: 3; }
+      main { order: 1; }
+      aside { order: 2; }
       .decision-strip,
       .panel-grid {
         grid-template-columns: 1fr;
@@ -275,6 +302,108 @@ export function buildControlCenterHtml({ snapshot, designContract } = {}) {
         flex-direction: column;
       }
       h1 { white-space: normal; }
+    }
+    @media (max-width: 640px) {
+      body {
+        background: var(--surface);
+      }
+      .topbar {
+        gap: 10px;
+        padding: 12px 14px;
+      }
+      .brand {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 3px;
+        width: 100%;
+      }
+      h1 {
+        font-size: 17px;
+        max-width: 100%;
+      }
+      .subtitle {
+        font-size: 12px;
+      }
+      main,
+      aside,
+      nav {
+        padding: 12px;
+      }
+      nav {
+        background: var(--surface);
+      }
+      .nav-title {
+        margin-bottom: 8px;
+      }
+      nav[aria-label="GPAO-T information architecture"] {
+        display: block;
+      }
+      nav[aria-label="GPAO-T information architecture"] > .nav-item {
+        display: inline-flex;
+        align-items: center;
+        width: calc(50% - 5px);
+        margin: 0 5px 8px 0;
+        border: 1px solid var(--line);
+        background: var(--surface-muted);
+      }
+      .decision-strip {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+        margin-bottom: 10px;
+      }
+      .mobile-next-action {
+        display: block;
+        margin-bottom: 12px;
+        padding: 11px;
+      }
+      .mobile-next-action h2 {
+        margin-bottom: 6px;
+      }
+      .metric {
+        min-height: 64px;
+        padding: 10px;
+      }
+      .metric b {
+        font-size: 18px;
+      }
+      .metric span,
+      .mobile-next-action .next,
+      .headline,
+      .next,
+      .authority-row span,
+      .quality,
+      .footer-note {
+        font-size: 12px;
+      }
+      .panel-grid {
+        gap: 10px;
+      }
+      .panel {
+        min-height: 0;
+        padding: 12px;
+      }
+      .panel-head {
+        align-items: flex-start;
+        gap: 8px;
+      }
+      h2 { font-size: 15px; }
+      h3 { font-size: 14px; }
+      .status {
+        max-width: 112px;
+        padding: 3px 7px;
+        text-align: center;
+        white-space: normal;
+        line-height: 1.15;
+      }
+      .side-section + .side-section {
+        margin-top: 14px;
+      }
+      .side-list {
+        gap: 7px;
+      }
+      .authority-row {
+        padding: 8px;
+      }
     }
   </style>
 </head>
@@ -299,6 +428,10 @@ export function buildControlCenterHtml({ snapshot, designContract } = {}) {
           ${metric("Blocked", uiSnapshot.firstViewport.counts.blocked, "requires recovery before action")}
           ${metric("Review", uiSnapshot.firstViewport.counts.review, "needs human-readable inspection")}
           ${metric("Evidence", uiSnapshot.firstViewport.counts.evidence, "recorded replay signals")}
+        </section>
+        <section class="mobile-next-action" aria-label="Mobile next safe action">
+          <h2>다음 안전 행동</h2>
+          <p class="next">${escapeHtml(uiSnapshot.firstViewport.nextSafeAction)}</p>
         </section>
         <section class="panel-grid" aria-label="Control Center panels">
           ${panels.map((panel) => panelHtml(panel)).join("")}
