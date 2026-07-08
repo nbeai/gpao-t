@@ -228,11 +228,22 @@ export function buildCoreWorkSurfaceHtml({ surface } = {}) {
       z-index: 2;
       display: flex;
       align-items: flex-start;
-      justify-content: space-between;
+      justify-content: flex-start;
+      flex-wrap: wrap;
       gap: 16px;
       padding: 14px 18px;
       border-bottom: 1px solid var(--line);
       background: var(--surface);
+    }
+    .topbar-main {
+      min-width: 0;
+    }
+    .topbar-action {
+      margin-top: 4px;
+      color: var(--review);
+      font-size: 12px;
+      font-weight: 800;
+      overflow-wrap: anywhere;
     }
     h1, h2, h3, p { margin: 0; letter-spacing: 0; }
     h1 { font-size: 19px; line-height: 1.2; }
@@ -245,6 +256,7 @@ export function buildCoreWorkSurfaceHtml({ surface } = {}) {
       padding: 3px 8px;
       color: var(--ready);
       background: #fff;
+      flex: 0 0 auto;
       font-size: 12px;
       font-weight: 800;
       white-space: nowrap;
@@ -385,7 +397,7 @@ export function buildCoreWorkSurfaceHtml({ surface } = {}) {
         width: 100%;
         padding: 12px 14px;
       }
-      .layout { padding-top: 116px; }
+      .layout { padding-top: 146px; }
       .state-grid, .authority-strip { grid-template-columns: 1fr; }
       .thread, .panel { padding: 12px; }
     }
@@ -393,9 +405,10 @@ export function buildCoreWorkSurfaceHtml({ surface } = {}) {
 </head>
 <body data-core-work-surface="read-only" data-external-activation="blocked">
   <header class="topbar">
-    <div>
+    <div class="topbar-main">
       <h1>GPAO-T Work Surface</h1>
       <p class="subtitle">작업 초안 · 맥락 프리뷰 · 권한 경계</p>
+      <p class="topbar-action">다음 안전 행동: read-only visual QA · 실제 전송/모델/도구 실행 없음</p>
     </div>
     <span class="status">${escapeHtml(workSurface.status)}</span>
   </header>

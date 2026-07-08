@@ -25,9 +25,14 @@ Core work surface first slice:
 - State contract: `GET /work-surface/state` and `node bin/gpao-t.js control work-surface`
 - Contract check: `GET /work-surface/verify` and `node bin/gpao-t.js control work-surface-check`
 - Control Center integration: `control snapshot`, `control html`, `/control-center`, and `/app-shell` must include the `Work Surface` panel or allowed read-only routes.
+- Visual baseline: `docs/03-verification/evidence/work-surface-visual-qa-baseline-2026-07-09.json` and `docs/03-verification/evidence/WORK-SURFACE-VISUAL-QA-BASELINE-2026-07-09.md`
+- Visual screenshots:
+  - Desktop viewport: `docs/03-verification/evidence/work-surface-visual-qa-2026-07-09-desktop-viewport-1440x960.jpg`
+  - Mobile viewport: `docs/03-verification/evidence/work-surface-visual-qa-2026-07-09-mobile-viewport-390x844.jpg`
 - Required invariant: the surface may show a draft task input, preview thread, current task state, Context Mesh / Memory Wiki / T-cell candidate summary, Skill Pack route preview, model/tool route preview, authority/approval summary, and next safe action.
 - Required blocked boundary: the surface must not submit input, call external models, execute tools, activate connectors, write approval records, invoke dry-run, promote durable memory, apply self-growth, deploy, send through messenger, start recurring automation, include script, include form submission, or link to external URLs.
-- Next visual QA: before adding richer interaction, capture desktop/mobile evidence for `/work-surface` and confirm nonblank viewport, draft input visibility, task state visibility, context/skill route readability, authority boundary visibility, next safe action visibility, no overflow, mobile topbar/action visibility, no script, no form, and no external activation.
+- Checked visual invariant: desktop/mobile evidence confirms nonblank viewport, draft input visibility, task state visibility, context/skill route readability, authority boundary visibility, next safe action visibility, no overflow, mobile topbar/action visibility, no script, no form, and no external activation.
+- Next gate: add only the smallest richer read-only task interaction that improves task readability. Live submission and all model/tool/connector execution remain blocked.
 
 Packaged desktop / Tauri gate:
 

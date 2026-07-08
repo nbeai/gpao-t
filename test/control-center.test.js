@@ -72,6 +72,14 @@ const CONTROL_APPROVAL_PREVIEW_QA_DOC = fileURLToPath(new URL(
   "../docs/03-verification/evidence/CONTROL-CENTER-APPROVAL-PREVIEW-UX-QA-2026-07-09.md",
   import.meta.url,
 ));
+const WORK_SURFACE_VISUAL_QA_JSON = fileURLToPath(new URL(
+  "../docs/03-verification/evidence/work-surface-visual-qa-baseline-2026-07-09.json",
+  import.meta.url,
+));
+const WORK_SURFACE_VISUAL_QA_DOC = fileURLToPath(new URL(
+  "../docs/03-verification/evidence/WORK-SURFACE-VISUAL-QA-BASELINE-2026-07-09.md",
+  import.meta.url,
+));
 const PACKAGED_DESKTOP_REVIEW_DOC = fileURLToPath(new URL(
   "../docs/03-engineering/PACKAGED-DESKTOP-PLANNING-REVIEW.md",
   import.meta.url,
@@ -900,6 +908,59 @@ describe("GPAO-T Local Control Center readiness", () => {
     assert.match(baselineDoc, /Tauri Shell Visual QA Baseline/);
     assert.match(baselineDoc, /tauri-shell-visual-qa-2026-07-09-desktop-viewport-1440x960\.jpg/);
     assert.match(baselineDoc, /tauri-shell-visual-qa-2026-07-09-mobile-viewport-390x844\.jpg/);
+  });
+
+  it("keeps work-surface visual QA baseline evidence replayable and read-only", () => {
+    const qa = JSON.parse(readFileSync(WORK_SURFACE_VISUAL_QA_JSON, "utf8"));
+    const qaDoc = readFileSync(WORK_SURFACE_VISUAL_QA_DOC, "utf8");
+    const verifyDoc = readFileSync(VERIFY_DOC_PATH, "utf8");
+    const screenshots = Object.values(qa.evidenceFiles).map((filePath) => readFileSync(filePath));
+
+    assert.equal(qa.schema, "gpao_t.work_surface_visual_qa_baseline.v0_1");
+    assert.equal(qa.status, "ready");
+    assert.equal(qa.target, "/work-surface");
+    assert.equal(qa.fileFormat, "jpg");
+    assert.equal(qa.invariants.readOnly, true);
+    assert.equal(qa.invariants.noExternalActivation, true);
+    assert.equal(qa.invariants.noToolActivation, true);
+    assert.equal(qa.invariants.noLiveModelConnectorExecution, true);
+    assert.equal(qa.invariants.noApprovalRecordWrite, true);
+    assert.equal(qa.invariants.noDryRunInvocation, true);
+    assert.equal(qa.invariants.noDurableMemoryPromotion, true);
+    assert.equal(qa.invariants.noSelfGrowthApply, true);
+    assert.equal(qa.invariants.noDeploymentMessengerOrAutomation, true);
+    assert.equal(qa.invariants.noScript, true);
+    assert.equal(qa.invariants.noForm, true);
+    assert.equal(qa.invariants.noExternalLinks, true);
+    assert.equal(qa.invariants.noHorizontalOverflow, true);
+    assert.equal(qa.invariants.topbarActionVisible, true);
+    assert.equal(qa.invariants.authorityBoundaryVisible, true);
+    assert.equal(qa.invariants.nextSafeActionVisible, true);
+    assert.equal(qa.checks.length, 2);
+    assert.equal(qa.checks.every((check) => check.nonblankViewport), true);
+    assert.equal(qa.checks.every((check) => check.draftInputVisible), true);
+    assert.equal(qa.checks.every((check) => check.composerVisible), true);
+    assert.equal(qa.checks.every((check) => check.taskStateVisible), true);
+    assert.equal(qa.checks.every((check) => check.contextVisible), true);
+    assert.equal(qa.checks.every((check) => check.skillRouteVisible), true);
+    assert.equal(qa.checks.every((check) => check.authorityBoundaryVisible), true);
+    assert.equal(qa.checks.every((check) => check.closedBoundaryTextVisible), true);
+    assert.equal(qa.checks.every((check) => check.nextSafeActionVisible), true);
+    assert.equal(qa.checks.every((check) => check.topbarActionVisible), true);
+    assert.equal(qa.checks.every((check) => check.noHorizontalOverflow), true);
+    assert.equal(qa.checks.every((check) => !check.hasScript && !check.hasForm), true);
+    assert.equal(qa.checks.every((check) => check.externalLinks.length === 0), true);
+    assert.equal(qa.checks.some((check) => check.id === "desktop-viewport" && check.viewport.width === 1440), true);
+    assert.equal(qa.checks.some((check) => check.id === "mobile-viewport" && check.viewport.width === 390), true);
+    assert.equal(qa.blockedActionsRemainClosed.includes("model connector live execution"), true);
+    assert.equal(qa.blockedActionsRemainClosed.includes("recurring automation"), true);
+    assert.equal(Object.values(qa.evidenceFiles).every((filePath) => existsSync(filePath)), true);
+    assert.equal(screenshots.every((bytes) => bytes[0] === 0xff && bytes[1] === 0xd8), true);
+    assert.match(qaDoc, /Work Surface Visual QA Baseline/);
+    assert.match(qaDoc, /work-surface-visual-qa-2026-07-09-desktop-viewport-1440x960\.jpg/);
+    assert.match(qaDoc, /work-surface-visual-qa-2026-07-09-mobile-viewport-390x844\.jpg/);
+    assert.match(verifyDoc, /work-surface-visual-qa-baseline-2026-07-09\.json/);
+    assert.match(verifyDoc, /Mobile viewport/);
   });
 
   it("keeps approval preview UX visual QA evidence replayable and preview-only", () => {

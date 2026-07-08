@@ -4,9 +4,9 @@ The first real GPAO-T user can open a local work surface, see where to give GPAO
 
 ## Current Phase
 
-- Phase: core work surface first slice
+- Phase: core work surface visual QA baseline
 - Command: control work-surface / GET /work-surface
-- Status: implemented and verified
+- Status: implemented, visually verified, and evidence-backed
 
 ## User Mode
 
@@ -35,4 +35,4 @@ AI does the work. User keeps authority.
 
 ## Latest Summary
 
-Implemented and verified the first read-only core work surface slice: draft task input, preview thread, task state, Context Mesh / Memory Wiki / T-cell preview, Skill Pack route preview, model/tool route preview, authority/approval summary, closed actions, and next safe action. Live send, external model calls, tool execution, connector activation, approval writes, dry-run invocation, durable memory promotion, self-growth apply, deployment, messenger, and automation remain blocked.
+Implemented and visually verified the first read-only core work surface slice: draft task input, preview thread, task state, Context Mesh / Memory Wiki / T-cell preview, Skill Pack route preview, model/tool route preview, authority/approval summary, closed actions, and next safe action. Desktop/mobile evidence is stored under `docs/03-verification/evidence/work-surface-visual-qa-*`. Live send, external model calls, tool execution, connector activation, approval writes, dry-run invocation, durable memory promotion, self-growth apply, deployment, messenger, and automation remain blocked.

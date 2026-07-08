@@ -20,6 +20,8 @@ Control Center approval/preview UX evidence is maintained in `docs/03-verificati
 
 The first GPAO-T core work surface is now exposed as a read-only user-facing slice. It gives the user a draft work input area, a preview thread, current task state, Context Mesh / Memory Wiki / T-cell candidate summary, Skill Pack route preview, model/tool route preview, authority/approval summary, closed action list, and next safe action. It is intentionally not a live chat executor yet: input submission, external model calls, tool execution, connector activation, approval-record writes, dry-run invocation, durable memory promotion, self-growth apply, deployment, messenger send, and recurring automation remain blocked.
 
+Work surface visual QA evidence is maintained in `docs/03-verification/evidence/work-surface-visual-qa-baseline-2026-07-09.json` and `docs/03-verification/evidence/WORK-SURFACE-VISUAL-QA-BASELINE-2026-07-09.md`. The `/work-surface` baseline must preserve nonblank desktop/mobile viewports, visible draft input, visible task state, Context Mesh / Memory Wiki preview, Skill Pack route preview, authority boundary, closed action text, next safe action, mobile topbar action line, no horizontal overflow, no script/form, and no external activation before richer task interaction is added.
+
 Skill ecosystem guidance is maintained in `docs/04-skill-ecosystem/GPAO-T-SKILL-ECOSYSTEM-MASTER-PLAN-ko.md`. GPAO-T skills must be research-grounded, practical, T-cell-shaped operating units, not prompt decorations or copied marketplace catalogs.
 
 ## First Slice
