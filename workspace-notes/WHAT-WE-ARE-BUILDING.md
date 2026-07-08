@@ -1,12 +1,12 @@
 # What We Are Building
 
-GPAO-T is moving from the no-script Local Control Center reader toward an app-shell decision gate while preserving local-first operation, authority visibility, next safe action visibility, and no external activation.
+GPAO-T is moving from the no-script Local Control Center reader into a browser-local app-shell build path while preserving local-first operation, authority visibility, next safe action visibility, screenshot QA, and no external activation.
 
 ## Current Phase
 
 - Phase: app-shell decision gate
 - Command: docs/test gate
-- Status: implementation not started
+- Status: decision closed, implementation not started
 
 ## User Mode
 
@@ -15,7 +15,7 @@ GPAO-T is moving from the no-script Local Control Center reader toward an app-sh
 
 ## First Workflow
 
-Control Center human-readability -> app-shell decision gate
+Browser-local app shell over `127.0.0.1` read-mostly HTTP
 
 ## Companion Principle
 
@@ -30,9 +30,9 @@ AI does the work. User keeps authority.
 
 ## User Authority
 
-- Choose the first app-shell technology and runtime boundary.
+- Approve later if the product should move from browser-local shell to packaged Tauri desktop shell.
 - Approve any taste, brand, operating policy, or business decision that AI cannot know.
 
 ## Latest Summary
 
-Human-readability check and app-shell decision gate are documented and test-covered. BEAI closeout remains conservative because the new docs intentionally define future implementation work.
+App-shell decision gate is closed in docs and tests. First target is browser-local shell over `127.0.0.1` read-mostly HTTP; Tauri is the first packaged desktop target after proof; Electron is deferred. BEAI closeout remains conservative because implementation is intentionally not started.

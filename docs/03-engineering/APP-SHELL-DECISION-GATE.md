@@ -1,9 +1,11 @@
 # App Shell Decision Gate
 
-Status: ready for decision, not approved for implementation  
+Status: decision closed, implementation not started
 Scope: transition from no-script Local Control Center reader to a local app shell
 
 GPAO-T should not jump from a static reader into a desktop shell just because the UI is visually ready. The app shell becomes part of the operating system boundary, so it must be decided as infrastructure, not decoration.
+
+The decision is now recorded in `docs/03-engineering/APP-SHELL-TECHNOLOGY-DECISION.md`.
 
 ## Entry Requirements
 
@@ -33,29 +35,32 @@ These gates must stay closed before app-shell implementation begins:
 ## Decision Questions
 
 1. Which shell technology is the first production target?
-   - Candidate: browser-local shell around the existing loopback server.
-   - Candidate: Tauri desktop shell.
-   - Candidate: Electron desktop shell.
+   - Decision: browser-local shell around the existing loopback server.
+   - Next packaged desktop target: Tauri.
+   - Deferred fallback: Electron.
 
 2. What is the shell-to-runtime boundary?
-   - Read-only HTTP over `127.0.0.1`.
-   - Local IPC.
-   - Hybrid: HTTP for read surfaces, IPC for future approved local actions.
+   - Decision: read-mostly HTTP over `127.0.0.1` for the first browser-local shell slice.
+   - Local IPC is blocked in the first slice.
+   - Later hybrid target: HTTP for read surfaces, Tauri command/IPC for explicit approved local actions.
 
 3. What actions are allowed in the first shell slice?
-   - Recommended first slice: read state, navigate panels, inspect evidence, open local files by explicit user action, and run safe verification previews.
-   - Blocked first slice: external connectors, live model calls, installs, updates, rollback execution, durable memory promotion, live self-growth mutation, deployment, public release, deletion, or recurring automation.
+   - Decision: read state, navigate panels, inspect evidence, show authority boundaries, show next safe action, refresh visible state, and support screenshot QA.
+   - Blocked first slice: `POST` routes, external connectors, live model calls, installs, updates, rollback execution, durable memory promotion, live self-growth mutation, deployment, public release, deletion, recurring automation, and messenger surfaces.
 
 4. How is rollback handled?
    - Source rollback remains local git.
    - Runtime rollback must be snapshot-based and explicit before any mutating shell action exists.
    - Packaging/update rollback is a later hardening gate, not part of the first shell slice.
 
+5. What failure states must exist before implementation?
+   - Decision: runtime unavailable, health not ready, invalid snapshot, stale snapshot, port conflict, permission blocked, overflow regression, authority hidden, and next action hidden.
+
 ## Recommended Decision
 
 Proceed to app-shell contract design before implementation.
 
-The first app-shell design should target a light local shell that reads the existing Control Center contracts and preserves no-external-activation behavior. It should not introduce connector execution, daemon persistence, packaging, or live mutation yet.
+The first app-shell design must target a browser-local shell that reads the existing Control Center contracts over `127.0.0.1` and preserves no-external-activation behavior. It must not introduce connector execution, daemon persistence, packaging, IPC, or live mutation yet.
 
 ## Required Deliverables Before Code
 
@@ -70,7 +75,7 @@ The first app-shell design should target a light local shell that reads the exis
 
 ## Exit Criteria
 
-The gate can close only when the project can say:
+This gate is closed because the project can now say:
 
 - why this shell technology was chosen
 - how it talks to GPAO-T runtime
@@ -80,4 +85,4 @@ The gate can close only when the project can say:
 - how visual quality is verified
 - what remains blocked until later approval
 
-Until then, the correct product status is: app-shell decision gate open, implementation not started.
+The correct product status is now: app-shell decision gate closed, implementation not started.

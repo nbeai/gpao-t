@@ -9,10 +9,11 @@
 
 ## Current Completion Boundary
 
-- Human-readability and app-shell decision documents have verification evidence.
-- Desktop shell implementation has not started.
-- Current status: decision gate open
+- App-shell decision gate is documented and test-covered.
+- App-shell implementation has not started by design.
+- Current status: decision gate closed, build step not started
 
 ## Blockers
 
-- App-shell technology, local serving or IPC boundary, threat model, rollback policy, and screenshot verification plan still need an explicit decision before code.
+- BEAI closeout records a product-quality review warning because `APP-SHELL-TECHNOLOGY-DECISION.md` contains actionable future implementation guidance.
+- Browser-local shell implementation, screenshot QA, failure/recovery UI states, and any future Tauri packaged-shell contract remain future work.

@@ -14,7 +14,7 @@ Local Control Center design guidance is maintained in `docs/LOCAL-CONTROL-CENTER
 
 Control Center human-readability QA is maintained in `docs/03-verification/CONTROL-CENTER-HUMAN-READABILITY-CHECK.md`. It keeps first-scan clarity, state comprehension, authority visibility, next-safe-action visibility, mobile action visibility, and no-script/no-external-activation boundaries explicit before app-shell work.
 
-The app-shell transition is governed by `docs/03-engineering/APP-SHELL-DECISION-GATE.md`. GPAO-T must close the shell technology, local server or IPC boundary, authority model, rollback substrate, screenshot verification, and failure/recovery decisions before desktop shell implementation begins.
+The app-shell transition is governed by `docs/03-engineering/APP-SHELL-DECISION-GATE.md` and the closed technology decision in `docs/03-engineering/APP-SHELL-TECHNOLOGY-DECISION.md`. GPAO-T's first app-shell target is a browser-local shell over `127.0.0.1` read-mostly HTTP; Tauri is the first packaged desktop target after browser-local proof; Electron is deferred.
 
 Skill ecosystem guidance is maintained in `docs/04-skill-ecosystem/GPAO-T-SKILL-ECOSYSTEM-MASTER-PLAN-ko.md`. GPAO-T skills must be research-grounded, practical, T-cell-shaped operating units, not prompt decorations or copied marketplace catalogs.
 

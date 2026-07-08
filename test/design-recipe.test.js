@@ -15,6 +15,9 @@ const README = `${ROOT}/docs/README.md`;
 const PRINCIPLES = `${ROOT}/docs/DEVELOPMENT-PRINCIPLES.md`;
 const HUMAN_READABILITY_CHECK = `${ROOT}/docs/03-verification/CONTROL-CENTER-HUMAN-READABILITY-CHECK.md`;
 const APP_SHELL_DECISION_GATE = `${ROOT}/docs/03-engineering/APP-SHELL-DECISION-GATE.md`;
+const APP_SHELL_TECHNOLOGY_DECISION = `${ROOT}/docs/03-engineering/APP-SHELL-TECHNOLOGY-DECISION.md`;
+const API_BOUNDARIES = `${ROOT}/docs/03-engineering/API-BOUNDARIES.md`;
+const SECURITY_NOTES = `${ROOT}/docs/03-engineering/SECURITY-NOTES.md`;
 
 describe("GPAO-T Local Control Center design recipe", () => {
   it("adapts BEAI design.md into a GPAO-T UI implementation contract", () => {
@@ -64,11 +67,39 @@ describe("GPAO-T Local Control Center design recipe", () => {
     assert.match(readability, /Mobile fixed topbar action line or decision strip remains visible/);
     assert.match(readability, /no `<script>`, no external activation, and no hidden mutation path/);
     assert.match(readability, /This is not an app-shell implementation approval/);
-    assert.match(appShell, /Status: ready for decision, not approved for implementation/);
+    assert.match(appShell, /Status: decision closed, implementation not started/);
     assert.match(appShell, /Loopback-only or local IPC/);
     assert.match(appShell, /No OAuth setup, token storage, external model call/);
     assert.match(appShell, /Technology decision record/);
-    assert.match(appShell, /app-shell decision gate open, implementation not started/);
+    assert.match(appShell, /app-shell decision gate closed, implementation not started/);
+  });
+
+  it("locks the app-shell technology, runtime boundary, and blocked-action decision", () => {
+    const readme = readFileSync(README, "utf8");
+    const decision = readFileSync(APP_SHELL_TECHNOLOGY_DECISION, "utf8");
+    const api = readFileSync(API_BOUNDARIES, "utf8");
+    const security = readFileSync(SECURITY_NOTES, "utf8");
+
+    assert.match(readme, /APP-SHELL-TECHNOLOGY-DECISION\.md/);
+    assert.match(readme, /browser-local shell over `127\.0\.0\.1` read-mostly HTTP/);
+    assert.match(decision, /Status: decided/);
+    assert.match(decision, /first app-shell target is a browser-local shell/);
+    assert.match(decision, /first packaged desktop shell target is Tauri/);
+    assert.match(decision, /Electron is not selected for the first GPAO-T app shell/);
+    assert.match(decision, /GET \/control-center\/ui-validate/);
+    assert.match(decision, /POST \/turn/);
+    assert.match(decision, /Tauri command\/IPC only for explicit, approved local actions/);
+    assert.match(decision, /runtime_unavailable/);
+    assert.match(decision, /snapshot_invalid/);
+    assert.match(decision, /authority_hidden/);
+    assert.match(decision, /next_action_hidden/);
+    assert.match(decision, /desktop viewport: `1440x960`/);
+    assert.match(decision, /mobile viewport: `390x844`/);
+    assert.match(api, /first GPAO-T app-shell slice is browser-local and read-mostly over `127\.0\.0\.1` HTTP/);
+    assert.match(api, /GET \/control-center\/ui-snapshot/);
+    assert.match(api, /POST \/turn/);
+    assert.match(security, /browser-local, loopback-only, read-mostly, and no-external-activation/);
+    assert.match(security, /Electron is deferred/);
   });
 
   it("exposes the design recipe as a runtime design contract", () => {

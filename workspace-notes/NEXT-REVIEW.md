@@ -2,7 +2,7 @@
 
 ## Next Safe Action
 
-Review `docs/03-engineering/APP-SHELL-DECISION-GATE.md` and choose the app-shell technology and runtime boundary before implementation.
+Start the app-shell contract/build step from `docs/03-engineering/APP-SHELL-TECHNOLOGY-DECISION.md`, keeping the first implementation browser-local, read-mostly, loopback-only, screenshot-verified, and no-external-activation.
 
 ## Review Before Continuing
 
@@ -13,11 +13,12 @@ Review `docs/03-engineering/APP-SHELL-DECISION-GATE.md` and choose the app-shell
 
 ## Session Resume
 
-Continue from the app-shell decision gate. The current scope intentionally stops before desktop shell implementation.
+Continue from the closed app-shell decision gate. BEAI closeout is conservative because the decision document intentionally defines future implementation work.
 
 ## Recent Evidence
 
 - route: Routed work as standard.
 - preflight: Read-only workspace check completed for gpao-t.
+- plan: Saved build plan.
 - verify: Executed 2 checks.
-- closeout: BEAI closeout stayed conservative because this is a docs/test decision gate before implementation.
+- closeout: Conservative review blocker recorded because app-shell implementation is intentionally not started.
