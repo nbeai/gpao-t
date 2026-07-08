@@ -104,6 +104,10 @@ import {
   writeRuntimeState,
 } from "./core/storage.js";
 import { buildToolPlan } from "./core/tool-runtime.js";
+import {
+  buildTauriPackagedDesktopGate,
+  verifyTauriPackagedDesktopGate,
+} from "./core/tauri-packaged-desktop-gate.js";
 import { runTurn } from "./core/turn-kernel.js";
 
 export {
@@ -149,6 +153,7 @@ export {
   buildSkillProductionStatus,
   buildSkillReadinessReport,
   buildToolPlan,
+  buildTauriPackagedDesktopGate,
   buildReplayRecoveryView,
   buildSelfGrowthProposal,
   captureMemoryEntry,
@@ -178,6 +183,7 @@ export {
   validateControlCenterUiSnapshot,
   verifyBrowserLocalAppShell,
   verifyControlCenterPreviewServing,
+  verifyTauriPackagedDesktopGate,
   selectModelAdapter,
   selectToolAdapters,
   runDoctor,

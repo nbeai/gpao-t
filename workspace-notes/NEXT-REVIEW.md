@@ -2,24 +2,22 @@
 
 ## Next Safe Action
 
-Continue with the next read-only app-shell refinement or decide the packaged desktop/Tauri gate, using the app-shell state lanes, per-panel drilldowns, and app-shell screenshot baseline as regression anchors.
+Decide or implement the first read-mostly Tauri shell slice that loads or mirrors the existing browser-local app-shell state. Keep it limited to visible state, navigation, evidence inspection, authority boundary, next safe action, failure/recovery state, and screenshot QA.
 
 ## Review Before Continuing
 
-- Confirm desktop/mobile `/app-shell` visual QA still passes after any UI change.
-- Keep GET-only, read-mostly, no external activation, POST blocking, authority boundary, failure/recovery state, next safe action visibility, state lanes, and panel drilldowns as invariants.
-- Keep POST routes, connector/model/tool activation, install/update/rollback, durable memory promotion, self-growth apply, deployment, messenger, and recurring automation blocked until explicit gates.
-- Keep Tauri packaged desktop work deferred until the browser-local proof is accepted.
+- Confirm `node bin/gpao-t.js control tauri-gate-check` remains `ready`.
+- Confirm `node bin/gpao-t.js control app-shell-check` remains `ready`.
+- Preserve GET/read-mostly behavior, blocked POST/mutation, blocked local IPC, blocked connector/model/tool activation, blocked OAuth/token/secret storage, blocked external send, blocked install/update/rollback execution, blocked durable memory promotion, blocked self-growth apply, blocked deployment, blocked messenger, and blocked recurring automation.
+- Preserve desktop/mobile screenshot QA criteria: nonblank viewport, panel navigation, state lanes, panel drilldowns, evidence inspector, failure/recovery state, no overflow, authority boundary, next safe action, mobile fixed topbar action or decision strip, and no external activation.
+- Keep install/update/rollback execution deferred until the readiness review, packaged-shell QA, signed/distributed package gate, and explicit executor gate are closed.
 
 ## Session Resume
 
-Deeper read-only app-shell behavior is implemented and verified. Continue only after preserving current browser-local invariants.
+Packaged desktop/Tauri gate is implemented and verified as a read-mostly contract and verification surface. The next implementation may begin only as a read-mostly Tauri shell slice, not as full Tauri packaging or mutation authority.
 
 ## Recent Evidence
 
-- route/preflight/plan: standard GPAO-T product workflow saved for deeper read-only app-shell behavior.
-- implementation: workflow, recovery, authority, and next-action state lanes plus per-panel state drilldowns were added.
-- app-shell check: GET-only/read-mostly contract and POST blocking passed.
-- visual QA: desktop and mobile `/app-shell` checks passed for nonblank viewport, panel navigation, state visibility, no overflow, authority boundary, failure/recovery state, next safe action, no script/form/external activation, and screenshot QA visibility.
-- verify: `npm run verify` and `beai verify --scenario --meaning` passed.
-- closeout: Closeout decision was ready for the deeper read-only app-shell slice.
+- route/preflight/brief/plan: GPAO-T packaged desktop/Tauri gate work selected with authority boundaries.
+- implementation: `TAURI-PACKAGED-DESKTOP-GATE.md`, core gate contract, CLI checks, Gateway routes, loopback routes, and tests were added.
+- verification: `control app-shell-check`, `control tauri-gate-check`, `npm run verify`, `beai verify --scenario --meaning`, `beai closeout`, and `git diff --check` passed.

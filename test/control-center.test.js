@@ -17,6 +17,7 @@ import {
   buildControlCenterSummary,
   buildControlCenterUiContract,
   buildControlCenterUiSnapshot,
+  buildTauriPackagedDesktopGate,
   buildOperationsContractSummary,
   buildOperationsReliabilityContract,
   buildRuntimeDataContract,
@@ -27,6 +28,7 @@ import {
   validateControlCenterUiSnapshot,
   verifyBrowserLocalAppShell,
   verifyControlCenterPreviewServing,
+  verifyTauriPackagedDesktopGate,
 } from "../src/index.js";
 import releaseFixture from "../fixtures/replay/release-file-active-target.json" with { type: "json" };
 
@@ -466,6 +468,63 @@ describe("GPAO-T Local Control Center readiness", () => {
     assert.equal(verification.status, "ready");
   });
 
+  it("closes the packaged desktop Tauri gate without opening mutation authority", () => {
+    const gate = buildTauriPackagedDesktopGate();
+    const verification = verifyTauriPackagedDesktopGate({ gate });
+    const cliGate = JSON.parse(execFileSync(process.execPath, [CLI, "control", "tauri-gate"], {
+      cwd: ROOT,
+      encoding: "utf8",
+    }));
+    const cliCheck = JSON.parse(execFileSync(process.execPath, [CLI, "control", "tauri-gate-check"], {
+      cwd: ROOT,
+      encoding: "utf8",
+    }));
+    const gatewayGate = handleGatewayRequest({ method: "GET", path: "/app-shell/tauri-gate" });
+    const gatewayCheck = handleGatewayRequest({ method: "GET", path: "/app-shell/tauri-gate/verify" });
+
+    assert.equal(gate.schema, "gpao_t.tauri_packaged_desktop_gate.v0_1");
+    assert.equal(gate.status, "ready");
+    assert.equal(gate.gateClosed, true);
+    assert.equal(gate.packagedDesktopImplementationStarted, false);
+    assert.equal(gate.targetShell, "tauri");
+    assert.equal(gate.shellBoundary.browserLocal.transport, "127.0.0.1_http");
+    assert.equal(gate.shellBoundary.tauriFirstSlice.localIpc, "blocked_in_first_tauri_slice");
+    assert.equal(gate.shellBoundary.tauriFirstSlice.mutation, "blocked");
+    assert.equal(gate.firstSlice.implementationAllowedNow, false);
+    assert.equal(gate.firstSlice.allowedRoutes.every((route) => route.startsWith("GET ")), true);
+    assert.equal(gate.firstSlice.blockedRoutes.includes("/turn"), true);
+    assert.equal(gate.blockedAuthorityActions.includes("OAuth setup"), true);
+    assert.equal(gate.blockedAuthorityActions.includes("token or secret storage"), true);
+    assert.equal(gate.blockedAuthorityActions.includes("connector activation"), true);
+    assert.equal(gate.blockedAuthorityActions.includes("model activation"), true);
+    assert.equal(gate.blockedAuthorityActions.includes("tool activation"), true);
+    assert.equal(gate.blockedAuthorityActions.includes("external send"), true);
+    assert.equal(gate.blockedAuthorityActions.includes("install execution"), true);
+    assert.equal(gate.blockedAuthorityActions.includes("update execution"), true);
+    assert.equal(gate.blockedAuthorityActions.includes("rollback execution"), true);
+    assert.equal(gate.blockedAuthorityActions.includes("durable memory promotion"), true);
+    assert.equal(gate.blockedAuthorityActions.includes("self-growth apply"), true);
+    assert.equal(gate.blockedAuthorityActions.includes("deployment"), true);
+    assert.equal(gate.blockedAuthorityActions.includes("messenger surfaces"), true);
+    assert.equal(gate.blockedAuthorityActions.includes("recurring automation"), true);
+    assert.equal(gate.authorityBoundary.mutationAuthority, "none_in_first_tauri_slice");
+    assert.equal(gate.sourceControlRollback.sourceRollback, "local_git_required_before_tauri_slice");
+    assert.equal(gate.screenshotQa.requiredSignals.includes("state_lanes_visible"), true);
+    assert.equal(gate.screenshotQa.requiredSignals.includes("panel_drilldown_visible"), true);
+    assert.equal(gate.screenshotQa.requiredSignals.includes("mobile_fixed_topbar_action_or_decision_strip_visible"), true);
+    assert.equal(gate.installUpdateRollbackOrder[0], "1_browser_local_app_shell_proof");
+    assert.equal(gate.installUpdateRollbackOrder.includes("7_install_update_rollback_executor_gate_after_approval"), true);
+    assert.equal(gate.failureRecoveryStates.some((state) => state.id === "loopback_runtime_unavailable"), true);
+    assert.equal(gate.failureRecoveryStates.some((state) => state.id === "ipc_not_allowed"), true);
+    assert.equal(verification.status, "ready");
+    assert.equal(cliGate.schema, gate.schema);
+    assert.equal(cliCheck.status, "ready");
+    assert.equal(gatewayGate.status, 200);
+    assert.equal(gatewayGate.body.schema, gate.schema);
+    assert.equal(gatewayCheck.status, 200);
+    assert.equal(gatewayCheck.body.status, "ready");
+  });
+
   it("keeps app-shell-specific screenshot QA baseline evidence separate and replayable", () => {
     const baseline = JSON.parse(readFileSync(APP_SHELL_BASELINE_JSON, "utf8"));
     const baselineDoc = readFileSync(APP_SHELL_BASELINE_DOC, "utf8");
@@ -520,6 +579,8 @@ describe("GPAO-T Local Control Center readiness", () => {
       const appShellContract = await fetchJson(`http://127.0.0.1:${preview.port}/app-shell/contract`);
       const appShellState = await fetchJson(`http://127.0.0.1:${preview.port}/app-shell/state`);
       const appShellVerify = await fetchJson(`http://127.0.0.1:${preview.port}/app-shell/verify`);
+      const tauriGate = await fetchJson(`http://127.0.0.1:${preview.port}/app-shell/tauri-gate`);
+      const tauriGateVerify = await fetchJson(`http://127.0.0.1:${preview.port}/app-shell/tauri-gate/verify`);
       const controlSummary = await fetchJson(`http://127.0.0.1:${preview.port}/control-center/summary`);
       const blockedPost = await fetchJson(`http://127.0.0.1:${preview.port}/app-shell`, { method: "POST" });
 
@@ -540,6 +601,8 @@ describe("GPAO-T Local Control Center readiness", () => {
       assert.equal(appShellContract.body.schema, "gpao_t.browser_local_app_shell_contract.v0_1");
       assert.equal(appShellState.body.schema, "gpao_t.browser_local_app_shell_state.v0_1");
       assert.equal(appShellVerify.body.status, "ready");
+      assert.equal(tauriGate.body.schema, "gpao_t.tauri_packaged_desktop_gate.v0_1");
+      assert.equal(tauriGateVerify.body.status, "ready");
       assert.equal(controlSummary.body.schema, "gpao_t.control_center_summary.v0_1");
       assert.equal(blockedPost.status, 405);
       assert.equal(blockedPost.body.status, "blocked");
@@ -567,6 +630,7 @@ describe("GPAO-T Local Control Center readiness", () => {
     assert.equal(verification.healthStatus, 200);
     assert.equal(verification.pageStatus, 200);
     assert.equal(verification.appShellStatus, 200);
+    assert.equal(verification.tauriGateStatus, 200);
     assert.equal(verification.blockedPostStatus, 405);
     assert.equal(verification.authorityBoundary.loopbackOnly, true);
     assert.equal(cliVerification.status, "ready");

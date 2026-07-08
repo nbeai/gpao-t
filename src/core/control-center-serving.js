@@ -15,6 +15,10 @@ import {
 } from "./control-center-ui-contract.js";
 import { buildLocalControlCenterDesignContract } from "./design-contract.js";
 import { runDoctor } from "./doctor.js";
+import {
+  buildTauriPackagedDesktopGate,
+  verifyTauriPackagedDesktopGate,
+} from "./tauri-packaged-desktop-gate.js";
 
 const DEFAULT_HOST = "127.0.0.1";
 const DEFAULT_PORT = 0;
@@ -40,6 +44,8 @@ export function buildControlCenterServingContract({
       { path: "/app-shell/contract", content: "browser_local_app_shell_contract" },
       { path: "/app-shell/state", content: "browser_local_app_shell_state" },
       { path: "/app-shell/verify", content: "browser_local_app_shell_verification" },
+      { path: "/app-shell/tauri-gate", content: "tauri_packaged_desktop_gate" },
+      { path: "/app-shell/tauri-gate/verify", content: "tauri_packaged_desktop_gate_verification" },
       { path: "/control-center/summary", content: "local_json_control_center_summary" },
       { path: "/control-center/design", content: "local_json_control_center_design" },
       { path: "/control-center/ui-contract", content: "local_json_control_center_ui_contract" },
@@ -198,6 +204,20 @@ export async function startControlCenterPreviewServer({
       return;
     }
 
+    if (url.pathname === "/app-shell/tauri-gate") {
+      respondJson(response, 200, buildTauriPackagedDesktopGate());
+      return;
+    }
+
+    if (url.pathname === "/app-shell/tauri-gate/verify") {
+      respondJson(response, 200, verifyTauriPackagedDesktopGate({
+        appShellVerification: verifyBrowserLocalAppShell({
+          state: buildBrowserLocalAppShellState({ root, now }),
+        }),
+      }));
+      return;
+    }
+
     if (["/app-shell", "/app-shell.html"].includes(url.pathname)) {
       response.writeHead(200, {
         "content-type": "text/html; charset=utf-8",
@@ -262,6 +282,8 @@ export async function verifyControlCenterPreviewServing({
     const page = await fetchText(preview.url);
     const appShell = await fetchText(`http://${host}:${preview.port}/app-shell`);
     const appShellState = await fetchJson(`http://${host}:${preview.port}/app-shell/state`);
+    const tauriGate = await fetchJson(`http://${host}:${preview.port}/app-shell/tauri-gate`);
+    const tauriGateVerify = await fetchJson(`http://${host}:${preview.port}/app-shell/tauri-gate/verify`);
     const blockedPost = await fetchJson(`http://${host}:${preview.port}/app-shell`, { method: "POST" });
     const findings = [];
 
@@ -294,6 +316,12 @@ export async function verifyControlCenterPreviewServing({
     if (appShellState.status !== 200 || appShellState.body.schema !== "gpao_t.browser_local_app_shell_state.v0_1") {
       findings.push("app_shell_state_not_ready");
     }
+    if (tauriGate.status !== 200 || tauriGate.body.schema !== "gpao_t.tauri_packaged_desktop_gate.v0_1") {
+      findings.push("tauri_gate_not_ready");
+    }
+    if (tauriGateVerify.status !== 200 || tauriGateVerify.body.status !== "ready") {
+      findings.push("tauri_gate_verify_not_ready");
+    }
     if (blockedPost.status !== 405 || blockedPost.body.status !== "blocked") {
       findings.push("app_shell_post_not_blocked");
     }
@@ -303,9 +331,11 @@ export async function verifyControlCenterPreviewServing({
       status: findings.length ? "blocked" : "ready",
       url: preview.url,
       appShellUrl: `http://${host}:${preview.port}/app-shell`,
+      tauriGateUrl: `http://${host}:${preview.port}/app-shell/tauri-gate`,
       healthStatus: health.status,
       pageStatus: page.status,
       appShellStatus: appShell.status,
+      tauriGateStatus: tauriGate.status,
       blockedPostStatus: blockedPost.status,
       contentLength: page.body.length,
       requiredVisibleText: preview.contract.screenshotVerification.requiredVisibleText,

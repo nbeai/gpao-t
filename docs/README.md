@@ -14,7 +14,7 @@ Local Control Center design guidance is maintained in `docs/LOCAL-CONTROL-CENTER
 
 Control Center human-readability QA is maintained in `docs/03-verification/CONTROL-CENTER-HUMAN-READABILITY-CHECK.md`. It keeps first-scan clarity, state comprehension, authority visibility, next-safe-action visibility, mobile action visibility, and no-script/no-external-activation boundaries explicit before app-shell work.
 
-The app-shell transition is governed by `docs/03-engineering/APP-SHELL-DECISION-GATE.md` and the closed technology decision in `docs/03-engineering/APP-SHELL-TECHNOLOGY-DECISION.md`. GPAO-T's first app-shell target is a browser-local shell over `127.0.0.1` read-mostly HTTP; Tauri is the first packaged desktop target after browser-local proof; Electron is deferred.
+The app-shell transition is governed by `docs/03-engineering/APP-SHELL-DECISION-GATE.md`, the closed technology decision in `docs/03-engineering/APP-SHELL-TECHNOLOGY-DECISION.md`, and the packaged desktop boundary in `docs/03-engineering/TAURI-PACKAGED-DESKTOP-GATE.md`. GPAO-T's first app-shell target is a browser-local shell over `127.0.0.1` read-mostly HTTP; Tauri is the first packaged desktop target after browser-local proof; Electron is deferred. The current Tauri gate is a read-mostly boundary contract only, not a full Tauri app, packaging step, or install/update/rollback executor.
 
 Skill ecosystem guidance is maintained in `docs/04-skill-ecosystem/GPAO-T-SKILL-ECOSYSTEM-MASTER-PLAN-ko.md`. GPAO-T skills must be research-grounded, practical, T-cell-shaped operating units, not prompt decorations or copied marketplace catalogs.
 
@@ -131,6 +131,11 @@ node bin/gpao-t.js control render .gpao-t/control-center/index.html
 node bin/gpao-t.js control serve-contract
 node bin/gpao-t.js control serve-check
 node bin/gpao-t.js control serve 0
+node bin/gpao-t.js control app-shell-contract
+node bin/gpao-t.js control app-shell-state
+node bin/gpao-t.js control app-shell-check
+node bin/gpao-t.js control tauri-gate
+node bin/gpao-t.js control tauri-gate-check
 node bin/gpao-t.js state
 node bin/gpao-t.js events
 node bin/gpao-t.js memory capture "배포파일 meaning" "배포파일 means GPAO Operating Package / GPAO for OpenClaw in this product flow."

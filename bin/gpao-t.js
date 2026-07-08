@@ -38,6 +38,7 @@ import {
   buildSkillProductionRoadmap,
   buildSkillProductionStatus,
   buildSkillReadinessReport,
+  buildTauriPackagedDesktopGate,
   captureMemoryEntry,
   buildReplayRecoveryView,
   appendReplayRecoveryRecord,
@@ -65,6 +66,7 @@ import {
   validateControlCenterUiSnapshot,
   verifyBrowserLocalAppShell,
   verifyControlCenterPreviewServing,
+  verifyTauriPackagedDesktopGate,
   appendSkillExecutionRun,
 } from "../src/index.js";
 
@@ -132,6 +134,8 @@ function usage() {
     "  gpao-t control app-shell-state",
     "  gpao-t control app-shell-html",
     "  gpao-t control app-shell-check",
+    "  gpao-t control tauri-gate",
+    "  gpao-t control tauri-gate-check",
     "  gpao-t state",
     "  gpao-t events",
     "  gpao-t memory capture <title> <body>",
@@ -399,8 +403,12 @@ try {
       process.stdout.write(buildBrowserLocalAppShellHtml());
     } else if (subcommand === "app-shell-check") {
       printJson(verifyBrowserLocalAppShell());
+    } else if (subcommand === "tauri-gate") {
+      printJson(buildTauriPackagedDesktopGate());
+    } else if (subcommand === "tauri-gate-check") {
+      printJson(verifyTauriPackagedDesktopGate());
     } else {
-      throw new Error("control command requires snapshot, summary, design, ui-contract, ui-snapshot, ui-validate, html, render, serve-contract, serve-check, serve, app-shell-contract, app-shell-state, app-shell-html, or app-shell-check");
+      throw new Error("control command requires snapshot, summary, design, ui-contract, ui-snapshot, ui-validate, html, render, serve-contract, serve-check, serve, app-shell-contract, app-shell-state, app-shell-html, app-shell-check, tauri-gate, or tauri-gate-check");
     }
   } else if (command === "gateway") {
     const [method, requestPath, rawBody] = args;

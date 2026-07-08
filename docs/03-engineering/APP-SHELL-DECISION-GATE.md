@@ -7,6 +7,8 @@ GPAO-T should not jump from a static reader into a desktop shell just because th
 
 The decision is now recorded in `docs/03-engineering/APP-SHELL-TECHNOLOGY-DECISION.md`.
 
+The packaged desktop transition is governed by `docs/03-engineering/TAURI-PACKAGED-DESKTOP-GATE.md`. That gate closes the safe boundary for a future read-mostly Tauri shell slice, but it does not start a full Tauri implementation, packaging, install/update/rollback execution, connector activation, model/tool activation, deployment, messenger, or automation.
+
 ## Entry Requirements
 
 These gates must stay closed before app-shell implementation begins:
