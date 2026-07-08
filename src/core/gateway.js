@@ -19,11 +19,15 @@ import {
   verifyTauriInstallReadinessGate,
 } from "./tauri-install-readiness-gate.js";
 import {
+  buildTauriInstallDryRunPlan,
   buildTauriInstallDryRunExecutorContract,
   buildTauriInstallDryRunImplementationDesign,
   buildTauriInstallPrerequisiteDoctor,
+  renderTauriInstallDryRunPreview,
+  verifyTauriInstallDryRunPlan,
   verifyTauriInstallDryRunExecutorContract,
   verifyTauriInstallDryRunImplementationDesign,
+  verifyTauriInstallDryRunPreview,
   verifyTauriInstallPrerequisiteDoctor,
 } from "./tauri-install-execution-contracts.js";
 import {
@@ -255,6 +259,38 @@ export function handleGatewayRequest({ method = "GET", path = "/", body = {}, ro
       schema: "gpao_t.gateway_response.v0_1",
       status: 200,
       body: verifyTauriInstallDryRunImplementationDesign({ root }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/app-shell/tauri-dry-run-plan") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: buildTauriInstallDryRunPlan({ root }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/app-shell/tauri-dry-run-plan/verify") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: verifyTauriInstallDryRunPlan({ root }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/app-shell/tauri-dry-run-preview") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: renderTauriInstallDryRunPreview({ root }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/app-shell/tauri-dry-run-preview/verify") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: verifyTauriInstallDryRunPreview({ root }),
     };
   }
 

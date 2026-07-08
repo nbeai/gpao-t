@@ -2,21 +2,24 @@
 
 ## Next Safe Action
 
-After committing this slice, the next safe action is to implement pure dry-run plan/verify/preview functions only after explicit approval. That next slice must still avoid dry-run invocation and must keep real install/update/rollback execution blocked.
+After committing this slice, the next safe action is to design a future dry-run invocation approval contract only. Do not invoke dry-run, and do not execute install/update/rollback.
 
 ## Review Before Continuing
 
-- Confirm the new dry-run implementation design routes stay `design_only`.
+- Confirm plan schema stays `gpao_t.tauri_install_dry_run_plan.v0_1`.
+- Confirm preview schema stays `gpao_t.tauri_install_dry_run_preview.v0_1`.
 - Preserve no-execution invariants: no writes, no commands, no network, no IPC, no Tauri build, no install/update/rollback execution.
 - Keep app-shell routes GET-only and read-mostly.
 - Keep authority boundary, failure/recovery state, rollback/source-control state, and next safe action visible in docs and UI-adjacent contracts.
-- Keep screenshot/visual QA evidence as the gate before deeper packaged shell behavior.
+- Do not open Tauri build, dependency install, connector/model/tool activation, deployment, messenger, automation, or public release gates.
 
 ## Recent Evidence
 
-- `npm run verify`: pass, 91 tests across 16 suites.
-- `node bin/gpao-t.js control tauri-dry-run-design-check`: ready.
-- `node bin/gpao-t.js control serve-check`: ready with `tauriDryRunDesignStatus: 200`.
+- `node --test test/install-hardening.test.js`: pass, 8 tests.
+- `node --test test/control-center.test.js`: pass, 18 tests.
+- `node bin/gpao-t.js control tauri-dry-run-preview-check`: ready.
+- `npm run verify`: pass, 92 tests across 16 suites.
+- `node bin/gpao-t.js control serve-check`: ready with plan/preview route statuses 200 under loopback bind permission.
 - `beai verify --run --scenario --meaning`: pass.
 - `beai closeout --apply`: ready.
 - `git diff --check`: pass.

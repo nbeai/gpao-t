@@ -721,6 +721,10 @@ describe("GPAO-T Local Control Center readiness", () => {
       const tauriDryRunContractVerify = await fetchJson(`http://127.0.0.1:${preview.port}/app-shell/tauri-dry-run-contract/verify`);
       const tauriDryRunDesign = await fetchJson(`http://127.0.0.1:${preview.port}/app-shell/tauri-dry-run-design`);
       const tauriDryRunDesignVerify = await fetchJson(`http://127.0.0.1:${preview.port}/app-shell/tauri-dry-run-design/verify`);
+      const tauriDryRunPlan = await fetchJson(`http://127.0.0.1:${preview.port}/app-shell/tauri-dry-run-plan`);
+      const tauriDryRunPlanVerify = await fetchJson(`http://127.0.0.1:${preview.port}/app-shell/tauri-dry-run-plan/verify`);
+      const tauriDryRunPreview = await fetchJson(`http://127.0.0.1:${preview.port}/app-shell/tauri-dry-run-preview`);
+      const tauriDryRunPreviewVerify = await fetchJson(`http://127.0.0.1:${preview.port}/app-shell/tauri-dry-run-preview/verify`);
       const tauriShell = await fetchText(`http://127.0.0.1:${preview.port}/app-shell/tauri-shell`);
       const tauriShellSlice = await fetchJson(`http://127.0.0.1:${preview.port}/app-shell/tauri-shell/slice`);
       const tauriShellVerify = await fetchJson(`http://127.0.0.1:${preview.port}/app-shell/tauri-shell/verify`);
@@ -761,6 +765,16 @@ describe("GPAO-T Local Control Center readiness", () => {
       assert.equal(tauriDryRunDesign.body.implementationStatus, "design_only");
       assert.equal(tauriDryRunDesign.body.executorBoundary.executorImplemented, false);
       assert.equal(tauriDryRunDesignVerify.body.status, "ready");
+      assert.equal(tauriDryRunPlan.body.schema, "gpao_t.tauri_install_dry_run_plan.v0_1");
+      assert.equal(tauriDryRunPlan.body.executionMode, "plan_only_not_invoked");
+      assert.equal(tauriDryRunPlan.body.safetyInvariants.invokesDryRunExecutor, false);
+      assert.equal(tauriDryRunPlan.body.operationPlans.every((plan) => plan.executionStatus === "planned_not_executed"), true);
+      assert.equal(tauriDryRunPlanVerify.body.status, "ready");
+      assert.equal(tauriDryRunPreview.body.schema, "gpao_t.tauri_install_dry_run_preview.v0_1");
+      assert.equal(tauriDryRunPreview.body.previewKind, "user_visible_preview_only");
+      assert.equal(tauriDryRunPreview.body.executionMode, "not_invoked");
+      assert.equal(tauriDryRunPreview.body.summary.approvalRequiredBeforeInvocation, true);
+      assert.equal(tauriDryRunPreviewVerify.body.status, "ready");
       assert.equal(tauriShell.status, 200);
       assert.match(tauriShell.body, /GPAO-T Read-Mostly Tauri Shell/);
       assert.match(tauriShell.body, /data-mobile-action-line="visible"/);
@@ -798,6 +812,8 @@ describe("GPAO-T Local Control Center readiness", () => {
     assert.equal(verification.tauriPrerequisiteDoctorStatus, 200);
     assert.equal(verification.tauriDryRunContractStatus, 200);
     assert.equal(verification.tauriDryRunDesignStatus, 200);
+    assert.equal(verification.tauriDryRunPlanStatus, 200);
+    assert.equal(verification.tauriDryRunPreviewStatus, 200);
     assert.equal(verification.tauriShellSliceStatus, 200);
     assert.equal(verification.blockedPostStatus, 405);
     assert.equal(verification.authorityBoundary.loopbackOnly, true);

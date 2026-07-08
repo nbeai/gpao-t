@@ -38,6 +38,7 @@ import {
   buildSkillProductionRoadmap,
   buildSkillProductionStatus,
   buildSkillReadinessReport,
+  buildTauriInstallDryRunPlan,
   buildTauriInstallReadinessGate,
   buildTauriInstallDryRunExecutorContract,
   buildTauriInstallDryRunImplementationDesign,
@@ -62,6 +63,7 @@ import {
   readRuntimeState,
   readSelfGrowthProposals,
   readSkillExecutionHistory,
+  renderTauriInstallDryRunPreview,
   resolveContextMesh,
   reviewConnectorPermission,
   renderControlCenterHtml,
@@ -72,9 +74,11 @@ import {
   validateControlCenterUiSnapshot,
   verifyBrowserLocalAppShell,
   verifyControlCenterPreviewServing,
+  verifyTauriInstallDryRunPlan,
   verifyTauriInstallReadinessGate,
   verifyTauriInstallDryRunExecutorContract,
   verifyTauriInstallDryRunImplementationDesign,
+  verifyTauriInstallDryRunPreview,
   verifyTauriInstallPrerequisiteDoctor,
   verifyTauriPackagedDesktopGate,
   verifyTauriReadOnlyShellSlice,
@@ -155,6 +159,10 @@ function usage() {
     "  gpao-t control tauri-dry-run-contract-check",
     "  gpao-t control tauri-dry-run-design",
     "  gpao-t control tauri-dry-run-design-check",
+    "  gpao-t control tauri-dry-run-plan",
+    "  gpao-t control tauri-dry-run-plan-check",
+    "  gpao-t control tauri-dry-run-preview",
+    "  gpao-t control tauri-dry-run-preview-check",
     "  gpao-t control tauri-shell-slice",
     "  gpao-t control tauri-shell-html",
     "  gpao-t control tauri-shell-check",
@@ -445,6 +453,14 @@ try {
       printJson(buildTauriInstallDryRunImplementationDesign());
     } else if (subcommand === "tauri-dry-run-design-check") {
       printJson(verifyTauriInstallDryRunImplementationDesign());
+    } else if (subcommand === "tauri-dry-run-plan") {
+      printJson(buildTauriInstallDryRunPlan());
+    } else if (subcommand === "tauri-dry-run-plan-check") {
+      printJson(verifyTauriInstallDryRunPlan());
+    } else if (subcommand === "tauri-dry-run-preview") {
+      printJson(renderTauriInstallDryRunPreview());
+    } else if (subcommand === "tauri-dry-run-preview-check") {
+      printJson(verifyTauriInstallDryRunPreview());
     } else if (subcommand === "tauri-shell-slice") {
       printJson(buildTauriReadOnlyShellSlice());
     } else if (subcommand === "tauri-shell-html") {
@@ -452,7 +468,7 @@ try {
     } else if (subcommand === "tauri-shell-check") {
       printJson(verifyTauriReadOnlyShellSlice());
     } else {
-      throw new Error("control command requires snapshot, summary, design, ui-contract, ui-snapshot, ui-validate, html, render, serve-contract, serve-check, serve, app-shell-contract, app-shell-state, app-shell-html, app-shell-check, tauri-gate, tauri-gate-check, tauri-install-gate, tauri-install-gate-check, tauri-prerequisite-doctor, tauri-prerequisite-doctor-check, tauri-dry-run-contract, tauri-dry-run-contract-check, tauri-dry-run-design, tauri-dry-run-design-check, tauri-shell-slice, tauri-shell-html, or tauri-shell-check");
+      throw new Error("control command requires snapshot, summary, design, ui-contract, ui-snapshot, ui-validate, html, render, serve-contract, serve-check, serve, app-shell-contract, app-shell-state, app-shell-html, app-shell-check, tauri-gate, tauri-gate-check, tauri-install-gate, tauri-install-gate-check, tauri-prerequisite-doctor, tauri-prerequisite-doctor-check, tauri-dry-run-contract, tauri-dry-run-contract-check, tauri-dry-run-design, tauri-dry-run-design-check, tauri-dry-run-plan, tauri-dry-run-plan-check, tauri-dry-run-preview, tauri-dry-run-preview-check, tauri-shell-slice, tauri-shell-html, or tauri-shell-check");
     }
   } else if (command === "gateway") {
     const [method, requestPath, rawBody] = args;

@@ -9,14 +9,18 @@ import {
   appendInstallHardeningReport,
   buildInstallHardeningReport,
   buildInstallHardeningSummary,
+  buildTauriInstallDryRunPlan,
   buildTauriInstallDryRunExecutorContract,
   buildTauriInstallDryRunImplementationDesign,
   buildTauriInstallPrerequisiteDoctor,
   buildTauriInstallReadinessGate,
   handleGatewayRequest,
   readInstallHardeningReports,
+  renderTauriInstallDryRunPreview,
+  verifyTauriInstallDryRunPlan,
   verifyTauriInstallDryRunExecutorContract,
   verifyTauriInstallDryRunImplementationDesign,
+  verifyTauriInstallDryRunPreview,
   verifyTauriInstallPrerequisiteDoctor,
   verifyTauriInstallReadinessGate,
 } from "../src/index.js";
@@ -242,5 +246,74 @@ describe("GPAO-T install/update/rollback hardening", () => {
     assert.equal(gatewayDesign.status, 200);
     assert.equal(gatewayDesign.body.schema, design.schema);
     assert.equal(gatewayDesignCheck.body.status, "ready");
+  });
+
+  it("builds pure dry-run plan verify preview surfaces without invocation or mutation", () => {
+    const plan = buildTauriInstallDryRunPlan({ root: ROOT });
+    const planCheck = verifyTauriInstallDryRunPlan({ root: ROOT, plan });
+    const preview = renderTauriInstallDryRunPreview({ root: ROOT, plan, verification: planCheck });
+    const previewCheck = verifyTauriInstallDryRunPreview({ root: ROOT, preview });
+    const cliPlan = JSON.parse(execFileSync(process.execPath, [CLI, "control", "tauri-dry-run-plan"], {
+      cwd: ROOT,
+      encoding: "utf8",
+    }));
+    const cliPlanCheck = JSON.parse(execFileSync(process.execPath, [CLI, "control", "tauri-dry-run-plan-check"], {
+      cwd: ROOT,
+      encoding: "utf8",
+    }));
+    const cliPreview = JSON.parse(execFileSync(process.execPath, [CLI, "control", "tauri-dry-run-preview"], {
+      cwd: ROOT,
+      encoding: "utf8",
+    }));
+    const cliPreviewCheck = JSON.parse(execFileSync(process.execPath, [CLI, "control", "tauri-dry-run-preview-check"], {
+      cwd: ROOT,
+      encoding: "utf8",
+    }));
+    const gatewayPlan = handleGatewayRequest({ root: ROOT, method: "GET", path: "/app-shell/tauri-dry-run-plan" });
+    const gatewayPlanCheck = handleGatewayRequest({ root: ROOT, method: "GET", path: "/app-shell/tauri-dry-run-plan/verify" });
+    const gatewayPreview = handleGatewayRequest({ root: ROOT, method: "GET", path: "/app-shell/tauri-dry-run-preview" });
+    const gatewayPreviewCheck = handleGatewayRequest({ root: ROOT, method: "GET", path: "/app-shell/tauri-dry-run-preview/verify" });
+
+    assert.equal(plan.schema, "gpao_t.tauri_install_dry_run_plan.v0_1");
+    assert.equal(plan.status, "ready");
+    assert.equal(plan.purity, "pure_object_no_write_no_command_no_network_no_ipc");
+    assert.equal(plan.executionMode, "plan_only_not_invoked");
+    assert.equal(plan.safetyInvariants.invokesDryRunExecutor, false);
+    assert.equal(plan.safetyInvariants.writesFiles, false);
+    assert.equal(plan.safetyInvariants.runsCommands, false);
+    assert.equal(plan.safetyInvariants.runsTauriBuild, false);
+    assert.equal(plan.safetyInvariants.installsDependencies, false);
+    assert.equal(plan.safetyInvariants.executesInstall, false);
+    assert.equal(plan.safetyInvariants.executesUpdate, false);
+    assert.equal(plan.safetyInvariants.executesRollback, false);
+    assert.equal(plan.safetyInvariants.opensIpc, false);
+    assert.equal(plan.safetyInvariants.readsExternalNetwork, false);
+    assert.deepEqual(plan.operationPlans.map((item) => item.operation), ["install", "update", "rollback"]);
+    assert.equal(plan.operationPlans.every((item) => item.executionStatus === "planned_not_executed"), true);
+    assert.equal(plan.operationPlans.every((item) => item.mutationStatus === "planned_not_written"), true);
+    assert.equal(plan.operationPlans.every((item) => item.plannedCommands.every((command) => command.executionStatus === "not_executed")), true);
+    assert.equal(plan.operationPlans.every((item) => item.plannedWrites.every((write) => write.writeStatus === "not_written")), true);
+    assert.equal(plan.operationPlans.every((item) => item.blockedActions.includes("Tauri build")), true);
+    assert.equal(plan.operationPlans.every((item) => item.rollbackPlan.rollbackExecution === "blocked"), true);
+    assert.equal(plan.approvalState.approved, false);
+    assert.equal(planCheck.status, "ready");
+    assert.equal(preview.schema, "gpao_t.tauri_install_dry_run_preview.v0_1");
+    assert.equal(preview.status, "ready");
+    assert.equal(preview.previewKind, "user_visible_preview_only");
+    assert.equal(preview.executionMode, "not_invoked");
+    assert.equal(preview.summary.operations, 3);
+    assert.equal(preview.summary.approvalRequiredBeforeInvocation, true);
+    assert.equal(preview.userDecision.approvalNowWouldStillNotAllow.includes("real install execution"), true);
+    assert.equal(previewCheck.status, "ready");
+    assert.equal(cliPlan.schema, plan.schema);
+    assert.equal(cliPlanCheck.status, "ready");
+    assert.equal(cliPreview.schema, preview.schema);
+    assert.equal(cliPreviewCheck.status, "ready");
+    assert.equal(gatewayPlan.status, 200);
+    assert.equal(gatewayPlan.body.schema, plan.schema);
+    assert.equal(gatewayPlanCheck.body.status, "ready");
+    assert.equal(gatewayPreview.status, 200);
+    assert.equal(gatewayPreview.body.schema, preview.schema);
+    assert.equal(gatewayPreviewCheck.body.status, "ready");
   });
 });

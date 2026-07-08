@@ -1,9 +1,9 @@
 # Tauri Prerequisite Doctor And Dry-Run Executor Contract
 
-Status: contract and implementation design added, execution blocked
-Scope: packaged desktop install/update/rollback prerequisite doctor, dry-run executor contract, and approval-gated implementation design
+Status: pure plan/verify/preview objects added, invocation blocked
+Scope: packaged desktop install/update/rollback prerequisite doctor, dry-run executor contract, approval-gated implementation design, and pure dry-run plan/verify/preview objects
 
-This stage does not install dependencies, run Cargo, run Tauri, build a package, create an installer, open IPC, write files as a dry-run, download externally, or execute install/update/rollback. It defines what must be inspected before a future dry-run executor may exist, and what that future dry-run must prove before any real operation is allowed.
+This stage does not install dependencies, run Cargo, run Tauri, build a package, create an installer, open IPC, write files as a dry-run, download externally, invoke a dry-run executor, or execute install/update/rollback. It defines what must be inspected before a future dry-run executor may exist, and now exposes pure JSON plan/verify/preview objects that can be shown before any future invocation gate.
 
 ## Machine Contract
 
@@ -14,12 +14,20 @@ node bin/gpao-t.js control tauri-dry-run-contract
 node bin/gpao-t.js control tauri-dry-run-contract-check
 node bin/gpao-t.js control tauri-dry-run-design
 node bin/gpao-t.js control tauri-dry-run-design-check
+node bin/gpao-t.js control tauri-dry-run-plan
+node bin/gpao-t.js control tauri-dry-run-plan-check
+node bin/gpao-t.js control tauri-dry-run-preview
+node bin/gpao-t.js control tauri-dry-run-preview-check
 node bin/gpao-t.js gateway GET /app-shell/tauri-prerequisite-doctor
 node bin/gpao-t.js gateway GET /app-shell/tauri-prerequisite-doctor/verify
 node bin/gpao-t.js gateway GET /app-shell/tauri-dry-run-contract
 node bin/gpao-t.js gateway GET /app-shell/tauri-dry-run-contract/verify
 node bin/gpao-t.js gateway GET /app-shell/tauri-dry-run-design
 node bin/gpao-t.js gateway GET /app-shell/tauri-dry-run-design/verify
+node bin/gpao-t.js gateway GET /app-shell/tauri-dry-run-plan
+node bin/gpao-t.js gateway GET /app-shell/tauri-dry-run-plan/verify
+node bin/gpao-t.js gateway GET /app-shell/tauri-dry-run-preview
+node bin/gpao-t.js gateway GET /app-shell/tauri-dry-run-preview/verify
 ```
 
 Loopback preview also exposes:
@@ -30,6 +38,10 @@ Loopback preview also exposes:
 - `GET /app-shell/tauri-dry-run-contract/verify`
 - `GET /app-shell/tauri-dry-run-design`
 - `GET /app-shell/tauri-dry-run-design/verify`
+- `GET /app-shell/tauri-dry-run-plan`
+- `GET /app-shell/tauri-dry-run-plan/verify`
+- `GET /app-shell/tauri-dry-run-preview`
+- `GET /app-shell/tauri-dry-run-preview/verify`
 
 ## Prerequisite Doctor
 
@@ -78,7 +90,7 @@ Every operation plan currently has:
 
 ## Approval-Gated Implementation Design
 
-The implementation design is still design-only. It proposes the future pure functions that can be implemented after explicit approval, but it does not implement or invoke the executor.
+The implementation design records the approval boundary for the pure functions and the future executor. The pure plan/verify/preview functions are now implemented as object builders only; they still do not implement or invoke an executor.
 
 Proposed future interfaces:
 
@@ -110,10 +122,36 @@ Future implementation must reject:
 - Tauri builds
 - IPC activation
 
+## Pure Dry-Run Plan / Verify / Preview
+
+The pure objects are safe to show before approval because they do not execute anything.
+
+Current object surfaces:
+
+- `buildTauriInstallDryRunPlan`: returns install/update/rollback operation plans.
+- `verifyTauriInstallDryRunPlan`: rejects any plan that implies execution, mutation, network, IPC, missing rollback, or missing verification evidence.
+- `renderTauriInstallDryRunPreview`: returns user-visible JSON preview cards for the three operations.
+- `verifyTauriInstallDryRunPreview`: verifies the preview remains approval-prep evidence only.
+
+Required invariant:
+
+- purity: `pure_object_no_write_no_command_no_network_no_ipc`
+- execution mode: `plan_only_not_invoked` or `not_invoked`
+- dry-run executor invoked: `false`
+- planned commands: `not_executed`
+- planned writes: `not_written`
+- network: `blocked`
+- IPC: `blocked`
+- install/update/rollback: blocked
+- Tauri build and dependency install: blocked
+
+The preview may show future command names and future local artifact paths, but those entries must remain marked as planned and not executed or written.
+
 ## Blocked Now
 
 - dry-run execution
-- dry-run executor implementation without future approval
+- dry-run executor invocation
+- real dry-run executor implementation beyond the pure object builders
 - real install/update/rollback execution
 - dependency installation
 - Tauri/Cargo build
@@ -135,4 +173,4 @@ Future implementation must reject:
 
 ## Next Safe Action
 
-After this implementation design remains verified, the next gate may implement pure dry-run plan/verify/preview functions only after explicit approval. Dry-run invocation and real install/update/rollback, Tauri build, IPC, external download, deployment, messenger, and automation remain blocked.
+After these pure plan/verify/preview objects remain verified, the next gate may design a future dry-run invocation approval contract. Dry-run invocation and real install/update/rollback, Tauri build, IPC, external download, deployment, messenger, and automation remain blocked.

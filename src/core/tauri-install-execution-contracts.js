@@ -404,6 +404,200 @@ export function verifyTauriInstallDryRunImplementationDesign({
   };
 }
 
+export function buildTauriInstallDryRunPlan({
+  root = PROJECT_ROOT,
+  design = buildTauriInstallDryRunImplementationDesign({ root }),
+  designVerification = verifyTauriInstallDryRunImplementationDesign({ root, design }),
+} = {}) {
+  const findings = [];
+  if (designVerification.status !== "ready") findings.push("dry_run_implementation_design_not_ready");
+
+  const packageJson = readPackageJson({ root });
+  const sourceCommit = design.dryRunContract?.status === "ready"
+    ? buildTauriInstallReadinessGate({ root }).rollbackGate?.currentCommit || null
+    : null;
+
+  return {
+    schema: "gpao_t.tauri_install_dry_run_plan.v0_1",
+    status: findings.length ? "blocked" : "ready",
+    planKind: "pure_install_update_rollback_dry_run_plan",
+    purity: "pure_object_no_write_no_command_no_network_no_ipc",
+    executionMode: "plan_only_not_invoked",
+    findings,
+    sourceCommit,
+    package: {
+      name: packageJson?.name || null,
+      version: packageJson?.version || null,
+      scriptsReadOnly: true,
+    },
+    design: {
+      schema: design.schema,
+      status: design.status,
+      verificationStatus: designVerification.status,
+    },
+    safetyInvariants: pureDryRunSafetyInvariants(),
+    operationPlans: [
+      buildPureDryRunOperationPlan({ operation: "install", sourceCommit }),
+      buildPureDryRunOperationPlan({ operation: "update", sourceCommit }),
+      buildPureDryRunOperationPlan({ operation: "rollback", sourceCommit }),
+    ],
+    approvalState: {
+      requested: false,
+      approved: false,
+      value: "not_requested",
+      appliesTo: "future_dry_run_invocation_only",
+    },
+    authorityBoundary: blockedAuthorityBoundary(),
+    nextSafeAction:
+      "Render and verify this preview-only plan for user inspection; do not invoke dry-run, write files, run commands, install/update/rollback, build Tauri, open IPC, call external network, or activate connectors/models/tools.",
+  };
+}
+
+export function verifyTauriInstallDryRunPlan({
+  root = PROJECT_ROOT,
+  plan = buildTauriInstallDryRunPlan({ root }),
+} = {}) {
+  const findings = [];
+
+  if (plan.schema !== "gpao_t.tauri_install_dry_run_plan.v0_1") findings.push("invalid_schema");
+  if (plan.purity !== "pure_object_no_write_no_command_no_network_no_ipc") findings.push("purity_boundary_invalid");
+  if (plan.executionMode !== "plan_only_not_invoked") findings.push("execution_mode_invalid");
+  if (plan.design.verificationStatus !== "ready") findings.push("design_not_ready");
+  if (!plan.sourceCommit) findings.push("source_commit_missing");
+  if (plan.approvalState.approved !== false) findings.push("approval_state_must_remain_false");
+  if (plan.operationPlans.length !== 3) findings.push("operation_plan_count_invalid");
+  if (!plan.operationPlans.every((operation) => operation.executionStatus === "planned_not_executed")) {
+    findings.push("operation_execution_status_invalid");
+  }
+  if (!plan.operationPlans.every((operation) => operation.mutationStatus === "planned_not_written")) {
+    findings.push("operation_mutation_status_invalid");
+  }
+  if (!plan.operationPlans.every((operation) => operation.networkStatus === "blocked")) {
+    findings.push("operation_network_status_invalid");
+  }
+  if (!plan.operationPlans.every((operation) => operation.ipcStatus === "blocked")) {
+    findings.push("operation_ipc_status_invalid");
+  }
+  if (!plan.operationPlans.every((operation) => operation.plannedCommands.every((command) => command.executionStatus === "not_executed"))) {
+    findings.push("planned_command_executed");
+  }
+  if (!plan.operationPlans.every((operation) => operation.plannedWrites.every((write) => write.writeStatus === "not_written"))) {
+    findings.push("planned_write_written");
+  }
+  if (!plan.operationPlans.every((operation) => operation.blockedActions.includes("Tauri build"))) {
+    findings.push("tauri_build_block_missing");
+  }
+  if (!plan.operationPlans.every((operation) => operation.rollbackPlan.rollbackExecution === "blocked")) {
+    findings.push("rollback_execution_not_blocked");
+  }
+  if (plan.authorityBoundary.installExecution !== "blocked") findings.push("install_execution_not_blocked");
+  if (plan.authorityBoundary.updateExecution !== "blocked") findings.push("update_execution_not_blocked");
+  if (plan.authorityBoundary.rollbackExecution !== "blocked") findings.push("rollback_execution_not_blocked");
+  if (plan.authorityBoundary.externalDownload !== "blocked") findings.push("external_download_not_blocked");
+  if (plan.authorityBoundary.localIpc !== "blocked") findings.push("ipc_not_blocked");
+
+  return {
+    schema: "gpao_t.tauri_install_dry_run_plan_verification.v0_1",
+    status: findings.length ? "blocked" : "ready",
+    findings,
+    checkedOperations: plan.operationPlans.map((operation) => operation.operation),
+    safetyInvariants: plan.safetyInvariants,
+    authorityBoundary: plan.authorityBoundary,
+    nextSafeAction: findings.length
+      ? "Fix dry-run plan findings before rendering a preview."
+      : "Render the preview-only dry-run plan for inspection; do not invoke dry-run or execute install/update/rollback.",
+  };
+}
+
+export function renderTauriInstallDryRunPreview({
+  root = PROJECT_ROOT,
+  plan = buildTauriInstallDryRunPlan({ root }),
+  verification = verifyTauriInstallDryRunPlan({ root, plan }),
+} = {}) {
+  const previewCards = plan.operationPlans.map((operation) => ({
+    operation: operation.operation,
+    status: verification.status,
+    headline: `${capitalize(operation.operation)} dry-run plan is preview-only`,
+    plannedCommandCount: operation.plannedCommands.length,
+    plannedWriteCount: operation.plannedWrites.length,
+    blockedActionCount: operation.blockedActions.length,
+    rollback: operation.rollbackPlan.summary,
+    recovery: operation.userVisibleRecovery.message,
+    nextSafeAction: operation.nextSafeAction,
+  }));
+
+  return {
+    schema: "gpao_t.tauri_install_dry_run_preview.v0_1",
+    status: verification.status,
+    previewKind: "user_visible_preview_only",
+    renderingMode: "json_preview_no_html_no_script_no_execution",
+    executionMode: "not_invoked",
+    findings: verification.findings,
+    sourceCommit: plan.sourceCommit,
+    summary: {
+      operations: previewCards.length,
+      plannedCommands: previewCards.reduce((sum, card) => sum + card.plannedCommandCount, 0),
+      plannedWrites: previewCards.reduce((sum, card) => sum + card.plannedWriteCount, 0),
+      blockedActions: previewCards.reduce((sum, card) => sum + card.blockedActionCount, 0),
+      approvalRequiredBeforeInvocation: true,
+    },
+    previewCards,
+    userDecision: {
+      currentDecisionNeeded: false,
+      futureDecision: "Approve or reject a future dry-run invocation after reviewing this preview.",
+      approvalNowWouldStillNotAllow: [
+        "real install execution",
+        "real update execution",
+        "real rollback execution",
+        "Tauri build",
+        "dependency install",
+        "external network",
+        "IPC activation",
+        "connector/model/tool activation",
+      ],
+    },
+    safetyInvariants: plan.safetyInvariants,
+    authorityBoundary: plan.authorityBoundary,
+    nextSafeAction: verification.status === "ready"
+      ? "Inspect this preview and then decide whether a future dry-run invocation gate should be designed; real install/update/rollback remains blocked."
+      : "Fix dry-run plan verification findings before user preview.",
+  };
+}
+
+export function verifyTauriInstallDryRunPreview({
+  root = PROJECT_ROOT,
+  preview = renderTauriInstallDryRunPreview({ root }),
+} = {}) {
+  const findings = [];
+
+  if (preview.schema !== "gpao_t.tauri_install_dry_run_preview.v0_1") findings.push("invalid_schema");
+  if (preview.previewKind !== "user_visible_preview_only") findings.push("preview_kind_invalid");
+  if (preview.renderingMode !== "json_preview_no_html_no_script_no_execution") findings.push("rendering_mode_invalid");
+  if (preview.executionMode !== "not_invoked") findings.push("execution_mode_invalid");
+  if (preview.summary.approvalRequiredBeforeInvocation !== true) findings.push("approval_before_invocation_missing");
+  if (preview.previewCards.length !== 3) findings.push("preview_card_count_invalid");
+  if (!preview.previewCards.every((card) => /preview-only/.test(card.headline))) findings.push("preview_only_headline_missing");
+  if (!preview.userDecision.approvalNowWouldStillNotAllow.includes("real install execution")) {
+    findings.push("real_install_block_missing");
+  }
+  if (preview.authorityBoundary.installExecution !== "blocked") findings.push("install_execution_not_blocked");
+  if (preview.authorityBoundary.updateExecution !== "blocked") findings.push("update_execution_not_blocked");
+  if (preview.authorityBoundary.rollbackExecution !== "blocked") findings.push("rollback_execution_not_blocked");
+  if (preview.authorityBoundary.localIpc !== "blocked") findings.push("ipc_not_blocked");
+  if (preview.authorityBoundary.externalDownload !== "blocked") findings.push("external_download_not_blocked");
+
+  return {
+    schema: "gpao_t.tauri_install_dry_run_preview_verification.v0_1",
+    status: findings.length ? "blocked" : "ready",
+    findings,
+    summary: preview.summary,
+    authorityBoundary: preview.authorityBoundary,
+    nextSafeAction: findings.length
+      ? "Fix dry-run preview findings before showing it as a trustworthy approval-prep object."
+      : "This preview can be inspected as approval-prep evidence; do not invoke dry-run or execute install/update/rollback.",
+  };
+}
+
 function buildOperationPlan({ operation }) {
   return {
     operation,
@@ -415,6 +609,98 @@ function buildOperationPlan({ operation }) {
     verificationRequired: true,
     rollbackPlanRequired: true,
     userVisibleRecoveryRequired: true,
+  };
+}
+
+function buildPureDryRunOperationPlan({ operation, sourceCommit }) {
+  return {
+    operation,
+    sourceCommit,
+    executionStatus: "planned_not_executed",
+    mutationStatus: "planned_not_written",
+    networkStatus: "blocked",
+    ipcStatus: "blocked",
+    plannedCommands: [
+      {
+        label: "source checkpoint check",
+        command: "git status --short",
+        executionStatus: "not_executed",
+        purpose: "Confirm the source-control state before any future dry-run invocation.",
+      },
+      {
+        label: "project verification",
+        command: "npm run verify",
+        executionStatus: "not_executed",
+        purpose: "Confirm the project still passes before considering a future dry-run invocation.",
+      },
+    ],
+    plannedWrites: [
+      {
+        path: `.gpao-t/tauri-dry-run/${operation}-preview.json`,
+        writeStatus: "not_written",
+        purpose: "Future dry-run preview artifact path after a separate invocation gate.",
+      },
+      {
+        path: `.gpao-t/audit/tauri-${operation}-dry-run-preview.jsonl`,
+        writeStatus: "not_written",
+        purpose: "Future audit preview path after a separate invocation gate.",
+      },
+    ],
+    blockedActions: [
+      `${operation} execution`,
+      "Tauri build",
+      "dependency install",
+      "file write",
+      "command execution",
+      "external network",
+      "IPC activation",
+      "connector activation",
+      "model activation",
+      "tool activation",
+    ],
+    verificationCommands: [
+      {
+        command: "npm run verify",
+        executionStatus: "not_executed",
+      },
+      {
+        command: "node bin/gpao-t.js control tauri-dry-run-preview-check",
+        executionStatus: "not_executed",
+      },
+    ],
+    rollbackPlan: {
+      summary: "Use the current local git commit as rollback anchor before any future dry-run invocation gate.",
+      rollbackExecution: "blocked",
+      sourceCommit,
+      triggerConditions: [
+        "verification fails",
+        "planned write leaves allowed local state root",
+        "planned command attempts install/update/rollback/Tauri build",
+      ],
+    },
+    userVisibleRecovery: {
+      status: "available_before_execution",
+      message: `${capitalize(operation)} remains preview-only. Nothing has been executed or written; revise the plan or return to the last source-control checkpoint.`,
+    },
+    nextSafeAction: "Review this preview-only operation plan; a separate future approval is required before any dry-run invocation exists.",
+  };
+}
+
+function pureDryRunSafetyInvariants() {
+  return {
+    invokesDryRunExecutor: false,
+    writesFiles: false,
+    runsCommands: false,
+    runsTauriBuild: false,
+    installsDependencies: false,
+    executesInstall: false,
+    executesUpdate: false,
+    executesRollback: false,
+    opensIpc: false,
+    readsExternalNetwork: false,
+    activatesConnectors: false,
+    activatesModels: false,
+    activatesTools: false,
   };
 }
 
