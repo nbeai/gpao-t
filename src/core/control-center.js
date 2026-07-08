@@ -1,5 +1,6 @@
 import { listModelAdapters, listToolAdapters } from "./adapter-boundary.js";
 import { buildConnectorGovernanceSummary } from "./connector-governance.js";
+import { buildCoreWorkSurface } from "./core-work-surface.js";
 import { runDoctor } from "./doctor.js";
 import { buildGrowthApplicationGateSummary } from "./growth-application-gates.js";
 import { readSelfGrowthProposals } from "./growth-proposals.js";
@@ -39,8 +40,10 @@ export function buildControlCenterSnapshot({ root } = {}) {
   const skillRoadmap = buildSkillProductionRoadmap();
   const skillProductionStatus = buildSkillProductionStatus({ phase: "phase-1" });
   const approvalPreviewFlow = buildApprovalPreviewFlow({ root });
+  const coreWorkSurface = buildCoreWorkSurface({ root });
 
   const panels = [
+    buildCoreWorkSurfacePanel({ coreWorkSurface }),
     buildRuntimePanel({ doctor, runtimeState, auditEvents }),
     buildOpsPanel({ installHardening, operationsContract }),
     buildApprovalPreviewPanel({ approvalPreviewFlow }),
@@ -89,6 +92,9 @@ export function buildControlCenterSnapshot({ root } = {}) {
       approvalPreviewStages: approvalPreviewFlow.stages.length,
       approvalPreviewBlockedActions: approvalPreviewFlow.blockedActions.length,
       approvalPreviewReadyStages: approvalPreviewFlow.stages.filter((stage) => stage.status === "ready").length,
+      coreWorkSurfaceThreadMessages: coreWorkSurface.workspaceThread.threadPreview.length,
+      coreWorkSurfaceSelectedSkillPacks: coreWorkSurface.skillRoutePreview.selectedPacks.length,
+      coreWorkSurfaceContextCandidates: coreWorkSurface.contextPreview.retrievedCandidates.length,
       growthProposals: growthProposals.length,
       growthApplicationGates: growthApplicationGates.totalGates,
       blockedGrowthApplications: growthApplicationGates.blockedLiveMutations,
@@ -138,6 +144,17 @@ export function buildControlCenterSummary({ root } = {}) {
     counts: snapshot.counts,
     authorityBoundary: snapshot.authorityBoundary,
     nextSafeAction: snapshot.nextSafeAction,
+  };
+}
+
+function buildCoreWorkSurfacePanel({ coreWorkSurface }) {
+  return {
+    id: "core-work-surface",
+    label: "Work Surface",
+    status: coreWorkSurface.status,
+    headline: "GPAO-T에게 일을 맡기는 첫 작업 표면이다. 입력은 초안이고 실행은 아직 열리지 않는다.",
+    data: coreWorkSurface,
+    nextSafeAction: coreWorkSurface.nextSafeAction,
   };
 }
 
@@ -467,6 +484,8 @@ function buildNextSafeAction({ blockedPanels, reviewPanels }) {
   if (blockedPanels.length) {
     return `Resolve blocked panel first: ${blockedPanels[0].label}.`;
   }
+  const coreWorkSurfacePanel = reviewPanels.find((panel) => panel.id === "core-work-surface");
+  if (coreWorkSurfacePanel) return coreWorkSurfacePanel.nextSafeAction;
   if (reviewPanels.length) {
     const approvalPreviewPanel = reviewPanels.find((panel) => panel.id === "approval-preview");
     if (approvalPreviewPanel) return approvalPreviewPanel.nextSafeAction;

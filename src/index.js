@@ -17,6 +17,11 @@ import {
   listConnectors,
   reviewConnectorPermission,
 } from "./core/connector-governance.js";
+import {
+  buildCoreWorkSurface,
+  buildCoreWorkSurfaceHtml,
+  verifyCoreWorkSurface,
+} from "./core/core-work-surface.js";
 import { buildControlCenterSnapshot, buildControlCenterSummary } from "./core/control-center.js";
 import {
   buildControlCenterHtml,
@@ -150,6 +155,8 @@ export {
   buildBrowserLocalAppShellHtml,
   buildBrowserLocalAppShellState,
   buildConnectorGovernanceSummary,
+  buildCoreWorkSurface,
+  buildCoreWorkSurfaceHtml,
   buildControlCenterSnapshot,
   buildControlCenterSummary,
   buildControlCenterHtml,
@@ -222,6 +229,7 @@ export {
   renderTauriInstallDryRunPreview,
   startControlCenterPreviewServer,
   validateControlCenterUiSnapshot,
+  verifyCoreWorkSurface,
   verifyBrowserLocalAppShell,
   verifyControlCenterPreviewServing,
   verifyPackagedDesktopPlanningReview,

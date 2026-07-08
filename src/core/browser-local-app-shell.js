@@ -9,6 +9,9 @@ import { runDoctor } from "./doctor.js";
 
 export const BROWSER_LOCAL_ALLOWED_GET_ROUTES = [
   "/health",
+  "/work-surface",
+  "/work-surface/state",
+  "/work-surface/verify",
   "/control-center",
   "/control-center/summary",
   "/control-center/design",

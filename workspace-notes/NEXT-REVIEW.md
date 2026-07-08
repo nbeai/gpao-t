@@ -2,25 +2,27 @@
 
 ## Next Safe Action
 
-Return to the user-facing GPAO-T core work surface plan/build.
+Capture desktop/mobile visual QA evidence for `/work-surface`, then add the smallest richer read-only interaction that improves task readability without opening live execution.
 
 ## Review Before Continuing
 
-- Keep the packaged desktop planning review stop-line intact.
+- Check whether `/work-surface` has pass evidence for nonblank viewport, draft input visibility, task state visibility, context/skill route readability, authority boundary visibility, next safe action visibility, no overflow, mobile topbar/action visibility, no script, no form, and no external activation.
 - Confirm that AI/developer scenario verification happened before final user review.
-- Keep approval write, dry-run invocation, Tauri build, install/update/rollback execution, IPC, external network, and connector/model/tool activation closed until a concrete mutating action is explicitly approved.
-- Use the existing Local Control Center/app-shell/Tauri substrate as the read-only regression anchor.
+- Keep risky actions manual or dry-run until explicitly approved.
+- Use `applied but unverified` until verification evidence exists.
 
 ## Session Resume
 
-Start with the user-facing core surface, not another meta-gate. Suggested first slice: workspace/thread surface plus state lanes, authority center, memory/context view, model/tool routing view, and next safe action.
+Resume from the user-facing GPAO-T core work surface. Do not reopen deeper Tauri/dry-run/approval meta-gates unless the user explicitly asks for a concrete mutating action gate.
 
 ## Recent Evidence
 
 - route: Routed work as strict.
-- plan: Saved packaged desktop planning review plan.
-- focused test: `node --test test/control-center.test.js` passed.
-- full verify: `npm run verify` passed.
-- BEAI verify: passed.
-- BEAI closeout: completion ready, no blockers; generic review signal noted.
-- serve-check: ready with packaged desktop review route status 200.
+- plan: Saved build plan.
+- preflight: Read-only workspace check completed for gpao-t.
+- verify: Executed 2 checks.
+- local: `npm run verify` passed, 98 tests across 16 suites.
+- local: `node bin/gpao-t.js control work-surface-check` returned ready with no findings.
+- local: `node bin/gpao-t.js control serve-check` returned ready with `/work-surface` and `/work-surface/state` status 200.
+- beai: `beai verify --run --scenario --meaning` passed with completion gate ready.
+- closeout: Completion language was allowed; closeout review signal came from generic TODO/blocker text scanning, and direct `TODO|FIXME|XXX|HACK` search found no source TODOs.

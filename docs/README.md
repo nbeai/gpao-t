@@ -18,6 +18,8 @@ The app-shell transition is governed by `docs/03-engineering/APP-SHELL-DECISION-
 
 Control Center approval/preview UX evidence is maintained in `docs/03-verification/evidence/control-center-approval-preview-ux-qa-2026-07-09.json` and `docs/03-verification/evidence/CONTROL-CENTER-APPROVAL-PREVIEW-UX-QA-2026-07-09.md`. The `Approval / Preview` panel must make five stages visually distinct, explain that nothing has executed yet, present blocked actions as calm locked states, preserve mobile topbar action visibility, and keep no-script/no-external-activation/no-overflow boundaries.
 
+The first GPAO-T core work surface is now exposed as a read-only user-facing slice. It gives the user a draft work input area, a preview thread, current task state, Context Mesh / Memory Wiki / T-cell candidate summary, Skill Pack route preview, model/tool route preview, authority/approval summary, closed action list, and next safe action. It is intentionally not a live chat executor yet: input submission, external model calls, tool execution, connector activation, approval-record writes, dry-run invocation, durable memory promotion, self-growth apply, deployment, messenger send, and recurring automation remain blocked.
+
 Skill ecosystem guidance is maintained in `docs/04-skill-ecosystem/GPAO-T-SKILL-ECOSYSTEM-MASTER-PLAN-ko.md`. GPAO-T skills must be research-grounded, practical, T-cell-shaped operating units, not prompt decorations or copied marketplace catalogs.
 
 ## First Slice
@@ -53,6 +55,7 @@ The first slice implements a local, dependency-free runtime skeleton:
 - `Replay Recovery History`: local replay recovery records and repeated-pattern summary
 - `Self-Growth Proposals`: review-only improvement candidates from replay-proven patterns
 - `Growth Application Gates`: replay, approval, audit, and rollback review before any growth proposal can become live behavior
+- `Core Work Surface`: the first read-only user-facing task surface with draft input, preview thread, context/skill route preview, authority summary, and next safe action
 
 ## Guided First Workflow
 
@@ -124,6 +127,9 @@ node bin/gpao-t.js adapters tools
 node bin/gpao-t.js adapters plan "그럼 배포파일은?"
 node bin/gpao-t.js control snapshot
 node bin/gpao-t.js control summary
+node bin/gpao-t.js control work-surface
+node bin/gpao-t.js control work-surface-html
+node bin/gpao-t.js control work-surface-check
 node bin/gpao-t.js control design
 node bin/gpao-t.js control ui-contract
 node bin/gpao-t.js control ui-snapshot
@@ -248,6 +254,9 @@ Local Control Center readiness is exposed as data and a static UI reader, not as
 
 - `control snapshot` returns full panel data for runtime, install/update/rollback readiness, memory, replay recovery, growth proposals/application gates, adapters, connectors, and authority
 - `control summary` returns compact panel status, counts, and next safe action
+- `control work-surface` returns the first user-facing GPAO-T work surface state as read-only JSON
+- `control work-surface-html` renders the standalone no-script work surface HTML
+- `control work-surface-check` verifies the work surface preserves draft-only input, preview-only context/skill/model routing, closed authority actions, no script, no form, and no external URL
 - `control design` returns the Local Control Center design contract adapted from BEAI Harness `design.md`
 - `control ui-contract` returns the UI schema and section contract that maps snapshot fields into visual sections
 - `control ui-snapshot` returns the renderer-ready UI snapshot
@@ -276,6 +285,7 @@ Local Control Center readiness is exposed as data and a static UI reader, not as
 - The Local Control Center includes an `Approval / Preview` panel that integrates dry-run plan, user preview, invocation approval, approval storage, and write-gate statuses as a preview-only user flow. The packaged desktop planning review now acts as the stop-line: do not add another meta-gate unless a concrete mutating action is explicitly approved; return to the user-facing GPAO-T core work surface next.
 - `control tauri-shell-slice`, `control tauri-shell-html`, and `control tauri-shell-check` define and verify the first read-mostly Tauri source scaffold
 - `GET /control-center`, `GET /control-center/summary`, `GET /control-center/design`, `GET /control-center/ui-contract`, `GET /control-center/ui-snapshot`, and `GET /control-center/ui-validate` expose the same contracts through the local gateway handler
+- `GET /work-surface`, `GET /work-surface.html`, `GET /work-surface/state`, and `GET /work-surface/verify` expose the standalone read-only core work surface through the loopback preview server. Gateway JSON also exposes `GET /work-surface/state` and `GET /work-surface/verify`.
 - `GET /app-shell`, `GET /app-shell/contract`, `GET /app-shell/state`, `GET /app-shell/verify`, `GET /app-shell/tauri-gate`, `GET /app-shell/tauri-gate/verify`, `GET /app-shell/packaged-desktop-review`, `GET /app-shell/packaged-desktop-review/verify`, `GET /app-shell/tauri-install-gate`, `GET /app-shell/tauri-install-gate/verify`, `GET /app-shell/tauri-prerequisite-doctor`, `GET /app-shell/tauri-prerequisite-doctor/verify`, `GET /app-shell/tauri-dry-run-contract`, `GET /app-shell/tauri-dry-run-contract/verify`, `GET /app-shell/tauri-dry-run-design`, `GET /app-shell/tauri-dry-run-design/verify`, `GET /app-shell/tauri-dry-run-plan`, `GET /app-shell/tauri-dry-run-plan/verify`, `GET /app-shell/tauri-dry-run-preview`, `GET /app-shell/tauri-dry-run-preview/verify`, `GET /app-shell/tauri-dry-run-invocation-approval`, `GET /app-shell/tauri-dry-run-invocation-approval/verify`, `GET /app-shell/tauri-dry-run-approval-storage`, `GET /app-shell/tauri-dry-run-approval-storage/verify`, `GET /app-shell/tauri-dry-run-approval-write-gate`, `GET /app-shell/tauri-dry-run-approval-write-gate/verify`, `GET /app-shell/tauri-shell`, `GET /app-shell/tauri-shell/slice`, and `GET /app-shell/tauri-shell/verify` expose the browser-local app-shell and packaged-shell boundary through the loopback preview server
 
 This keeps the future Codex-like desktop surface light: the first visual layer reads the existing snapshot/design contracts before adding interactivity, daemon behavior, or external activation.

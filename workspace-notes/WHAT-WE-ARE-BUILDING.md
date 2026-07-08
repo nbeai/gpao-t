@@ -1,42 +1,38 @@
 # What We Are Building
 
-GPAO-T is a production-aimed local personal AI operating system. The Local Control Center -> browser-local app-shell -> Tauri substrate planning track is now coherent enough to return to the user-facing core work surface.
+The first real GPAO-T user can open a local work surface, see where to give GPAO-T a task, understand the current task state, preview which context and skill route would be used, and see the authority boundary before any live execution exists.
 
 ## Current Phase
 
-- Phase: packaged-desktop-planning-review
-- Status: verified and closeout-ready
-- Scope closed in this slice: Local Control Center / app-shell / Tauri substrate planning review and stop-line, without opening approval write, dry-run invocation, build, install/update/rollback, IPC, external network, or connector/model/tool activation.
-- Current surface added:
-  - `gpao-t control packaged-desktop-review`
-  - `gpao-t control packaged-desktop-review-check`
-  - `GET /app-shell/packaged-desktop-review`
-  - `GET /app-shell/packaged-desktop-review/verify`
+- Phase: core work surface first slice
+- Command: control work-surface / GET /work-surface
+- Status: implemented and verified
 
-## Verification Anchor
+## User Mode
 
-- `node --check src/core/tauri-packaged-desktop-gate.js`: pass.
-- `node --check src/core/gateway.js`: pass.
-- `node --check src/core/control-center-serving.js`: pass.
-- `node --check bin/gpao-t.js`: pass.
-- `node --test test/control-center.test.js`: pass, 20 tests.
-- `node bin/gpao-t.js control packaged-desktop-review-check`: ready.
-- `node bin/gpao-t.js control serve-check`: ready with `packagedDesktopReviewStatus: 200` when run with local loopback bind permission.
-- `npm run verify`: pass, 97 tests across 16 suites.
-- `beai verify --run --scenario --meaning`: pass.
-- `beai closeout --apply`: completion ready, no blockers; harness still reports one generic review signal.
-- `git diff --check`: pass.
+- Mode: general user with developer-grade inspection available
+- Task type: local-first GPAO-T product surface
+
+## First Workflow
+
+Core Work Surface First Workflow
+
+## Companion Principle
+
+AI does the work. User keeps authority.
+
+## AI First
+
+- AI/developer verifies first success path for the read-only work surface.
+- AI/developer verifies empty or first-time state before asking the user to test.
+- AI/developer verifies likely failure or recovery state before claiming completion.
+- AI/developer inspects the main visual flow when a UI exists.
 
 ## User Authority
 
-The user keeps authority over approval-record write, future dry-run invocation, Tauri build, dependency installation, install/update/rollback execution, connector/model/tool activation, deployment, messenger, automation, external account, token, or public release boundary.
+- Confirm whether the first work surface feels like a place where the user can naturally hand work to GPAO-T.
+- Approve any taste, brand, operating policy, or business decision that AI cannot know.
 
-## Stop-Line
+## Latest Summary
 
-Do not add another approval/write/dry-run/packaged-desktop meta-gate unless a concrete mutating action is explicitly approved. The next safe product direction is the user-facing GPAO-T core work surface.
-
-## Current Progress Estimate
-
-- Full GPAO-T production product: about 37-40% complete, 60-63% remaining.
-- Current desktop/local substrate track: about 83-86% complete, 14-17% remaining.
-- Immediate planning-review slice: verified; next larger step should return to user-facing GPAO-T core surface planning/build.
+Implemented and verified the first read-only core work surface slice: draft task input, preview thread, task state, Context Mesh / Memory Wiki / T-cell preview, Skill Pack route preview, model/tool route preview, authority/approval summary, closed actions, and next safe action. Live send, external model calls, tool execution, connector activation, approval writes, dry-run invocation, durable memory promotion, self-growth apply, deployment, messenger, and automation remain blocked.

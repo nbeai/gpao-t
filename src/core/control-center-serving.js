@@ -6,6 +6,11 @@ import {
   buildBrowserLocalAppShellState,
   verifyBrowserLocalAppShell,
 } from "./browser-local-app-shell.js";
+import {
+  buildCoreWorkSurface,
+  buildCoreWorkSurfaceHtml,
+  verifyCoreWorkSurface,
+} from "./core-work-surface.js";
 import { renderControlCenterHtml } from "./control-center-renderer.js";
 import { buildControlCenterSnapshot, buildControlCenterSummary } from "./control-center.js";
 import {
@@ -68,6 +73,10 @@ export function buildControlCenterServingContract({
       { path: "/control-center", content: "static_control_center_html" },
       { path: "/control-center.html", content: "static_control_center_html" },
       { path: "/health", content: "local_json_health" },
+      { path: "/work-surface", content: "core_work_surface_html" },
+      { path: "/work-surface.html", content: "core_work_surface_html" },
+      { path: "/work-surface/state", content: "core_work_surface_state" },
+      { path: "/work-surface/verify", content: "core_work_surface_verification" },
       { path: "/app-shell", content: "browser_local_app_shell_html" },
       { path: "/app-shell.html", content: "browser_local_app_shell_html" },
       { path: "/app-shell/contract", content: "browser_local_app_shell_contract" },
@@ -237,6 +246,28 @@ export async function startControlCenterPreviewServer({
         designContract: buildLocalControlCenterDesignContract(),
       });
       respondJson(response, 200, validateControlCenterUiSnapshot({ uiSnapshot }));
+      return;
+    }
+
+    if (url.pathname === "/work-surface" || url.pathname === "/work-surface.html") {
+      const surface = buildCoreWorkSurface({ root, now });
+      respondHtml(response, 200, buildCoreWorkSurfaceHtml({ surface }), {
+        "x-gpao-t-surface": "core-work-surface",
+      });
+      return;
+    }
+
+    if (url.pathname === "/work-surface/state") {
+      respondJson(response, 200, buildCoreWorkSurface({ root, now }));
+      return;
+    }
+
+    if (url.pathname === "/work-surface/verify") {
+      const surface = buildCoreWorkSurface({ root, now });
+      respondJson(response, 200, verifyCoreWorkSurface({
+        surface,
+        html: buildCoreWorkSurfaceHtml({ surface }),
+      }));
       return;
     }
 
@@ -455,6 +486,9 @@ export async function verifyControlCenterPreviewServing({
   try {
     const health = await fetchJson(`http://${host}:${preview.port}/health`);
     const page = await fetchText(preview.url);
+    const workSurface = await fetchText(`http://${host}:${preview.port}/work-surface`);
+    const workSurfaceState = await fetchJson(`http://${host}:${preview.port}/work-surface/state`);
+    const workSurfaceVerify = await fetchJson(`http://${host}:${preview.port}/work-surface/verify`);
     const appShell = await fetchText(`http://${host}:${preview.port}/app-shell`);
     const appShellState = await fetchJson(`http://${host}:${preview.port}/app-shell/state`);
     const tauriGate = await fetchJson(`http://${host}:${preview.port}/app-shell/tauri-gate`);
@@ -487,6 +521,27 @@ export async function verifyControlCenterPreviewServing({
 
     if (health.status !== 200 || health.body.status !== "ready") {
       findings.push("health_route_not_ready");
+    }
+    if (workSurface.status !== 200 || !workSurface.body.includes("GPAO-T Work Surface")) {
+      findings.push("work_surface_not_ready");
+    }
+    if (/<script/i.test(workSurface.body)) {
+      findings.push("work_surface_script_tag_present");
+    }
+    if (/<form/i.test(workSurface.body)) {
+      findings.push("work_surface_form_present");
+    }
+    if (!workSurface.body.includes("data-core-work-surface=\"read-only\"")) {
+      findings.push("work_surface_missing_marker");
+    }
+    if (
+      workSurfaceState.status !== 200
+      || workSurfaceState.body.schema !== "gpao_t.core_work_surface.v0_1"
+    ) {
+      findings.push("work_surface_state_not_ready");
+    }
+    if (workSurfaceVerify.status !== 200 || workSurfaceVerify.body.status !== "ready") {
+      findings.push("work_surface_verify_not_ready");
     }
     if (page.status !== 200) {
       findings.push("control_center_route_not_200");
@@ -630,6 +685,7 @@ export async function verifyControlCenterPreviewServing({
       schema: "gpao_t.control_center_serving_verification.v0_1",
       status: findings.length ? "blocked" : "ready",
       url: preview.url,
+      workSurfaceUrl: `http://${host}:${preview.port}/work-surface`,
       appShellUrl: `http://${host}:${preview.port}/app-shell`,
       tauriGateUrl: `http://${host}:${preview.port}/app-shell/tauri-gate`,
       packagedDesktopReviewUrl: `http://${host}:${preview.port}/app-shell/packaged-desktop-review`,
@@ -645,6 +701,8 @@ export async function verifyControlCenterPreviewServing({
       tauriShellUrl: `http://${host}:${preview.port}/app-shell/tauri-shell`,
       tauriShellSliceUrl: `http://${host}:${preview.port}/app-shell/tauri-shell/slice`,
       healthStatus: health.status,
+      workSurfaceStatus: workSurface.status,
+      workSurfaceStateStatus: workSurfaceState.status,
       pageStatus: page.status,
       appShellStatus: appShell.status,
       tauriGateStatus: tauriGate.status,
@@ -679,6 +737,15 @@ function respondJson(response, statusCode, value) {
     "cache-control": "no-store",
   });
   response.end(JSON.stringify(value, null, 2));
+}
+
+function respondHtml(response, statusCode, html, headers = {}) {
+  response.writeHead(statusCode, {
+    "content-type": "text/html; charset=utf-8",
+    "cache-control": "no-store",
+    ...headers,
+  });
+  response.end(html);
 }
 
 async function fetchText(url) {

@@ -4,6 +4,10 @@ import {
   listConnectors,
   reviewConnectorPermission,
 } from "./connector-governance.js";
+import {
+  buildCoreWorkSurface,
+  verifyCoreWorkSurface,
+} from "./core-work-surface.js";
 import { buildControlCenterSnapshot, buildControlCenterSummary } from "./control-center.js";
 import {
   buildControlCenterUiContract,
@@ -148,6 +152,23 @@ export function handleGatewayRequest({ method = "GET", path = "/", body = {}, ro
       schema: "gpao_t.gateway_response.v0_1",
       status: 200,
       body: buildControlCenterSummary({ root }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/work-surface/state") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: buildCoreWorkSurface({ root }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/work-surface/verify") {
+    const surface = buildCoreWorkSurface({ root });
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: verifyCoreWorkSurface({ surface }),
     };
   }
 

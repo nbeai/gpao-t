@@ -1,29 +1,25 @@
 # What Is Not Done
 
-## Still Excluded By Authority
+## Still Excluded
 
-- approval record actual write
+- live chat submission
+- external model connector execution
+- tool execution
+- connector activation or OAuth/token storage
+- approval record write
 - dry-run invocation
-- command execution from dry-run plans
-- file mutation from approval or install executors
-- Tauri build or dependency installation
-- bundle/signing/installer creation
-- install/update/rollback execution
-- local IPC commands
-- external network/download
-- connector/model/tool activation
-- OAuth/token/secret storage
-- deployment/public release
-- messenger surfaces
-- recurring automation
-- unrelated refactor
+- command or file mutation through the work surface
+- Tauri build, dependency install, installer, update, or rollback execution
+- durable memory promotion or self-growth apply
+- deployment, messenger send, recurring automation
+- unrelated refactor or large rewrite
 
 ## Current Completion Boundary
 
-- The packaged desktop planning review slice has passing verification evidence.
-- The remaining exclusions above are intentional authority boundaries, not unresolved implementation blockers.
-- Current status: verified
+- Do not call this complete unless verification evidence and completion language guard pass.
+- Do not ask the user to test before AI/developer scenario verification covers success, empty, and failure states when applicable.
+- Current status: implemented and verified for the read-only first slice
 
-## Open Product Work
+## Blockers
 
-- Build the user-facing GPAO-T core work surface next.
+- No unresolved session blocker is recorded.

@@ -20,6 +20,7 @@ const STATUS_LABELS = {
 };
 
 const PANEL_GROUPS = {
+  "core-work-surface": "Work",
   runtime: "Work",
   "skill-ecosystem": "Work",
   "approval-preview": "Authority",
@@ -285,6 +286,9 @@ export function buildControlCenterHtml({ snapshot, designContract } = {}) {
     .panel[data-panel="approval-preview"] {
       grid-column: 1 / -1;
     }
+    .panel[data-panel="core-work-surface"] {
+      grid-column: 1 / -1;
+    }
     .panel:target {
       outline: 2px solid var(--approval);
       outline-offset: 2px;
@@ -450,6 +454,39 @@ export function buildControlCenterHtml({ snapshot, designContract } = {}) {
       color: var(--muted);
       font-size: 9px;
       text-transform: uppercase;
+    }
+    .work-thread-preview {
+      display: grid;
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .work-composer,
+    .work-message,
+    .work-signal {
+      min-width: 0;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: #fbfcfd;
+      padding: 8px;
+      font-size: 12px;
+      overflow-wrap: anywhere;
+    }
+    .work-composer {
+      background: #f7fafc;
+    }
+    .work-composer strong,
+    .work-message strong,
+    .work-signal strong {
+      display: block;
+      color: var(--muted);
+      font-size: 10px;
+      text-transform: uppercase;
+    }
+    .work-surface-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 6px;
+      margin-top: 8px;
     }
     .panel-action {
       display: inline-flex;
@@ -717,6 +754,9 @@ export function buildControlCenterHtml({ snapshot, designContract } = {}) {
       .approval-flow {
         grid-template-columns: 1fr;
       }
+      .work-surface-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
       .approval-stage {
         min-height: 0;
       }
@@ -767,6 +807,9 @@ export function buildControlCenterHtml({ snapshot, designContract } = {}) {
         gap: 2px;
       }
       .blocked-actions {
+        grid-template-columns: 1fr;
+      }
+      .work-surface-grid {
         grid-template-columns: 1fr;
       }
     }
@@ -913,6 +956,7 @@ function panelHtml(panel) {
               ${statePill("Authority", states.authority)}
               ${statePill("Next", states.next)}
             </div>
+            ${coreWorkSurfaceHtml(panel)}
             ${approvalPreviewHtml(panel)}
             <div class="panel-actions" aria-label="${escapeHtml(panel.label)} local drilldown actions">
               <a class="panel-action" data-panel-action="inspect" href="#inspect-${escapeHtml(panel.id)}">인스펙터</a>
@@ -932,12 +976,73 @@ function panelHtml(panel) {
                 ${inspectorRow("Authority State", states.authority)}
                 ${inspectorRow("Next State", states.next)}
                 ${approvalInspectorRows(panel)}
+                ${coreWorkSurfaceInspectorRows(panel)}
                 ${inspectorRow("Authority", authorityLens(group))}
                 ${inspectorRow("Evidence", evidenceLens(panel))}
                 ${inspectorLinks(panel)}
               </div>
             </details>
           </section>`;
+}
+
+function coreWorkSurfaceHtml(panel) {
+  if (panel.id !== "core-work-surface" || !panel.data) return "";
+  const surface = panel.data;
+  const selectedPacks = surface.skillRoutePreview?.selectedPacks || [];
+  const contextCandidates = surface.contextPreview?.retrievedCandidates || [];
+  const closedActions = surface.authoritySummary?.closedActions || [];
+
+  return `
+            <div class="work-thread-preview" data-core-work-surface="read-only">
+              <div class="work-composer" role="textbox" aria-readonly="true" data-composer-state="draft-not-sent" tabindex="0">
+                <strong>${escapeHtml(surface.workspaceThread.composer.label)}</strong>
+                ${escapeHtml(surface.workspaceThread.composer.draftRequest)}
+              </div>
+              ${surface.workspaceThread.threadPreview.map((message) => `
+              <div class="work-message" data-work-message-role="${escapeHtml(message.role)}">
+                <strong>${escapeHtml(message.label)} · ${escapeHtml(message.state)}</strong>
+                ${escapeHtml(message.text)}
+              </div>`).join("")}
+              <div class="work-surface-grid" aria-label="Core work surface state">
+                ${workSignal("Task", surface.taskState.status)}
+                ${workSignal("Context", surface.contextPreview.status)}
+                ${workSignal("Skill", surface.skillRoutePreview.status)}
+                ${workSignal("Authority", surface.authoritySummary.approvalStatus)}
+              </div>
+              <div class="work-surface-grid" aria-label="Core work surface route preview">
+                ${workSignal("Memory", `${surface.contextPreview.memoryEntries}`)}
+                ${workSignal("T-cells", `${surface.contextPreview.tcellCandidates}`)}
+                ${workSignal("Packs", `${selectedPacks.length}`)}
+                ${workSignal("Closed", `${closedActions.length}`)}
+              </div>
+              <div class="blocked-actions" aria-label="Core work surface closed authority actions" data-authority-boundary="closed">
+                <strong>닫힌 실행 경계</strong>
+                <span class="blocked-action"><span class="blocked-action-label">요약</span>no external action · no tool activation · no live model connector execution<span class="blocked-action-detail">아직 전송/실행/연결은 열리지 않음</span></span>
+                ${closedActions.slice(0, 6).map((action) => `<span class="blocked-action"><span class="blocked-action-label">잠김</span>${escapeHtml(action)}<span class="blocked-action-detail">preview only</span></span>`).join("")}
+              </div>
+              <div class="work-surface-grid" aria-label="Context and skill route anchors">
+                ${workSignal("Context Anchor", contextCandidates[0]?.anchor || "none")}
+                ${workSignal("Skill Pack", selectedPacks[0]?.id || "none")}
+                ${workSignal("Model", surface.modelToolRoutePreview.selectedModelAdapter || "none")}
+                ${workSignal("Tools", `${surface.modelToolRoutePreview.toolAdapters.length}`)}
+              </div>
+            </div>`;
+}
+
+function workSignal(label, value) {
+  return `<div class="work-signal"><strong>${escapeHtml(label)}</strong>${escapeHtml(value || "none")}</div>`;
+}
+
+function coreWorkSurfaceInspectorRows(panel) {
+  if (panel.id !== "core-work-surface" || !panel.data) return "";
+  const surface = panel.data;
+  return [
+    inspectorRow("Input State", surface.workspaceThread.composer.submission),
+    inspectorRow("Task State", `${surface.taskState.status} · ${surface.taskState.inputSignal}`),
+    inspectorRow("Context Preview", `${surface.contextPreview.status} · ${surface.contextPreview.retrievedCandidates.length} candidates`),
+    inspectorRow("Skill Route", (surface.skillRoutePreview.selectedPacks || []).map((pack) => pack.id).join(" · ") || "none"),
+    inspectorRow("Authority Summary", (surface.authoritySummary.closedActions || []).join(" · ")),
+  ].join("");
 }
 
 function approvalPreviewHtml(panel) {
