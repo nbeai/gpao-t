@@ -2,7 +2,7 @@
 
 ## Next Safe Action
 
-Apply the newer source guidance to implementation or explicitly mark it out of scope before claiming completion.
+Review evidence before claiming completion.
 
 ## Review Before Continuing
 
@@ -13,12 +13,12 @@ Apply the newer source guidance to implementation or explicitly mark it out of s
 
 ## Session Resume
 
-Apply the newer source guidance to implementation or explicitly mark it out of scope before claiming completion.
+Continue only after reviewing verification evidence.
 
 ## Recent Evidence
 
-- route: Routed work as standard.
-- plan: Saved build plan.
+- brief: Saved product brief.
 - verify: Executed 2 checks.
 - closeout: Closeout decision: ready.
+- ops-check: Ops-check status: ready.
 - verify: Executed 2 checks.

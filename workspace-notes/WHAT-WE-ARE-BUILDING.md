@@ -6,7 +6,7 @@ The first real user can route a vague request, see the plan, run checks, and und
 
 - Phase: verify
 - Command: verify
-- Status: blocked
+- Status: completed
 
 ## User Mode
 
