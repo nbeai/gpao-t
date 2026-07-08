@@ -4,9 +4,8 @@ GPAO-T is a local-first Growth Personal AI Operating System with T-cell as its r
 
 ## Current Phase
 
-- Phase: tauri-install-update-rollback-readiness-gate
-- Command: `control tauri-install-gate`, `control tauri-install-gate-check`
-- Status: verified by local product checks; BEAI closeout still records a session-history review blocker caused by route/plan evidence being refreshed after implementation during context recovery.
+- Phase: tauri-prerequisite-doctor-and-dry-run-contract
+- Status: verified and closeout-ready as no-execution contracts.
 
 ## Current Surface
 
@@ -14,23 +13,26 @@ GPAO-T is a local-first Growth Personal AI Operating System with T-cell as its r
 - Packaged desktop/Tauri gate is closed as a decision contract.
 - First read-mostly Tauri shell source scaffold exists under `src-tauri/` and `tauri-shell/`.
 - Packaged-shell desktop/mobile visual QA baseline evidence exists under `docs/03-verification/evidence/`.
-- Packaged desktop install/update/rollback readiness gate now exposes:
-  - `gpao-t control tauri-install-gate`
-  - `gpao-t control tauri-install-gate-check`
-  - `GET /app-shell/tauri-install-gate`
-  - `GET /app-shell/tauri-install-gate/verify`
-
-## Companion Principle
-
-AI does the work. User keeps authority.
+- Packaged desktop install/update/rollback readiness gate is exposed through CLI, Gateway, loopback serving, docs, and tests.
+- Prerequisite doctor / dry-run contracts expose:
+  - `gpao-t control tauri-prerequisite-doctor`
+  - `gpao-t control tauri-prerequisite-doctor-check`
+  - `gpao-t control tauri-dry-run-contract`
+  - `gpao-t control tauri-dry-run-contract-check`
+  - `GET /app-shell/tauri-prerequisite-doctor`
+  - `GET /app-shell/tauri-prerequisite-doctor/verify`
+  - `GET /app-shell/tauri-dry-run-contract`
+  - `GET /app-shell/tauri-dry-run-contract/verify`
 
 ## Verification Anchor
 
-- `npm run verify`: 89 tests / 16 suites passed.
-- `node bin/gpao-t.js control tauri-install-gate-check`: ready.
-- `node bin/gpao-t.js control serve-check`: ready with loopback preview routes, including the Tauri install gate.
-- `beai verify --run --scenario --meaning`: checks passed; BEAI product-quality history remains review because route/plan evidence was refreshed after implementation during context recovery.
+- `npm run verify`: passed with 90 tests / 16 suites.
+- `node bin/gpao-t.js control tauri-prerequisite-doctor-check`: ready.
+- `node bin/gpao-t.js control tauri-dry-run-contract-check`: ready.
+- `node bin/gpao-t.js control serve-check`: ready with prerequisite doctor and dry-run contract loopback routes.
+- `beai verify --run --scenario --meaning`: pass.
+- `beai closeout`: ready.
 
 ## User Authority
 
-Real install/update/rollback execution, dependency installation, Tauri build, IPC activation, signing, installer creation, external download, connector/model/tool activation, deployment, messenger, and automation remain blocked until explicit future approval and gate closure.
+Dry-run execution, real install/update/rollback execution, dependency installation, Tauri build, IPC activation, signing, installer creation, external download, connector/model/tool activation, deployment, messenger, and automation remain blocked until explicit future approval and gate closure.

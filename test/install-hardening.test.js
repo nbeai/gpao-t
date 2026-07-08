@@ -9,9 +9,13 @@ import {
   appendInstallHardeningReport,
   buildInstallHardeningReport,
   buildInstallHardeningSummary,
+  buildTauriInstallDryRunExecutorContract,
+  buildTauriInstallPrerequisiteDoctor,
   buildTauriInstallReadinessGate,
   handleGatewayRequest,
   readInstallHardeningReports,
+  verifyTauriInstallDryRunExecutorContract,
+  verifyTauriInstallPrerequisiteDoctor,
   verifyTauriInstallReadinessGate,
 } from "../src/index.js";
 
@@ -128,7 +132,7 @@ describe("GPAO-T install/update/rollback hardening", () => {
     assert.equal(gate.authorityBoundary.rollbackExecution, "blocked");
     assert.equal(gate.authorityBoundary.localIpc, "blocked");
     assert.equal(gate.authorityBoundary.externalDownload, "blocked");
-    assert.equal(gate.implementationOrder.includes("5_dry_run_executor_gate_after_approval"), true);
+    assert.equal(gate.implementationOrder.includes("5_prerequisite_doctor_and_dry_run_contract"), true);
     assert.equal(gate.failureRecoveryStates.some((state) => state.id === "executor_requested_too_early"), true);
     assert.equal(verification.status, "ready");
     assert.equal(cliGate.schema, gate.schema);
@@ -137,5 +141,63 @@ describe("GPAO-T install/update/rollback hardening", () => {
     assert.equal(gatewayGate.body.schema, gate.schema);
     assert.equal(gatewayCheck.status, 200);
     assert.equal(gatewayCheck.body.status, "ready");
+  });
+
+  it("defines prerequisite doctor and dry-run executor contracts without invoking operations", () => {
+    const doctor = buildTauriInstallPrerequisiteDoctor({ root: ROOT });
+    const doctorCheck = verifyTauriInstallPrerequisiteDoctor({ root: ROOT, doctor });
+    const dryRun = buildTauriInstallDryRunExecutorContract({ root: ROOT, prerequisiteDoctor: doctor });
+    const dryRunCheck = verifyTauriInstallDryRunExecutorContract({ root: ROOT, contract: dryRun });
+    const cliDoctor = JSON.parse(execFileSync(process.execPath, [CLI, "control", "tauri-prerequisite-doctor"], {
+      cwd: ROOT,
+      encoding: "utf8",
+    }));
+    const cliDryRunCheck = JSON.parse(execFileSync(process.execPath, [CLI, "control", "tauri-dry-run-contract-check"], {
+      cwd: ROOT,
+      encoding: "utf8",
+    }));
+    const gatewayDoctor = handleGatewayRequest({ root: ROOT, method: "GET", path: "/app-shell/tauri-prerequisite-doctor" });
+    const gatewayDoctorCheck = handleGatewayRequest({ root: ROOT, method: "GET", path: "/app-shell/tauri-prerequisite-doctor/verify" });
+    const gatewayDryRun = handleGatewayRequest({ root: ROOT, method: "GET", path: "/app-shell/tauri-dry-run-contract" });
+    const gatewayDryRunCheck = handleGatewayRequest({ root: ROOT, method: "GET", path: "/app-shell/tauri-dry-run-contract/verify" });
+
+    assert.equal(doctor.schema, "gpao_t.tauri_install_prerequisite_doctor.v0_1");
+    assert.equal(doctor.status, "ready");
+    assert.equal(doctor.executionMode, "inspection_only_no_install_no_build");
+    assert.equal(doctor.toolchainPolicy.cargoVersionExecuted, false);
+    assert.equal(doctor.toolchainPolicy.tauriCliExecuted, false);
+    assert.equal(doctor.toolchainPolicy.dependencyInstallExecuted, false);
+    assert.equal(doctor.toolchainPolicy.buildExecuted, false);
+    assert.equal(doctor.toolchainPolicy.allowedNow, false);
+    assert.equal(doctor.rollbackCheckpoint.requiredBeforeDryRun, true);
+    assert.ok(doctor.rollbackCheckpoint.currentCommit);
+    assert.equal(doctorCheck.status, "ready");
+    assert.equal(dryRun.schema, "gpao_t.tauri_install_dry_run_executor_contract.v0_1");
+    assert.equal(dryRun.status, "ready");
+    assert.equal(dryRun.executionMode, "contract_only_no_dry_run_execution");
+    assert.equal(dryRun.dryRunGate.allowedNow, false);
+    assert.equal(dryRun.dryRunGate.executorImplemented, false);
+    assert.equal(dryRun.dryRunGate.executorInvoked, false);
+    assert.equal(dryRun.dryRunGate.writesFiles, false);
+    assert.equal(dryRun.dryRunGate.runsInstall, false);
+    assert.equal(dryRun.dryRunGate.runsUpdate, false);
+    assert.equal(dryRun.dryRunGate.runsRollback, false);
+    assert.equal(dryRun.dryRunGate.runsTauriBuild, false);
+    assert.equal(dryRun.dryRunGate.runsDependencyInstall, false);
+    assert.equal(dryRun.dryRunGate.runsExternalDownload, false);
+    assert.equal(dryRun.dryRunGate.opensIpc, false);
+    assert.deepEqual(dryRun.operationPlans.map((plan) => plan.operation), ["install", "update", "rollback"]);
+    assert.equal(dryRun.operationPlans.every((plan) => plan.mutationAllowed === false), true);
+    assert.equal(dryRun.requiredDryRunArtifacts.length >= 7, true);
+    assert.equal(dryRun.failureRecoveryStates.some((state) => state.id === "dry_run_invoked_too_early"), true);
+    assert.equal(dryRunCheck.status, "ready");
+    assert.equal(cliDoctor.schema, doctor.schema);
+    assert.equal(cliDryRunCheck.status, "ready");
+    assert.equal(gatewayDoctor.status, 200);
+    assert.equal(gatewayDoctor.body.schema, doctor.schema);
+    assert.equal(gatewayDoctorCheck.body.status, "ready");
+    assert.equal(gatewayDryRun.status, 200);
+    assert.equal(gatewayDryRun.body.schema, dryRun.schema);
+    assert.equal(gatewayDryRunCheck.body.status, "ready");
   });
 });

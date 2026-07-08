@@ -51,3 +51,12 @@ Tauri install / update / rollback readiness gate:
 - Loopback routes: `GET /app-shell/tauri-install-gate` and `GET /app-shell/tauri-install-gate/verify`
 - Required invariant: this gate is read-only and review-only. It may inspect package hardening, Tauri gate status, Tauri shell status, visual QA evidence, source files, and rollback substrate, but it must not install dependencies, run Cargo/Tauri build, bundle, sign, create an installer, execute install/update/rollback, activate IPC, download externally, mutate state, or activate connectors/models/tools.
 - Next gate: prerequisite doctor and dry-run executor contract design only; real install/update/rollback execution remains blocked until explicit later approval.
+
+Tauri prerequisite doctor and dry-run executor contract:
+
+- Gate document: `docs/03-engineering/TAURI-PREREQUISITE-DOCTOR-AND-DRY-RUN-CONTRACT.md`
+- Prerequisite checks: `node bin/gpao-t.js control tauri-prerequisite-doctor` and `node bin/gpao-t.js control tauri-prerequisite-doctor-check`
+- Dry-run checks: `node bin/gpao-t.js control tauri-dry-run-contract` and `node bin/gpao-t.js control tauri-dry-run-contract-check`
+- Loopback routes: `GET /app-shell/tauri-prerequisite-doctor`, `GET /app-shell/tauri-prerequisite-doctor/verify`, `GET /app-shell/tauri-dry-run-contract`, and `GET /app-shell/tauri-dry-run-contract/verify`
+- Required invariant: prerequisite doctor is inspection-only and must not invoke Cargo, Tauri CLI, dependency installation, build, signing, installer creation, or IPC. Dry-run executor is contract-only and must not implement, invoke, write files, download externally, build, install, update, rollback, activate connectors/models/tools, deploy, open messenger, or start automation.
+- Next gate: approval-gated dry-run executor implementation design only; real install/update/rollback execution remains blocked.

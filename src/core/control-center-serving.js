@@ -24,6 +24,12 @@ import {
   verifyTauriInstallReadinessGate,
 } from "./tauri-install-readiness-gate.js";
 import {
+  buildTauriInstallDryRunExecutorContract,
+  buildTauriInstallPrerequisiteDoctor,
+  verifyTauriInstallDryRunExecutorContract,
+  verifyTauriInstallPrerequisiteDoctor,
+} from "./tauri-install-execution-contracts.js";
+import {
   buildTauriReadOnlyShellHtml,
   buildTauriReadOnlyShellSlice,
   verifyTauriReadOnlyShellSlice,
@@ -57,6 +63,10 @@ export function buildControlCenterServingContract({
       { path: "/app-shell/tauri-gate/verify", content: "tauri_packaged_desktop_gate_verification" },
       { path: "/app-shell/tauri-install-gate", content: "tauri_install_update_rollback_readiness_gate" },
       { path: "/app-shell/tauri-install-gate/verify", content: "tauri_install_update_rollback_readiness_gate_verification" },
+      { path: "/app-shell/tauri-prerequisite-doctor", content: "tauri_install_prerequisite_doctor" },
+      { path: "/app-shell/tauri-prerequisite-doctor/verify", content: "tauri_install_prerequisite_doctor_verification" },
+      { path: "/app-shell/tauri-dry-run-contract", content: "tauri_install_dry_run_executor_contract" },
+      { path: "/app-shell/tauri-dry-run-contract/verify", content: "tauri_install_dry_run_executor_contract_verification" },
       { path: "/app-shell/tauri-shell", content: "tauri_readonly_shell_html" },
       { path: "/app-shell/tauri-shell.html", content: "tauri_readonly_shell_html" },
       { path: "/app-shell/tauri-shell/slice", content: "tauri_readonly_shell_slice" },
@@ -243,6 +253,26 @@ export async function startControlCenterPreviewServer({
       return;
     }
 
+    if (url.pathname === "/app-shell/tauri-prerequisite-doctor") {
+      respondJson(response, 200, buildTauriInstallPrerequisiteDoctor());
+      return;
+    }
+
+    if (url.pathname === "/app-shell/tauri-prerequisite-doctor/verify") {
+      respondJson(response, 200, verifyTauriInstallPrerequisiteDoctor());
+      return;
+    }
+
+    if (url.pathname === "/app-shell/tauri-dry-run-contract") {
+      respondJson(response, 200, buildTauriInstallDryRunExecutorContract());
+      return;
+    }
+
+    if (url.pathname === "/app-shell/tauri-dry-run-contract/verify") {
+      respondJson(response, 200, verifyTauriInstallDryRunExecutorContract());
+      return;
+    }
+
     if (url.pathname === "/app-shell/tauri-shell/slice") {
       respondJson(response, 200, buildTauriReadOnlyShellSlice());
       return;
@@ -331,6 +361,10 @@ export async function verifyControlCenterPreviewServing({
     const tauriGateVerify = await fetchJson(`http://${host}:${preview.port}/app-shell/tauri-gate/verify`);
     const tauriInstallGate = await fetchJson(`http://${host}:${preview.port}/app-shell/tauri-install-gate`);
     const tauriInstallGateVerify = await fetchJson(`http://${host}:${preview.port}/app-shell/tauri-install-gate/verify`);
+    const tauriPrerequisiteDoctor = await fetchJson(`http://${host}:${preview.port}/app-shell/tauri-prerequisite-doctor`);
+    const tauriPrerequisiteDoctorVerify = await fetchJson(`http://${host}:${preview.port}/app-shell/tauri-prerequisite-doctor/verify`);
+    const tauriDryRunContract = await fetchJson(`http://${host}:${preview.port}/app-shell/tauri-dry-run-contract`);
+    const tauriDryRunContractVerify = await fetchJson(`http://${host}:${preview.port}/app-shell/tauri-dry-run-contract/verify`);
     const tauriShell = await fetchText(`http://${host}:${preview.port}/app-shell/tauri-shell`);
     const tauriShellSlice = await fetchJson(`http://${host}:${preview.port}/app-shell/tauri-shell/slice`);
     const tauriShellVerify = await fetchJson(`http://${host}:${preview.port}/app-shell/tauri-shell/verify`);
@@ -378,6 +412,24 @@ export async function verifyControlCenterPreviewServing({
     if (tauriInstallGateVerify.status !== 200 || tauriInstallGateVerify.body.status !== "ready") {
       findings.push("tauri_install_gate_verify_not_ready");
     }
+    if (
+      tauriPrerequisiteDoctor.status !== 200
+      || tauriPrerequisiteDoctor.body.schema !== "gpao_t.tauri_install_prerequisite_doctor.v0_1"
+    ) {
+      findings.push("tauri_prerequisite_doctor_not_ready");
+    }
+    if (tauriPrerequisiteDoctorVerify.status !== 200 || tauriPrerequisiteDoctorVerify.body.status !== "ready") {
+      findings.push("tauri_prerequisite_doctor_verify_not_ready");
+    }
+    if (
+      tauriDryRunContract.status !== 200
+      || tauriDryRunContract.body.schema !== "gpao_t.tauri_install_dry_run_executor_contract.v0_1"
+    ) {
+      findings.push("tauri_dry_run_contract_not_ready");
+    }
+    if (tauriDryRunContractVerify.status !== 200 || tauriDryRunContractVerify.body.status !== "ready") {
+      findings.push("tauri_dry_run_contract_verify_not_ready");
+    }
     if (tauriShell.status !== 200) {
       findings.push("tauri_shell_route_not_200");
     }
@@ -404,6 +456,8 @@ export async function verifyControlCenterPreviewServing({
       appShellUrl: `http://${host}:${preview.port}/app-shell`,
       tauriGateUrl: `http://${host}:${preview.port}/app-shell/tauri-gate`,
       tauriInstallGateUrl: `http://${host}:${preview.port}/app-shell/tauri-install-gate`,
+      tauriPrerequisiteDoctorUrl: `http://${host}:${preview.port}/app-shell/tauri-prerequisite-doctor`,
+      tauriDryRunContractUrl: `http://${host}:${preview.port}/app-shell/tauri-dry-run-contract`,
       tauriShellUrl: `http://${host}:${preview.port}/app-shell/tauri-shell`,
       tauriShellSliceUrl: `http://${host}:${preview.port}/app-shell/tauri-shell/slice`,
       healthStatus: health.status,
@@ -411,6 +465,8 @@ export async function verifyControlCenterPreviewServing({
       appShellStatus: appShell.status,
       tauriGateStatus: tauriGate.status,
       tauriInstallGateStatus: tauriInstallGate.status,
+      tauriPrerequisiteDoctorStatus: tauriPrerequisiteDoctor.status,
+      tauriDryRunContractStatus: tauriDryRunContract.status,
       tauriShellStatus: tauriShell.status,
       tauriShellSliceStatus: tauriShellSlice.status,
       blockedPostStatus: blockedPost.status,

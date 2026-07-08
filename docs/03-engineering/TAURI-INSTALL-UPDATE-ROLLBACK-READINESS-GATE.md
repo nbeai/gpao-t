@@ -1,6 +1,6 @@
 # Tauri Install / Update / Rollback Readiness Gate
 
-Status: readiness gate added, execution blocked
+Status: readiness gate added, prerequisite/dry-run contract added, execution blocked
 Scope: packaged desktop install/update/rollback readiness after packaged-shell visual QA
 
 This gate is not an installer, updater, rollback executor, package build, signing step, or distribution step. It is a read-only product contract that checks whether GPAO-T has enough source, visual, package, and rollback evidence to design later executors safely.
@@ -91,4 +91,4 @@ Rollback gate:
 
 ## Next Safe Action
 
-Design prerequisite doctor and dry-run executor contracts next. Keep real install, update, rollback, Tauri build, IPC, external download, connectors, models, tools, deployment, messenger, and automation blocked.
+Use `docs/03-engineering/TAURI-PREREQUISITE-DOCTOR-AND-DRY-RUN-CONTRACT.md` and the `tauri-prerequisite-doctor` / `tauri-dry-run-contract` checks as the next gate. Keep real install, update, rollback, Tauri build, IPC, external download, connectors, models, tools, deployment, messenger, and automation blocked.

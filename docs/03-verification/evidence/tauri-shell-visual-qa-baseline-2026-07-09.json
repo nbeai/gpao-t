@@ -86,5 +86,5 @@
     }
   ],
   "fileFormat": "jpeg",
-  "nextSafeAction": "Design prerequisite doctor and dry-run executor contracts next; keep real install/update/rollback execution, Tauri build, IPC, external download, connectors, models, tools, deployment, messenger, and automation blocked."
+  "nextSafeAction": "Use this packaged-shell visual baseline together with the install/update/rollback readiness gate, prerequisite doctor, and dry-run executor contract before designing any approval-gated dry-run implementation; keep real install/update/rollback execution, Tauri build, IPC, external download, connectors, models, tools, deployment, messenger, and automation blocked."
 }

@@ -169,13 +169,14 @@ export function buildTauriInstallReadinessGate({
       "2_prerequisite_doctor_without_install",
       "3_package_manifest_and_integrity_policy",
       "4_backup_and_rollback_snapshot_contract",
-      "5_dry_run_executor_gate_after_approval",
-      "6_signed_package_gate_after_approval",
-      "7_real_install_update_rollback_executor_after_approval",
+      "5_prerequisite_doctor_and_dry_run_contract",
+      "6_dry_run_executor_implementation_gate_after_approval",
+      "7_signed_package_gate_after_approval",
+      "8_real_install_update_rollback_executor_after_approval",
     ],
     nextSafeAction: readinessFindings.length
       ? "Fix readiness findings before designing any packaged desktop install/update/rollback executor."
-      : "Design prerequisite doctor and dry-run executor contracts next; keep real install, update, rollback, Tauri build, IPC, external download, connectors, models, tools, deployment, messenger, and automation blocked.",
+      : "Use prerequisite doctor and dry-run executor contracts before any approval-gated dry-run implementation; keep real install, update, rollback, Tauri build, IPC, external download, connectors, models, tools, deployment, messenger, and automation blocked.",
   };
 }
 
@@ -197,7 +198,7 @@ export function verifyTauriInstallReadinessGate({
   if (gate.authorityBoundary.rollbackExecution !== "blocked") findings.push("rollback_execution_not_blocked");
   if (gate.authorityBoundary.localIpc !== "blocked") findings.push("local_ipc_not_blocked");
   if (gate.authorityBoundary.externalDownload !== "blocked") findings.push("external_download_not_blocked");
-  if (!gate.implementationOrder.includes("5_dry_run_executor_gate_after_approval")) findings.push("dry_run_gate_missing");
+  if (!gate.implementationOrder.includes("5_prerequisite_doctor_and_dry_run_contract")) findings.push("dry_run_contract_gate_missing");
   if (!gate.failureRecoveryStates.some((state) => state.id === "executor_requested_too_early")) {
     findings.push("executor_too_early_recovery_missing");
   }
@@ -215,7 +216,7 @@ export function verifyTauriInstallReadinessGate({
     authorityBoundary: gate.authorityBoundary,
     nextSafeAction: findings.length
       ? "Fix packaged desktop install/update/rollback readiness findings before any executor design."
-      : "Proceed only to prerequisite doctor and dry-run executor contract design; keep real install/update/rollback execution, Tauri build, IPC, external download, connectors, models, tools, deployment, messenger, and automation blocked.",
+      : "Proceed only to approval-gated dry-run executor implementation design after prerequisite/dry-run contracts remain verified; keep real install/update/rollback execution, Tauri build, IPC, external download, connectors, models, tools, deployment, messenger, and automation blocked.",
   };
 }
 

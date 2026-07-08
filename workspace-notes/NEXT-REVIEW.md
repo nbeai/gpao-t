@@ -2,29 +2,25 @@
 
 ## Next Safe Action
 
-Design prerequisite doctor and dry-run executor contracts for packaged desktop install/update/rollback. Keep them contract-first, read-mostly, evidence-producing, and approval-gated. Do not execute install, update, rollback, Tauri build, IPC, connector/model/tool activation, deployment, messenger, or automation.
+Commit the verified prerequisite doctor / dry-run executor contract slice. The following product step should be approval-gated dry-run executor implementation design only, not execution.
 
 ## Review Before Continuing
 
-- Confirm `node bin/gpao-t.js control app-shell-check` remains `ready`.
-- Confirm `node bin/gpao-t.js control tauri-gate-check` remains `ready`.
-- Confirm `node bin/gpao-t.js control tauri-shell-check` remains `ready`.
-- Confirm `node bin/gpao-t.js control tauri-install-gate-check` remains `ready`.
-- Confirm packaged-shell visual QA evidence stays replayable through `test/control-center.test.js`.
-- Preserve no-execution invariants: no dependency install, no Cargo/Tauri build, no IPC, no package signing, no installer creation, no install/update/rollback execution, no external download, and no connector/model/tool activation.
-- Treat the BEAI closeout session-history review blocker as a procedural note from context recovery; do not let it hide the product-level verification evidence.
+- Confirm `node bin/gpao-t.js control tauri-prerequisite-doctor-check` remains `ready`.
+- Confirm `node bin/gpao-t.js control tauri-dry-run-contract-check` remains `ready`.
+- Confirm `node bin/gpao-t.js control serve-check` includes `tauriPrerequisiteDoctorStatus` and `tauriDryRunContractStatus`.
+- Confirm `npm run verify` passes.
+- Preserve no-execution invariants: no dry-run invocation, no dependency install, no Cargo/Tauri build, no IPC, no package signing, no installer creation, no install/update/rollback execution, no external download, and no connector/model/tool activation.
 
 ## Session Resume
 
-The read-mostly Tauri shell source scaffold, packaged-shell visual QA baseline, and packaged desktop install/update/rollback readiness gate are in place and locally verified. Next work should define prerequisite doctor and dry-run executor contracts as documentation, machine contracts, CLI/Gateway checks, and tests only.
+The read-mostly Tauri shell source scaffold, packaged-shell visual QA baseline, packaged desktop install/update/rollback readiness gate, and prerequisite doctor / dry-run executor contracts are implemented and verified as local no-execution contracts. Next work should commit this slice, then design an approval-gated dry-run executor implementation without executing it.
 
 ## Recent Evidence
 
-- `npm run verify`: passed with 89 tests / 16 suites.
-- `node bin/gpao-t.js control app-shell-check`: covered by the verify suite.
-- `node bin/gpao-t.js control tauri-gate-check`: covered by the verify suite.
-- `node bin/gpao-t.js control tauri-shell-check`: covered by the verify suite.
-- `node bin/gpao-t.js control tauri-install-gate-check`: ready.
-- `node bin/gpao-t.js control serve-check`: ready with loopback preview routes.
-- Browser visual QA: desktop/mobile screenshots refreshed for `/app-shell/tauri-shell`.
-- `beai closeout`: written with a session-history review blocker because route/plan evidence was refreshed after implementation during context recovery.
+- `npm run verify`: passed with 90 tests / 16 suites.
+- `node bin/gpao-t.js control tauri-prerequisite-doctor-check`: ready.
+- `node bin/gpao-t.js control tauri-dry-run-contract-check`: ready.
+- `node bin/gpao-t.js control serve-check`: ready with prerequisite doctor and dry-run contract routes.
+- `beai verify --run --scenario --meaning`: pass.
+- `beai closeout`: ready.
