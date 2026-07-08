@@ -1,6 +1,20 @@
 import { readFileSync } from "node:fs";
 import { createServer } from "node:http";
+import {
+  buildBrowserLocalAppShellContract,
+  buildBrowserLocalAppShellHtml,
+  buildBrowserLocalAppShellState,
+  verifyBrowserLocalAppShell,
+} from "./browser-local-app-shell.js";
 import { renderControlCenterHtml } from "./control-center-renderer.js";
+import { buildControlCenterSnapshot, buildControlCenterSummary } from "./control-center.js";
+import {
+  buildControlCenterUiContract,
+  buildControlCenterUiSnapshot,
+  validateControlCenterUiSnapshot,
+} from "./control-center-ui-contract.js";
+import { buildLocalControlCenterDesignContract } from "./design-contract.js";
+import { runDoctor } from "./doctor.js";
 
 const DEFAULT_HOST = "127.0.0.1";
 const DEFAULT_PORT = 0;
@@ -21,6 +35,16 @@ export function buildControlCenterServingContract({
       { path: "/control-center", content: "static_control_center_html" },
       { path: "/control-center.html", content: "static_control_center_html" },
       { path: "/health", content: "local_json_health" },
+      { path: "/app-shell", content: "browser_local_app_shell_html" },
+      { path: "/app-shell.html", content: "browser_local_app_shell_html" },
+      { path: "/app-shell/contract", content: "browser_local_app_shell_contract" },
+      { path: "/app-shell/state", content: "browser_local_app_shell_state" },
+      { path: "/app-shell/verify", content: "browser_local_app_shell_verification" },
+      { path: "/control-center/summary", content: "local_json_control_center_summary" },
+      { path: "/control-center/design", content: "local_json_control_center_design" },
+      { path: "/control-center/ui-contract", content: "local_json_control_center_ui_contract" },
+      { path: "/control-center/ui-snapshot", content: "local_json_control_center_ui_snapshot" },
+      { path: "/control-center/ui-validate", content: "local_json_control_center_ui_validation" },
     ],
     defaultRoute: route,
     renderBeforeServe: true,
@@ -100,6 +124,19 @@ export async function startControlCenterPreviewServer({
 
   const server = createServer((request, response) => {
     const url = new URL(request.url || "/", `http://${host}`);
+    if (request.method !== "GET") {
+      respondJson(response, 405, {
+        schema: "gpao_t.browser_local_app_shell_blocked_route.v0_1",
+        status: "blocked",
+        method: request.method,
+        path: url.pathname,
+        reason: "browser_local_app_shell_first_slice_is_get_only",
+        blockedActions: buildBrowserLocalAppShellContract().blockedActions,
+        nextSafeAction: "Use GET-only app-shell and control-center read routes.",
+      });
+      return;
+    }
+
     if (url.pathname === "/health") {
       respondJson(response, 200, {
         schema: "gpao_t.control_center_serving_health.v0_1",
@@ -107,6 +144,69 @@ export async function startControlCenterPreviewServer({
         servingMode: contract.servingMode,
         authorityBoundary: contract.authorityBoundary,
       });
+      return;
+    }
+
+    if (url.pathname === "/control-center/summary") {
+      respondJson(response, 200, buildControlCenterSummary({ root }));
+      return;
+    }
+
+    if (url.pathname === "/control-center/design") {
+      respondJson(response, 200, buildLocalControlCenterDesignContract());
+      return;
+    }
+
+    if (url.pathname === "/control-center/ui-contract") {
+      respondJson(response, 200, buildControlCenterUiContract());
+      return;
+    }
+
+    if (url.pathname === "/control-center/ui-snapshot") {
+      const snapshot = buildControlCenterSnapshot({ root });
+      respondJson(response, 200, buildControlCenterUiSnapshot({
+        snapshot,
+        designContract: buildLocalControlCenterDesignContract(),
+      }));
+      return;
+    }
+
+    if (url.pathname === "/control-center/ui-validate") {
+      const snapshot = buildControlCenterSnapshot({ root });
+      const uiSnapshot = buildControlCenterUiSnapshot({
+        snapshot,
+        designContract: buildLocalControlCenterDesignContract(),
+      });
+      respondJson(response, 200, validateControlCenterUiSnapshot({ uiSnapshot }));
+      return;
+    }
+
+    if (url.pathname === "/app-shell/contract") {
+      respondJson(response, 200, buildBrowserLocalAppShellContract());
+      return;
+    }
+
+    if (url.pathname === "/app-shell/state") {
+      respondJson(response, 200, buildBrowserLocalAppShellState({ root, now }));
+      return;
+    }
+
+    if (url.pathname === "/app-shell/verify") {
+      respondJson(response, 200, verifyBrowserLocalAppShell({
+        state: buildBrowserLocalAppShellState({ root, now }),
+      }));
+      return;
+    }
+
+    if (["/app-shell", "/app-shell.html"].includes(url.pathname)) {
+      response.writeHead(200, {
+        "content-type": "text/html; charset=utf-8",
+        "cache-control": "no-store",
+        "x-gpao-t-surface": "browser-local-app-shell",
+      });
+      response.end(buildBrowserLocalAppShellHtml({
+        state: buildBrowserLocalAppShellState({ root, now }),
+      }));
       return;
     }
 
@@ -160,6 +260,9 @@ export async function verifyControlCenterPreviewServing({
   try {
     const health = await fetchJson(`http://${host}:${preview.port}/health`);
     const page = await fetchText(preview.url);
+    const appShell = await fetchText(`http://${host}:${preview.port}/app-shell`);
+    const appShellState = await fetchJson(`http://${host}:${preview.port}/app-shell/state`);
+    const blockedPost = await fetchJson(`http://${host}:${preview.port}/app-shell`, { method: "POST" });
     const findings = [];
 
     if (health.status !== 200 || health.body.status !== "ready") {
@@ -179,13 +282,31 @@ export async function verifyControlCenterPreviewServing({
     if (/https?:\/\/(?!127\.0\.0\.1|localhost)/i.test(page.body)) {
       findings.push("external_url_present");
     }
+    if (appShell.status !== 200) {
+      findings.push("app_shell_route_not_200");
+    }
+    if (!appShell.body.includes("GPAO-T Browser-Local App Shell")) {
+      findings.push("app_shell_missing_title");
+    }
+    if (/<script/i.test(appShell.body)) {
+      findings.push("app_shell_script_tag_present");
+    }
+    if (appShellState.status !== 200 || appShellState.body.schema !== "gpao_t.browser_local_app_shell_state.v0_1") {
+      findings.push("app_shell_state_not_ready");
+    }
+    if (blockedPost.status !== 405 || blockedPost.body.status !== "blocked") {
+      findings.push("app_shell_post_not_blocked");
+    }
 
     return {
       schema: "gpao_t.control_center_serving_verification.v0_1",
       status: findings.length ? "blocked" : "ready",
       url: preview.url,
+      appShellUrl: `http://${host}:${preview.port}/app-shell`,
       healthStatus: health.status,
       pageStatus: page.status,
+      appShellStatus: appShell.status,
+      blockedPostStatus: blockedPost.status,
       contentLength: page.body.length,
       requiredVisibleText: preview.contract.screenshotVerification.requiredVisibleText,
       findings,
@@ -214,8 +335,8 @@ async function fetchText(url) {
   };
 }
 
-async function fetchJson(url) {
-  const response = await fetch(url);
+async function fetchJson(url, init) {
+  const response = await fetch(url, init);
   return {
     status: response.status,
     body: await response.json(),

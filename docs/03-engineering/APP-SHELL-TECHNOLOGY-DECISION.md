@@ -172,4 +172,15 @@ The app shell must model these states before implementation:
 
 The app-shell decision gate is closed for planning.
 
-Implementation remains blocked until a separate app-shell contract/build step starts from this decision and keeps the first slice browser-local, read-mostly, loopback-only, screenshot-verified, and no-external-activation.
+The first implementation step after this decision is the browser-local app-shell contract/build:
+
+- `gpao-t control app-shell-contract`
+- `gpao-t control app-shell-state`
+- `gpao-t control app-shell-html`
+- `gpao-t control app-shell-check`
+- `GET /app-shell`
+- `GET /app-shell/contract`
+- `GET /app-shell/state`
+- `GET /app-shell/verify`
+
+This implementation must remain browser-local, read-mostly, loopback-only, screenshot-verifiable, and no-external-activation.

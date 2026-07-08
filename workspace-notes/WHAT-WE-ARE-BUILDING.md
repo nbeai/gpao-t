@@ -1,21 +1,21 @@
 # What We Are Building
 
-GPAO-T is moving from the no-script Local Control Center reader into a browser-local app-shell build path while preserving local-first operation, authority visibility, next safe action visibility, screenshot QA, and no external activation.
+GPAO-T is moving from the no-script Control Center reader into a browser-local app-shell proof. The first app-shell slice is a read-mostly 127.0.0.1 surface that reads health/control-center/app-shell state, exposes panel navigation and evidence inspection, and keeps all mutating or external activation paths blocked.
 
 ## Current Phase
 
-- Phase: app-shell decision gate
-- Command: docs/test gate
-- Status: decision closed, implementation not started
+- Phase: closeout
+- Command: closeout
+- Status: ready
 
 ## User Mode
 
-- Mode: beginner
-- Task type: plugin
+- Mode: general user and developer friendly
+- Task type: browser-local app-shell proof
 
 ## First Workflow
 
-Browser-local app shell over `127.0.0.1` read-mostly HTTP
+Browser-local Control Center inspection
 
 ## Companion Principle
 
@@ -23,16 +23,16 @@ AI does the work. User keeps authority.
 
 ## AI First
 
-- AI/developer verifies first success path for Guided First Workflow.
-- AI/developer verifies empty or first-time state before asking the user to test.
-- AI/developer verifies likely failure or recovery state before claiming completion.
-- AI/developer inspects the main visual flow when a UI exists.
+- AI/developer verifies GET-only routes, blocked POST routes, and no external activation.
+- AI/developer verifies desktop/mobile visual QA before claiming the app-shell proof is ready.
+- AI/developer verifies failure/recovery, authority, next safe action, and screenshot QA visibility.
+- AI/developer keeps Tauri/Electron, local IPC, connector/model/tool activation, durable memory promotion, install/update/rollback execution, deployment, messenger, and automation outside this slice.
 
 ## User Authority
 
-- Approve later if the product should move from browser-local shell to packaged Tauri desktop shell.
+- Confirm whether the browser-local app-shell feels like the intended product direction.
 - Approve any taste, brand, operating policy, or business decision that AI cannot know.
 
 ## Latest Summary
 
-App-shell decision gate is closed in docs and tests. First target is browser-local shell over `127.0.0.1` read-mostly HTTP; Tauri is the first packaged desktop target after proof; Electron is deferred. BEAI closeout remains conservative because implementation is intentionally not started.
+Closeout decision: ready. Browser-local app-shell first slice is implemented and verified as read-mostly/GET-only.

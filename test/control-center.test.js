@@ -8,6 +8,9 @@ import { describe, it } from "node:test";
 import {
   appendReplayRecoveryRecord,
   appendSelfGrowthProposal,
+  buildBrowserLocalAppShellContract,
+  buildBrowserLocalAppShellHtml,
+  buildBrowserLocalAppShellState,
   buildControlCenterHtml,
   buildControlCenterServingContract,
   buildControlCenterSnapshot,
@@ -22,6 +25,7 @@ import {
   renderControlCenterHtml,
   startControlCenterPreviewServer,
   validateControlCenterUiSnapshot,
+  verifyBrowserLocalAppShell,
   verifyControlCenterPreviewServing,
 } from "../src/index.js";
 import releaseFixture from "../fixtures/replay/release-file-active-target.json" with { type: "json" };
@@ -371,6 +375,71 @@ describe("GPAO-T Local Control Center readiness", () => {
     assert.equal(contract.authorityBoundary.deploysOrPublishes, false);
   });
 
+  it("defines the browser-local app-shell first slice as read-mostly and GET-only", () => {
+    const contract = buildBrowserLocalAppShellContract();
+    const state = buildBrowserLocalAppShellState({ root: tempRoot(), now: "2026-07-09T00:00:00.000Z" });
+
+    assert.equal(contract.schema, "gpao_t.browser_local_app_shell_contract.v0_1");
+    assert.equal(contract.shellKind, "browser_local_app_shell");
+    assert.equal(contract.runtimeBoundary.transport, "127.0.0.1_http");
+    assert.equal(contract.runtimeBoundary.localIpc, "blocked_in_first_slice");
+    assert.equal(contract.runtimeBoundary.packagedDesktopTarget, "tauri_after_browser_local_proof");
+    assert.equal(contract.allowedGetRoutes.includes("/health"), true);
+    assert.equal(contract.allowedGetRoutes.includes("/control-center/ui-validate"), true);
+    assert.equal(contract.blockedPostRoutes.includes("/turn"), true);
+    assert.equal(contract.blockedActions.includes("connector activation"), true);
+    assert.equal(contract.blockedActions.includes("model activation"), true);
+    assert.equal(contract.blockedActions.includes("tool activation"), true);
+    assert.equal(contract.blockedActions.includes("install execution"), true);
+    assert.equal(contract.blockedActions.includes("rollback execution"), true);
+    assert.equal(contract.blockedActions.includes("durable memory promotion"), true);
+    assert.equal(contract.blockedActions.includes("self-growth apply"), true);
+    assert.equal(contract.blockedActions.includes("deployment"), true);
+    assert.equal(contract.blockedActions.includes("messenger surfaces"), true);
+    assert.equal(contract.blockedActions.includes("recurring automation"), true);
+    assert.equal(contract.authorityBoundary.mutationAuthority, "none_in_first_slice");
+    assert.equal(contract.auditReplayRollback.auditWritesFromShell, false);
+    assert.equal(contract.screenshotQa.requiredViewports.length, 2);
+    assert.equal(contract.failureRecoveryStates.some((failure) => failure.id === "runtime_unavailable"), true);
+    assert.equal(contract.failureRecoveryStates.some((failure) => failure.id === "snapshot_invalid"), true);
+    assert.equal(state.schema, "gpao_t.browser_local_app_shell_state.v0_1");
+    assert.equal(state.sourceRoutes.every((route) => route.method === "GET"), true);
+    assert.equal(state.blockedRoutes.every((route) => route.method === "POST" && route.mode === "blocked"), true);
+    assert.equal(state.panels.length > 0, true);
+  });
+
+  it("renders the browser-local app shell with panel navigation, evidence inspection, and recovery state", () => {
+    const state = buildBrowserLocalAppShellState({
+      root: tempRoot(),
+      runtimeAvailable: false,
+      staleSnapshot: true,
+      now: "2026-07-09T00:01:00.000Z",
+    });
+    const html = buildBrowserLocalAppShellHtml({ state });
+    const verification = verifyBrowserLocalAppShell({ html, state });
+
+    assert.match(html, /GPAO-T Browser-Local App Shell/);
+    assert.match(html, /127\.0\.0\.1 read-mostly shell/);
+    assert.match(html, /POST and external activation blocked/);
+    assert.match(html, /data-app-shell="browser-local"/);
+    assert.match(html, /data-interaction-mode="read-mostly-get"/);
+    assert.match(html, /href="#shell-panel-runtime"/);
+    assert.match(html, /data-shell-panel="runtime"/);
+    assert.match(html, /data-evidence-inspection="runtime"/);
+    assert.match(html, /id="shell-failure-recovery"/);
+    assert.match(html, /data-failure-recovery-state="runtime_unavailable" data-active="true"/);
+    assert.match(html, /data-failure-recovery-state="stale_snapshot" data-active="true"/);
+    assert.match(html, /id="shell-screenshot-qa"/);
+    assert.match(html, /nonblank_viewport/);
+    assert.match(html, /connector activation/);
+    assert.match(html, /durable memory promotion/);
+    assert.doesNotMatch(html, /<script/i);
+    assert.doesNotMatch(html, /<form/i);
+    assert.doesNotMatch(html, /method=["']?post/i);
+    assert.doesNotMatch(html, /https?:\/\/(?!127\.0\.0\.1|localhost)/i);
+    assert.equal(verification.status, "ready");
+  });
+
   it("serves the static Control Center over loopback and verifies page content", async () => {
     const root = tempRoot();
     const preview = await startControlCenterPreviewServer({
@@ -381,6 +450,12 @@ describe("GPAO-T Local Control Center readiness", () => {
     try {
       const health = await fetchJson(`http://127.0.0.1:${preview.port}/health`);
       const page = await fetchText(preview.url);
+      const appShell = await fetchText(`http://127.0.0.1:${preview.port}/app-shell`);
+      const appShellContract = await fetchJson(`http://127.0.0.1:${preview.port}/app-shell/contract`);
+      const appShellState = await fetchJson(`http://127.0.0.1:${preview.port}/app-shell/state`);
+      const appShellVerify = await fetchJson(`http://127.0.0.1:${preview.port}/app-shell/verify`);
+      const controlSummary = await fetchJson(`http://127.0.0.1:${preview.port}/control-center/summary`);
+      const blockedPost = await fetchJson(`http://127.0.0.1:${preview.port}/app-shell`, { method: "POST" });
 
       assert.equal(preview.schema, "gpao_t.control_center_preview_server.v0_1");
       assert.equal(preview.status, "serving");
@@ -393,6 +468,16 @@ describe("GPAO-T Local Control Center readiness", () => {
       assert.match(page.body, /GPAO-T Local Control Center/);
       assert.match(page.body, /다음 안전 행동/);
       assert.doesNotMatch(page.body, /<script/i);
+      assert.equal(appShell.status, 200);
+      assert.match(appShell.body, /GPAO-T Browser-Local App Shell/);
+      assert.doesNotMatch(appShell.body, /<script/i);
+      assert.equal(appShellContract.body.schema, "gpao_t.browser_local_app_shell_contract.v0_1");
+      assert.equal(appShellState.body.schema, "gpao_t.browser_local_app_shell_state.v0_1");
+      assert.equal(appShellVerify.body.status, "ready");
+      assert.equal(controlSummary.body.schema, "gpao_t.control_center_summary.v0_1");
+      assert.equal(blockedPost.status, 405);
+      assert.equal(blockedPost.body.status, "blocked");
+      assert.equal(blockedPost.body.reason, "browser_local_app_shell_first_slice_is_get_only");
     } finally {
       await preview.close();
     }
@@ -415,6 +500,8 @@ describe("GPAO-T Local Control Center readiness", () => {
     assert.equal(verification.findings.length, 0);
     assert.equal(verification.healthStatus, 200);
     assert.equal(verification.pageStatus, 200);
+    assert.equal(verification.appShellStatus, 200);
+    assert.equal(verification.blockedPostStatus, 405);
     assert.equal(verification.authorityBoundary.loopbackOnly, true);
     assert.equal(cliVerification.status, "ready");
     assert.equal(cliVerification.findings.length, 0);
@@ -429,8 +516,8 @@ async function fetchText(url) {
   };
 }
 
-async function fetchJson(url) {
-  const response = await fetch(url);
+async function fetchJson(url, init) {
+  const response = await fetch(url, init);
   return {
     status: response.status,
     body: await response.json(),

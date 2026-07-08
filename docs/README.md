@@ -230,11 +230,18 @@ Local Control Center readiness is exposed as data and a static UI reader, not as
 - `control serve-contract` returns the browser-safe loopback serving and screenshot verification contract
 - `control serve-check` starts a temporary loopback preview server, checks `/health` and `/control-center`, then stops it
 - `control serve [port]` starts an explicit `127.0.0.1` preview server for browser screenshot verification
+- `control app-shell-contract` returns the browser-local app-shell first-slice contract
+- `control app-shell-state` returns read-mostly shell state derived from `GET /health` and `GET /control-center/*`
+- `control app-shell-html` renders the browser-local shell HTML with panel navigation, evidence inspection, failure/recovery state, and screenshot QA anchors
+- `control app-shell-check` verifies the browser-local shell preserves no script, no POST form, no external URL, authority visibility, and failure/recovery markers
 - `GET /control-center`, `GET /control-center/summary`, `GET /control-center/design`, `GET /control-center/ui-contract`, `GET /control-center/ui-snapshot`, and `GET /control-center/ui-validate` expose the same contracts through the local gateway handler
+- `GET /app-shell`, `GET /app-shell/contract`, `GET /app-shell/state`, and `GET /app-shell/verify` expose the browser-local app-shell through the loopback preview server
 
 This keeps the future Codex-like desktop surface light: the first visual layer reads the existing snapshot/design contracts before adding interactivity, daemon behavior, or external activation.
 
 Browser-safe serving is local preview only. It binds to `127.0.0.1`, does not configure OAuth, does not call external models or tools, does not store secrets, does not deploy, and does not become a persistent daemon. The purpose is to capture desktop/mobile screenshots and verify visible state before interactive Control Center work.
+
+Browser-local app-shell first slice is also local preview only. It reads `GET /health` and `GET /control-center/*`, supports panel navigation and evidence inspection, exposes failure/recovery states, and keeps screenshot QA visible. It blocks `POST` routes, connector/model/tool activation, install/update/rollback execution, durable memory promotion, self-growth application, deployment, messenger surfaces, and recurring automation.
 
 Skill Ecosystem readiness is exposed as data before live execution:
 

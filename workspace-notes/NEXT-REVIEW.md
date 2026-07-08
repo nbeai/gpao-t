@@ -2,23 +2,25 @@
 
 ## Next Safe Action
 
-Start the app-shell contract/build step from `docs/03-engineering/APP-SHELL-TECHNOLOGY-DECISION.md`, keeping the first implementation browser-local, read-mostly, loopback-only, screenshot-verified, and no-external-activation.
+Review the browser-local app-shell proof and decide whether the next step is deeper read-only Control Center behavior or a packaged desktop/Tauri decision gate.
 
 ## Review Before Continuing
 
 - Check whether the current phase has pass/blocked evidence.
-- Confirm that AI/developer scenario verification happened before final user review.
-- Keep risky actions manual or dry-run until explicitly approved.
-- Use `applied but unverified` until verification evidence exists.
+- Confirm desktop/mobile visual QA still passes after any UI change.
+- Keep POST routes, connector/model/tool activation, install/update/rollback, durable memory promotion, deployment, messenger, and recurring automation blocked until explicit gates.
+- Keep Tauri packaged desktop work deferred until the browser-local proof is accepted.
+- Use `applied but unverified` until route, test, and visual evidence exists.
 
 ## Session Resume
 
-Continue from the closed app-shell decision gate. BEAI closeout is conservative because the decision document intentionally defines future implementation work.
+Browser-local app-shell first slice is implemented and verified. Continue from read-mostly app-shell refinement or packaged desktop decision only after preserving current invariants.
 
 ## Recent Evidence
 
-- route: Routed work as standard.
-- preflight: Read-only workspace check completed for gpao-t.
+- route: Routed work as strict.
 - plan: Saved build plan.
 - verify: Executed 2 checks.
-- closeout: Conservative review blocker recorded because app-shell implementation is intentionally not started.
+- verify: Executed 2 checks.
+- closeout: Closeout decision: ready.
+- visual QA: desktop/mobile app-shell passed nonblank, panel navigation, evidence inspection, failure/recovery, no overflow, authority boundary, next safe action, screenshot QA, mobile action line, and no topbar overlap.

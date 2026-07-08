@@ -3,6 +3,9 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import {
   handleGatewayRequest,
+  buildBrowserLocalAppShellContract,
+  buildBrowserLocalAppShellHtml,
+  buildBrowserLocalAppShellState,
   initializeRuntimeState,
   appendSelfGrowthProposal,
   appendGrowthApplicationGate,
@@ -60,6 +63,7 @@ import {
   runRuntimeTurn,
   startControlCenterPreviewServer,
   validateControlCenterUiSnapshot,
+  verifyBrowserLocalAppShell,
   verifyControlCenterPreviewServing,
   appendSkillExecutionRun,
 } from "../src/index.js";
@@ -124,6 +128,10 @@ function usage() {
     "  gpao-t control serve-contract",
     "  gpao-t control serve-check",
     "  gpao-t control serve [port]",
+    "  gpao-t control app-shell-contract",
+    "  gpao-t control app-shell-state",
+    "  gpao-t control app-shell-html",
+    "  gpao-t control app-shell-check",
     "  gpao-t state",
     "  gpao-t events",
     "  gpao-t memory capture <title> <body>",
@@ -383,8 +391,16 @@ try {
         stop: "Press Ctrl+C to stop this local preview server.",
       });
       await waitForStop(preview);
+    } else if (subcommand === "app-shell-contract") {
+      printJson(buildBrowserLocalAppShellContract());
+    } else if (subcommand === "app-shell-state") {
+      printJson(buildBrowserLocalAppShellState());
+    } else if (subcommand === "app-shell-html") {
+      process.stdout.write(buildBrowserLocalAppShellHtml());
+    } else if (subcommand === "app-shell-check") {
+      printJson(verifyBrowserLocalAppShell());
     } else {
-      throw new Error("control command requires snapshot, summary, design, ui-contract, ui-snapshot, ui-validate, html, render, serve-contract, serve-check, or serve");
+      throw new Error("control command requires snapshot, summary, design, ui-contract, ui-snapshot, ui-validate, html, render, serve-contract, serve-check, serve, app-shell-contract, app-shell-state, app-shell-html, or app-shell-check");
     }
   } else if (command === "gateway") {
     const [method, requestPath, rawBody] = args;

@@ -7,6 +7,12 @@ import {
 } from "./core/adapter-boundary.js";
 import { buildAuthorityDecision } from "./core/authority.js";
 import {
+  buildBrowserLocalAppShellContract,
+  buildBrowserLocalAppShellHtml,
+  buildBrowserLocalAppShellState,
+  verifyBrowserLocalAppShell,
+} from "./core/browser-local-app-shell.js";
+import {
   buildConnectorGovernanceSummary,
   listConnectors,
   reviewConnectorPermission,
@@ -107,6 +113,9 @@ export {
   appendReplayRecoveryRecord,
   appendSelfGrowthProposal,
   buildAdapterPlan,
+  buildBrowserLocalAppShellContract,
+  buildBrowserLocalAppShellHtml,
+  buildBrowserLocalAppShellState,
   buildConnectorGovernanceSummary,
   buildControlCenterSnapshot,
   buildControlCenterSummary,
@@ -167,6 +176,7 @@ export {
   renderControlCenterHtml,
   startControlCenterPreviewServer,
   validateControlCenterUiSnapshot,
+  verifyBrowserLocalAppShell,
   verifyControlCenterPreviewServing,
   selectModelAdapter,
   selectToolAdapters,

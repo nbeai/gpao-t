@@ -2,18 +2,20 @@
 
 ## Still Excluded
 
-- large rewrite
-- unapproved deployment
-- unrelated refactor
-- technical deep-dive before the first workflow is approved
+- POST/mutating app-shell routes
+- connector, model, or tool activation
+- install/update/rollback execution
+- durable memory promotion or self-growth apply
+- deployment, public release, messenger surfaces, or recurring automation
+- Tauri packaged desktop shell; this remains a later gate after browser-local proof
+- unrelated refactor or broad rewrite
 
 ## Current Completion Boundary
 
-- App-shell decision gate is documented and test-covered.
-- App-shell implementation has not started by design.
-- Current status: decision gate closed, build step not started
+- Do not call an app-shell stage ready unless verification evidence, desktop/mobile visual QA, and completion language guard pass.
+- Do not cross from read-mostly browser-local proof into packaged desktop, IPC, connector activation, or mutation without an explicit gate.
+- Current status: ready
 
 ## Blockers
 
-- BEAI closeout records a product-quality review warning because `APP-SHELL-TECHNOLOGY-DECISION.md` contains actionable future implementation guidance.
-- Browser-local shell implementation, screenshot QA, failure/recovery UI states, and any future Tauri packaged-shell contract remain future work.
+- No unresolved session blocker is recorded.
