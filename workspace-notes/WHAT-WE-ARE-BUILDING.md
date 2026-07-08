@@ -4,8 +4,8 @@ GPAO-T is moving from the no-script Control Center reader into a browser-local a
 
 ## Current Phase
 
-- Phase: closeout
-- Command: closeout
+- Phase: visual-baseline
+- Command: app-shell screenshot QA baseline
 - Status: ready
 
 ## User Mode
@@ -35,4 +35,4 @@ AI does the work. User keeps authority.
 
 ## Latest Summary
 
-Closeout decision: ready. Browser-local app-shell first slice is implemented and verified as read-mostly/GET-only.
+App-shell-specific desktop/mobile screenshot QA baseline evidence is captured under `docs/03-verification/evidence/`, separate from the existing Control Center screen evidence.

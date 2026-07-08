@@ -243,6 +243,13 @@ Browser-safe serving is local preview only. It binds to `127.0.0.1`, does not co
 
 Browser-local app-shell first slice is also local preview only. It reads `GET /health` and `GET /control-center/*`, supports panel navigation and evidence inspection, exposes failure/recovery states, and keeps screenshot QA visible. It blocks `POST` routes, connector/model/tool activation, install/update/rollback execution, durable memory promotion, self-growth application, deployment, messenger surfaces, and recurring automation.
 
+The app-shell-specific visual baseline is stored separately from the older Control Center screenshots:
+
+- `03-verification/evidence/app-shell-baseline-2026-07-09-desktop-viewport-1440x960.jpg`
+- `03-verification/evidence/app-shell-baseline-2026-07-09-mobile-viewport-390x844.jpg`
+- `03-verification/evidence/app-shell-screenshot-qa-baseline-2026-07-09.json`
+- `03-verification/evidence/APP-SHELL-SCREENSHOT-QA-BASELINE-2026-07-09.md`
+
 Skill Ecosystem readiness is exposed as data before live execution:
 
 - `skill ecosystem` returns the product plan, base pack registry, and future runtime hook contract

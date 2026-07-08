@@ -1,0 +1,74 @@
+{
+  "schema": "gpao_t.app_shell_screenshot_qa_baseline.v0_1",
+  "status": "ready",
+  "capturedAt": "2026-07-08T16:37:00.384Z",
+  "target": "http://127.0.0.1:50753/app-shell",
+  "evidenceFiles": {
+    "desktop": "/Users/jyp/Documents/Playground 2/gpao-t/docs/03-verification/evidence/app-shell-baseline-2026-07-09-desktop-viewport-1440x960.jpg",
+    "mobile": "/Users/jyp/Documents/Playground 2/gpao-t/docs/03-verification/evidence/app-shell-baseline-2026-07-09-mobile-viewport-390x844.jpg"
+  },
+  "invariants": {
+    "getOnly": true,
+    "readMostly": true,
+    "noExternalActivation": true,
+    "postBlocked": true,
+    "authorityBoundaryVisible": true,
+    "failureRecoveryStateVisible": true,
+    "nextSafeActionVisible": true
+  },
+  "checks": [
+    {
+      "appShellMarker": "browser-local",
+      "authorityBoundaryVisible": true,
+      "evidenceInspectors": 9,
+      "externalLinks": [],
+      "failureRecoveryStates": 9,
+      "hasForm": false,
+      "hasScript": false,
+      "interactionMode": "read-mostly-get",
+      "label": "desktop",
+      "mobileFixedTopbarActionLineVisible": true,
+      "nextSafeActionVisible": true,
+      "noHorizontalOverflow": true,
+      "noTopbarOverlap": true,
+      "nonblankViewport": true,
+      "panelCount": 9,
+      "panelNavigationVisible": true,
+      "screenshotQaVisible": true,
+      "target": "/app-shell",
+      "title": "GPAO-T Browser-Local App Shell",
+      "viewport": {
+        "height": 960,
+        "width": 1440
+      },
+      "file": "/Users/jyp/Documents/Playground 2/gpao-t/docs/03-verification/evidence/app-shell-baseline-2026-07-09-desktop-viewport-1440x960.jpg"
+    },
+    {
+      "appShellMarker": "browser-local",
+      "authorityBoundaryVisible": true,
+      "evidenceInspectors": 9,
+      "externalLinks": [],
+      "failureRecoveryStates": 9,
+      "hasForm": false,
+      "hasScript": false,
+      "interactionMode": "read-mostly-get",
+      "label": "mobile",
+      "mobileFixedTopbarActionLineVisible": true,
+      "nextSafeActionVisible": true,
+      "noHorizontalOverflow": true,
+      "noTopbarOverlap": true,
+      "nonblankViewport": true,
+      "panelCount": 9,
+      "panelNavigationVisible": true,
+      "screenshotQaVisible": true,
+      "target": "/app-shell",
+      "title": "GPAO-T Browser-Local App Shell",
+      "viewport": {
+        "height": 844,
+        "width": 390
+      },
+      "file": "/Users/jyp/Documents/Playground 2/gpao-t/docs/03-verification/evidence/app-shell-baseline-2026-07-09-mobile-viewport-390x844.jpg"
+    }
+  ],
+  "fileFormat": "jpeg"
+}

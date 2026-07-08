@@ -34,6 +34,14 @@ const CLI = fileURLToPath(new URL("../bin/gpao-t.js", import.meta.url));
 const ROOT = fileURLToPath(new URL("..", import.meta.url));
 const DATA_SCHEMA_PATH = fileURLToPath(new URL("../schema/gpao-t-runtime-data-schema.json", import.meta.url));
 const UI_SCHEMA_PATH = fileURLToPath(new URL("../schema/gpao-t-control-center-ui-schema.json", import.meta.url));
+const APP_SHELL_BASELINE_JSON = fileURLToPath(new URL(
+  "../docs/03-verification/evidence/app-shell-screenshot-qa-baseline-2026-07-09.json",
+  import.meta.url,
+));
+const APP_SHELL_BASELINE_DOC = fileURLToPath(new URL(
+  "../docs/03-verification/evidence/APP-SHELL-SCREENSHOT-QA-BASELINE-2026-07-09.md",
+  import.meta.url,
+));
 
 function tempRoot() {
   return mkdtempSync(join(tmpdir(), "gpao-t-control-center-"));
@@ -438,6 +446,46 @@ describe("GPAO-T Local Control Center readiness", () => {
     assert.doesNotMatch(html, /method=["']?post/i);
     assert.doesNotMatch(html, /https?:\/\/(?!127\.0\.0\.1|localhost)/i);
     assert.equal(verification.status, "ready");
+  });
+
+  it("keeps app-shell-specific screenshot QA baseline evidence separate and replayable", () => {
+    const baseline = JSON.parse(readFileSync(APP_SHELL_BASELINE_JSON, "utf8"));
+    const baselineDoc = readFileSync(APP_SHELL_BASELINE_DOC, "utf8");
+    const desktopBytes = readFileSync(baseline.evidenceFiles.desktop);
+    const mobileBytes = readFileSync(baseline.evidenceFiles.mobile);
+
+    assert.equal(baseline.schema, "gpao_t.app_shell_screenshot_qa_baseline.v0_1");
+    assert.equal(baseline.status, "ready");
+    assert.equal(baseline.target.endsWith("/app-shell"), true);
+    assert.equal(baseline.fileFormat, "jpeg");
+    assert.equal(baseline.invariants.getOnly, true);
+    assert.equal(baseline.invariants.readMostly, true);
+    assert.equal(baseline.invariants.noExternalActivation, true);
+    assert.equal(baseline.invariants.postBlocked, true);
+    assert.equal(baseline.invariants.authorityBoundaryVisible, true);
+    assert.equal(baseline.invariants.failureRecoveryStateVisible, true);
+    assert.equal(baseline.invariants.nextSafeActionVisible, true);
+    assert.equal(baseline.checks.length, 2);
+    assert.equal(baseline.checks.every((check) => check.target === "/app-shell"), true);
+    assert.equal(baseline.checks.every((check) => check.nonblankViewport), true);
+    assert.equal(baseline.checks.every((check) => check.panelNavigationVisible), true);
+    assert.equal(baseline.checks.every((check) => check.evidenceInspectors === 9), true);
+    assert.equal(baseline.checks.every((check) => check.failureRecoveryStates === 9), true);
+    assert.equal(baseline.checks.every((check) => check.authorityBoundaryVisible), true);
+    assert.equal(baseline.checks.every((check) => check.nextSafeActionVisible), true);
+    assert.equal(baseline.checks.every((check) => check.screenshotQaVisible), true);
+    assert.equal(baseline.checks.every((check) => check.noHorizontalOverflow), true);
+    assert.equal(baseline.checks.every((check) => check.noTopbarOverlap), true);
+    assert.equal(baseline.checks.every((check) => !check.hasScript && !check.hasForm), true);
+    assert.equal(existsSync(baseline.evidenceFiles.desktop), true);
+    assert.equal(existsSync(baseline.evidenceFiles.mobile), true);
+    assert.equal(desktopBytes[0], 0xff);
+    assert.equal(desktopBytes[1], 0xd8);
+    assert.equal(mobileBytes[0], 0xff);
+    assert.equal(mobileBytes[1], 0xd8);
+    assert.match(baselineDoc, /App Shell Screenshot QA Baseline/);
+    assert.match(baselineDoc, /app-shell-baseline-2026-07-09-desktop-viewport-1440x960\.jpg/);
+    assert.match(baselineDoc, /app-shell-baseline-2026-07-09-mobile-viewport-390x844\.jpg/);
   });
 
   it("serves the static Control Center over loopback and verifies page content", async () => {
