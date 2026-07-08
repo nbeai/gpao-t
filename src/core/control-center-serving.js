@@ -20,6 +20,7 @@ import {
   verifyTauriPackagedDesktopGate,
 } from "./tauri-packaged-desktop-gate.js";
 import {
+  buildTauriReadOnlyShellHtml,
   buildTauriReadOnlyShellSlice,
   verifyTauriReadOnlyShellSlice,
 } from "./tauri-readonly-shell.js";
@@ -50,6 +51,8 @@ export function buildControlCenterServingContract({
       { path: "/app-shell/verify", content: "browser_local_app_shell_verification" },
       { path: "/app-shell/tauri-gate", content: "tauri_packaged_desktop_gate" },
       { path: "/app-shell/tauri-gate/verify", content: "tauri_packaged_desktop_gate_verification" },
+      { path: "/app-shell/tauri-shell", content: "tauri_readonly_shell_html" },
+      { path: "/app-shell/tauri-shell.html", content: "tauri_readonly_shell_html" },
       { path: "/app-shell/tauri-shell/slice", content: "tauri_readonly_shell_slice" },
       { path: "/app-shell/tauri-shell/verify", content: "tauri_readonly_shell_slice_verification" },
       { path: "/control-center/summary", content: "local_json_control_center_summary" },
@@ -234,6 +237,16 @@ export async function startControlCenterPreviewServer({
       return;
     }
 
+    if (["/app-shell/tauri-shell", "/app-shell/tauri-shell.html"].includes(url.pathname)) {
+      response.writeHead(200, {
+        "content-type": "text/html; charset=utf-8",
+        "cache-control": "no-store",
+        "x-gpao-t-surface": "tauri-readonly-shell-preview",
+      });
+      response.end(buildTauriReadOnlyShellHtml());
+      return;
+    }
+
     if (["/app-shell", "/app-shell.html"].includes(url.pathname)) {
       response.writeHead(200, {
         "content-type": "text/html; charset=utf-8",
@@ -300,6 +313,7 @@ export async function verifyControlCenterPreviewServing({
     const appShellState = await fetchJson(`http://${host}:${preview.port}/app-shell/state`);
     const tauriGate = await fetchJson(`http://${host}:${preview.port}/app-shell/tauri-gate`);
     const tauriGateVerify = await fetchJson(`http://${host}:${preview.port}/app-shell/tauri-gate/verify`);
+    const tauriShell = await fetchText(`http://${host}:${preview.port}/app-shell/tauri-shell`);
     const tauriShellSlice = await fetchJson(`http://${host}:${preview.port}/app-shell/tauri-shell/slice`);
     const tauriShellVerify = await fetchJson(`http://${host}:${preview.port}/app-shell/tauri-shell/verify`);
     const blockedPost = await fetchJson(`http://${host}:${preview.port}/app-shell`, { method: "POST" });
@@ -340,6 +354,15 @@ export async function verifyControlCenterPreviewServing({
     if (tauriGateVerify.status !== 200 || tauriGateVerify.body.status !== "ready") {
       findings.push("tauri_gate_verify_not_ready");
     }
+    if (tauriShell.status !== 200) {
+      findings.push("tauri_shell_route_not_200");
+    }
+    if (!tauriShell.body.includes("GPAO-T Read-Mostly Tauri Shell")) {
+      findings.push("tauri_shell_missing_title");
+    }
+    if (/<script/i.test(tauriShell.body)) {
+      findings.push("tauri_shell_script_tag_present");
+    }
     if (tauriShellSlice.status !== 200 || tauriShellSlice.body.schema !== "gpao_t.tauri_readonly_shell_slice.v0_1") {
       findings.push("tauri_shell_slice_not_ready");
     }
@@ -356,11 +379,13 @@ export async function verifyControlCenterPreviewServing({
       url: preview.url,
       appShellUrl: `http://${host}:${preview.port}/app-shell`,
       tauriGateUrl: `http://${host}:${preview.port}/app-shell/tauri-gate`,
+      tauriShellUrl: `http://${host}:${preview.port}/app-shell/tauri-shell`,
       tauriShellSliceUrl: `http://${host}:${preview.port}/app-shell/tauri-shell/slice`,
       healthStatus: health.status,
       pageStatus: page.status,
       appShellStatus: appShell.status,
       tauriGateStatus: tauriGate.status,
+      tauriShellStatus: tauriShell.status,
       tauriShellSliceStatus: tauriShellSlice.status,
       blockedPostStatus: blockedPost.status,
       contentLength: page.body.length,

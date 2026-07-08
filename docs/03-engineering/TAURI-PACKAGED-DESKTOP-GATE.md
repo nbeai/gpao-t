@@ -1,6 +1,6 @@
 # Tauri Packaged Desktop Gate
 
-Status: gate closed, first read-mostly source slice added
+Status: gate closed, first read-mostly source slice added, packaged-shell visual QA baseline captured
 Scope: transition from browser-local app-shell proof to the first packaged desktop shell slice
 
 GPAO-T's next shell target is Tauri, but the first step is not a full Tauri app. This gate defines the minimum safe boundary for moving from the browser-local app-shell to a packaged desktop shell.
@@ -86,7 +86,7 @@ The first Tauri slice must keep these blocked:
 
 ## Screenshot And Visual QA
 
-Before any packaged-shell visual quality claim, capture or inspect:
+Packaged-shell visual QA baseline is captured for:
 
 - desktop viewport: `1440x960`
 - mobile viewport: `390x844`
@@ -101,6 +101,15 @@ Before any packaged-shell visual quality claim, capture or inspect:
 - next safe action visible
 - mobile fixed topbar action or decision strip visible
 - no external activation
+
+Evidence:
+
+- `docs/03-verification/evidence/tauri-shell-visual-qa-2026-07-09-desktop-viewport-1440x960.jpg`
+- `docs/03-verification/evidence/tauri-shell-visual-qa-2026-07-09-mobile-viewport-390x844.jpg`
+- `docs/03-verification/evidence/tauri-shell-visual-qa-baseline-2026-07-09.json`
+- `docs/03-verification/evidence/TAURI-SHELL-VISUAL-QA-BASELINE-2026-07-09.md`
+
+Browser policy note: direct `file://` inspection was blocked by browser policy, so the packaged-shell visual QA uses the safer read-only loopback preview route `GET /app-shell/tauri-shell`.
 
 Blocked visual signals:
 
@@ -153,6 +162,8 @@ Loopback preview also exposes:
 
 - `GET /app-shell/tauri-gate`
 - `GET /app-shell/tauri-gate/verify`
+- `GET /app-shell/tauri-shell`
+- `GET /app-shell/tauri-shell.html`
 
 The first read-mostly source slice is inspectable through:
 
@@ -160,6 +171,7 @@ The first read-mostly source slice is inspectable through:
 node bin/gpao-t.js control tauri-shell-slice
 node bin/gpao-t.js control tauri-shell-html
 node bin/gpao-t.js control tauri-shell-check
+node bin/gpao-t.js gateway GET /app-shell/tauri-shell
 node bin/gpao-t.js gateway GET /app-shell/tauri-shell/slice
 node bin/gpao-t.js gateway GET /app-shell/tauri-shell/verify
 ```
@@ -186,4 +198,4 @@ This gate is closed only when:
 - BEAI verify and closeout pass
 - master plan history and backlog are updated
 
-The next safe implementation after this gate is packaged-shell visual QA for the read-mostly source slice, not a full desktop product or packaging/release flow.
+The next safe implementation after this visual QA baseline is the install/update/rollback readiness gate design for packaged desktop, not execution. Full desktop build, dependency installation, IPC, signing, installer creation, distribution, or install/update/rollback execution remain blocked until their later gates are explicit.

@@ -1,0 +1,90 @@
+{
+  "schema": "gpao_t.tauri_shell_visual_qa_baseline.v0_1",
+  "status": "ready",
+  "capturedAt": "2026-07-08T17:33:46.727Z",
+  "target": "http://127.0.0.1:63326/app-shell/tauri-shell",
+  "evidenceFiles": {
+    "desktop": "/Users/jyp/Documents/Playground 2/gpao-t/docs/03-verification/evidence/tauri-shell-visual-qa-2026-07-09-desktop-viewport-1440x960.jpg",
+    "mobile": "/Users/jyp/Documents/Playground 2/gpao-t/docs/03-verification/evidence/tauri-shell-visual-qa-2026-07-09-mobile-viewport-390x844.jpg"
+  },
+  "invariants": {
+    "readMostly": true,
+    "localIpcBlocked": true,
+    "mutationBlocked": true,
+    "noScript": true,
+    "noForm": true,
+    "noExternalActivation": true,
+    "authorityBoundaryVisible": true,
+    "failureRecoveryStateVisible": true,
+    "nextSafeActionVisible": true,
+    "mobileActionLineVisible": true
+  },
+  "checks": [
+    {
+      "label": "desktop",
+      "target": "/app-shell/tauri-shell",
+      "viewport": {
+        "height": 960,
+        "width": 1440
+      },
+      "file": "/Users/jyp/Documents/Playground 2/gpao-t/docs/03-verification/evidence/tauri-shell-visual-qa-2026-07-09-desktop-viewport-1440x960.jpg",
+      "authorityBoundaryVisible": true,
+      "blockedBoundaryTextVisible": true,
+      "evidenceInspectorVisible": true,
+      "externalLinks": [],
+      "failureRecoveryVisible": true,
+      "hasForm": false,
+      "hasScript": false,
+      "localIpc": "blocked",
+      "mobileFixedTopbarActionLineVisible": true,
+      "mutation": "blocked",
+      "nextActionTextVisible": true,
+      "nextSafeActionVisible": true,
+      "noHorizontalOverflow": true,
+      "nonblankViewport": true,
+      "panelNavigationVisible": true,
+      "scroll": {
+        "height": 1684,
+        "width": 1440
+      },
+      "shellMarker": "read-mostly",
+      "stateLanesVisible": true,
+      "title": "GPAO-T Read-Mostly Tauri Shell",
+      "urlProtocol": "http:"
+    },
+    {
+      "label": "mobile",
+      "target": "/app-shell/tauri-shell",
+      "viewport": {
+        "height": 844,
+        "width": 390
+      },
+      "file": "/Users/jyp/Documents/Playground 2/gpao-t/docs/03-verification/evidence/tauri-shell-visual-qa-2026-07-09-mobile-viewport-390x844.jpg",
+      "authorityBoundaryVisible": true,
+      "blockedBoundaryTextVisible": true,
+      "evidenceInspectorVisible": true,
+      "externalLinks": [],
+      "failureRecoveryVisible": true,
+      "hasForm": false,
+      "hasScript": false,
+      "localIpc": "blocked",
+      "mobileFixedTopbarActionLineVisible": true,
+      "mutation": "blocked",
+      "nextActionTextVisible": true,
+      "nextSafeActionVisible": true,
+      "noHorizontalOverflow": true,
+      "nonblankViewport": true,
+      "panelNavigationVisible": true,
+      "scroll": {
+        "height": 3597,
+        "width": 390
+      },
+      "shellMarker": "read-mostly",
+      "stateLanesVisible": true,
+      "title": "GPAO-T Read-Mostly Tauri Shell",
+      "urlProtocol": "http:"
+    }
+  ],
+  "fileFormat": "jpeg",
+  "nextSafeAction": "Design the packaged desktop install/update/rollback readiness gate next; keep execution, Tauri build, IPC, connectors, models, tools, deployment, messenger, and automation blocked."
+}

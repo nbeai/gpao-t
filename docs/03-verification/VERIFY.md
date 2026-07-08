@@ -31,6 +31,15 @@ First read-mostly Tauri shell source slice:
 
 - Source files: `src-tauri/tauri.conf.json`, `src-tauri/Cargo.toml`, `src-tauri/build.rs`, `src-tauri/src/main.rs`, `src-tauri/capabilities/default.json`, and `tauri-shell/index.html`
 - Contract check: `node bin/gpao-t.js control tauri-shell-check`
-- Loopback routes: `GET /app-shell/tauri-shell/slice` and `GET /app-shell/tauri-shell/verify`
+- Loopback routes: `GET /app-shell/tauri-shell`, `GET /app-shell/tauri-shell/slice`, and `GET /app-shell/tauri-shell/verify`
 - Required invariant: source scaffold may exist, but dependency install, packaged build, bundle/signing, local IPC, Tauri commands, POST/mutation, connector/model/tool activation, OAuth/token, external send, install/update/rollback execution, durable memory promotion, self-growth apply, deployment, messenger, and recurring automation remain blocked.
-- Next QA: packaged-shell visual QA must use the current app-shell screenshot baseline and Tauri shell source slice as regression anchors before any build, IPC, installer, or distribution gate opens.
+
+Packaged-shell visual QA baseline:
+
+- `/app-shell/tauri-shell` desktop baseline: `docs/03-verification/evidence/tauri-shell-visual-qa-2026-07-09-desktop-viewport-1440x960.jpg`
+- `/app-shell/tauri-shell` mobile baseline: `docs/03-verification/evidence/tauri-shell-visual-qa-2026-07-09-mobile-viewport-390x844.jpg`
+- QA report: `docs/03-verification/evidence/tauri-shell-visual-qa-baseline-2026-07-09.json`
+- Human-readable report: `docs/03-verification/evidence/TAURI-SHELL-VISUAL-QA-BASELINE-2026-07-09.md`
+- Checked invariant: nonblank viewport, panel navigation, state lanes, evidence inspector, failure/recovery state, no horizontal overflow, authority boundary, next safe action, mobile fixed topbar action line, no script, no form, and no external activation.
+- Browser policy note: direct `file://` inspection was blocked by browser policy, so visual QA uses the safer read-only `127.0.0.1` loopback route.
+- Next gate: use this visual baseline before opening any Tauri build, local IPC, installer, install/update/rollback executor, connector, model, tool, deployment, messenger, or automation gate.
