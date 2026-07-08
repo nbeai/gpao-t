@@ -147,6 +147,9 @@ describe("GPAO-T Local Control Center readiness", () => {
     assert.equal(contract.schema, "gpao_t.control_center_ui_contract.v0_1");
     assert.equal(contract.schemaFile, "schema/gpao-t-control-center-ui-schema.json");
     assert.equal(contract.renderedSurface.kind, "static_html_reader");
+    assert.equal(contract.renderedSurface.interactionMode, "no_script_local_inspection");
+    assert.equal(contract.renderedSurface.interactionSurfaces.includes("anchor_panel_navigation"), true);
+    assert.equal(contract.renderedSurface.interactionSurfaces.includes("details_summary_panel_inspector"), true);
     assert.equal(contract.authorityBoundary.startsDaemon, false);
     assert.equal(contract.authorityBoundary.connectsAccounts, false);
     assert.equal(uiSnapshot.schema, "gpao_t.control_center_ui_snapshot.v0_1");
@@ -199,6 +202,12 @@ describe("GPAO-T Local Control Center readiness", () => {
     assert.match(html, /권한 경계/);
     assert.match(html, /data-panel="memory"/);
     assert.match(html, /data-group="Context"/);
+    assert.match(html, /href="#panel-memory"/);
+    assert.match(html, /id="panel-memory"/);
+    assert.match(html, /<details class="inspector" data-panel-inspector="memory">/);
+    assert.match(html, /<summary>패널 인스펙터<\/summary>/);
+    assert.match(html, /aria-label="Control Center panel inspector"/);
+    assert.match(html, /Interaction: no-script local inspection/);
     assert.match(html, /status-blocked/);
     assert.doesNotMatch(html, /<script/i);
     assert.equal(render.schema, "gpao_t.local_control_center_render.v0_1");
@@ -236,8 +245,28 @@ describe("GPAO-T Local Control Center readiness", () => {
 
     assert.match(htmlOutput, /<html lang="ko">/);
     assert.match(htmlOutput, /Operating Objects/);
+    assert.match(htmlOutput, /Panels/);
+    assert.match(htmlOutput, /패널 인스펙터/);
     assert.equal(render.schema, "gpao_t.local_control_center_render.v0_1");
     assert.equal(existsSync(render.outputPath), true);
+  });
+
+  it("keeps first Control Center interactions local, inspectable, and script-free", () => {
+    const html = buildControlCenterHtml();
+
+    assert.match(html, /href="#panel-runtime"/);
+    assert.match(html, /href="#panel-skill-ecosystem"/);
+    assert.match(html, /href="#panel-authority"/);
+    assert.match(html, /\.panel:target/);
+    assert.match(html, /scroll-margin-top/);
+    assert.match(html, /data-panel-inspector="skill-ecosystem"/);
+    assert.match(html, /<strong>Panel ID<\/strong>/);
+    assert.match(html, /<strong>Status<\/strong>/);
+    assert.match(html, /<strong>Next<\/strong>/);
+    assert.doesNotMatch(html, /onclick=/i);
+    assert.doesNotMatch(html, /addEventListener/i);
+    assert.doesNotMatch(html, /<script/i);
+    assert.doesNotMatch(html, /https?:\/\/(?!127\.0\.0\.1|localhost)/i);
   });
 
   it("keeps responsive visual hardening rules in the static Control Center reader", () => {

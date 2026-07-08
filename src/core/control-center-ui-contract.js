@@ -54,6 +54,8 @@ export function buildControlCenterUiContract() {
       kind: "static_html_reader",
       defaultOutputPath: ".gpao-t/control-center/index.html",
       executableSurfaces: ["gpao-t control html", "gpao-t control render [output.html]"],
+      interactionMode: "no_script_local_inspection",
+      interactionSurfaces: ["anchor_panel_navigation", "details_summary_panel_inspector"],
     },
     visualSections: VISUAL_SECTIONS,
     requiredPanelFields: REQUIRED_PANEL_FIELDS,
@@ -84,10 +86,11 @@ export function buildControlCenterUiContract() {
       "Every rendered status must include visible text, not only color.",
       "The first scan must include next safe action and authority boundaries.",
       "The static reader must not include scripts or live external actions.",
+      "Initial interactivity must use no-script local inspection controls only.",
       "Renderer output must report static_html_file_written before visual quality claims.",
     ],
     nextSafeAction:
-      "Use this UI contract as the boundary before adding interactive controls, browser-safe serving, or desktop shell behavior.",
+      "Use this UI contract as the boundary before adding richer browser behavior or desktop shell behavior.",
   };
 }
 
@@ -135,6 +138,7 @@ export function buildControlCenterUiSnapshot({ snapshot, designContract, uiContr
       requiredPanelFields: contract.requiredPanelFields,
       statusLanguage: contract.statusLanguage,
       noScript: true,
+      interactionMode: contract.renderedSurface.interactionMode,
       noExternalActivation: Object.values(contract.authorityBoundary).every((value) => value === false),
     },
   };
@@ -178,6 +182,9 @@ export function validateControlCenterUiSnapshot({ uiSnapshot } = {}) {
     if (uiSnapshot.validation?.noExternalActivation !== true) {
       findings.push({ severity: "P0", message: "UI snapshot must preserve no external activation." });
     }
+    if (uiSnapshot.validation?.interactionMode !== "no_script_local_inspection") {
+      findings.push({ severity: "P0", message: "Initial UI interactivity must remain no-script local inspection." });
+    }
   }
 
   return {
@@ -190,7 +197,7 @@ export function validateControlCenterUiSnapshot({ uiSnapshot } = {}) {
     findings,
     nextSafeAction: findings.length
       ? "Fix UI snapshot contract findings before adding interactive UI behavior."
-      : "Render the static UI from this snapshot before adding interactivity.",
+      : "Render the local inspection UI from this snapshot before adding richer browser behavior.",
   };
 }
 import { buildLocalControlCenterDesignContract } from "./design-contract.js";

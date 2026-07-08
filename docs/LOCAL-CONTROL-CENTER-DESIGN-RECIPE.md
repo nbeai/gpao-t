@@ -169,6 +169,27 @@ Status must use text and color together. Color alone is never enough.
 
 ## Component Rules
 
+### First Interactive Reader
+
+The first interactive Local Control Center must stay inside a no-script local inspection boundary.
+
+Allowed interactions:
+
+- anchor navigation to a panel
+- expandable panel inspectors with `details` / `summary`
+- visible status, group, headline, and next safe action inspection
+
+Blocked in this layer:
+
+- inline or external scripts
+- external model calls
+- account connection prompts
+- tool execution
+- memory promotion or growth mutation
+- daemon, installer, update, rollback, deploy, or publish actions
+
+This keeps the first interactive surface fast and safe while preserving a direct path toward a richer Codex-like desktop surface later.
+
 ### StatusChip
 
 Use for each layer status.

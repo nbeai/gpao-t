@@ -143,7 +143,13 @@ export function buildControlCenterHtml({ snapshot, designContract } = {}) {
       border-radius: 6px;
       font-size: 13px;
       color: var(--text);
+      text-decoration: none;
       min-width: 0;
+    }
+    .nav-item:hover,
+    .nav-item:focus-visible {
+      background: var(--surface);
+      outline: 1px solid var(--line);
     }
     .nav-item span {
       min-width: 0;
@@ -200,6 +206,11 @@ export function buildControlCenterHtml({ snapshot, designContract } = {}) {
       padding: 14px;
       min-width: 0;
       min-height: 142px;
+      scroll-margin-top: 78px;
+    }
+    .panel:target {
+      outline: 2px solid var(--approval);
+      outline-offset: 2px;
     }
     .panel-head {
       display: flex;
@@ -227,6 +238,41 @@ export function buildControlCenterHtml({ snapshot, designContract } = {}) {
       border-top: 1px solid var(--line);
       color: var(--text);
       font-size: 13px;
+      overflow-wrap: anywhere;
+    }
+    .inspector {
+      margin-top: 10px;
+      border-top: 1px solid var(--line);
+      padding-top: 10px;
+    }
+    .inspector summary {
+      cursor: pointer;
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 700;
+      list-style-position: outside;
+    }
+    .inspector summary:focus-visible {
+      outline: 2px solid var(--approval);
+      outline-offset: 3px;
+      border-radius: 4px;
+    }
+    .inspector-grid {
+      display: grid;
+      gap: 7px;
+      margin-top: 9px;
+    }
+    .inspector-row {
+      display: grid;
+      grid-template-columns: 92px minmax(0, 1fr);
+      gap: 8px;
+      font-size: 12px;
+    }
+    .inspector-row strong {
+      color: var(--muted);
+      overflow-wrap: anywhere;
+    }
+    .inspector-row span {
       overflow-wrap: anywhere;
     }
     .status {
@@ -381,6 +427,7 @@ export function buildControlCenterHtml({ snapshot, designContract } = {}) {
       .panel {
         min-height: 0;
         padding: 12px;
+        scroll-margin-top: 108px;
       }
       .panel-head {
         align-items: flex-start;
@@ -404,6 +451,10 @@ export function buildControlCenterHtml({ snapshot, designContract } = {}) {
       .authority-row {
         padding: 8px;
       }
+      .inspector-row {
+        grid-template-columns: 1fr;
+        gap: 2px;
+      }
     }
   </style>
 </head>
@@ -421,6 +472,9 @@ export function buildControlCenterHtml({ snapshot, designContract } = {}) {
         <p class="nav-title">Operating Objects</p>
         ${uiSnapshot.operatingObjects.map((item) => `
         <div class="nav-item"><span>${escapeHtml(item.type)}</span><span>${escapeHtml(item.panelCount)}</span></div>`).join("")}
+        <p class="nav-title nav-panel-title">Panels</p>
+        ${panels.map((panel) => `
+        <a class="nav-item" href="#panel-${escapeHtml(panel.id)}"><span>${escapeHtml(panel.label)}</span><span>${escapeHtml(STATUS_LABELS[panel.status] || panel.status)}</span></a>`).join("")}
       </nav>
       <main>
         <section class="decision-strip" aria-label="Current operating state">
@@ -457,6 +511,7 @@ export function buildControlCenterHtml({ snapshot, designContract } = {}) {
           <ul class="quality">
             ${uiSnapshot.designGate.slice(0, 6).map((gate) => `<li>${escapeHtml(gate)}</li>`).join("")}
           </ul>
+          <p class="footer-note">Interaction: no-script local inspection · panel anchors and inspectors only.</p>
           <p class="footer-note">Source: ${escapeHtml(contract.recipePath)} · schema ${escapeHtml(controlSnapshot.schema)}</p>
         </section>
       </aside>
@@ -515,7 +570,7 @@ export function renderControlCenterHtml({ root, outputPath = DEFAULT_OUTPUT_PATH
 function panelHtml(panel) {
   const group = PANEL_GROUPS[panel.id] || "Work";
   return `
-          <section class="panel" data-panel="${escapeHtml(panel.id)}" data-group="${escapeHtml(group)}">
+          <section class="panel" id="panel-${escapeHtml(panel.id)}" data-panel="${escapeHtml(panel.id)}" data-group="${escapeHtml(group)}">
             <div class="panel-head">
               <div>
                 <h3>${escapeHtml(panel.label)}</h3>
@@ -524,6 +579,16 @@ function panelHtml(panel) {
               ${statusChip(panel.status)}
             </div>
             <p class="next">${escapeHtml(panel.nextSafeAction)}</p>
+            <details class="inspector" data-panel-inspector="${escapeHtml(panel.id)}">
+              <summary>패널 인스펙터</summary>
+              <div class="inspector-grid" aria-label="Control Center panel inspector">
+                ${inspectorRow("Panel ID", panel.id)}
+                ${inspectorRow("Group", group)}
+                ${inspectorRow("Status", STATUS_LABELS[panel.status] || panel.status)}
+                ${inspectorRow("Headline", panel.headline)}
+                ${inspectorRow("Next", panel.nextSafeAction)}
+              </div>
+            </details>
           </section>`;
 }
 
@@ -538,6 +603,14 @@ function metric(label, value, hint) {
 function statusChip(status) {
   const normalized = String(status || "unknown");
   return `<span class="status status-${escapeHtml(normalized)}">${escapeHtml(STATUS_LABELS[normalized] || normalized)}</span>`;
+}
+
+function inspectorRow(label, value) {
+  return `
+                <div class="inspector-row">
+                  <strong>${escapeHtml(label)}</strong>
+                  <span>${escapeHtml(value)}</span>
+                </div>`;
 }
 
 function escapeHtml(value) {

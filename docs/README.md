@@ -218,6 +218,7 @@ Local Control Center readiness is exposed as data and a static UI reader, not as
 - `control ui-contract` returns the UI schema and section contract that maps snapshot fields into visual sections
 - `control ui-snapshot` returns the renderer-ready UI snapshot
 - `control ui-validate` checks that the UI snapshot preserves required panel fields, visible status text, authority boundaries, and no external activation
+- `control html` and `control render` now produce a no-script local inspection UI: panel anchor navigation and expandable panel inspectors are interactive, but they do not start daemons, call models, connect accounts, execute tools, or mutate memory/growth state
 - `control html` prints the static Local Control Center HTML reader to stdout
 - `control render [output.html]` writes the static Local Control Center HTML reader to a local file
 - `control serve-contract` returns the browser-safe loopback serving and screenshot verification contract

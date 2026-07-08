@@ -19,6 +19,3 @@ Review item: human scenario acceptance reviewed: human-scenario acceptance evide
 
 - verify: Executed 2 checks.
 - closeout: Closeout decision: review.
-- closeout: Closeout decision: review.
-- verify: Executed 2 checks.
-- closeout: Closeout decision: review.
