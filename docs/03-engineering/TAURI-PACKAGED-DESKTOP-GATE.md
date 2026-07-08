@@ -1,15 +1,15 @@
 # Tauri Packaged Desktop Gate
 
-Status: gate closed, packaged desktop implementation not started
+Status: gate closed, first read-mostly source slice added
 Scope: transition from browser-local app-shell proof to the first packaged desktop shell slice
 
-GPAO-T's next shell target is Tauri, but the next step is not a full Tauri app. This gate defines the minimum safe boundary for moving from the browser-local app-shell to a packaged desktop shell.
+GPAO-T's next shell target is Tauri, but the first step is not a full Tauri app. This gate defines the minimum safe boundary for moving from the browser-local app-shell to a packaged desktop shell.
 
 ## Gate Result
 
 - First packaged desktop target: Tauri.
 - First Tauri slice: read-mostly shell only.
-- Implementation status: blocked until this gate is accepted as the implementation boundary.
+- Implementation status: first read-mostly source scaffold is allowed after this gate; full app, build, bundle, signing, IPC, and mutation remain blocked.
 - Runtime boundary: load or mirror the existing browser-local app-shell state, with no mutation authority.
 - Local IPC: blocked in the first slice.
 - Tauri commands: disabled until each command has authority, audit, replay, rollback, failure/recovery, and QA contracts.
@@ -154,6 +154,27 @@ Loopback preview also exposes:
 - `GET /app-shell/tauri-gate`
 - `GET /app-shell/tauri-gate/verify`
 
+The first read-mostly source slice is inspectable through:
+
+```sh
+node bin/gpao-t.js control tauri-shell-slice
+node bin/gpao-t.js control tauri-shell-html
+node bin/gpao-t.js control tauri-shell-check
+node bin/gpao-t.js gateway GET /app-shell/tauri-shell/slice
+node bin/gpao-t.js gateway GET /app-shell/tauri-shell/verify
+```
+
+Source scaffold:
+
+- `src-tauri/tauri.conf.json`
+- `src-tauri/Cargo.toml`
+- `src-tauri/build.rs`
+- `src-tauri/src/main.rs`
+- `src-tauri/capabilities/default.json`
+- `tauri-shell/index.html`
+
+The scaffold is source-only. It does not install dependencies, run `cargo`, run Tauri build, bundle, sign, create an installer, activate IPC commands, or execute local/system actions.
+
 ## Exit Criteria
 
 This gate is closed only when:
@@ -165,4 +186,4 @@ This gate is closed only when:
 - BEAI verify and closeout pass
 - master plan history and backlog are updated
 
-The next safe implementation after this gate is a read-mostly Tauri shell slice, not a full desktop product or packaging/release flow.
+The next safe implementation after this gate is packaged-shell visual QA for the read-mostly source slice, not a full desktop product or packaging/release flow.

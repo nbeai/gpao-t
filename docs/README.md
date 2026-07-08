@@ -14,7 +14,7 @@ Local Control Center design guidance is maintained in `docs/LOCAL-CONTROL-CENTER
 
 Control Center human-readability QA is maintained in `docs/03-verification/CONTROL-CENTER-HUMAN-READABILITY-CHECK.md`. It keeps first-scan clarity, state comprehension, authority visibility, next-safe-action visibility, mobile action visibility, and no-script/no-external-activation boundaries explicit before app-shell work.
 
-The app-shell transition is governed by `docs/03-engineering/APP-SHELL-DECISION-GATE.md`, the closed technology decision in `docs/03-engineering/APP-SHELL-TECHNOLOGY-DECISION.md`, and the packaged desktop boundary in `docs/03-engineering/TAURI-PACKAGED-DESKTOP-GATE.md`. GPAO-T's first app-shell target is a browser-local shell over `127.0.0.1` read-mostly HTTP; Tauri is the first packaged desktop target after browser-local proof; Electron is deferred. The current Tauri gate is a read-mostly boundary contract only, not a full Tauri app, packaging step, or install/update/rollback executor.
+The app-shell transition is governed by `docs/03-engineering/APP-SHELL-DECISION-GATE.md`, the closed technology decision in `docs/03-engineering/APP-SHELL-TECHNOLOGY-DECISION.md`, and the packaged desktop boundary in `docs/03-engineering/TAURI-PACKAGED-DESKTOP-GATE.md`. GPAO-T's first app-shell target is a browser-local shell over `127.0.0.1` read-mostly HTTP; Tauri is the first packaged desktop target after browser-local proof; Electron is deferred. The current Tauri slice is a read-mostly source scaffold and verification contract only, not a built Tauri app, packaging step, signing step, or install/update/rollback executor.
 
 Skill ecosystem guidance is maintained in `docs/04-skill-ecosystem/GPAO-T-SKILL-ECOSYSTEM-MASTER-PLAN-ko.md`. GPAO-T skills must be research-grounded, practical, T-cell-shaped operating units, not prompt decorations or copied marketplace catalogs.
 
@@ -136,6 +136,9 @@ node bin/gpao-t.js control app-shell-state
 node bin/gpao-t.js control app-shell-check
 node bin/gpao-t.js control tauri-gate
 node bin/gpao-t.js control tauri-gate-check
+node bin/gpao-t.js control tauri-shell-slice
+node bin/gpao-t.js control tauri-shell-html
+node bin/gpao-t.js control tauri-shell-check
 node bin/gpao-t.js state
 node bin/gpao-t.js events
 node bin/gpao-t.js memory capture "배포파일 meaning" "배포파일 means GPAO Operating Package / GPAO for OpenClaw in this product flow."
@@ -239,14 +242,18 @@ Local Control Center readiness is exposed as data and a static UI reader, not as
 - `control app-shell-state` returns read-mostly shell state derived from `GET /health` and `GET /control-center/*`
 - `control app-shell-html` renders the browser-local shell HTML with panel navigation, evidence inspection, failure/recovery state, and screenshot QA anchors
 - `control app-shell-check` verifies the browser-local shell preserves no script, no POST form, no external URL, authority visibility, and failure/recovery markers
+- `control tauri-gate` and `control tauri-gate-check` define and verify the packaged desktop/Tauri transition boundary
+- `control tauri-shell-slice`, `control tauri-shell-html`, and `control tauri-shell-check` define and verify the first read-mostly Tauri source scaffold
 - `GET /control-center`, `GET /control-center/summary`, `GET /control-center/design`, `GET /control-center/ui-contract`, `GET /control-center/ui-snapshot`, and `GET /control-center/ui-validate` expose the same contracts through the local gateway handler
-- `GET /app-shell`, `GET /app-shell/contract`, `GET /app-shell/state`, and `GET /app-shell/verify` expose the browser-local app-shell through the loopback preview server
+- `GET /app-shell`, `GET /app-shell/contract`, `GET /app-shell/state`, `GET /app-shell/verify`, `GET /app-shell/tauri-gate`, `GET /app-shell/tauri-gate/verify`, `GET /app-shell/tauri-shell/slice`, and `GET /app-shell/tauri-shell/verify` expose the browser-local app-shell and packaged-shell boundary through the loopback preview server
 
 This keeps the future Codex-like desktop surface light: the first visual layer reads the existing snapshot/design contracts before adding interactivity, daemon behavior, or external activation.
 
 Browser-safe serving is local preview only. It binds to `127.0.0.1`, does not configure OAuth, does not call external models or tools, does not store secrets, does not deploy, and does not become a persistent daemon. The purpose is to capture desktop/mobile screenshots and verify visible state before interactive Control Center work.
 
 Browser-local app-shell first slice is also local preview only. It reads `GET /health` and `GET /control-center/*`, supports panel navigation and evidence inspection, exposes failure/recovery states, and keeps screenshot QA visible. It now includes read-only state lanes for workflow, recovery, authority, and next action, plus per-panel state drilldowns. It blocks `POST` routes, connector/model/tool activation, install/update/rollback execution, durable memory promotion, self-growth application, deployment, messenger surfaces, and recurring automation.
+
+First Tauri shell slice is source-only and read-mostly. It adds `src-tauri/tauri.conf.json`, `src-tauri/Cargo.toml`, `src-tauri/build.rs`, `src-tauri/src/main.rs`, `src-tauri/capabilities/default.json`, and `tauri-shell/index.html` as a scaffold that mirrors app-shell state. It does not install dependencies, run Tauri build, bundle, sign, create an installer, activate local IPC commands, mutate runtime state, or connect external services.
 
 The app-shell-specific visual baseline is stored separately from the older Control Center screenshots:
 

@@ -108,6 +108,11 @@ import {
   buildTauriPackagedDesktopGate,
   verifyTauriPackagedDesktopGate,
 } from "./core/tauri-packaged-desktop-gate.js";
+import {
+  buildTauriReadOnlyShellHtml,
+  buildTauriReadOnlyShellSlice,
+  verifyTauriReadOnlyShellSlice,
+} from "./core/tauri-readonly-shell.js";
 import { runTurn } from "./core/turn-kernel.js";
 
 export {
@@ -154,6 +159,8 @@ export {
   buildSkillReadinessReport,
   buildToolPlan,
   buildTauriPackagedDesktopGate,
+  buildTauriReadOnlyShellHtml,
+  buildTauriReadOnlyShellSlice,
   buildReplayRecoveryView,
   buildSelfGrowthProposal,
   captureMemoryEntry,
@@ -184,6 +191,7 @@ export {
   verifyBrowserLocalAppShell,
   verifyControlCenterPreviewServing,
   verifyTauriPackagedDesktopGate,
+  verifyTauriReadOnlyShellSlice,
   selectModelAdapter,
   selectToolAdapters,
   runDoctor,

@@ -2,7 +2,8 @@
 
 ## Still Excluded
 
-- Full Tauri app implementation
+- Tauri dependency installation
+- Tauri build, bundle, signing, installer, or distribution
 - Tauri command/IPC activation
 - POST/mutating app-shell or packaged-shell routes
 - connector, model, or tool activation
@@ -17,8 +18,8 @@
 
 ## Current Completion Boundary
 
-- Do not call a Tauri implementation slice ready unless `control tauri-gate-check`, `control app-shell-check`, app-shell visual QA invariants, source-control rollback, and completion language guard pass.
-- Do not cross from Tauri gate into packaged desktop implementation, local IPC, connector activation, mutation, packaging, signing, install/update/rollback execution, or external action without an explicit gate.
+- Do not call a packaged desktop implementation ready unless `control app-shell-check`, `control tauri-gate-check`, `control tauri-shell-check`, packaged-shell visual QA, source-control rollback, and completion language guard pass.
+- Do not cross from read-mostly source scaffold into dependency install, Tauri build, local IPC, connector activation, mutation, packaging, signing, install/update/rollback execution, or external action without an explicit gate.
 - Current status: ready
 
 ## Blockers

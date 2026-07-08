@@ -26,3 +26,11 @@ Packaged desktop / Tauri gate:
 - Loopback routes: `GET /app-shell/tauri-gate` and `GET /app-shell/tauri-gate/verify`
 - Required invariant: first Tauri slice remains read-mostly, with local IPC, Tauri commands, POST routes, connector/model/tool activation, OAuth/token, external send, install/update/rollback execution, durable memory promotion, self-growth apply, deployment, messenger, and recurring automation blocked.
 - Required QA before implementation: desktop/mobile screenshot QA must preserve nonblank viewport, panel navigation, state lanes, panel drilldowns, evidence inspector, failure/recovery state, no overflow, authority boundary, next safe action, mobile action line or decision strip, and no external activation.
+
+First read-mostly Tauri shell source slice:
+
+- Source files: `src-tauri/tauri.conf.json`, `src-tauri/Cargo.toml`, `src-tauri/build.rs`, `src-tauri/src/main.rs`, `src-tauri/capabilities/default.json`, and `tauri-shell/index.html`
+- Contract check: `node bin/gpao-t.js control tauri-shell-check`
+- Loopback routes: `GET /app-shell/tauri-shell/slice` and `GET /app-shell/tauri-shell/verify`
+- Required invariant: source scaffold may exist, but dependency install, packaged build, bundle/signing, local IPC, Tauri commands, POST/mutation, connector/model/tool activation, OAuth/token, external send, install/update/rollback execution, durable memory promotion, self-growth apply, deployment, messenger, and recurring automation remain blocked.
+- Next QA: packaged-shell visual QA must use the current app-shell screenshot baseline and Tauri shell source slice as regression anchors before any build, IPC, installer, or distribution gate opens.

@@ -1,21 +1,21 @@
 # What We Are Building
 
-GPAO-T is closing the packaged desktop/Tauri transition gate after the browser-local app-shell proof. The gate defines the read-mostly boundary, allowed first slice, blocked authority actions, rollback/source-control requirements, screenshot QA, install/update/rollback ordering, and failure/recovery states without implementing the full Tauri app.
+GPAO-T has added the first read-mostly Tauri shell source slice after the packaged desktop gate. The slice creates a source scaffold and verification contract for a future packaged desktop shell while keeping dependency install, Tauri build, bundle/signing, local IPC, Tauri commands, runtime mutation, install/update/rollback execution, external activation, messenger, and automation blocked.
 
 ## Current Phase
 
-- Phase: packaged-desktop-tauri-gate
-- Command: tauri packaged desktop gate and check
+- Phase: read-mostly-tauri-shell-source-slice
+- Command: tauri shell source scaffold and check
 - Status: ready
 
 ## User Mode
 
 - Mode: general user and developer friendly
-- Task type: packaged desktop shell gate
+- Task type: packaged desktop source slice
 
 ## First Workflow
 
-Browser-local app-shell to read-mostly Tauri shell gate
+Browser-local app-shell state mirrored into a read-mostly Tauri shell source scaffold
 
 ## Companion Principle
 
@@ -23,16 +23,16 @@ AI does the work. User keeps authority.
 
 ## AI First
 
-- AI/developer verifies the Tauri gate contract before any packaged desktop implementation.
-- AI/developer verifies `app-shell-check` remains ready as the browser-local regression anchor.
-- AI/developer verifies the first Tauri slice stays read-mostly with local IPC and mutation authority blocked.
+- AI/developer verifies the source scaffold before any dependency install, build, bundle, signing, IPC, mutation, or external activation.
+- AI/developer verifies `app-shell-check`, `tauri-gate-check`, and `tauri-shell-check` remain ready.
+- AI/developer keeps the first Tauri slice read-mostly and source-only.
 - AI/developer keeps connector/model/tool activation, OAuth/token, external send, install/update/rollback execution, durable memory promotion, self-growth apply, deployment, messenger, and automation outside this slice.
 
 ## User Authority
 
-- Confirm whether the read-mostly Tauri transition boundary feels like the intended product direction.
-- Approve any taste, brand, operating policy, real install, packaging, signing, deployment, account, or external-action decision that AI cannot own.
+- Confirm whether the read-mostly Tauri source scaffold feels like the intended packaged desktop direction.
+- Approve any real install, dependency download, build, packaging, signing, deployment, account, connector, or external-action step.
 
 ## Latest Summary
 
-Packaged desktop/Tauri gate is implemented and verified as a read-only contract and verification surface. It prepares the next read-mostly Tauri shell slice while keeping full Tauri implementation, packaging, mutation, connectors, models, tools, install/update/rollback, self-growth apply, deployment, messenger, and automation blocked.
+The first read-mostly Tauri shell source slice is implemented and verified. It adds `src-tauri` and `tauri-shell` source scaffolding plus CLI/Gateway/loopback verification, while keeping all mutation and external activation boundaries closed.

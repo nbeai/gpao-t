@@ -1,0 +1,7 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "GPAO-T first Tauri shell slice intentionally grants no command permissions.",
+  "windows": ["main"],
+  "permissions": []
+}

@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>GPAO-T Read-Mostly Tauri Shell</title>
+</head>
+<body data-tauri-shell="read-mostly" data-local-ipc="blocked" data-mutation="blocked">
+  <main>
+    <h1>GPAO-T Read-Mostly Tauri Shell</h1>
+    <p data-boundary="read-only">This first packaged desktop source slice mirrors app-shell state and keeps all mutation authority blocked.</p>
+    <section id="state-lanes" aria-label="Workflow, recovery, authority, and next action state lanes">
+      <h2>State Lanes</h2>
+      <ul>
+        <li data-state-lane="workflow">workflow</li>
+        <li data-state-lane="recovery">recovery</li>
+        <li data-state-lane="authority">authority</li>
+        <li data-state-lane="next">next</li>
+      </ul>
+    </section>
+    <section id="authority-boundary" data-authority-boundary="visible">
+      <h2>Authority Boundary</h2>
+      <p>Local IPC, Tauri commands, POST routes, connector/model/tool activation, OAuth/token, install/update/rollback, durable memory promotion, self-growth apply, deployment, messenger, and automation remain blocked.</p>
+    </section>
+    <section id="failure-recovery" data-failure-recovery="visible">
+      <h2>Failure / Recovery</h2>
+      <p>Use browser-local app-shell checks as the recovery anchor before any packaged action is opened.</p>
+    </section>
+    <section id="next-safe-action" data-next-safe-action="visible">
+      <h2>Next Safe Action</h2>
+      <p>Capture packaged-shell visual QA next; keep Tauri commands, local IPC, mutation, install/update/rollback, connectors, models, tools, deployment, messenger, and automation blocked.</p>
+    </section>
+  </main>
+</body>
+</html>

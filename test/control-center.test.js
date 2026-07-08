@@ -18,6 +18,8 @@ import {
   buildControlCenterUiContract,
   buildControlCenterUiSnapshot,
   buildTauriPackagedDesktopGate,
+  buildTauriReadOnlyShellHtml,
+  buildTauriReadOnlyShellSlice,
   buildOperationsContractSummary,
   buildOperationsReliabilityContract,
   buildRuntimeDataContract,
@@ -29,6 +31,7 @@ import {
   verifyBrowserLocalAppShell,
   verifyControlCenterPreviewServing,
   verifyTauriPackagedDesktopGate,
+  verifyTauriReadOnlyShellSlice,
 } from "../src/index.js";
 import releaseFixture from "../fixtures/replay/release-file-active-target.json" with { type: "json" };
 
@@ -36,6 +39,9 @@ const CLI = fileURLToPath(new URL("../bin/gpao-t.js", import.meta.url));
 const ROOT = fileURLToPath(new URL("..", import.meta.url));
 const DATA_SCHEMA_PATH = fileURLToPath(new URL("../schema/gpao-t-runtime-data-schema.json", import.meta.url));
 const UI_SCHEMA_PATH = fileURLToPath(new URL("../schema/gpao-t-control-center-ui-schema.json", import.meta.url));
+const TAURI_CONFIG_PATH = fileURLToPath(new URL("../src-tauri/tauri.conf.json", import.meta.url));
+const TAURI_CAPABILITY_PATH = fileURLToPath(new URL("../src-tauri/capabilities/default.json", import.meta.url));
+const TAURI_SHELL_HTML_PATH = fileURLToPath(new URL("../tauri-shell/index.html", import.meta.url));
 const APP_SHELL_BASELINE_JSON = fileURLToPath(new URL(
   "../docs/03-verification/evidence/app-shell-screenshot-qa-baseline-2026-07-09.json",
   import.meta.url,
@@ -525,6 +531,71 @@ describe("GPAO-T Local Control Center readiness", () => {
     assert.equal(gatewayCheck.body.status, "ready");
   });
 
+  it("adds the first read-mostly Tauri shell source slice without enabling IPC or packaging", () => {
+    const slice = buildTauriReadOnlyShellSlice({ root: ROOT });
+    const html = buildTauriReadOnlyShellHtml({ state: slice });
+    const verification = verifyTauriReadOnlyShellSlice({ root: ROOT, slice, html });
+    const cliSlice = JSON.parse(execFileSync(process.execPath, [CLI, "control", "tauri-shell-slice"], {
+      cwd: ROOT,
+      encoding: "utf8",
+    }));
+    const cliCheck = JSON.parse(execFileSync(process.execPath, [CLI, "control", "tauri-shell-check"], {
+      cwd: ROOT,
+      encoding: "utf8",
+    }));
+    const cliHtml = execFileSync(process.execPath, [CLI, "control", "tauri-shell-html"], {
+      cwd: ROOT,
+      encoding: "utf8",
+    });
+    const gatewaySlice = handleGatewayRequest({ method: "GET", path: "/app-shell/tauri-shell/slice", root: ROOT });
+    const gatewayCheck = handleGatewayRequest({ method: "GET", path: "/app-shell/tauri-shell/verify", root: ROOT });
+    const tauriConfig = JSON.parse(readFileSync(TAURI_CONFIG_PATH, "utf8"));
+    const tauriCapability = JSON.parse(readFileSync(TAURI_CAPABILITY_PATH, "utf8"));
+    const sourceHtml = readFileSync(TAURI_SHELL_HTML_PATH, "utf8");
+
+    assert.equal(slice.schema, "gpao_t.tauri_readonly_shell_slice.v0_1");
+    assert.equal(slice.status, "ready");
+    assert.equal(slice.targetShell, "tauri");
+    assert.equal(slice.sourceScaffoldReady, true);
+    assert.equal(slice.packagedDesktopImplementationStarted, true);
+    assert.equal(slice.packagedBuildExecuted, false);
+    assert.equal(slice.dependencyInstallExecuted, false);
+    assert.equal(slice.bundleOrSigningExecuted, false);
+    assert.equal(slice.runtimeBoundary.frontendDist, "tauri-shell");
+    assert.equal(slice.runtimeBoundary.tauriConfig, "src-tauri/tauri.conf.json");
+    assert.equal(slice.runtimeBoundary.localIpc, "blocked_in_this_slice");
+    assert.equal(slice.runtimeBoundary.tauriCommands.length, 0);
+    assert.equal(slice.runtimeBoundary.mutation, "blocked");
+    assert.equal(slice.documentationAnchors.includes("docs/README.md"), true);
+    assert.equal(slice.documentationAnchors.includes("docs/03-engineering/TAURI-PACKAGED-DESKTOP-GATE.md"), true);
+    assert.equal(slice.documentationAnchors.includes("docs/03-verification/VERIFY.md"), true);
+    assert.equal(slice.sourceFiles.every((file) => file.status === "present"), true);
+    assert.equal(slice.mirroredState.lanes.includes("workflow"), true);
+    assert.equal(slice.mirroredState.lanes.includes("recovery"), true);
+    assert.equal(slice.mirroredState.lanes.includes("authority"), true);
+    assert.equal(slice.mirroredState.lanes.includes("next"), true);
+    assert.equal(slice.blockedBehavior.includes("OAuth setup"), true);
+    assert.equal(slice.blockedBehavior.includes("install execution"), true);
+    assert.equal(slice.blockedBehavior.includes("rollback execution"), true);
+    assert.equal(verification.status, "ready");
+    assert.equal(cliSlice.schema, slice.schema);
+    assert.equal(cliCheck.status, "ready");
+    assert.match(cliHtml, /GPAO-T Read-Mostly Tauri Shell/);
+    assert.equal(gatewaySlice.status, 200);
+    assert.equal(gatewaySlice.body.schema, slice.schema);
+    assert.equal(gatewayCheck.status, 200);
+    assert.equal(gatewayCheck.body.status, "ready");
+    assert.equal(tauriConfig.productName, "GPAO-T");
+    assert.equal(tauriConfig.identifier, "app.gpao.t.local");
+    assert.equal(tauriConfig.build.frontendDist, "../tauri-shell");
+    assert.equal(tauriConfig.bundle.active, false);
+    assert.equal(tauriCapability.permissions.length, 0);
+    assert.match(sourceHtml, /data-tauri-shell="read-mostly"/);
+    assert.match(sourceHtml, /data-local-ipc="blocked"/);
+    assert.doesNotMatch(sourceHtml, /<script/i);
+    assert.doesNotMatch(sourceHtml, /<form/i);
+  });
+
   it("keeps app-shell-specific screenshot QA baseline evidence separate and replayable", () => {
     const baseline = JSON.parse(readFileSync(APP_SHELL_BASELINE_JSON, "utf8"));
     const baselineDoc = readFileSync(APP_SHELL_BASELINE_DOC, "utf8");
@@ -581,6 +652,8 @@ describe("GPAO-T Local Control Center readiness", () => {
       const appShellVerify = await fetchJson(`http://127.0.0.1:${preview.port}/app-shell/verify`);
       const tauriGate = await fetchJson(`http://127.0.0.1:${preview.port}/app-shell/tauri-gate`);
       const tauriGateVerify = await fetchJson(`http://127.0.0.1:${preview.port}/app-shell/tauri-gate/verify`);
+      const tauriShellSlice = await fetchJson(`http://127.0.0.1:${preview.port}/app-shell/tauri-shell/slice`);
+      const tauriShellVerify = await fetchJson(`http://127.0.0.1:${preview.port}/app-shell/tauri-shell/verify`);
       const controlSummary = await fetchJson(`http://127.0.0.1:${preview.port}/control-center/summary`);
       const blockedPost = await fetchJson(`http://127.0.0.1:${preview.port}/app-shell`, { method: "POST" });
 
@@ -603,6 +676,8 @@ describe("GPAO-T Local Control Center readiness", () => {
       assert.equal(appShellVerify.body.status, "ready");
       assert.equal(tauriGate.body.schema, "gpao_t.tauri_packaged_desktop_gate.v0_1");
       assert.equal(tauriGateVerify.body.status, "ready");
+      assert.equal(tauriShellSlice.body.schema, "gpao_t.tauri_readonly_shell_slice.v0_1");
+      assert.equal(tauriShellVerify.body.status, "ready");
       assert.equal(controlSummary.body.schema, "gpao_t.control_center_summary.v0_1");
       assert.equal(blockedPost.status, 405);
       assert.equal(blockedPost.body.status, "blocked");
@@ -631,6 +706,7 @@ describe("GPAO-T Local Control Center readiness", () => {
     assert.equal(verification.pageStatus, 200);
     assert.equal(verification.appShellStatus, 200);
     assert.equal(verification.tauriGateStatus, 200);
+    assert.equal(verification.tauriShellSliceStatus, 200);
     assert.equal(verification.blockedPostStatus, 405);
     assert.equal(verification.authorityBoundary.loopbackOnly, true);
     assert.equal(cliVerification.status, "ready");

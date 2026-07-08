@@ -14,6 +14,10 @@ import {
   buildTauriPackagedDesktopGate,
   verifyTauriPackagedDesktopGate,
 } from "./tauri-packaged-desktop-gate.js";
+import {
+  buildTauriReadOnlyShellSlice,
+  verifyTauriReadOnlyShellSlice,
+} from "./tauri-readonly-shell.js";
 import { buildLocalControlCenterDesignContract } from "./design-contract.js";
 import { runDoctor } from "./doctor.js";
 import {
@@ -174,6 +178,22 @@ export function handleGatewayRequest({ method = "GET", path = "/", body = {}, ro
       schema: "gpao_t.gateway_response.v0_1",
       status: 200,
       body: verifyTauriPackagedDesktopGate(),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/app-shell/tauri-shell/slice") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: buildTauriReadOnlyShellSlice({ root }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/app-shell/tauri-shell/verify") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: verifyTauriReadOnlyShellSlice({ root }),
     };
   }
 
