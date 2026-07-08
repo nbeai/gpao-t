@@ -2,7 +2,7 @@
 
 ## Next Safe Action
 
-Proceed to browser-safe local serving plus screenshot verification for the Local Control Center.
+Apply the newer source guidance to implementation or explicitly mark it out of scope before claiming completion.
 
 ## Review Before Continuing
 
@@ -13,13 +13,12 @@ Proceed to browser-safe local serving plus screenshot verification for the Local
 
 ## Session Resume
 
-Closeout is ready. Resume from local git commit `82ccf96`, keep `.gpao-t/` and `.beai-harness/` ignored, and avoid public push/deploy unless explicitly approved.
+Apply the newer source guidance to implementation or explicitly mark it out of scope before claiming completion.
 
 ## Recent Evidence
 
-- preflight: Read-only workspace check completed for gpao-t.
 - route: Routed work as standard.
 - plan: Saved build plan.
 - verify: Executed 2 checks.
 - closeout: Closeout decision: ready.
-- hardening: `ops hardening` reports `rollbackSubstrate: git_available` and `sourceControlBaseline.mode: independent_local_git_repository`.
+- verify: Executed 2 checks.

@@ -4,6 +4,7 @@ import { buildSkillExecutionPlan } from "./skill-ecosystem.js";
 import { runtimePaths } from "./storage.js";
 
 const SKILL_EXECUTION_HISTORY_FILE = "skill-execution/history.jsonl";
+const SKILL_EXECUTION_BASELINE = "skill_execution_adapter_v0_1";
 
 export function skillExecutionHistoryPath({ root } = {}) {
   return resolve(runtimePaths({ root }).runtimeRoot, SKILL_EXECUTION_HISTORY_FILE);
@@ -31,7 +32,7 @@ export function buildSkillExecutionRun({
 
   return {
     schema: "gpao_t.skill_execution_run.v0_1",
-    executionBaseline: "skill_execution_adapter_v0_1",
+    executionBaseline: SKILL_EXECUTION_BASELINE,
     id: `skillrun.${Date.parse(now) || 0}`,
     createdAt: now,
     status: blockedQualityResults.length ? "blocked" : reviewQualityResults.length ? "review" : "ready",
@@ -147,9 +148,10 @@ function buildArtifact({ artifactName, plan }) {
 function buildQualityResults({ plan, artifacts }) {
   return plan.qualityGateContract.gates.map((gate) => {
     const evidence = evidenceForGate({ gate, artifacts, plan });
+    const hasSpecificEvidence = evidence.some((item) => item !== "local_artifact_drafted_for_manual_review");
     return {
       gate,
-      status: evidence.length ? "pass" : "review",
+      status: hasSpecificEvidence ? "pass" : "review",
       evidence,
       checkedAgainst: {
         selectedSkills: plan.selectedSkills.map((skill) => skill.id),
@@ -301,6 +303,22 @@ function sectionsForArtifact({ artifactName, plan }) {
     ];
   }
 
+  if (/decision|task_plan|priority|next_action/.test(artifactName)) {
+    return [
+      ...base,
+      {
+        id: "facts_assumptions_risks",
+        title: "Facts / Assumptions / Risks",
+        content: "Separate facts, assumptions, risks, and the current request before choosing the next action.",
+      },
+      {
+        id: "next_action",
+        title: "Next Action",
+        content: "Name the next local, reversible action and avoid decorative theory unless it changes a concrete decision.",
+      },
+    ];
+  }
+
   return [
     ...base,
     {
@@ -312,11 +330,11 @@ function sectionsForArtifact({ artifactName, plan }) {
 }
 
 function evidenceForGate({ gate, artifacts, plan }) {
-  const text = `${gate} ${artifacts.map((artifact) => `${artifact.artifactName} ${artifact.artifactType} ${artifact.sections.map((section) => section.content).join(" ")}`).join(" ")} ${plan.request}`.toLowerCase();
+  const text = `${artifacts.map((artifact) => `${artifact.artifactName} ${artifact.artifactType} ${artifact.sections.map((section) => section.content).join(" ")}`).join(" ")} ${plan.request}`.toLowerCase();
   const evidence = [];
 
-  if (/typography|spacing|contrast|responsive|hierarchy/i.test(gate)
-    && /typography|spacing|contrast|responsive|hierarchy|visual/.test(text)) {
+  if (/typography|spacing|contrast|responsive|hierarchy|generic|domain|audience|design/i.test(gate)
+    && /typography|spacing|contrast|responsive|hierarchy|visual|domain|audience|design/.test(text)) {
     evidence.push("visual_artifact_contains_layout_quality_sections");
   }
   if (/first screen|workflow|empty state|recovery|responsive|implementation/i.test(gate)
@@ -335,7 +353,11 @@ function evidenceForGate({ gate, artifacts, plan }) {
     && /growth|approval|audit|rollback|live mutation|blocked|replay/.test(text)) {
     evidence.push("growth_governance_artifact_contains_authority_and_replay_sections");
   }
-  if (/facts|assumptions|risks|next action|current request|decorative theory/i.test(gate)
+  if (/preserves the user's current request/i.test(gate)
+    && /user request/.test(text)) {
+    evidence.push("current_request_section_preserved");
+  }
+  if (/facts|assumptions|risks|next action|current request|highest-priority anchor|decorative theory/i.test(gate)
     && /user request|next action|selected skills|artifact purpose/.test(text)) {
     evidence.push("core_thinking_artifact_preserves_request_and_next_action");
   }

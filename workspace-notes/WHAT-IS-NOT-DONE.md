@@ -11,9 +11,8 @@
 
 - Do not call this complete unless verification evidence and completion language guard pass.
 - Do not ask the user to test before AI/developer scenario verification covers success, empty, and failure states when applicable.
-- Current status: ready
+- Current status: blocked
 
 ## Blockers
 
-- No unresolved session blocker is recorded.
-- Public GitHub push, deployment, installer execution, update execution, destructive rollback, external account setup, and secret storage remain excluded until explicit approval.
+- product-quality: Product quality gate is review.

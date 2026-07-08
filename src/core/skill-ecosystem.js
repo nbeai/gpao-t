@@ -406,9 +406,15 @@ export function buildSkillEcosystemPlan() {
     integrationContract: {
       registrySurface: "gpao-t skill packs",
       routerSurface: "gpao-t skill route <text>",
+      executionPlanSurface: "gpao-t skill execute-plan <text>",
+      executionAdapterSurface: "gpao-t skill execute <text>",
+      executionEvidenceSurface: "gpao-t skill execute-record <text>",
+      executionHistorySurface: "gpao-t skill execution-history",
       readinessSurface: "gpao-t skill readiness",
       runtimeHook:
         "GPAO-T turn kernel calls the registry to select skill packs before model/tool routing.",
+      executionHook:
+        "GPAO-T skill execution adapter converts selected skill plans into local artifact drafts, quality gate results, replay evidence, and growth signal candidates.",
       futureRuntimeHook:
         "GPAO-T turn kernel calls the registry to select skill packs before model/tool routing.",
     },
@@ -416,7 +422,7 @@ export function buildSkillEcosystemPlan() {
       "Lock manifest standard and base pack registry.",
       "Add per-pack scenario fixtures.",
       "Expand per-pack replay fixtures now that intent-profile routing is connected to turn-kernel task packets.",
-      "Add skill execution adapters after GPAO-T UI/runtime authority contracts are stable.",
+      "Promote skill execution adapter evidence into per-pack replay fixtures.",
       "Let growth governance propose skill updates from replay evidence.",
     ],
   };
