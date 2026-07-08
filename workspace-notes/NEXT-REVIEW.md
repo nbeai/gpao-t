@@ -2,7 +2,7 @@
 
 ## Next Safe Action
 
-Review evidence before claiming completion.
+Proceed to browser-safe local serving plus screenshot verification for the Local Control Center.
 
 ## Review Before Continuing
 
@@ -13,12 +13,12 @@ Review evidence before claiming completion.
 
 ## Session Resume
 
-Continue only after reviewing verification evidence.
+Closeout is ready. Resume from local git head `f68706f`, where source-control rollback substrate and local skill execution adapter evidence are committed.
 
 ## Recent Evidence
 
-- brief: Saved product brief.
-- verify: Executed 2 checks.
 - closeout: Closeout decision: ready.
 - ops-check: Ops-check status: ready.
 - verify: Executed 2 checks.
+- closeout: Closeout decision: ready.
+- hardening: `ops hardening` reports `rollbackSubstrate: git_available`.
