@@ -171,8 +171,42 @@ export function buildControlCenterHtml({ snapshot, designContract } = {}) {
       gap: 10px;
       margin-bottom: 14px;
     }
+    .focus-strip {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 14px;
+      padding: 8px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--surface);
+      box-shadow: var(--shadow);
+    }
+    .focus-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 32px;
+      padding: 6px 10px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: var(--surface-muted);
+      color: var(--text);
+      font-size: 12px;
+      font-weight: 700;
+      text-decoration: none;
+      overflow-wrap: anywhere;
+    }
+    .focus-link:hover,
+    .focus-link:focus-visible {
+      background: var(--surface);
+      outline: 2px solid var(--approval);
+      outline-offset: 1px;
+    }
     .mobile-next-action {
-      display: none;
+      display: block;
+      margin-bottom: 14px;
+      padding: 12px;
     }
     .metric,
     .panel,
@@ -397,8 +431,18 @@ export function buildControlCenterHtml({ snapshot, designContract } = {}) {
         gap: 8px;
         margin-bottom: 10px;
       }
+      .focus-strip {
+        position: sticky;
+        top: 104px;
+        z-index: 1;
+        margin-bottom: 10px;
+        padding: 7px;
+      }
+      .focus-link {
+        flex: 1 1 calc(50% - 5px);
+        min-width: 0;
+      }
       .mobile-next-action {
-        display: block;
         margin-bottom: 12px;
         padding: 11px;
       }
@@ -427,7 +471,7 @@ export function buildControlCenterHtml({ snapshot, designContract } = {}) {
       .panel {
         min-height: 0;
         padding: 12px;
-        scroll-margin-top: 108px;
+        scroll-margin-top: 160px;
       }
       .panel-head {
         align-items: flex-start;
@@ -477,13 +521,19 @@ export function buildControlCenterHtml({ snapshot, designContract } = {}) {
         <a class="nav-item" href="#panel-${escapeHtml(panel.id)}"><span>${escapeHtml(panel.label)}</span><span>${escapeHtml(STATUS_LABELS[panel.status] || panel.status)}</span></a>`).join("")}
       </nav>
       <main>
-        <section class="decision-strip" aria-label="Current operating state">
+        <section class="focus-strip" aria-label="Control Center focus navigation">
+          <a class="focus-link" href="#decision-strip">상태</a>
+          <a class="focus-link" href="#next-safe-action">다음 행동</a>
+          <a class="focus-link" href="#authority-boundary">권한</a>
+          <a class="focus-link" href="#panel-authority">Authority</a>
+        </section>
+        <section class="decision-strip" id="decision-strip" aria-label="Current operating state">
           ${metric("Panels", uiSnapshot.firstViewport.counts.panels, "visible OS surfaces")}
           ${metric("Blocked", uiSnapshot.firstViewport.counts.blocked, "requires recovery before action")}
           ${metric("Review", uiSnapshot.firstViewport.counts.review, "needs human-readable inspection")}
           ${metric("Evidence", uiSnapshot.firstViewport.counts.evidence, "recorded replay signals")}
         </section>
-        <section class="mobile-next-action" aria-label="Mobile next safe action">
+        <section class="mobile-next-action" id="next-safe-action" aria-label="Mobile next safe action">
           <h2>다음 안전 행동</h2>
           <p class="next">${escapeHtml(uiSnapshot.firstViewport.nextSafeAction)}</p>
         </section>
@@ -492,11 +542,11 @@ export function buildControlCenterHtml({ snapshot, designContract } = {}) {
         </section>
       </main>
       <aside aria-label="Authority and next safe action">
-        <section class="side-section">
+        <section class="side-section" id="next-safe-action-aside">
           <h2>다음 안전 행동</h2>
           <p class="next">${escapeHtml(uiSnapshot.firstViewport.nextSafeAction)}</p>
         </section>
-        <section class="side-section">
+        <section class="side-section" id="authority-boundary">
           <h2>권한 경계</h2>
           <div class="side-list">
             ${authorityEntries.map(([key, value]) => `
@@ -511,7 +561,7 @@ export function buildControlCenterHtml({ snapshot, designContract } = {}) {
           <ul class="quality">
             ${uiSnapshot.designGate.slice(0, 6).map((gate) => `<li>${escapeHtml(gate)}</li>`).join("")}
           </ul>
-          <p class="footer-note">Interaction: no-script local inspection · panel anchors and inspectors only.</p>
+          <p class="footer-note">Interaction: no-script local inspection · panel anchors, focus navigation, and inspectors only.</p>
           <p class="footer-note">Source: ${escapeHtml(contract.recipePath)} · schema ${escapeHtml(controlSnapshot.schema)}</p>
         </section>
       </aside>

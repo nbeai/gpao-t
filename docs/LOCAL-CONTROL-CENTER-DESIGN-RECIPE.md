@@ -320,6 +320,7 @@ Before claiming a Local Control Center UI surface is ready, verify:
 - direct evidence outranks generated support
 - authority boundaries appear before dangerous actions
 - text fits on desktop and mobile
+- mobile sticky topbar or decision strip remains visible during panel navigation
 - no cards inside cards
 - no marketing hero or decorative blob background
 - no hidden external action or live mutation
@@ -334,4 +335,11 @@ Required surfaces:
 - `control html` prints the static HTML reader
 - `control render [output.html]` writes the static HTML reader to a local file
 
-The first UI reader should prove scanability and authority clarity before adding interactivity, external connectors, or daemon behavior.
+Allowed no-script behavior:
+
+- panel anchor navigation
+- focus navigation to current state, next safe action, and authority boundary
+- expandable panel inspectors
+- mobile next-safe-action strip
+
+The first UI reader should prove scanability and authority clarity before adding external connectors, daemon behavior, live mutations, or a JavaScript app shell.

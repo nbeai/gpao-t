@@ -55,7 +55,12 @@ export function buildControlCenterUiContract() {
       defaultOutputPath: ".gpao-t/control-center/index.html",
       executableSurfaces: ["gpao-t control html", "gpao-t control render [output.html]"],
       interactionMode: "no_script_local_inspection",
-      interactionSurfaces: ["anchor_panel_navigation", "details_summary_panel_inspector"],
+      interactionSurfaces: [
+        "anchor_panel_navigation",
+        "focus_navigation",
+        "details_summary_panel_inspector",
+        "mobile_next_safe_action_strip",
+      ],
     },
     visualSections: VISUAL_SECTIONS,
     requiredPanelFields: REQUIRED_PANEL_FIELDS,
@@ -87,6 +92,7 @@ export function buildControlCenterUiContract() {
       "The first scan must include next safe action and authority boundaries.",
       "The static reader must not include scripts or live external actions.",
       "Initial interactivity must use no-script local inspection controls only.",
+      "Richer Control Center behavior must preserve no-script, no external activation, no overflow, authority boundary visibility, and next safe action visibility.",
       "Renderer output must report static_html_file_written before visual quality claims.",
     ],
     nextSafeAction:

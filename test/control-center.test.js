@@ -149,7 +149,9 @@ describe("GPAO-T Local Control Center readiness", () => {
     assert.equal(contract.renderedSurface.kind, "static_html_reader");
     assert.equal(contract.renderedSurface.interactionMode, "no_script_local_inspection");
     assert.equal(contract.renderedSurface.interactionSurfaces.includes("anchor_panel_navigation"), true);
+    assert.equal(contract.renderedSurface.interactionSurfaces.includes("focus_navigation"), true);
     assert.equal(contract.renderedSurface.interactionSurfaces.includes("details_summary_panel_inspector"), true);
+    assert.equal(contract.renderedSurface.interactionSurfaces.includes("mobile_next_safe_action_strip"), true);
     assert.equal(contract.authorityBoundary.startsDaemon, false);
     assert.equal(contract.authorityBoundary.connectsAccounts, false);
     assert.equal(uiSnapshot.schema, "gpao_t.control_center_ui_snapshot.v0_1");
@@ -257,6 +259,13 @@ describe("GPAO-T Local Control Center readiness", () => {
     assert.match(html, /href="#panel-runtime"/);
     assert.match(html, /href="#panel-skill-ecosystem"/);
     assert.match(html, /href="#panel-authority"/);
+    assert.match(html, /aria-label="Control Center focus navigation"/);
+    assert.match(html, /href="#decision-strip"/);
+    assert.match(html, /href="#next-safe-action"/);
+    assert.match(html, /href="#authority-boundary"/);
+    assert.match(html, /id="decision-strip"/);
+    assert.match(html, /id="next-safe-action"/);
+    assert.match(html, /id="authority-boundary"/);
     assert.match(html, /\.panel:target/);
     assert.match(html, /scroll-margin-top/);
     assert.match(html, /data-panel-inspector="skill-ecosystem"/);
@@ -277,6 +286,9 @@ describe("GPAO-T Local Control Center readiness", () => {
     assert.match(html, /max-width: 100vw/);
     assert.match(html, /mobile-next-action/);
     assert.match(html, /aria-label="Mobile next safe action"/);
+    assert.match(html, /focus-strip/);
+    assert.match(html, /\.focus-strip \{[\s\S]*flex-wrap: wrap/);
+    assert.match(html, /\.focus-strip \{[\s\S]*position: sticky/);
     assert.match(html, /\.topbar \{[\s\S]*position: sticky/);
     assert.match(html, /nav \{ order: 3; \}/);
     assert.match(html, /main \{ order: 1; \}/);
@@ -298,9 +310,15 @@ describe("GPAO-T Local Control Center readiness", () => {
     assert.equal(contract.previewLifecycle.serveCheck, "ephemeral_start_verify_stop");
     assert.equal(contract.previewLifecycle.serve, "explicit_manual_preview_until_signal");
     assert.equal(contract.previewLifecycle.persistentDaemon, false);
-    assert.equal(contract.screenshotVerification.status, "required_before_interactivity");
+    assert.equal(contract.screenshotVerification.status, "required_before_richer_behavior");
     assert.equal(contract.screenshotVerification.requiredViewports.length, 2);
     assert.equal(contract.screenshotVerification.requiredVisibleText.includes("권한 경계"), true);
+    assert.equal(contract.screenshotVerification.requiredSelectors.includes(".focus-strip"), true);
+    assert.equal(contract.screenshotVerification.requiredSelectors.includes(".mobile-next-action"), true);
+    assert.equal(
+      contract.screenshotVerification.requiredInteractionSignals.includes("mobile_sticky_topbar_or_decision_strip_visible"),
+      true,
+    );
     assert.equal(contract.authorityBoundary.loopbackOnly, true);
     assert.equal(contract.authorityBoundary.startsPersistentDaemon, false);
     assert.equal(contract.authorityBoundary.deploysOrPublishes, false);

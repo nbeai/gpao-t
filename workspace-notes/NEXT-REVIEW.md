@@ -2,7 +2,7 @@
 
 ## Next Safe Action
 
-Review item: human scenario acceptance reviewed: human-scenario acceptance evidence is recommended for production, public, new-product, or quality-sensitive work.
+Review evidence before claiming completion.
 
 ## Review Before Continuing
 
@@ -13,9 +13,12 @@ Review item: human scenario acceptance reviewed: human-scenario acceptance evide
 
 ## Session Resume
 
-Review item: human scenario acceptance reviewed: human-scenario acceptance evidence is recommended for production, public, new-product, or quality-sensitive work.
+Continue only after reviewing verification evidence.
 
 ## Recent Evidence
 
+- closeout: Closeout decision: blocked.
 - verify: Executed 2 checks.
 - closeout: Closeout decision: review.
+- closeout: Closeout decision: review.
+- verify: Executed 2 checks.

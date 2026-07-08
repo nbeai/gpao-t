@@ -31,7 +31,7 @@ export function buildControlCenterServingContract({
       installOrUpdateHook: false,
     },
     screenshotVerification: {
-      status: "required_before_interactivity",
+      status: "required_before_richer_behavior",
       requiredViewports: [
         { label: "desktop", width: 1440, height: 960 },
         { label: "mobile", width: 390, height: 844 },
@@ -44,9 +44,20 @@ export function buildControlCenterServingContract({
       ],
       requiredSelectors: [
         ".topbar",
+        ".focus-strip",
         ".decision-strip",
+        ".mobile-next-action",
         "[data-panel=\"memory\"]",
         "[data-group=\"Authority\"]",
+      ],
+      requiredInteractionSignals: [
+        "nonblank_viewport",
+        "panel_anchor_navigation",
+        "panel_inspector_expansion",
+        "no_horizontal_overflow",
+        "next_safe_action_visible",
+        "authority_boundary_visible",
+        "mobile_sticky_topbar_or_decision_strip_visible",
       ],
       blockedSignals: [
         "blank_page",
