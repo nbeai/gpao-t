@@ -115,6 +115,9 @@ node bin/gpao-t.js control ui-snapshot
 node bin/gpao-t.js control ui-validate
 node bin/gpao-t.js control html
 node bin/gpao-t.js control render .gpao-t/control-center/index.html
+node bin/gpao-t.js control serve-contract
+node bin/gpao-t.js control serve-check
+node bin/gpao-t.js control serve 0
 node bin/gpao-t.js state
 node bin/gpao-t.js events
 node bin/gpao-t.js memory capture "배포파일 meaning" "배포파일 means GPAO Operating Package / GPAO for OpenClaw in this product flow."
@@ -210,9 +213,14 @@ Local Control Center readiness is exposed as data and a static UI reader, not as
 - `control ui-validate` checks that the UI snapshot preserves required panel fields, visible status text, authority boundaries, and no external activation
 - `control html` prints the static Local Control Center HTML reader to stdout
 - `control render [output.html]` writes the static Local Control Center HTML reader to a local file
+- `control serve-contract` returns the browser-safe loopback serving and screenshot verification contract
+- `control serve-check` starts a temporary loopback preview server, checks `/health` and `/control-center`, then stops it
+- `control serve [port]` starts an explicit `127.0.0.1` preview server for browser screenshot verification
 - `GET /control-center`, `GET /control-center/summary`, `GET /control-center/design`, `GET /control-center/ui-contract`, `GET /control-center/ui-snapshot`, and `GET /control-center/ui-validate` expose the same contracts through the local gateway handler
 
 This keeps the future Codex-like desktop surface light: the first visual layer reads the existing snapshot/design contracts before adding interactivity, daemon behavior, or external activation.
+
+Browser-safe serving is local preview only. It binds to `127.0.0.1`, does not configure OAuth, does not call external models or tools, does not store secrets, does not deploy, and does not become a persistent daemon. The purpose is to capture desktop/mobile screenshots and verify visible state before interactive Control Center work.
 
 Skill Ecosystem readiness is exposed as data before live execution:
 

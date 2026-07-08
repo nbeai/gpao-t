@@ -9,6 +9,7 @@ import {
   appendReplayRecoveryRecord,
   appendSelfGrowthProposal,
   buildControlCenterHtml,
+  buildControlCenterServingContract,
   buildControlCenterSnapshot,
   buildControlCenterSummary,
   buildControlCenterUiContract,
@@ -19,7 +20,9 @@ import {
   captureMemoryEntry,
   handleGatewayRequest,
   renderControlCenterHtml,
+  startControlCenterPreviewServer,
   validateControlCenterUiSnapshot,
+  verifyControlCenterPreviewServing,
 } from "../src/index.js";
 import releaseFixture from "../fixtures/replay/release-file-active-target.json" with { type: "json" };
 
@@ -236,4 +239,88 @@ describe("GPAO-T Local Control Center readiness", () => {
     assert.equal(render.schema, "gpao_t.local_control_center_render.v0_1");
     assert.equal(existsSync(render.outputPath), true);
   });
+
+  it("defines browser-safe local serving and screenshot verification boundaries", () => {
+    const contract = buildControlCenterServingContract();
+
+    assert.equal(contract.schema, "gpao_t.control_center_serving_contract.v0_1");
+    assert.equal(contract.status, "ready");
+    assert.equal(contract.servingMode, "browser_safe_loopback_preview");
+    assert.equal(contract.host, "127.0.0.1");
+    assert.equal(contract.routes.some((route) => route.path === "/control-center"), true);
+    assert.equal(contract.previewLifecycle.serveCheck, "ephemeral_start_verify_stop");
+    assert.equal(contract.previewLifecycle.serve, "explicit_manual_preview_until_signal");
+    assert.equal(contract.previewLifecycle.persistentDaemon, false);
+    assert.equal(contract.screenshotVerification.status, "required_before_interactivity");
+    assert.equal(contract.screenshotVerification.requiredViewports.length, 2);
+    assert.equal(contract.screenshotVerification.requiredVisibleText.includes("권한 경계"), true);
+    assert.equal(contract.authorityBoundary.loopbackOnly, true);
+    assert.equal(contract.authorityBoundary.startsPersistentDaemon, false);
+    assert.equal(contract.authorityBoundary.deploysOrPublishes, false);
+  });
+
+  it("serves the static Control Center over loopback and verifies page content", async () => {
+    const root = tempRoot();
+    const preview = await startControlCenterPreviewServer({
+      root,
+      now: "2026-07-08T00:04:00.000Z",
+    });
+
+    try {
+      const health = await fetchJson(`http://127.0.0.1:${preview.port}/health`);
+      const page = await fetchText(preview.url);
+
+      assert.equal(preview.schema, "gpao_t.control_center_preview_server.v0_1");
+      assert.equal(preview.status, "serving");
+      assert.match(preview.url, /^http:\/\/127\.0\.0\.1:\d+\/control-center$/);
+      assert.equal(preview.contract.authorityBoundary.loopbackOnly, true);
+      assert.equal(preview.contract.authorityBoundary.startsPersistentDaemon, false);
+      assert.equal(health.status, 200);
+      assert.equal(health.body.status, "ready");
+      assert.equal(page.status, 200);
+      assert.match(page.body, /GPAO-T Local Control Center/);
+      assert.match(page.body, /다음 안전 행동/);
+      assert.doesNotMatch(page.body, /<script/i);
+    } finally {
+      await preview.close();
+    }
+  });
+
+  it("runs serving smoke verification through function and CLI without leaving a server running", async () => {
+    const root = tempRoot();
+    const verification = await verifyControlCenterPreviewServing({
+      root,
+      now: "2026-07-08T00:05:00.000Z",
+    });
+    const cliOutput = execFileSync(process.execPath, [CLI, "control", "serve-check"], {
+      cwd: tempRoot(),
+      encoding: "utf8",
+    });
+    const cliVerification = JSON.parse(cliOutput);
+
+    assert.equal(verification.schema, "gpao_t.control_center_serving_verification.v0_1");
+    assert.equal(verification.status, "ready");
+    assert.equal(verification.findings.length, 0);
+    assert.equal(verification.healthStatus, 200);
+    assert.equal(verification.pageStatus, 200);
+    assert.equal(verification.authorityBoundary.loopbackOnly, true);
+    assert.equal(cliVerification.status, "ready");
+    assert.equal(cliVerification.findings.length, 0);
+  });
 });
+
+async function fetchText(url) {
+  const response = await fetch(url);
+  return {
+    status: response.status,
+    body: await response.text(),
+  };
+}
+
+async function fetchJson(url) {
+  const response = await fetch(url);
+  return {
+    status: response.status,
+    body: await response.json(),
+  };
+}

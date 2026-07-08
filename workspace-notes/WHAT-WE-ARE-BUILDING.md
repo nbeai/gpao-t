@@ -6,7 +6,7 @@ The first real user can route a vague request, see the plan, run checks, and und
 
 - Phase: closeout
 - Command: closeout
-- Status: ready
+- Status: review
 
 ## User Mode
 
@@ -35,4 +35,4 @@ AI does the work. User keeps authority.
 
 ## Latest Summary
 
-Closeout decision: ready.
+Closeout decision: review.

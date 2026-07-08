@@ -10,6 +10,7 @@ import {
   buildControlCenterSnapshot,
   buildControlCenterSummary,
   buildControlCenterHtml,
+  buildControlCenterServingContract,
   buildControlCenterUiContract,
   buildControlCenterUiSnapshot,
   buildConnectorGovernanceSummary,
@@ -53,7 +54,9 @@ import {
   routeSkillPacks,
   runDoctor,
   runRuntimeTurn,
+  startControlCenterPreviewServer,
   validateControlCenterUiSnapshot,
+  verifyControlCenterPreviewServing,
   appendSkillExecutionRun,
 } from "../src/index.js";
 
@@ -110,6 +113,9 @@ function usage() {
     "  gpao-t control ui-validate",
     "  gpao-t control html",
     "  gpao-t control render [output.html]",
+    "  gpao-t control serve-contract",
+    "  gpao-t control serve-check",
+    "  gpao-t control serve [port]",
     "  gpao-t state",
     "  gpao-t events",
     "  gpao-t memory capture <title> <body>",
@@ -343,8 +349,26 @@ try {
       process.stdout.write(buildControlCenterHtml());
     } else if (subcommand === "render") {
       printJson(renderControlCenterHtml({ outputPath: args[1] }));
+    } else if (subcommand === "serve-contract") {
+      printJson(buildControlCenterServingContract());
+    } else if (subcommand === "serve-check") {
+      printJson(await verifyControlCenterPreviewServing());
+    } else if (subcommand === "serve") {
+      const requestedPort = args[1] ? Number(args[1]) : 0;
+      const preview = await startControlCenterPreviewServer({ port: requestedPort });
+      printJson({
+        schema: preview.schema,
+        status: preview.status,
+        url: preview.url,
+        host: preview.host,
+        port: preview.port,
+        render: preview.render,
+        contract: preview.contract,
+        stop: "Press Ctrl+C to stop this local preview server.",
+      });
+      await waitForStop(preview);
     } else {
-      throw new Error("control command requires snapshot, summary, design, ui-contract, ui-snapshot, ui-validate, html, or render");
+      throw new Error("control command requires snapshot, summary, design, ui-contract, ui-snapshot, ui-validate, html, render, serve-contract, serve-check, or serve");
     }
   } else if (command === "gateway") {
     const [method, requestPath, rawBody] = args;
@@ -374,4 +398,18 @@ function parseGrowthGateArgs({ target, approvalStatus }) {
     ...selection,
     approvalStatus,
   };
+}
+
+function waitForStop(preview) {
+  return new Promise((resolve) => {
+    const stop = async () => {
+      try {
+        await preview.close();
+      } finally {
+        resolve();
+      }
+    };
+    process.once("SIGINT", stop);
+    process.once("SIGTERM", stop);
+  });
 }

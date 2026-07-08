@@ -17,6 +17,11 @@ import {
   renderControlCenterHtml,
 } from "./core/control-center-renderer.js";
 import {
+  buildControlCenterServingContract,
+  startControlCenterPreviewServer,
+  verifyControlCenterPreviewServing,
+} from "./core/control-center-serving.js";
+import {
   buildControlCenterUiContract,
   buildControlCenterUiSnapshot,
   validateControlCenterUiSnapshot,
@@ -102,6 +107,7 @@ export {
   buildControlCenterSnapshot,
   buildControlCenterSummary,
   buildControlCenterHtml,
+  buildControlCenterServingContract,
   buildControlCenterUiContract,
   buildControlCenterUiSnapshot,
   buildGrowthApplicationGate,
@@ -151,7 +157,9 @@ export {
   routeSkillPacks,
   routeModel,
   renderControlCenterHtml,
+  startControlCenterPreviewServer,
   validateControlCenterUiSnapshot,
+  verifyControlCenterPreviewServing,
   selectModelAdapter,
   selectToolAdapters,
   runDoctor,

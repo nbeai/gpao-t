@@ -2,7 +2,7 @@
 
 ## Next Safe Action
 
-Closeout is ready; use the report for the final response and handoff.
+Review item: human scenario acceptance reviewed: human-scenario acceptance evidence is recommended for production, public, new-product, or quality-sensitive work.
 
 ## Review Before Continuing
 
@@ -13,12 +13,12 @@ Closeout is ready; use the report for the final response and handoff.
 
 ## Session Resume
 
-Closeout is ready; use the report for the final response and handoff.
+Review item: human scenario acceptance reviewed: human-scenario acceptance evidence is recommended for production, public, new-product, or quality-sensitive work.
 
 ## Recent Evidence
 
-- ops-check: Ops-check status: ready.
+- plan: Saved build plan.
 - verify: Executed 2 checks.
-- closeout: Closeout decision: ready.
-- closeout: Closeout decision: ready.
-- closeout: Closeout decision: ready.
+- closeout: Closeout decision: blocked.
+- verify: Executed 2 checks.
+- closeout: Closeout decision: review.
