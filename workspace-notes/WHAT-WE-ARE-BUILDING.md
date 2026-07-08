@@ -4,25 +4,20 @@ GPAO-T is a production-aimed local personal AI operating system. The current pro
 
 ## Current Phase
 
-- Phase: approval-record-write-gate-design
+- Phase: approval-preview-ux-integration
 - Status: implemented, verified, and closeout-ready
-- Scope closed in this slice: write gate design for future approval packets, without writing records or invoking dry-run.
+- Scope closed in this slice: integrated dry-run plan/preview/approval/storage/write-gate statuses into the Control Center as a user-visible preview-only flow.
 - Current surface added:
-  - `gpao-t control tauri-dry-run-approval-write-gate`
-  - `gpao-t control tauri-dry-run-approval-write-gate-check`
-  - `GET /app-shell/tauri-dry-run-approval-write-gate`
-  - `GET /app-shell/tauri-dry-run-approval-write-gate/verify`
+  - `Approval / Preview` Control Center panel
+  - 5 approval/preview stages: dry-run plan, user preview, invocation approval, approval storage, write gate
+  - blocked action chips for approval record write, dry-run invocation, command execution, file mutation, Tauri build, dependency install, install/update/rollback execution, IPC, external network, and connector/model/tool activation
 
 ## Verification Anchor
 
-- `node --check src/core/tauri-install-execution-contracts.js`: pass.
-- `node --check src/core/control-center-serving.js`: pass.
-- `node --check src/core/gateway.js`: pass.
-- `node bin/gpao-t.js control tauri-dry-run-approval-write-gate-check`: ready.
-- `node --test test/install-hardening.test.js`: pass, 11 tests.
 - `node --test test/control-center.test.js`: pass, 18 tests.
 - `npm run verify`: pass, 95 tests across 16 suites.
-- `node bin/gpao-t.js control serve-check`: ready with `tauriDryRunApprovalWriteGateStatus: 200` when run with local loopback bind permission.
+- `node bin/gpao-t.js control summary`: shows `Approval / Preview`, 5 approval preview stages, 10 blocked approval preview actions, and next safe action for user-visible approval/preview flow.
+- `node bin/gpao-t.js control tauri-dry-run-approval-write-gate-check`: ready.
 - `beai verify --run --scenario --meaning`: pass.
 - `beai closeout --apply`: ready.
 - `git diff --check`: pass.
@@ -33,6 +28,6 @@ The user keeps authority over approval-record write, future dry-run invocation, 
 
 ## Current Progress Estimate
 
-- Full GPAO-T production product: about 34-37% complete, 63-66% remaining.
-- Current desktop/local substrate track: about 75-79% complete, 21-25% remaining.
-- Immediate write gate design slice: closed; next micro-slice should design or implement pure approval-packet validation only, still without writing records.
+- Full GPAO-T production product: about 35-38% complete, 62-65% remaining.
+- Current desktop/local substrate track: about 77-81% complete, 19-23% remaining.
+- Immediate next safe action: approval/preview UX visual and interaction refinement in Control Center, not approval-record write implementation.

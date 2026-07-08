@@ -77,6 +77,7 @@ export function buildControlCenterUiContract() {
     panelGroupMap: {
       runtime: "Work",
       "skill-ecosystem": "Work",
+      "approval-preview": "Authority",
       memory: "Context",
       recovery: "Evidence",
       growth: "Growth",
@@ -148,6 +149,7 @@ export function buildControlCenterUiSnapshot({ snapshot, designContract, uiContr
       status: panel.status,
       headline: panel.headline,
       nextSafeAction: panel.nextSafeAction,
+      data: panel.data || null,
     })),
     authorityBoundary,
     designGate: design.qualityGate || [],

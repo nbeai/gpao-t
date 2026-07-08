@@ -78,12 +78,25 @@ describe("GPAO-T Local Control Center readiness", () => {
     assert.equal(snapshot.counts.modelAdapters, 4);
     assert.equal(snapshot.counts.connectors, 6);
     assert.equal(snapshot.counts.growthApplicationGates, 0);
+    assert.equal(snapshot.counts.approvalPreviewStages, 5);
+    assert.equal(snapshot.counts.approvalPreviewBlockedActions, 10);
     assert.equal(snapshot.authorityBoundary.connectorActivation, "blocked_until_explicit_approval");
     assert.equal(snapshot.authorityBoundary.growthApplication, "blocked_in_this_slice");
     assert.equal(snapshot.authorityBoundary.installExecution, "blocked_until_user_approval");
+    assert.equal(snapshot.authorityBoundary.approvalPreviewFlow, "local_preview_only_no_write_no_invocation");
+    assert.equal(snapshot.authorityBoundary.approvalRecordWrite, "blocked");
+    assert.equal(snapshot.authorityBoundary.dryRunInvocation, "blocked");
     assert.equal(snapshot.authorityBoundary.externalModelCall, "blocked_until_configured_and_approved");
     assert.ok(snapshot.panels.some((panel) => panel.id === "memory" && panel.status === "review"));
     assert.ok(snapshot.panels.some((panel) => panel.id === "ops" && panel.status === "blocked"));
+    assert.ok(snapshot.panels.some((panel) =>
+      panel.id === "approval-preview"
+      && panel.data.stages.length === 5
+      && panel.data.blockedActions.includes("approval record write")
+      && panel.data.blockedActions.includes("dry-run invocation")
+      && panel.data.safetyInvariants.writesApprovalRecord === false
+      && panel.data.safetyInvariants.invokesDryRunExecutor === false
+    ));
     assert.ok(snapshot.panels.some((panel) => panel.id === "connectors" && panel.status === "review"));
     assert.ok(snapshot.panels.some((panel) => panel.id === "skill-ecosystem" && panel.status === "ready"));
   });
@@ -190,6 +203,11 @@ describe("GPAO-T Local Control Center readiness", () => {
     assert.equal(uiSnapshot.firstViewport.title, "GPAO-T Local Control Center");
     assert.equal(uiSnapshot.firstViewport.counts.panels, snapshot.counts.panels);
     assert.equal(uiSnapshot.panels.some((panel) => panel.id === "memory" && panel.group === "Context"), true);
+    assert.equal(uiSnapshot.panels.some((panel) =>
+      panel.id === "approval-preview"
+      && panel.group === "Authority"
+      && panel.data.stages.length === 5
+    ), true);
     assert.equal(validation.status, "ready");
     assert.equal(cliContract.schema, contract.schema);
     assert.equal(cliSnapshot.schema, uiSnapshot.schema);
@@ -233,6 +251,12 @@ describe("GPAO-T Local Control Center readiness", () => {
     assert.match(html, /다음 안전 행동/);
     assert.match(html, /권한 경계/);
     assert.match(html, /data-panel="memory"/);
+    assert.match(html, /data-panel="approval-preview"/);
+    assert.match(html, /Approval \/ Preview/);
+    assert.match(html, /data-approval-stage="plan"/);
+    assert.match(html, /data-approval-stage="write-gate"/);
+    assert.match(html, /approval record write/);
+    assert.match(html, /dry-run invocation/);
     assert.match(html, /data-group="Context"/);
     assert.match(html, /href="#panel-memory"/);
     assert.match(html, /id="panel-memory"/);
@@ -291,6 +315,8 @@ describe("GPAO-T Local Control Center readiness", () => {
     assert.match(htmlOutput, /panel-actions/);
     assert.match(htmlOutput, /workflow-state-view/);
     assert.match(htmlOutput, /state-ribbon/);
+    assert.match(htmlOutput, /approval-flow/);
+    assert.match(htmlOutput, /blocked-actions/);
     assert.equal(render.schema, "gpao_t.local_control_center_render.v0_1");
     assert.equal(existsSync(render.outputPath), true);
   });
@@ -314,6 +340,7 @@ describe("GPAO-T Local Control Center readiness", () => {
     assert.match(html, /\.inspector:target/);
     assert.match(html, /scroll-margin-top/);
     assert.match(html, /data-panel-inspector="skill-ecosystem"/);
+    assert.match(html, /data-panel-inspector="approval-preview"/);
     assert.match(html, /href="#inspect-runtime"/);
     assert.match(html, /id="inspect-runtime"/);
     assert.match(html, /data-panel-action="inspect"/);
@@ -806,6 +833,9 @@ describe("GPAO-T Local Control Center readiness", () => {
       assert.equal(tauriShellSlice.body.schema, "gpao_t.tauri_readonly_shell_slice.v0_1");
       assert.equal(tauriShellVerify.body.status, "ready");
       assert.equal(controlSummary.body.schema, "gpao_t.control_center_summary.v0_1");
+      assert.equal(controlSummary.body.panels.some((panel) => panel.id === "approval-preview"), true);
+      assert.equal(controlSummary.body.authorityBoundary.approvalRecordWrite, "blocked");
+      assert.equal(controlSummary.body.authorityBoundary.dryRunInvocation, "blocked");
       assert.equal(blockedPost.status, 405);
       assert.equal(blockedPost.body.status, "blocked");
       assert.equal(blockedPost.body.reason, "browser_local_app_shell_first_slice_is_get_only");

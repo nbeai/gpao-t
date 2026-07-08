@@ -22,6 +22,7 @@ const STATUS_LABELS = {
 const PANEL_GROUPS = {
   runtime: "Work",
   "skill-ecosystem": "Work",
+  "approval-preview": "Authority",
   memory: "Context",
   recovery: "Evidence",
   growth: "Growth",
@@ -347,6 +348,59 @@ export function buildControlCenterHtml({ snapshot, designContract } = {}) {
       gap: 7px;
       margin-top: 10px;
     }
+    .approval-flow {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 7px;
+      margin-top: 10px;
+    }
+    .approval-stage {
+      min-width: 0;
+      min-height: 86px;
+      padding: 7px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: #fbfcfd;
+      font-size: 11px;
+      line-height: 1.25;
+      overflow-wrap: anywhere;
+    }
+    .approval-stage strong,
+    .blocked-actions strong {
+      display: block;
+      color: var(--muted);
+      font-size: 10px;
+      text-transform: uppercase;
+    }
+    .approval-stage span {
+      display: block;
+      margin-top: 3px;
+      font-weight: 700;
+    }
+    .approval-stage small {
+      display: block;
+      margin-top: 3px;
+      color: var(--muted);
+      font-size: 10px;
+      line-height: 1.25;
+    }
+    .blocked-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      margin-top: 8px;
+    }
+    .blocked-action {
+      min-width: 0;
+      padding: 4px 6px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: #fff;
+      color: var(--blocked);
+      font-size: 10px;
+      font-weight: 700;
+      overflow-wrap: anywhere;
+    }
     .panel-action {
       display: inline-flex;
       align-items: center;
@@ -610,6 +664,12 @@ export function buildControlCenterHtml({ snapshot, designContract } = {}) {
         grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: 6px;
       }
+      .approval-flow {
+        grid-template-columns: 1fr;
+      }
+      .approval-stage {
+        min-height: 0;
+      }
       .panel-action {
         min-height: 34px;
         padding: 6px;
@@ -794,6 +854,7 @@ function panelHtml(panel) {
               ${statePill("Authority", states.authority)}
               ${statePill("Next", states.next)}
             </div>
+            ${approvalPreviewHtml(panel)}
             <div class="panel-actions" aria-label="${escapeHtml(panel.label)} local drilldown actions">
               <a class="panel-action" data-panel-action="inspect" href="#inspect-${escapeHtml(panel.id)}">인스펙터</a>
               <a class="panel-action" data-panel-action="authority" href="#authority-boundary">권한</a>
@@ -811,12 +872,42 @@ function panelHtml(panel) {
                 ${inspectorRow("Recovery State", states.recovery)}
                 ${inspectorRow("Authority State", states.authority)}
                 ${inspectorRow("Next State", states.next)}
+                ${approvalInspectorRows(panel)}
                 ${inspectorRow("Authority", authorityLens(group))}
                 ${inspectorRow("Evidence", evidenceLens(panel))}
                 ${inspectorLinks(panel)}
               </div>
             </details>
           </section>`;
+}
+
+function approvalPreviewHtml(panel) {
+  if (panel.id !== "approval-preview" || !panel.data) return "";
+  const stages = panel.data.stages || [];
+  const blockedActions = panel.data.blockedActions || [];
+  return `
+            <div class="approval-flow" aria-label="Approval preview stages">
+              ${stages.map((stage) => `
+              <div class="approval-stage" data-approval-stage="${escapeHtml(stage.id)}">
+                <strong>${escapeHtml(stage.label)}</strong>
+                <span>${escapeHtml(STATUS_LABELS[stage.status] || stage.status)}</span>
+                <small>${escapeHtml(stage.visibleState)}</small>
+                <small>${escapeHtml(stage.blockedState)}</small>
+              </div>`).join("")}
+            </div>
+            <div class="blocked-actions" aria-label="Blocked approval preview actions">
+              <strong>Blocked</strong>
+              ${blockedActions.map((action) => `<span class="blocked-action">${escapeHtml(action)}</span>`).join("")}
+            </div>`;
+}
+
+function approvalInspectorRows(panel) {
+  if (panel.id !== "approval-preview" || !panel.data) return "";
+  return [
+    inspectorRow("Flow Mode", panel.data.flowMode),
+    inspectorRow("Stages", (panel.data.stages || []).map((stage) => `${stage.label}:${stage.status}`).join(" · ")),
+    inspectorRow("Still Blocked", (panel.data.blockedActions || []).join(" · ")),
+  ].join("");
 }
 
 function metric(label, value, hint) {

@@ -1279,7 +1279,7 @@ export function buildTauriInstallDryRunApprovalRecordWriteGateDesign({
     authorityBoundary: blockedAuthorityBoundary(),
     nextSafeAction: findings.length
       ? "Fix approval-record storage design findings before trusting the write gate design."
-      : "Next gate may implement pure approval-packet validation only; actual approval record write, dry-run invocation, command execution, file mutation, Tauri build, dependency install, IPC, external network, connector/model/tool activation, and install/update/rollback execution remain blocked.",
+      : "Expose this stop-line through the Control Center approval/preview UX before any deeper validation work; actual approval record write, dry-run invocation, command execution, file mutation, Tauri build, dependency install, IPC, external network, connector/model/tool activation, and install/update/rollback execution remain blocked.",
   };
 }
 
@@ -1354,7 +1354,7 @@ export function verifyTauriInstallDryRunApprovalRecordWriteGateDesign({
     authorityBoundary: design.authorityBoundary,
     nextSafeAction: findings.length
       ? "Fix approval-record write gate design findings before any validation implementation."
-      : "Proceed only to pure approval-packet validation design/implementation; do not write approval records, invoke dry-run, run commands, mutate files, build Tauri, install dependencies, open IPC, call external network, activate connectors/models/tools, or execute install/update/rollback.",
+      : "Proceed only to Control Center approval/preview UX integration; do not write approval records, invoke dry-run, run commands, mutate files, build Tauri, install dependencies, open IPC, call external network, activate connectors/models/tools, or execute install/update/rollback.",
   };
 }
 

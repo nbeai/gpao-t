@@ -38,10 +38,12 @@ export function buildControlCenterSnapshot({ root } = {}) {
   const skillAtlas = buildSkillCandidateAtlas();
   const skillRoadmap = buildSkillProductionRoadmap();
   const skillProductionStatus = buildSkillProductionStatus({ phase: "phase-1" });
+  const approvalPreviewFlow = buildApprovalPreviewFlow({ root });
 
   const panels = [
     buildRuntimePanel({ doctor, runtimeState, auditEvents }),
     buildOpsPanel({ installHardening, operationsContract }),
+    buildApprovalPreviewPanel({ approvalPreviewFlow }),
     buildSkillPanel({
       skillPacks,
       skillReadiness,
@@ -84,6 +86,9 @@ export function buildControlCenterSnapshot({ root } = {}) {
       skillPackReadinessFindings: skillReadiness.totalFindings,
       skillExecutionRuns: skillExecution.totalRuns,
       skillExecutionGrowthSignals: skillExecution.growthSignalCandidates.length,
+      approvalPreviewStages: approvalPreviewFlow.stages.length,
+      approvalPreviewBlockedActions: approvalPreviewFlow.blockedActions.length,
+      approvalPreviewReadyStages: approvalPreviewFlow.stages.filter((stage) => stage.status === "ready").length,
       growthProposals: growthProposals.length,
       growthApplicationGates: growthApplicationGates.totalGates,
       blockedGrowthApplications: growthApplicationGates.blockedLiveMutations,
@@ -98,6 +103,11 @@ export function buildControlCenterSnapshot({ root } = {}) {
       installExecution: installHardening.authorityBoundary.installExecution,
       updateExecution: installHardening.authorityBoundary.updateExecution,
       destructiveRollback: installHardening.authorityBoundary.destructiveRollback,
+      approvalPreviewFlow: "local_preview_only_no_write_no_invocation",
+      approvalRecordWrite: "blocked",
+      dryRunInvocation: "blocked",
+      tauriBuild: "blocked",
+      dependencyInstall: "blocked",
       connectorActivation: connectorGovernance.authorityBoundary.oauthSetup,
       connectorWriteAccess: connectorGovernance.authorityBoundary.writeAccess,
       connectorExternalSend: connectorGovernance.authorityBoundary.externalSend,
@@ -207,6 +217,108 @@ function buildOpsPanel({ installHardening, operationsContract }) {
       operationsContract,
     },
     nextSafeAction: installHardening.nextSafeAction,
+  };
+}
+
+function buildApprovalPreviewFlow() {
+  const stages = [
+    {
+      id: "plan",
+      label: "Dry-run plan",
+      status: "ready",
+      mode: "plan_only_not_invoked",
+      visibleState: "install/update/rollback operations planned, not invoked",
+      blockedState: "commands and writes are preview-only",
+      nextSafeAction: "Inspect the plan surface before any future invocation gate.",
+    },
+    {
+      id: "preview",
+      label: "User preview",
+      status: "ready",
+      mode: "json_preview_no_html_no_script_no_execution",
+      visibleState: "preview cards summarize planned commands, writes, rollback, and blocked actions",
+      blockedState: "approval prep only",
+      nextSafeAction: "Make the preview easier to read in Control Center.",
+    },
+    {
+      id: "approval",
+      label: "Invocation approval",
+      status: "ready",
+      mode: "approval_contract_only_no_invocation",
+      visibleState: "not_requested",
+      blockedState: "approval missing by design; invocation not invoked",
+      nextSafeAction: "Show approval scope without recording approval.",
+    },
+    {
+      id: "storage",
+      label: "Approval storage",
+      status: "ready",
+      mode: "storage_design_only_no_record_write_no_invocation",
+      visibleState: ".gpao-t/approvals/tauri-dry-run-invocation-approvals.jsonl",
+      blockedState: "record write and directory creation disabled",
+      nextSafeAction: "Show where records would live later without reading or writing them now.",
+    },
+    {
+      id: "write-gate",
+      label: "Write gate",
+      status: "ready",
+      mode: "write_gate_design_only_no_record_write_no_invocation",
+      visibleState: "write gate not implemented or invoked",
+      blockedState: "approval record write remains false",
+      nextSafeAction: "Keep this as a stop-line while the user-facing preview flow is refined.",
+    },
+  ];
+
+  const blockedActions = [
+    "approval record write",
+    "dry-run invocation",
+    "command execution",
+    "file mutation",
+    "Tauri build",
+    "dependency install",
+    "install/update/rollback execution",
+    "IPC",
+    "external network",
+    "connector/model/tool activation",
+  ];
+
+  return {
+    schema: "gpao_t.approval_preview_control_center_flow.v0_1",
+    status: stages.some((stage) => stage.status === "blocked") ? "blocked" : "review",
+    flowMode: "control_center_preview_only_no_write_no_invocation",
+    stages,
+    blockedActions,
+    userVisibleFlow: [
+      "Inspect dry-run plan status.",
+      "Inspect preview cards and blocked actions.",
+      "Inspect approval scope without requesting approval now.",
+      "Inspect storage and write-gate boundaries.",
+      "Refine the user-visible approval/preview flow before enabling any write path.",
+    ],
+    safetyInvariants: {
+      writesApprovalRecord: false,
+      invokesDryRunExecutor: false,
+      runsCommands: false,
+      mutatesFiles: false,
+      runsTauriBuild: false,
+      installsDependencies: false,
+      opensIpc: false,
+      usesExternalNetwork: false,
+      activatesConnectorsModelsTools: false,
+    },
+    nextSafeAction:
+      "Design the user-visible approval/preview flow in Control Center; do not implement approval-record write, dry-run invocation, build, install/update/rollback, IPC, external network, or connector/model/tool activation.",
+  };
+}
+
+function buildApprovalPreviewPanel({ approvalPreviewFlow }) {
+  return {
+    id: "approval-preview",
+    label: "Approval / Preview",
+    status: approvalPreviewFlow.status,
+    headline: "Dry-run plan, preview, approval, storage, and write-gate states are visible without opening execution.",
+    data: approvalPreviewFlow,
+    nextSafeAction: approvalPreviewFlow.nextSafeAction,
   };
 }
 
@@ -321,6 +433,8 @@ function buildNextSafeAction({ blockedPanels, reviewPanels }) {
     return `Resolve blocked panel first: ${blockedPanels[0].label}.`;
   }
   if (reviewPanels.length) {
+    const approvalPreviewPanel = reviewPanels.find((panel) => panel.id === "approval-preview");
+    if (approvalPreviewPanel) return approvalPreviewPanel.nextSafeAction;
     return `Review panel before applying changes: ${reviewPanels[0].label}.`;
   }
   return "Use this snapshot as the Local Control Center data source before building the visual UI.";
