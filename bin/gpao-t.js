@@ -24,6 +24,8 @@ import {
   buildSelfGrowthProposal,
   buildSkillEcosystemPlan,
   buildSkillExecutionPlan,
+  buildSkillExecutionRun,
+  buildSkillExecutionSummary,
   buildSkillIntentProfile,
   buildSkillManifestStandard,
   buildSkillManualFirstPlan,
@@ -44,6 +46,7 @@ import {
   readReplayRecoveryHistory,
   readRuntimeState,
   readSelfGrowthProposals,
+  readSkillExecutionHistory,
   resolveContextMesh,
   reviewConnectorPermission,
   renderControlCenterHtml,
@@ -51,6 +54,7 @@ import {
   runDoctor,
   runRuntimeTurn,
   validateControlCenterUiSnapshot,
+  appendSkillExecutionRun,
 } from "../src/index.js";
 
 function usage() {
@@ -74,6 +78,10 @@ function usage() {
     "  gpao-t growth gate-summary",
     "  gpao-t skill ecosystem",
     "  gpao-t skill execute-plan <text>",
+    "  gpao-t skill execute <text>",
+    "  gpao-t skill execute-record <text>",
+    "  gpao-t skill execution-history",
+    "  gpao-t skill execution-summary",
     "  gpao-t skill intent <text>",
     "  gpao-t skill manifest",
     "  gpao-t skill manual-first",
@@ -218,6 +226,22 @@ try {
         throw new Error("skill execute-plan requires input text");
       }
       printJson(buildSkillExecutionPlan({ request }));
+    } else if (subcommand === "execute") {
+      const request = [firstArg, ...restArgs].filter(Boolean).join(" ").trim();
+      if (!request) {
+        throw new Error("skill execute requires input text");
+      }
+      printJson(buildSkillExecutionRun({ request }));
+    } else if (subcommand === "execute-record") {
+      const request = [firstArg, ...restArgs].filter(Boolean).join(" ").trim();
+      if (!request) {
+        throw new Error("skill execute-record requires input text");
+      }
+      printJson(appendSkillExecutionRun({ request }));
+    } else if (subcommand === "execution-history") {
+      printJson(readSkillExecutionHistory());
+    } else if (subcommand === "execution-summary") {
+      printJson(buildSkillExecutionSummary());
     } else if (subcommand === "intent") {
       const request = [firstArg, ...restArgs].filter(Boolean).join(" ").trim();
       if (!request) {
@@ -244,7 +268,7 @@ try {
     } else if (subcommand === "readiness") {
       printJson(buildSkillReadinessReport());
     } else {
-      throw new Error("skill command requires ecosystem, execute-plan, intent, manifest, manual-first, packs, inspect, route, or readiness");
+      throw new Error("skill command requires ecosystem, execute-plan, execute, execute-record, execution-history, execution-summary, intent, manifest, manual-first, packs, inspect, route, or readiness");
     }
   } else if (command === "connectors") {
     const [subcommand, connectorId, action] = args;

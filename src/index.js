@@ -64,6 +64,12 @@ import { buildReplayRecoveryView } from "./core/replay-recovery.js";
 import { runRuntimeTurn } from "./core/runtime.js";
 import { buildSessionOverlay } from "./core/session-overlay.js";
 import {
+  appendSkillExecutionRun,
+  buildSkillExecutionRun,
+  buildSkillExecutionSummary,
+  readSkillExecutionHistory,
+} from "./core/skill-execution-adapter.js";
+import {
   buildSkillEcosystemPlan,
   buildSkillExecutionPlan,
   buildSkillIntentProfile,
@@ -110,8 +116,11 @@ export {
   buildAuthorityDecision,
   buildContextRuntime,
   buildSessionOverlay,
+  appendSkillExecutionRun,
   buildSkillEcosystemPlan,
   buildSkillExecutionPlan,
+  buildSkillExecutionRun,
+  buildSkillExecutionSummary,
   buildSkillIntentProfile,
   buildSkillManifestStandard,
   buildSkillManualFirstPlan,
@@ -135,6 +144,7 @@ export {
   readReplayRecoveryHistory,
   readRuntimeState,
   readSelfGrowthProposals,
+  readSkillExecutionHistory,
   readTCellCandidates,
   resolveContextMesh,
   reviewConnectorPermission,

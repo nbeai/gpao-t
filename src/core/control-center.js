@@ -7,6 +7,7 @@ import { buildInstallHardeningSummary } from "./install-hardening.js";
 import { readMemoryWiki, readTCellCandidates } from "./memory-wiki.js";
 import { buildOperationsContractSummary } from "./operations-contract.js";
 import { buildRecoveryHistorySummary, readReplayRecoveryHistory } from "./replay-history.js";
+import { buildSkillExecutionSummary } from "./skill-execution-adapter.js";
 import { buildSkillReadinessReport, listSkillPacks } from "./skill-ecosystem.js";
 import { readAuditEvents, readRuntimeState } from "./storage.js";
 
@@ -27,11 +28,12 @@ export function buildControlCenterSnapshot({ root } = {}) {
   const operationsContract = buildOperationsContractSummary();
   const skillPacks = listSkillPacks();
   const skillReadiness = buildSkillReadinessReport();
+  const skillExecution = buildSkillExecutionSummary({ root });
 
   const panels = [
     buildRuntimePanel({ doctor, runtimeState, auditEvents }),
     buildOpsPanel({ installHardening, operationsContract }),
-    buildSkillPanel({ skillPacks, skillReadiness }),
+    buildSkillPanel({ skillPacks, skillReadiness, skillExecution }),
     buildMemoryPanel({ memoryWiki, tcellCandidates }),
     buildRecoveryPanel({ recoveryHistory, recoverySummary }),
     buildGrowthPanel({ growthProposals, growthApplicationGates }),
@@ -61,6 +63,8 @@ export function buildControlCenterSnapshot({ root } = {}) {
       dataSurfaces: operationsContract.dataSurfaces,
       skillPacks: skillPacks.total,
       skillPackReadinessFindings: skillReadiness.totalFindings,
+      skillExecutionRuns: skillExecution.totalRuns,
+      skillExecutionGrowthSignals: skillExecution.growthSignalCandidates.length,
       growthProposals: growthProposals.length,
       growthApplicationGates: growthApplicationGates.totalGates,
       blockedGrowthApplications: growthApplicationGates.blockedLiveMutations,
@@ -108,21 +112,31 @@ export function buildControlCenterSummary({ root } = {}) {
   };
 }
 
-function buildSkillPanel({ skillPacks, skillReadiness }) {
+function buildSkillPanel({ skillPacks, skillReadiness, skillExecution }) {
+  const status = skillReadiness.status === "blocked"
+    ? "blocked"
+    : skillExecution.status === "review" && skillExecution.totalRuns > 0
+    ? "review"
+    : skillReadiness.status;
   return {
     id: "skill-ecosystem",
     label: "Skill Ecosystem",
-    status: skillReadiness.status,
-    headline: skillReadiness.status === "ready"
-      ? "Research-grounded base skill packs are registered."
+    status,
+    headline: skillExecution.totalRuns
+      ? "Skill packs now produce local execution evidence and growth signals."
+      : skillReadiness.status === "ready"
+      ? "Research-grounded base skill packs are registered; execution evidence is waiting for first run."
       : "Skill ecosystem manifest needs review before runtime attachment.",
     data: {
       totalPacks: skillPacks.total,
       categories: skillPacks.categories,
       readinessFindings: skillReadiness.findings,
+      executionSummary: skillExecution,
       primeRule: "Every GPAO-T skill must solve a real user problem through research-grounded practical procedures.",
     },
-    nextSafeAction: skillReadiness.nextSafeAction,
+    nextSafeAction: skillExecution.totalRuns
+      ? skillExecution.nextSafeAction
+      : "Run a local skill execution record to create inspectable artifact, quality, replay, and growth evidence.",
   };
 }
 

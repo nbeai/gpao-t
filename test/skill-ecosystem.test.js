@@ -1,21 +1,33 @@
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
+import { mkdtempSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, it } from "node:test";
 import {
+  appendSkillExecutionRun,
   buildControlCenterSummary,
   buildSkillEcosystemPlan,
   buildSkillExecutionPlan,
+  buildSkillExecutionRun,
+  buildSkillExecutionSummary,
   buildSkillIntentProfile,
   buildSkillManifestStandard,
   buildSkillManualFirstPlan,
   buildSkillReadinessReport,
+  handleGatewayRequest,
   listSkillPacks,
+  readSkillExecutionHistory,
   routeSkillPacks,
 } from "../src/index.js";
 
 const CLI = fileURLToPath(new URL("../bin/gpao-t.js", import.meta.url));
 const ROOT = fileURLToPath(new URL("..", import.meta.url));
+
+function tempRoot() {
+  return mkdtempSync(join(tmpdir(), "gpao-t-skill-execution-"));
+}
 
 describe("GPAO-T Skill Ecosystem", () => {
   it("defines the prime rule and required manifest lifecycle", () => {
@@ -143,6 +155,39 @@ describe("GPAO-T Skill Ecosystem", () => {
     assert.match(plan.authorityContract.liveActionRule, /approval-gated/);
   });
 
+  it("runs selected skills as local preview artifacts without live mutation", () => {
+    const run = buildSkillExecutionRun({
+      request: "디자인 좋은 웹앱을 실제로 작동하게 만들어줘",
+      now: "2026-07-08T00:00:00.000Z",
+    });
+
+    assert.equal(run.schema, "gpao_t.skill_execution_run.v0_1");
+    assert.equal(run.status, "ready");
+    assert.equal(run.executionMode, "local_execution_plan");
+    assert.equal(run.localArtifacts.some((artifact) => artifact.artifactName === "working_app"), true);
+    assert.equal(run.qualityGateResults.every((result) => result.status === "pass"), true);
+    assert.equal(run.authorityBoundary.liveSkillMutation, "blocked_until_approval_replay_audit_and_rollback");
+    assert.equal(run.authorityBoundary.localPreview, "allowed");
+  });
+
+  it("records skill execution history as local evidence only", () => {
+    const root = tempRoot();
+    const run = appendSkillExecutionRun({
+      root,
+      request: "자가성장 업그레이드 제안을 검토용으로 만들어줘",
+      now: "2026-07-08T00:00:00.000Z",
+    });
+    const history = readSkillExecutionHistory({ root });
+    const summary = buildSkillExecutionSummary({ root });
+
+    assert.equal(run.persistence.state, "written");
+    assert.match(run.persistence.historyFile, /\.gpao-t/);
+    assert.equal(history.length, 1);
+    assert.equal(summary.schema, "gpao_t.skill_execution_summary.v0_1");
+    assert.equal(summary.totalRuns, 1);
+    assert.equal(summary.growthSignalCandidates.length > 0, true);
+  });
+
   it("keeps ambiguous user requests anchored to core thinking instead of pretending a domain fit", () => {
     const route = routeSkillPacks({ request: "좋아. 진행해." });
 
@@ -183,6 +228,15 @@ describe("GPAO-T Skill Ecosystem", () => {
       cwd: ROOT,
       encoding: "utf8",
     }));
+    const executionRun = JSON.parse(execFileSync(process.execPath, [
+      CLI,
+      "skill",
+      "execute",
+      "디자인 좋은 웹앱을 만들어줘",
+    ], {
+      cwd: ROOT,
+      encoding: "utf8",
+    }));
     const designPacks = JSON.parse(execFileSync(process.execPath, [CLI, "skill", "packs", "design"], {
       cwd: ROOT,
       encoding: "utf8",
@@ -203,10 +257,37 @@ describe("GPAO-T Skill Ecosystem", () => {
     assert.equal(manualFirst.status, "ready");
     assert.equal(executionPlan.status, "ready");
     assert.equal(executionPlan.qualityGateContract.status, "ready");
+    assert.equal(executionRun.schema, "gpao_t.skill_execution_run.v0_1");
+    assert.equal(executionRun.authorityBoundary.localPreview, "allowed");
     assert.equal(manualFirst.stages[0].id, "manual_preview");
     assert.equal(designPacks.total, 1);
     assert.equal(designPacks.packs[0].id, "gpao-visual-design-pack");
     assert.equal(route.selectedPacks[0].id, "gpao-visual-design-pack");
+  });
+
+  it("exposes skill execution adapter through the gateway", () => {
+    const root = tempRoot();
+    const run = handleGatewayRequest({
+      root,
+      method: "POST",
+      path: "/skill/execute",
+      body: { request: "디자인 좋은 웹앱을 만들어줘" },
+    });
+    const record = handleGatewayRequest({
+      root,
+      method: "POST",
+      path: "/skill/execute/record",
+      body: { request: "디자인 좋은 웹앱을 만들어줘" },
+    });
+    const history = handleGatewayRequest({ root, method: "GET", path: "/skill/execution-history" });
+    const summary = handleGatewayRequest({ root, method: "GET", path: "/skill/execution-summary" });
+
+    assert.equal(run.status, 200);
+    assert.equal(run.body.schema, "gpao_t.skill_execution_run.v0_1");
+    assert.equal(record.status, 200);
+    assert.equal(record.body.persistence.state, "written");
+    assert.equal(history.body.length, 1);
+    assert.equal(summary.body.totalRuns, 1);
   });
 
   it("adds skill ecosystem status to the local control center summary", () => {

@@ -37,6 +37,12 @@ import {
 } from "./replay-history.js";
 import { buildReplayRecoveryView } from "./replay-recovery.js";
 import { runRuntimeTurn } from "./runtime.js";
+import {
+  appendSkillExecutionRun,
+  buildSkillExecutionRun,
+  buildSkillExecutionSummary,
+  readSkillExecutionHistory,
+} from "./skill-execution-adapter.js";
 import { initializeRuntimeState, readAuditEvents, readRuntimeState } from "./storage.js";
 
 export function handleGatewayRequest({ method = "GET", path = "/", body = {}, root } = {}) {
@@ -217,6 +223,38 @@ export function handleGatewayRequest({ method = "GET", path = "/", body = {}, ro
     };
   }
 
+  if (normalizedMethod === "POST" && path === "/skill/execute") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: buildSkillExecutionRun({ ...body, root }),
+    };
+  }
+
+  if (normalizedMethod === "POST" && path === "/skill/execute/record") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: appendSkillExecutionRun({ ...body, root }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/skill/execution-history") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: readSkillExecutionHistory({ root }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/skill/execution-summary") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: buildSkillExecutionSummary({ root }),
+    };
+  }
+
   if (normalizedMethod === "POST" && path === "/replay/recovery") {
     return {
       schema: "gpao_t.gateway_response.v0_1",
@@ -342,7 +380,7 @@ export function handleGatewayRequest({ method = "GET", path = "/", body = {}, ro
     status: 404,
     body: {
       error: "not_found",
-      nextSafeAction: "Use GET /health, POST /init, GET /state, GET /events, GET /memory, GET /tcells, GET /control-center, GET /control-center/summary, GET /control-center/design, GET /control-center/ui-contract, GET /control-center/ui-snapshot, GET /control-center/ui-validate, GET /connectors, GET /connectors/governance, POST /connectors/review, GET /adapters/models, GET /adapters/tools, POST /adapters/plan, POST /memory/capture, POST /mesh/resolve, POST /replay/recovery, POST /replay/record, GET /recovery/history, GET /recovery/summary, POST /growth/preview, POST /growth/propose, GET /growth/proposals, POST /growth/application-gate, POST /growth/application-gate/record, GET /growth/application-gates, GET /growth/application-gates/summary, GET /ops/install-hardening, POST /ops/install-hardening/record, GET /ops/install-hardening/history, GET /ops/install-hardening/summary, or POST /turn.",
+      nextSafeAction: "Use GET /health, POST /init, GET /state, GET /events, GET /memory, GET /tcells, GET /control-center, GET /control-center/summary, GET /control-center/design, GET /control-center/ui-contract, GET /control-center/ui-snapshot, GET /control-center/ui-validate, GET /connectors, GET /connectors/governance, POST /connectors/review, GET /adapters/models, GET /adapters/tools, POST /adapters/plan, POST /memory/capture, POST /mesh/resolve, POST /skill/execute, POST /skill/execute/record, GET /skill/execution-history, GET /skill/execution-summary, POST /replay/recovery, POST /replay/record, GET /recovery/history, GET /recovery/summary, POST /growth/preview, POST /growth/propose, GET /growth/proposals, POST /growth/application-gate, POST /growth/application-gate/record, GET /growth/application-gates, GET /growth/application-gates/summary, GET /ops/install-hardening, POST /ops/install-hardening/record, GET /ops/install-hardening/history, GET /ops/install-hardening/summary, or POST /turn.",
     },
   };
 }

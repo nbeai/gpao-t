@@ -32,6 +32,7 @@ The first slice implements a local, dependency-free runtime skeleton:
 - `Local Control Center Design Recipe`: BEAI design doctrine adapted to GPAO-T UI implementation
 - `Skill Ecosystem Registry`: research-grounded base skill packs, manifest standard, routing, readiness, and future runtime integration contract
 - `Skill Execution Plan`: selected skill packs expanded into execution steps, artifact contracts, quality gates, authority boundaries, and replay signals
+- `Skill Execution Adapter`: selected skill execution plans converted into local artifact drafts, quality gate results, replay evidence, and growth signal candidates
 - `GpaoDoctor`: target health check
 - `GpaoRuntime`: persisted `.gpao-t` state and audit events
 - `GpaoLocalGateway`: local API contract for health, state, events, and turns
@@ -91,6 +92,10 @@ node bin/gpao-t.js skill packs design
 node bin/gpao-t.js skill inspect gpao-visual-design-pack
 node bin/gpao-t.js skill route "디자인 좋은 웹앱을 만들어줘"
 node bin/gpao-t.js skill execute-plan "디자인 좋은 웹앱을 만들어줘"
+node bin/gpao-t.js skill execute "디자인 좋은 웹앱을 만들어줘"
+node bin/gpao-t.js skill execute-record "디자인 좋은 웹앱을 만들어줘"
+node bin/gpao-t.js skill execution-history
+node bin/gpao-t.js skill execution-summary
 node bin/gpao-t.js skill readiness
 node bin/gpao-t.js connectors list
 node bin/gpao-t.js connectors governance
@@ -217,9 +222,14 @@ Skill Ecosystem readiness is exposed as data before live execution:
 - `skill inspect <skill-pack-id>` returns one pack's full operating contract
 - `skill route <text>` selects advisory skill packs for the current request
 - `skill execute-plan <text>` expands selected packs into execution steps, output artifacts, quality gates, authority boundaries, and replay signals
+- `skill execute <text>` creates a local preview run with artifact drafts, quality gate results, replay evidence, and growth signal candidates
+- `skill execute-record <text>` records that local preview evidence under `.gpao-t/skill-execution/history.jsonl`
+- `skill execution-history` and `skill execution-summary` expose recorded skill execution evidence
 - `skill readiness` verifies every base pack has target problem, T-cell principle, research protocol, quality gates, replay cases, authority boundary, and growth signals
 
 This keeps GPAO-T skills practical: a skill is accepted only when it maps research into an operating principle, execution procedure, quality gate, replay case, and growth signal. A selected skill is not treated as a vague recommendation; it must become a local execution contract that states what artifact will be produced, which quality gates block completion, which authority boundaries remain approval-gated, and which replay cases can improve the skill later.
+
+Skill execution remains local-first. It drafts inspectable artifacts and checks quality gates, but does not mutate live skills, promote durable memory, send externally, deploy, call external models, start daemons, or activate connectors.
 
 The visual Local Control Center must follow `docs/LOCAL-CONTROL-CENTER-DESIGN-RECIPE.md`:
 
