@@ -1,0 +1,127 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "gpao_t.control_center_ui_schema.v0_1",
+  "title": "GPAO-T Control Center UI Schema",
+  "description": "Static Local Control Center UI snapshot and render contract before interactive UI, daemon behavior, connector activation, external model/tool calls, or deployment exists.",
+  "type": "object",
+  "required": ["uiContract", "uiSnapshot", "renderResult"],
+  "properties": {
+    "uiContract": {
+      "type": "object",
+      "required": ["schema", "status", "sourceContracts", "renderedSurface", "visualSections", "requiredPanelFields", "statusLanguage", "authorityBoundary"],
+      "properties": {
+        "schema": { "const": "gpao_t.control_center_ui_contract.v0_1" },
+        "status": { "enum": ["ready", "review", "blocked"] },
+        "sourceContracts": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "renderedSurface": {
+          "type": "object",
+          "required": ["kind", "defaultOutputPath", "executableSurfaces"],
+          "properties": {
+            "kind": { "const": "static_html_reader" },
+            "defaultOutputPath": { "type": "string" },
+            "executableSurfaces": {
+              "type": "array",
+              "items": { "type": "string" }
+            }
+          }
+        },
+        "visualSections": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["id", "label", "objectType", "requiredFields", "sourceFields"],
+            "properties": {
+              "id": { "type": "string" },
+              "label": { "type": "string" },
+              "objectType": { "enum": ["Work", "Context", "Evidence", "Growth", "Authority"] },
+              "requiredFields": {
+                "type": "array",
+                "items": { "type": "string" }
+              },
+              "sourceFields": {
+                "type": "array",
+                "items": { "type": "string" }
+              }
+            }
+          }
+        },
+        "requiredPanelFields": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "statusLanguage": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "authorityBoundary": { "type": "object" }
+      }
+    },
+    "uiSnapshot": {
+      "type": "object",
+      "required": ["schema", "status", "sourceSnapshotSchema", "sourceDesignSchema", "uiContractSchema", "firstViewport", "operatingObjects", "panels", "authorityBoundary", "validation"],
+      "properties": {
+        "schema": { "const": "gpao_t.control_center_ui_snapshot.v0_1" },
+        "status": { "type": "string" },
+        "sourceSnapshotSchema": { "type": "string" },
+        "sourceDesignSchema": { "type": "string" },
+        "uiContractSchema": { "type": "string" },
+        "firstViewport": {
+          "type": "object",
+          "required": ["title", "subtitle", "overallStatus", "counts", "nextSafeAction"],
+          "properties": {
+            "title": { "type": "string" },
+            "subtitle": { "type": "string" },
+            "overallStatus": { "type": "string" },
+            "counts": { "type": "object" },
+            "nextSafeAction": { "type": "string" }
+          }
+        },
+        "operatingObjects": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["type", "panelCount"],
+            "properties": {
+              "type": { "type": "string" },
+              "panelCount": { "type": "number" }
+            }
+          }
+        },
+        "panels": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["id", "group", "label", "status", "headline", "nextSafeAction"],
+            "properties": {
+              "id": { "type": "string" },
+              "group": { "type": "string" },
+              "label": { "type": "string" },
+              "status": { "type": "string" },
+              "headline": { "type": "string" },
+              "nextSafeAction": { "type": "string" }
+            }
+          }
+        },
+        "authorityBoundary": { "type": "object" },
+        "validation": { "type": "object" }
+      }
+    },
+    "renderResult": {
+      "type": "object",
+      "required": ["schema", "status", "outputPath", "uiContractSchema", "uiSnapshotSchema", "uiValidationStatus", "renderEvidence", "authorityBoundary"],
+      "properties": {
+        "schema": { "const": "gpao_t.local_control_center_render.v0_1" },
+        "status": { "const": "rendered_static_html" },
+        "outputPath": { "type": "string" },
+        "uiContractSchema": { "type": "string" },
+        "uiSnapshotSchema": { "type": "string" },
+        "uiValidationStatus": { "type": "string" },
+        "renderEvidence": { "const": "static_html_file_written" },
+        "authorityBoundary": { "type": "object" }
+      }
+    }
+  }
+}

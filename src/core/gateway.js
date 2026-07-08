@@ -1,0 +1,348 @@
+import { listModelAdapters, listToolAdapters } from "./adapter-boundary.js";
+import {
+  buildConnectorGovernanceSummary,
+  listConnectors,
+  reviewConnectorPermission,
+} from "./connector-governance.js";
+import { buildControlCenterSnapshot, buildControlCenterSummary } from "./control-center.js";
+import {
+  buildControlCenterUiContract,
+  buildControlCenterUiSnapshot,
+  validateControlCenterUiSnapshot,
+} from "./control-center-ui-contract.js";
+import { buildLocalControlCenterDesignContract } from "./design-contract.js";
+import { runDoctor } from "./doctor.js";
+import {
+  appendSelfGrowthProposal,
+  buildSelfGrowthProposal,
+  readSelfGrowthProposals,
+} from "./growth-proposals.js";
+import {
+  appendGrowthApplicationGate,
+  buildGrowthApplicationGate,
+  buildGrowthApplicationGateSummary,
+  readGrowthApplicationGates,
+} from "./growth-application-gates.js";
+import {
+  appendInstallHardeningReport,
+  buildInstallHardeningReport,
+  buildInstallHardeningSummary,
+  readInstallHardeningReports,
+} from "./install-hardening.js";
+import { captureMemoryEntry, readMemoryWiki, readTCellCandidates, resolveContextMesh } from "./memory-wiki.js";
+import {
+  appendReplayRecoveryRecord,
+  buildRecoveryHistorySummary,
+  readReplayRecoveryHistory,
+} from "./replay-history.js";
+import { buildReplayRecoveryView } from "./replay-recovery.js";
+import { runRuntimeTurn } from "./runtime.js";
+import { initializeRuntimeState, readAuditEvents, readRuntimeState } from "./storage.js";
+
+export function handleGatewayRequest({ method = "GET", path = "/", body = {}, root } = {}) {
+  const normalizedMethod = method.toUpperCase();
+
+  if (normalizedMethod === "GET" && path === "/health") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: runDoctor({ root }),
+    };
+  }
+
+  if (normalizedMethod === "POST" && path === "/init") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: initializeRuntimeState({ root }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/state") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: readRuntimeState({ root }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/events") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: readAuditEvents({ root }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/memory") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: readMemoryWiki({ root }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/tcells") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: readTCellCandidates({ root }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/control-center") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: buildControlCenterSnapshot({ root }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/control-center/summary") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: buildControlCenterSummary({ root }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/control-center/design") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: buildLocalControlCenterDesignContract(),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/control-center/ui-contract") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: buildControlCenterUiContract(),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/control-center/ui-snapshot") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: buildControlCenterUiSnapshot({
+        snapshot: buildControlCenterSnapshot({ root }),
+        designContract: buildLocalControlCenterDesignContract(),
+      }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/control-center/ui-validate") {
+    const uiSnapshot = buildControlCenterUiSnapshot({
+      snapshot: buildControlCenterSnapshot({ root }),
+      designContract: buildLocalControlCenterDesignContract(),
+    });
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: validateControlCenterUiSnapshot({ uiSnapshot }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/connectors") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: listConnectors(),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/connectors/governance") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: buildConnectorGovernanceSummary(),
+    };
+  }
+
+  if (normalizedMethod === "POST" && path === "/connectors/review") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: reviewConnectorPermission(body),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/adapters/models") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: listModelAdapters(),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/adapters/tools") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: listToolAdapters(),
+    };
+  }
+
+  if (normalizedMethod === "POST" && path === "/adapters/plan") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: runRuntimeTurn({ ...body, root }).adapterPlan,
+    };
+  }
+
+  if (normalizedMethod === "POST" && path === "/memory/capture") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: captureMemoryEntry({ ...body, root }),
+    };
+  }
+
+  if (normalizedMethod === "POST" && path === "/mesh/resolve") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: resolveContextMesh({ ...body, root }),
+    };
+  }
+
+  if (normalizedMethod === "POST" && path === "/turn") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: runRuntimeTurn({ ...body, root }),
+    };
+  }
+
+  if (normalizedMethod === "POST" && path === "/replay/recovery") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: buildReplayRecoveryView({ ...body, root }),
+    };
+  }
+
+  if (normalizedMethod === "POST" && path === "/replay/record") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: appendReplayRecoveryRecord({ ...body, root }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/recovery/history") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: readReplayRecoveryHistory({ root }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/recovery/summary") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: buildRecoveryHistorySummary({ root }),
+    };
+  }
+
+  if (normalizedMethod === "POST" && path === "/growth/propose") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: appendSelfGrowthProposal({ ...body, root }),
+    };
+  }
+
+  if (normalizedMethod === "POST" && path === "/growth/preview") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: buildSelfGrowthProposal({ ...body, root }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/growth/proposals") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: readSelfGrowthProposals({ root }),
+    };
+  }
+
+  if (normalizedMethod === "POST" && path === "/growth/application-gate") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: buildGrowthApplicationGate({ ...body, root }),
+    };
+  }
+
+  if (normalizedMethod === "POST" && path === "/growth/application-gate/record") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: appendGrowthApplicationGate({ ...body, root }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/growth/application-gates") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: readGrowthApplicationGates({ root }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/growth/application-gates/summary") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: buildGrowthApplicationGateSummary({ root }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/ops/install-hardening") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: buildInstallHardeningReport({ root }),
+    };
+  }
+
+  if (normalizedMethod === "POST" && path === "/ops/install-hardening/record") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: appendInstallHardeningReport({ ...body, root }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/ops/install-hardening/history") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: readInstallHardeningReports({ root }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/ops/install-hardening/summary") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: buildInstallHardeningSummary({ root }),
+    };
+  }
+
+  return {
+    schema: "gpao_t.gateway_response.v0_1",
+    status: 404,
+    body: {
+      error: "not_found",
+      nextSafeAction: "Use GET /health, POST /init, GET /state, GET /events, GET /memory, GET /tcells, GET /control-center, GET /control-center/summary, GET /control-center/design, GET /control-center/ui-contract, GET /control-center/ui-snapshot, GET /control-center/ui-validate, GET /connectors, GET /connectors/governance, POST /connectors/review, GET /adapters/models, GET /adapters/tools, POST /adapters/plan, POST /memory/capture, POST /mesh/resolve, POST /replay/recovery, POST /replay/record, GET /recovery/history, GET /recovery/summary, POST /growth/preview, POST /growth/propose, GET /growth/proposals, POST /growth/application-gate, POST /growth/application-gate/record, GET /growth/application-gates, GET /growth/application-gates/summary, GET /ops/install-hardening, POST /ops/install-hardening/record, GET /ops/install-hardening/history, GET /ops/install-hardening/summary, or POST /turn.",
+    },
+  };
+}

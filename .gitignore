@@ -1,0 +1,8 @@
+.gpao-t/
+.beai-harness/
+node_modules/
+coverage/
+dist/
+tmp/
+*.log
+.DS_Store

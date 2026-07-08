@@ -1,0 +1,13 @@
+{
+  "input": {
+    "text": "그럼 배포파일은?"
+  },
+  "priorFlow": {
+    "flowKey": "gpao-t-dev-flow",
+    "activeTargetId": "release-file",
+    "activeTargetLabel": "배포 파일",
+    "continuityState": "fresh",
+    "createdAt": "2026-07-08T00:00:00.000Z",
+    "updatedAt": "2026-07-08T00:00:00.000Z"
+  }
+}

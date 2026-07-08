@@ -1,0 +1,105 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "gpao_t.runtime_data_schema.v0_1",
+  "title": "GPAO-T Runtime Data Schema",
+  "description": "Local-only GPAO-T skeleton runtime data surfaces. This schema describes storage contracts before any daemon, connector, external model, or live apply engine exists.",
+  "type": "object",
+  "required": ["runtimeState", "auditEvent", "memoryWikiEntry", "tcellCandidate", "replayRecoveryRecord", "growthProposal", "growthApplicationGate", "installHardeningReport"],
+  "properties": {
+    "runtimeState": {
+      "type": "object",
+      "required": ["schema", "runtimeId", "version", "installRoot", "startedAt", "updatedAt", "boundaries"],
+      "properties": {
+        "schema": { "const": "gpao_t.runtime_state.v0_1" },
+        "runtimeId": { "type": "string" },
+        "version": { "type": "string" },
+        "installRoot": { "type": "string" },
+        "startedAt": { "type": "string" },
+        "updatedAt": { "type": "string" },
+        "activeFlow": { "type": ["object", "null"] },
+        "counters": { "type": "object" },
+        "boundaries": { "type": "object" }
+      }
+    },
+    "auditEvent": {
+      "type": "object",
+      "required": ["schema", "id", "type", "createdAt", "authority", "summary", "payload"],
+      "properties": {
+        "schema": { "const": "gpao_t.audit_event.v0_1" },
+        "id": { "type": "string" },
+        "type": { "type": "string" },
+        "createdAt": { "type": "string" },
+        "authority": { "type": "string" },
+        "summary": { "type": "string" },
+        "payload": { "type": "object" }
+      }
+    },
+    "memoryWikiEntry": {
+      "type": "object",
+      "required": ["id", "title", "body", "createdAt", "source", "status"],
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "body": { "type": "string" },
+        "createdAt": { "type": "string" },
+        "source": { "type": "string" },
+        "status": { "enum": ["candidate", "reviewed", "promoted", "stale", "conflicted"] }
+      }
+    },
+    "tcellCandidate": {
+      "type": "object",
+      "required": ["id", "memoryEntryId", "principle", "payload", "anchor", "status"],
+      "properties": {
+        "id": { "type": "string" },
+        "memoryEntryId": { "type": "string" },
+        "principle": { "type": "string" },
+        "payload": { "type": "string" },
+        "anchor": { "type": "string" },
+        "status": { "enum": ["candidate", "reviewed", "promoted", "stale", "conflicted"] }
+      }
+    },
+    "replayRecoveryRecord": {
+      "type": "object",
+      "required": ["schema", "createdAt", "target", "status", "view"],
+      "properties": {
+        "schema": { "const": "gpao_t.replay_recovery_record.v0_1" },
+        "createdAt": { "type": "string" },
+        "target": { "type": "string" },
+        "status": { "type": "string" },
+        "view": { "type": "object" }
+      }
+    },
+    "growthProposal": {
+      "type": "object",
+      "required": ["schema", "id", "target", "status", "authorityBoundary"],
+      "properties": {
+        "schema": { "const": "gpao_t.self_growth_proposal.v0_1" },
+        "id": { "type": "string" },
+        "target": { "type": "string" },
+        "status": { "type": "string" },
+        "authorityBoundary": { "type": "object" }
+      }
+    },
+    "growthApplicationGate": {
+      "type": "object",
+      "required": ["schema", "proposalId", "status", "approval", "rollback"],
+      "properties": {
+        "schema": { "const": "gpao_t.growth_application_gate.v0_1" },
+        "proposalId": { "type": "string" },
+        "status": { "type": "string" },
+        "approval": { "type": "object" },
+        "rollback": { "type": "object" }
+      }
+    },
+    "installHardeningReport": {
+      "type": "object",
+      "required": ["schema", "status", "authorityBoundary", "findings"],
+      "properties": {
+        "schema": { "const": "gpao_t.install_hardening_report.v0_1" },
+        "status": { "type": "string" },
+        "authorityBoundary": { "type": "object" },
+        "findings": { "type": "array" }
+      }
+    }
+  }
+}
