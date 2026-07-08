@@ -10,11 +10,13 @@ import {
   buildInstallHardeningReport,
   buildInstallHardeningSummary,
   buildTauriInstallDryRunExecutorContract,
+  buildTauriInstallDryRunImplementationDesign,
   buildTauriInstallPrerequisiteDoctor,
   buildTauriInstallReadinessGate,
   handleGatewayRequest,
   readInstallHardeningReports,
   verifyTauriInstallDryRunExecutorContract,
+  verifyTauriInstallDryRunImplementationDesign,
   verifyTauriInstallPrerequisiteDoctor,
   verifyTauriInstallReadinessGate,
 } from "../src/index.js";
@@ -199,5 +201,46 @@ describe("GPAO-T install/update/rollback hardening", () => {
     assert.equal(gatewayDryRun.status, 200);
     assert.equal(gatewayDryRun.body.schema, dryRun.schema);
     assert.equal(gatewayDryRunCheck.body.status, "ready");
+  });
+
+  it("designs approval-gated dry-run implementation without implementing or invoking it", () => {
+    const design = buildTauriInstallDryRunImplementationDesign({ root: ROOT });
+    const designCheck = verifyTauriInstallDryRunImplementationDesign({ root: ROOT, design });
+    const cliDesign = JSON.parse(execFileSync(process.execPath, [CLI, "control", "tauri-dry-run-design"], {
+      cwd: ROOT,
+      encoding: "utf8",
+    }));
+    const cliDesignCheck = JSON.parse(execFileSync(process.execPath, [CLI, "control", "tauri-dry-run-design-check"], {
+      cwd: ROOT,
+      encoding: "utf8",
+    }));
+    const gatewayDesign = handleGatewayRequest({ root: ROOT, method: "GET", path: "/app-shell/tauri-dry-run-design" });
+    const gatewayDesignCheck = handleGatewayRequest({ root: ROOT, method: "GET", path: "/app-shell/tauri-dry-run-design/verify" });
+
+    assert.equal(design.schema, "gpao_t.tauri_install_dry_run_implementation_design.v0_1");
+    assert.equal(design.status, "ready");
+    assert.equal(design.implementationStatus, "design_only");
+    assert.equal(design.executionMode, "no_executor_no_invocation_no_mutation");
+    assert.equal(design.executorBoundary.executorImplemented, false);
+    assert.equal(design.executorBoundary.executorInvoked, false);
+    assert.equal(design.executorBoundary.implementationAllowedNow, false);
+    assert.equal(design.executorBoundary.invocationAllowedNow, false);
+    assert.equal(design.executorBoundary.writesFiles, false);
+    assert.equal(design.executorBoundary.runsCommands, false);
+    assert.equal(design.executorBoundary.readsExternalNetwork, false);
+    assert.equal(design.executorBoundary.opensIpc, false);
+    assert.deepEqual(design.operationDesigns.map((item) => item.operation), ["install", "update", "rollback"]);
+    assert.equal(design.operationDesigns.every((item) => item.executionAllowedNow === false), true);
+    assert.equal(design.proposedInterfaces.every((item) => item.mutatesState === false), true);
+    assert.equal(design.approvalGate.status, "required_before_implementation");
+    assert.equal(design.approvalGate.approvalDoesNotAllow.includes("real install execution"), true);
+    assert.equal(design.rejectionRules.includes("reject_if_external_download_present"), true);
+    assert.equal(design.rejectionRules.includes("reject_if_tauri_build_present"), true);
+    assert.equal(designCheck.status, "ready");
+    assert.equal(cliDesign.schema, design.schema);
+    assert.equal(cliDesignCheck.status, "ready");
+    assert.equal(gatewayDesign.status, 200);
+    assert.equal(gatewayDesign.body.schema, design.schema);
+    assert.equal(gatewayDesignCheck.body.status, "ready");
   });
 });

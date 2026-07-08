@@ -2,25 +2,21 @@
 
 ## Next Safe Action
 
-Commit the verified prerequisite doctor / dry-run executor contract slice. The following product step should be approval-gated dry-run executor implementation design only, not execution.
+After committing this slice, the next safe action is to implement pure dry-run plan/verify/preview functions only after explicit approval. That next slice must still avoid dry-run invocation and must keep real install/update/rollback execution blocked.
 
 ## Review Before Continuing
 
-- Confirm `node bin/gpao-t.js control tauri-prerequisite-doctor-check` remains `ready`.
-- Confirm `node bin/gpao-t.js control tauri-dry-run-contract-check` remains `ready`.
-- Confirm `node bin/gpao-t.js control serve-check` includes `tauriPrerequisiteDoctorStatus` and `tauriDryRunContractStatus`.
-- Confirm `npm run verify` passes.
-- Preserve no-execution invariants: no dry-run invocation, no dependency install, no Cargo/Tauri build, no IPC, no package signing, no installer creation, no install/update/rollback execution, no external download, and no connector/model/tool activation.
-
-## Session Resume
-
-The read-mostly Tauri shell source scaffold, packaged-shell visual QA baseline, packaged desktop install/update/rollback readiness gate, and prerequisite doctor / dry-run executor contracts are implemented and verified as local no-execution contracts. Next work should commit this slice, then design an approval-gated dry-run executor implementation without executing it.
+- Confirm the new dry-run implementation design routes stay `design_only`.
+- Preserve no-execution invariants: no writes, no commands, no network, no IPC, no Tauri build, no install/update/rollback execution.
+- Keep app-shell routes GET-only and read-mostly.
+- Keep authority boundary, failure/recovery state, rollback/source-control state, and next safe action visible in docs and UI-adjacent contracts.
+- Keep screenshot/visual QA evidence as the gate before deeper packaged shell behavior.
 
 ## Recent Evidence
 
-- `npm run verify`: passed with 90 tests / 16 suites.
-- `node bin/gpao-t.js control tauri-prerequisite-doctor-check`: ready.
-- `node bin/gpao-t.js control tauri-dry-run-contract-check`: ready.
-- `node bin/gpao-t.js control serve-check`: ready with prerequisite doctor and dry-run contract routes.
+- `npm run verify`: pass, 91 tests across 16 suites.
+- `node bin/gpao-t.js control tauri-dry-run-design-check`: ready.
+- `node bin/gpao-t.js control serve-check`: ready with `tauriDryRunDesignStatus: 200`.
 - `beai verify --run --scenario --meaning`: pass.
-- `beai closeout`: ready.
+- `beai closeout --apply`: ready.
+- `git diff --check`: pass.

@@ -255,6 +255,155 @@ export function verifyTauriInstallDryRunExecutorContract({
   };
 }
 
+export function buildTauriInstallDryRunImplementationDesign({
+  root = PROJECT_ROOT,
+  dryRunContract = buildTauriInstallDryRunExecutorContract({ root }),
+  dryRunVerification = verifyTauriInstallDryRunExecutorContract({ root, contract: dryRunContract }),
+} = {}) {
+  const findings = [];
+  if (dryRunVerification.status !== "ready") findings.push("dry_run_contract_not_ready");
+
+  return {
+    schema: "gpao_t.tauri_install_dry_run_implementation_design.v0_1",
+    status: findings.length ? "blocked" : "ready",
+    designKind: "approval_gated_dry_run_executor_implementation_design",
+    implementationStatus: "design_only",
+    executionMode: "no_executor_no_invocation_no_mutation",
+    findings,
+    dryRunContract: {
+      status: dryRunContract.status,
+      verificationStatus: dryRunVerification.status,
+    },
+    executorBoundary: {
+      executorImplemented: false,
+      executorInvoked: false,
+      implementationAllowedNow: false,
+      invocationAllowedNow: false,
+      requiresExplicitFutureApproval: true,
+      writesFiles: false,
+      runsCommands: false,
+      readsExternalNetwork: false,
+      opensIpc: false,
+    },
+    proposedInterfaces: [
+      {
+        name: "buildDryRunPlan",
+        type: "pure_function",
+        purpose: "Create an install/update/rollback dry-run plan from current source, package, visual, and rollback evidence.",
+        mutatesState: false,
+      },
+      {
+        name: "verifyDryRunPlan",
+        type: "pure_function",
+        purpose: "Reject plans that include mutation, external download, build, install/update/rollback execution, IPC, or missing rollback/verification evidence.",
+        mutatesState: false,
+      },
+      {
+        name: "renderDryRunPreview",
+        type: "pure_function",
+        purpose: "Show the user planned commands, planned writes, blocked actions, rollback plan, and next safe action before any future executor invocation.",
+        mutatesState: false,
+      },
+    ],
+    planStateSchema: {
+      requiredFields: [
+        "operation",
+        "sourceCommit",
+        "plannedCommands",
+        "plannedWrites",
+        "blockedActions",
+        "verificationCommands",
+        "rollbackPlan",
+        "approvalState",
+        "userVisibleRecovery",
+      ],
+      approvalStateValues: [
+        "not_requested",
+        "requested",
+        "approved_for_future_dry_run_only",
+        "rejected",
+      ],
+    },
+    operationDesigns: [
+      buildDryRunImplementationOperation({ operation: "install" }),
+      buildDryRunImplementationOperation({ operation: "update" }),
+      buildDryRunImplementationOperation({ operation: "rollback" }),
+    ],
+    approvalGate: {
+      status: "required_before_implementation",
+      approvalRequiredFor: [
+        "creating a real dry-run executor",
+        "invoking a dry-run executor",
+        "writing audit records from a dry-run",
+        "reading toolchain state through Cargo or Tauri CLI",
+      ],
+      approvalDoesNotAllow: [
+        "real install execution",
+        "real update execution",
+        "real rollback execution",
+        "Tauri build",
+        "dependency installation",
+        "external download",
+        "IPC activation",
+      ],
+    },
+    rejectionRules: [
+      "reject_if_operation_is_not_install_update_or_rollback",
+      "reject_if_planned_command_mutates_without_future_approval",
+      "reject_if_planned_write_is_outside_allowed_root",
+      "reject_if_verification_commands_missing",
+      "reject_if_rollback_plan_missing",
+      "reject_if_external_download_present",
+      "reject_if_tauri_build_present",
+      "reject_if_ipc_activation_present",
+    ],
+    authorityBoundary: blockedAuthorityBoundary(),
+    nextSafeAction: findings.length
+      ? "Fix dry-run contract findings before implementation design can be trusted."
+      : "Next step may implement pure dry-run plan/verify/preview functions after explicit approval; do not invoke dry-run or run install/update/rollback, Tauri build, IPC, external download, deployment, messenger, or automation.",
+  };
+}
+
+export function verifyTauriInstallDryRunImplementationDesign({
+  root = PROJECT_ROOT,
+  design = buildTauriInstallDryRunImplementationDesign({ root }),
+} = {}) {
+  const findings = [];
+
+  if (design.schema !== "gpao_t.tauri_install_dry_run_implementation_design.v0_1") findings.push("invalid_schema");
+  if (design.implementationStatus !== "design_only") findings.push("implementation_status_not_design_only");
+  if (design.executionMode !== "no_executor_no_invocation_no_mutation") findings.push("execution_mode_not_noop");
+  if (design.dryRunContract.verificationStatus !== "ready") findings.push("dry_run_contract_not_ready");
+  if (design.executorBoundary.executorImplemented !== false) findings.push("executor_implemented");
+  if (design.executorBoundary.executorInvoked !== false) findings.push("executor_invoked");
+  if (design.executorBoundary.implementationAllowedNow !== false) findings.push("implementation_allowed_now");
+  if (design.executorBoundary.invocationAllowedNow !== false) findings.push("invocation_allowed_now");
+  if (design.executorBoundary.writesFiles !== false) findings.push("design_writes_files");
+  if (design.executorBoundary.runsCommands !== false) findings.push("design_runs_commands");
+  if (design.executorBoundary.readsExternalNetwork !== false) findings.push("design_reads_external_network");
+  if (design.executorBoundary.opensIpc !== false) findings.push("design_opens_ipc");
+  if (design.proposedInterfaces.length !== 3) findings.push("proposed_interface_count_invalid");
+  if (!design.proposedInterfaces.every((item) => item.mutatesState === false)) findings.push("proposed_interface_mutates_state");
+  if (design.operationDesigns.length !== 3) findings.push("operation_design_count_invalid");
+  if (!design.operationDesigns.every((item) => item.executionAllowedNow === false)) findings.push("operation_execution_allowed");
+  if (!design.rejectionRules.includes("reject_if_external_download_present")) findings.push("external_download_rejection_missing");
+  if (!design.rejectionRules.includes("reject_if_tauri_build_present")) findings.push("tauri_build_rejection_missing");
+  if (design.authorityBoundary.dryRunExecution !== "blocked_until_future_approval_and_executor_exists") {
+    findings.push("dry_run_execution_boundary_invalid");
+  }
+
+  return {
+    schema: "gpao_t.tauri_install_dry_run_implementation_design_verification.v0_1",
+    status: findings.length ? "blocked" : "ready",
+    findings,
+    executorBoundary: design.executorBoundary,
+    authorityBoundary: design.authorityBoundary,
+    nextSafeAction: findings.length
+      ? "Fix dry-run implementation design findings before any implementation work."
+      : "Proceed only to pure dry-run plan/verify/preview function implementation after explicit approval; keep dry-run invocation and real install/update/rollback execution blocked.",
+  };
+}
+
 function buildOperationPlan({ operation }) {
   return {
     operation,
@@ -266,6 +415,39 @@ function buildOperationPlan({ operation }) {
     verificationRequired: true,
     rollbackPlanRequired: true,
     userVisibleRecoveryRequired: true,
+  };
+}
+
+function buildDryRunImplementationOperation({ operation }) {
+  return {
+    operation,
+    implementationAllowedNow: false,
+    executionAllowedNow: false,
+    futureFunction: `build${capitalize(operation)}DryRunPlan`,
+    requiredInputs: [
+      "sourceCommit",
+      "packageManifest",
+      "readinessGate",
+      "prerequisiteDoctor",
+      "visualQaEvidence",
+    ],
+    requiredOutputs: [
+      "plannedCommands",
+      "plannedWrites",
+      "blockedActions",
+      "verificationCommands",
+      "rollbackPlan",
+      "userVisibleRecovery",
+    ],
+    forbiddenOutputs: [
+      "executedCommands",
+      "writtenFiles",
+      "networkDownloads",
+      "ipcCalls",
+      "installResult",
+      "updateResult",
+      "rollbackResult",
+    ],
   };
 }
 
@@ -295,4 +477,8 @@ function readPackageJson({ root }) {
     return null;
   }
   return JSON.parse(readFileSync(file, "utf8"));
+}
+
+function capitalize(value) {
+  return value.charAt(0).toUpperCase() + value.slice(1);
 }

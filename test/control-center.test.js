@@ -719,6 +719,8 @@ describe("GPAO-T Local Control Center readiness", () => {
       const tauriPrerequisiteDoctorVerify = await fetchJson(`http://127.0.0.1:${preview.port}/app-shell/tauri-prerequisite-doctor/verify`);
       const tauriDryRunContract = await fetchJson(`http://127.0.0.1:${preview.port}/app-shell/tauri-dry-run-contract`);
       const tauriDryRunContractVerify = await fetchJson(`http://127.0.0.1:${preview.port}/app-shell/tauri-dry-run-contract/verify`);
+      const tauriDryRunDesign = await fetchJson(`http://127.0.0.1:${preview.port}/app-shell/tauri-dry-run-design`);
+      const tauriDryRunDesignVerify = await fetchJson(`http://127.0.0.1:${preview.port}/app-shell/tauri-dry-run-design/verify`);
       const tauriShell = await fetchText(`http://127.0.0.1:${preview.port}/app-shell/tauri-shell`);
       const tauriShellSlice = await fetchJson(`http://127.0.0.1:${preview.port}/app-shell/tauri-shell/slice`);
       const tauriShellVerify = await fetchJson(`http://127.0.0.1:${preview.port}/app-shell/tauri-shell/verify`);
@@ -755,6 +757,10 @@ describe("GPAO-T Local Control Center readiness", () => {
       assert.equal(tauriDryRunContract.body.executionMode, "contract_only_no_dry_run_execution");
       assert.equal(tauriDryRunContract.body.dryRunGate.executorInvoked, false);
       assert.equal(tauriDryRunContractVerify.body.status, "ready");
+      assert.equal(tauriDryRunDesign.body.schema, "gpao_t.tauri_install_dry_run_implementation_design.v0_1");
+      assert.equal(tauriDryRunDesign.body.implementationStatus, "design_only");
+      assert.equal(tauriDryRunDesign.body.executorBoundary.executorImplemented, false);
+      assert.equal(tauriDryRunDesignVerify.body.status, "ready");
       assert.equal(tauriShell.status, 200);
       assert.match(tauriShell.body, /GPAO-T Read-Mostly Tauri Shell/);
       assert.match(tauriShell.body, /data-mobile-action-line="visible"/);
@@ -791,6 +797,7 @@ describe("GPAO-T Local Control Center readiness", () => {
     assert.equal(verification.tauriGateStatus, 200);
     assert.equal(verification.tauriPrerequisiteDoctorStatus, 200);
     assert.equal(verification.tauriDryRunContractStatus, 200);
+    assert.equal(verification.tauriDryRunDesignStatus, 200);
     assert.equal(verification.tauriShellSliceStatus, 200);
     assert.equal(verification.blockedPostStatus, 405);
     assert.equal(verification.authorityBoundary.loopbackOnly, true);

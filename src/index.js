@@ -114,8 +114,10 @@ import {
 } from "./core/tauri-install-readiness-gate.js";
 import {
   buildTauriInstallDryRunExecutorContract,
+  buildTauriInstallDryRunImplementationDesign,
   buildTauriInstallPrerequisiteDoctor,
   verifyTauriInstallDryRunExecutorContract,
+  verifyTauriInstallDryRunImplementationDesign,
   verifyTauriInstallPrerequisiteDoctor,
 } from "./core/tauri-install-execution-contracts.js";
 import {
@@ -169,6 +171,7 @@ export {
   buildSkillReadinessReport,
   buildToolPlan,
   buildTauriInstallDryRunExecutorContract,
+  buildTauriInstallDryRunImplementationDesign,
   buildTauriInstallPrerequisiteDoctor,
   buildTauriInstallReadinessGate,
   buildTauriPackagedDesktopGate,
@@ -204,6 +207,7 @@ export {
   verifyBrowserLocalAppShell,
   verifyControlCenterPreviewServing,
   verifyTauriInstallDryRunExecutorContract,
+  verifyTauriInstallDryRunImplementationDesign,
   verifyTauriInstallPrerequisiteDoctor,
   verifyTauriInstallReadinessGate,
   verifyTauriPackagedDesktopGate,

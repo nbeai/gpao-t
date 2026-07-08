@@ -1,7 +1,7 @@
 # Tauri Prerequisite Doctor And Dry-Run Executor Contract
 
-Status: contract added, execution blocked
-Scope: packaged desktop install/update/rollback prerequisite doctor and dry-run executor design
+Status: contract and implementation design added, execution blocked
+Scope: packaged desktop install/update/rollback prerequisite doctor, dry-run executor contract, and approval-gated implementation design
 
 This stage does not install dependencies, run Cargo, run Tauri, build a package, create an installer, open IPC, write files as a dry-run, download externally, or execute install/update/rollback. It defines what must be inspected before a future dry-run executor may exist, and what that future dry-run must prove before any real operation is allowed.
 
@@ -12,10 +12,14 @@ node bin/gpao-t.js control tauri-prerequisite-doctor
 node bin/gpao-t.js control tauri-prerequisite-doctor-check
 node bin/gpao-t.js control tauri-dry-run-contract
 node bin/gpao-t.js control tauri-dry-run-contract-check
+node bin/gpao-t.js control tauri-dry-run-design
+node bin/gpao-t.js control tauri-dry-run-design-check
 node bin/gpao-t.js gateway GET /app-shell/tauri-prerequisite-doctor
 node bin/gpao-t.js gateway GET /app-shell/tauri-prerequisite-doctor/verify
 node bin/gpao-t.js gateway GET /app-shell/tauri-dry-run-contract
 node bin/gpao-t.js gateway GET /app-shell/tauri-dry-run-contract/verify
+node bin/gpao-t.js gateway GET /app-shell/tauri-dry-run-design
+node bin/gpao-t.js gateway GET /app-shell/tauri-dry-run-design/verify
 ```
 
 Loopback preview also exposes:
@@ -24,6 +28,8 @@ Loopback preview also exposes:
 - `GET /app-shell/tauri-prerequisite-doctor/verify`
 - `GET /app-shell/tauri-dry-run-contract`
 - `GET /app-shell/tauri-dry-run-contract/verify`
+- `GET /app-shell/tauri-dry-run-design`
+- `GET /app-shell/tauri-dry-run-design/verify`
 
 ## Prerequisite Doctor
 
@@ -70,9 +76,44 @@ Every operation plan currently has:
 - verification required: `true`
 - rollback plan required: `true`
 
+## Approval-Gated Implementation Design
+
+The implementation design is still design-only. It proposes the future pure functions that can be implemented after explicit approval, but it does not implement or invoke the executor.
+
+Proposed future interfaces:
+
+- `buildDryRunPlan`: create an install/update/rollback dry-run plan from current evidence.
+- `verifyDryRunPlan`: reject unsafe plans before any future executor invocation.
+- `renderDryRunPreview`: show planned commands, writes, blocked actions, rollback plan, and next safe action.
+
+Current implementation design boundary:
+
+- implementation status: `design_only`
+- execution mode: `no_executor_no_invocation_no_mutation`
+- executor implemented: `false`
+- executor invoked: `false`
+- implementation allowed now: `false`
+- invocation allowed now: `false`
+- writes files: `false`
+- runs commands: `false`
+- reads external network: `false`
+- opens IPC: `false`
+
+Future implementation must reject:
+
+- operations other than install/update/rollback
+- mutating commands without future approval
+- writes outside the allowed root
+- missing verification commands
+- missing rollback plans
+- external downloads
+- Tauri builds
+- IPC activation
+
 ## Blocked Now
 
 - dry-run execution
+- dry-run executor implementation without future approval
 - real install/update/rollback execution
 - dependency installation
 - Tauri/Cargo build
@@ -94,4 +135,4 @@ Every operation plan currently has:
 
 ## Next Safe Action
 
-After this contract remains verified, the next gate may design an approval-gated dry-run executor implementation. Real install/update/rollback, Tauri build, IPC, external download, deployment, messenger, and automation remain blocked.
+After this implementation design remains verified, the next gate may implement pure dry-run plan/verify/preview functions only after explicit approval. Dry-run invocation and real install/update/rollback, Tauri build, IPC, external download, deployment, messenger, and automation remain blocked.

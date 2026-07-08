@@ -57,6 +57,8 @@ Tauri prerequisite doctor and dry-run executor contract:
 - Gate document: `docs/03-engineering/TAURI-PREREQUISITE-DOCTOR-AND-DRY-RUN-CONTRACT.md`
 - Prerequisite checks: `node bin/gpao-t.js control tauri-prerequisite-doctor` and `node bin/gpao-t.js control tauri-prerequisite-doctor-check`
 - Dry-run checks: `node bin/gpao-t.js control tauri-dry-run-contract` and `node bin/gpao-t.js control tauri-dry-run-contract-check`
-- Loopback routes: `GET /app-shell/tauri-prerequisite-doctor`, `GET /app-shell/tauri-prerequisite-doctor/verify`, `GET /app-shell/tauri-dry-run-contract`, and `GET /app-shell/tauri-dry-run-contract/verify`
+- Implementation design checks: `node bin/gpao-t.js control tauri-dry-run-design` and `node bin/gpao-t.js control tauri-dry-run-design-check`
+- Loopback routes: `GET /app-shell/tauri-prerequisite-doctor`, `GET /app-shell/tauri-prerequisite-doctor/verify`, `GET /app-shell/tauri-dry-run-contract`, `GET /app-shell/tauri-dry-run-contract/verify`, `GET /app-shell/tauri-dry-run-design`, and `GET /app-shell/tauri-dry-run-design/verify`
 - Required invariant: prerequisite doctor is inspection-only and must not invoke Cargo, Tauri CLI, dependency installation, build, signing, installer creation, or IPC. Dry-run executor is contract-only and must not implement, invoke, write files, download externally, build, install, update, rollback, activate connectors/models/tools, deploy, open messenger, or start automation.
-- Next gate: approval-gated dry-run executor implementation design only; real install/update/rollback execution remains blocked.
+- Required implementation-design invariant: dry-run implementation design may define future pure plan/verify/preview functions, but `implementationStatus` must stay `design_only`, `executorImplemented` and `executorInvoked` must stay `false`, and writes, commands, external network, IPC, build, install, update, and rollback must stay blocked.
+- Next gate: pure dry-run plan/verify/preview function implementation after explicit approval only; dry-run invocation and real install/update/rollback execution remain blocked.

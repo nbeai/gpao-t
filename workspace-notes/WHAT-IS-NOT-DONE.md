@@ -2,27 +2,21 @@
 
 ## Still Excluded
 
-- Dry-run executor implementation or invocation.
-- Tauri dependency installation.
-- Cargo/Tauri build, bundle, package signing, notarization, or installer creation.
-- Real install, update, rollback, destructive file operation, or release-channel download.
-- Local IPC/Tauri command activation.
-- Connector, model, or tool activation.
-- OAuth, token vault, secret storage, or external account connection.
-- Durable memory promotion or self-growth apply.
-- Deployment, public release, messenger, or recurring automation.
-- Electron implementation.
+- Real dry-run executor implementation without explicit future approval.
+- Dry-run executor invocation.
+- Install/update/rollback execution.
+- Tauri dependency installation, Cargo/Tauri build, bundle, signing, packaged installer creation, or release channel activation.
+- Local IPC command activation.
+- Connector/model/tool activation.
+- OAuth, token vault, secret storage, external send, external account connection, or deployment.
+- Durable memory promotion and self-growth apply.
+- Messenger adapters and recurring automation.
+- Public GitHub publication or public release.
 
 ## Current Completion Boundary
 
-- The prerequisite doctor is inspection-only.
-- The dry-run executor contract is contract-only.
-- They may describe prerequisites, operation plans, dry-run artifacts, recovery states, audit preview, and future approval requirements.
-- They must not execute dry-run, install/update/rollback, dependency install, build, IPC, external download, deployment, or automation.
+This slice is complete only as a no-execution implementation design. It defines future pure `buildDryRunPlan`, `verifyDryRunPlan`, and `renderDryRunPreview` interfaces, but it does not implement or invoke them yet.
 
-## Remaining Production Path
+## Blockers
 
-- Approval-gated dry-run executor implementation design.
-- Dry-run executor implementation after explicit approval.
-- Packaged desktop dependency/build gate after explicit approval.
-- Installer/update/rollback implementation and visual/ops QA after dry-run gates prove safe.
+No unresolved technical blocker is recorded for the current design slice. The next authority boundary is explicit user approval before implementing pure dry-run plan/verify/preview functions.
