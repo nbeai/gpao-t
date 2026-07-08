@@ -279,6 +279,111 @@ const BASE_SKILL_PACKS = [
       "User approves or rejects the same type of upgrade proposal.",
     ],
   },
+  {
+    id: "gpao-replay-evaluation-pack",
+    category: "quality",
+    priority: 94,
+    title: "GPAO Replay Evaluation Pack",
+    targetUserProblem:
+      "사용자가 '좋아졌다'는 주장 대신 같은 유형의 이전/이후 시나리오에서 실제 개선 증거를 보고 싶어 한다.",
+    tcellPrinciple:
+      "A replay skill converts improvement claims into before/after cases, measurable deltas, and regression signals.",
+    triggerSignals: ["리플레이", "replay", "이전보다", "개선됐는지", "효과", "검증", "회귀"],
+    inputTypes: ["previous_case", "current_output", "quality_gate_result", "growth_signal"],
+    outputArtifacts: ["replay_suite", "before_after_scorecard", "regression_report", "promotion_evidence"],
+    researchProtocol: [
+      "Compare current behavior against a preserved prior case before claiming improvement.",
+      "Use the same scoring rubric before and after a skill or OS change.",
+    ],
+    qualityGates: [
+      "Before and after cases use the same user intent and scoring policy.",
+      "Improvement is measured as a bounded local evidence claim, not a universal product claim.",
+      "Regression or no-gain results create a growth candidate instead of a completion claim.",
+    ],
+    replayCases: [
+      "A vague request routing failure is replayed after a skill routing update.",
+      "A visual design quality failure is replayed after adding a design quality gate.",
+    ],
+    authorityBoundary: {
+      localReplay: "allowed",
+      promotionEvidence: "review_required",
+      liveMutation: "blocked_until_approval_audit_and_rollback",
+    },
+    growthSignals: [
+      "Replay score repeatedly fails the same gate.",
+      "A claimed upgrade produces no measurable before/after gain.",
+    ],
+  },
+  {
+    id: "gpao-quality-audit-pack",
+    category: "quality",
+    priority: 93,
+    title: "GPAO Quality Audit Pack",
+    targetUserProblem:
+      "사용자가 결과물을 받았을 때 그럴듯한 답변인지, 완료라고 말할 수 있는 산출물인지 구분해야 한다.",
+    tcellPrinciple:
+      "A quality skill separates output existence from completion authority through evidence, drift, and acceptance gates.",
+    triggerSignals: ["품질", "감사", "audit", "완료", "검수", "정합성", "게이트"],
+    inputTypes: ["artifact", "completion_claim", "source_plan", "test_result", "user_acceptance_signal"],
+    outputArtifacts: ["completion_audit", "drift_report", "evidence_checklist", "quality_decision"],
+    researchProtocol: [
+      "Check the artifact against the user's stated outcome and the implementation truth source.",
+      "Review source-to-document drift and test shallowness before allowing completion language.",
+    ],
+    qualityGates: [
+      "Completion language maps to verification evidence and user-facing acceptance criteria.",
+      "Source, docs, tests, and runtime surfaces do not contradict each other.",
+      "Known limitations and next recovery action are visible when the result is not complete.",
+    ],
+    replayCases: [
+      "A command surface is changed and docs/test references are audited for drift.",
+      "A feature with passing smoke tests is blocked when scenario evidence is missing.",
+    ],
+    authorityBoundary: {
+      localAudit: "allowed",
+      completionClaim: "requires_evidence",
+      publicReleaseClaim: "blocked_until_release_gate",
+    },
+    growthSignals: [
+      "Completion claims are repeatedly blocked by missing scenario evidence.",
+      "Docs and implementation drift repeatedly appears in the same surface.",
+    ],
+  },
+  {
+    id: "gpao-local-app-qa-pack",
+    category: "quality",
+    priority: 91,
+    title: "GPAO Local App QA Pack",
+    targetUserProblem:
+      "사용자가 만든 앱이 열리기만 하는 수준을 넘어 첫 화면, 핵심 흐름, 빈 상태, 실패 복구까지 확인되어야 한다.",
+    tcellPrinciple:
+      "An app QA skill treats usable workflow, visible state, recovery path, and responsive fit as one product proof packet.",
+    triggerSignals: ["QA", "검수", "화면", "작동", "빈 상태", "오류", "복구", "반응형"],
+    inputTypes: ["local_app", "screen_contract", "user_flow", "test_result", "screenshot_or_dom_signal"],
+    outputArtifacts: ["app_qa_plan", "first_workflow_report", "state_matrix_check", "recovery_notes"],
+    researchProtocol: [
+      "Test the first user workflow before relying on component-level success.",
+      "Check empty, loading, error, and recovery states that users can actually encounter.",
+    ],
+    qualityGates: [
+      "First screen leads to a real workflow and not only a placeholder.",
+      "Core workflow, empty state, and failure/recovery state are checked.",
+      "Text fit, responsive stability, and visible status do not break the layout.",
+    ],
+    replayCases: [
+      "A local app feature is tested through first success, empty state, and recovery state.",
+      "A visual polish request is checked against screenshot or UI contract evidence.",
+    ],
+    authorityBoundary: {
+      localQa: "allowed",
+      browserPreview: "allowed_on_loopback",
+      externalDeployment: "blocked_until_approval",
+    },
+    growthSignals: [
+      "A generated app repeatedly lacks empty or recovery states.",
+      "Responsive or text-fit issues repeatedly block final acceptance.",
+    ],
+  },
 ];
 
 const REQUIRED_FIELDS = [
@@ -295,6 +400,317 @@ const REQUIRED_FIELDS = [
   "replayCases",
   "authorityBoundary",
   "growthSignals",
+];
+
+const SKILL_CANDIDATE_ATLAS = [
+  {
+    id: "gpao-core-thinking-pack",
+    category: "foundation",
+    tier: "foundation",
+    phase: "phase-1",
+    title: "Core Thinking",
+    productionStatus: "seed_pack_exists",
+    userProblem: "사용자가 애매하게 말해도 목표, 기준, 위험, 다음 행동이 선명해야 한다.",
+    tcellFocus: "operating_principle_extraction",
+    buildReason: "모든 스킬 라우팅과 산출물 품질의 중심축이다.",
+    dependencies: [],
+    shouldBuildWith: ["gpao-growth-governance-pack"],
+    requiredProof: ["ambiguous_request_recovery", "facts_assumptions_risks_split"],
+  },
+  {
+    id: "gpao-growth-governance-pack",
+    category: "foundation",
+    tier: "foundation",
+    phase: "phase-1",
+    title: "Growth Governance",
+    productionStatus: "seed_pack_exists",
+    userProblem: "스킬과 OS가 성장하되 위험한 자동 승격은 통제되어야 한다.",
+    tcellFocus: "bounded_mutation_loop",
+    buildReason: "자동화와 사용자 승인 경계가 없으면 스킬 생태계 전체가 불안정해진다.",
+    dependencies: ["gpao-core-thinking-pack"],
+    shouldBuildWith: ["gpao-replay-evaluation-pack"],
+    requiredProof: ["upgrade_proposal_gate", "rollback_boundary_visible"],
+  },
+  {
+    id: "gpao-research-evidence-pack",
+    category: "foundation",
+    tier: "foundation",
+    phase: "phase-1",
+    title: "Research Evidence",
+    productionStatus: "seed_pack_exists",
+    userProblem: "AI가 기억으로 우기는 대신 출처와 최신성을 확인해야 한다.",
+    tcellFocus: "source_claim_inference_split",
+    buildReason: "좋은 스킬은 좋은 근거를 먹고 성장한다.",
+    dependencies: ["gpao-core-thinking-pack"],
+    shouldBuildWith: ["gpao-korean-business-pack", "gpao-document-output-pack"],
+    requiredProof: ["source_matrix", "inference_labeling"],
+  },
+  {
+    id: "gpao-visual-design-pack",
+    category: "high-impact",
+    tier: "experience",
+    phase: "phase-1",
+    title: "Visual Design",
+    productionStatus: "seed_pack_exists",
+    userProblem: "웹, 앱, 문서, 발표가 작동해도 시각 품질이 낮으면 사용자는 가치를 낮게 느낀다.",
+    tcellFocus: "visual_quality_operating_constraint",
+    buildReason: "일반 사용자가 가장 빠르게 체감하는 품질 축이다.",
+    dependencies: ["gpao-core-thinking-pack"],
+    shouldBuildWith: ["gpao-webapp-builder-pack", "gpao-document-output-pack"],
+    requiredProof: ["responsive_visual_qa", "domain_fit_check"],
+  },
+  {
+    id: "gpao-webapp-builder-pack",
+    category: "high-impact",
+    tier: "execution",
+    phase: "phase-1",
+    title: "Web/App Builder",
+    productionStatus: "seed_pack_exists",
+    userProblem: "아이디어가 작동하는 앱이 되기까지 기획, 구현, 디자인, 검증이 자주 끊긴다.",
+    tcellFocus: "product_intent_to_verified_workflow",
+    buildReason: "GPAO-T가 실제 제작 OS로 느껴지는 핵심 실행 표면이다.",
+    dependencies: ["gpao-core-thinking-pack", "gpao-visual-design-pack"],
+    shouldBuildWith: ["gpao-local-app-qa-pack"],
+    requiredProof: ["first_workflow_runs", "empty_and_recovery_states"],
+  },
+  {
+    id: "gpao-document-output-pack",
+    category: "high-impact",
+    tier: "artifact",
+    phase: "phase-1",
+    title: "Document Output",
+    productionStatus: "seed_pack_exists",
+    userProblem: "대화와 자료가 실제 보고서, 제안서, 매뉴얼, 글로 정리되어야 한다.",
+    tcellFocus: "reader_specific_artifact_structure",
+    buildReason: "비개발자 사용자의 체감 생산성을 즉시 높인다.",
+    dependencies: ["gpao-core-thinking-pack", "gpao-research-evidence-pack"],
+    shouldBuildWith: ["gpao-writing-style-pack"],
+    requiredProof: ["reader_purpose_action_visible", "source_traceable_claims"],
+  },
+  {
+    id: "gpao-korean-business-pack",
+    category: "domain",
+    tier: "domain",
+    phase: "phase-2",
+    title: "Korean Business",
+    productionStatus: "seed_pack_exists",
+    userProblem: "한국 사업자가 법령, 공시, 통계, 문서, 세무 경계를 실무적으로 다뤄야 한다.",
+    tcellFocus: "official_source_business_action",
+    buildReason: "한국 일반 사용자에게 GPAO-T의 현실적 쓸모를 보여주는 대표 도메인이다.",
+    dependencies: ["gpao-research-evidence-pack", "gpao-document-output-pack"],
+    shouldBuildWith: ["gpao-mcp-source-connector-pack"],
+    requiredProof: ["official_source_registry", "legal_tax_finance_boundary"],
+  },
+  {
+    id: "gpao-data-insight-pack",
+    category: "domain",
+    tier: "domain",
+    phase: "phase-2",
+    title: "Data Insight",
+    productionStatus: "seed_pack_exists",
+    userProblem: "스프레드시트와 지표를 보고 의사결정으로 바꿔야 한다.",
+    tcellFocus: "calculation_trace_to_decision",
+    buildReason: "사업, 운영, 리서치 스킬의 판단 품질을 높이는 공통 도메인 축이다.",
+    dependencies: ["gpao-research-evidence-pack"],
+    shouldBuildWith: ["gpao-dashboard-briefing-pack"],
+    requiredProof: ["calculation_trace", "decision_relevant_chart_plan"],
+  },
+  {
+    id: "gpao-replay-evaluation-pack",
+    category: "foundation",
+    tier: "quality",
+    phase: "phase-1",
+    title: "Replay Evaluation",
+    productionStatus: "production_pack_exists",
+    userProblem: "좋아졌다는 주장이 아니라 이전보다 나아졌다는 증거가 필요하다.",
+    tcellFocus: "before_after_replay_proof",
+    buildReason: "스킬 성장의 객관적 증거를 담당한다.",
+    dependencies: ["gpao-growth-governance-pack"],
+    shouldBuildWith: ["gpao-quality-audit-pack"],
+    requiredProof: ["before_after_case", "regression_signal"],
+  },
+  {
+    id: "gpao-quality-audit-pack",
+    category: "foundation",
+    tier: "quality",
+    phase: "phase-1",
+    title: "Quality Audit",
+    productionStatus: "production_pack_exists",
+    userProblem: "작업 결과가 그럴듯해도 완료라고 말할 수 있는지 따로 봐야 한다.",
+    tcellFocus: "claim_evidence_completion_gate",
+    buildReason: "완료 언어, 품질 게이트, 산출물 정합성을 통제한다.",
+    dependencies: ["gpao-core-thinking-pack"],
+    shouldBuildWith: ["gpao-replay-evaluation-pack"],
+    requiredProof: ["completion_claim_guard", "artifact_drift_check"],
+  },
+  {
+    id: "gpao-local-app-qa-pack",
+    category: "high-impact",
+    tier: "quality",
+    phase: "phase-1",
+    title: "Local App QA",
+    productionStatus: "production_pack_exists",
+    userProblem: "앱이 열리기만 하는 것과 실제 사용자 흐름이 되는 것은 다르다.",
+    tcellFocus: "workflow_state_visual_runtime_check",
+    buildReason: "웹앱 제작 스킬의 결과물을 제품 수준으로 끌어올린다.",
+    dependencies: ["gpao-webapp-builder-pack", "gpao-visual-design-pack"],
+    shouldBuildWith: ["gpao-accessibility-usability-pack"],
+    requiredProof: ["first_screen_check", "failure_recovery_check"],
+  },
+  {
+    id: "gpao-writing-style-pack",
+    category: "high-impact",
+    tier: "artifact",
+    phase: "phase-2",
+    title: "Writing Style",
+    productionStatus: "planned_candidate",
+    userProblem: "사용자의 말투, 독자, 목적에 맞는 글쓰기 품질이 필요하다.",
+    tcellFocus: "voice_purpose_reader_alignment",
+    buildReason: "문서와 콘텐츠 산출물의 체감 품질을 크게 높인다.",
+    dependencies: ["gpao-document-output-pack"],
+    shouldBuildWith: ["gpao-content-distribution-pack"],
+    requiredProof: ["voice_consistency", "reader_action_clarity"],
+  },
+  {
+    id: "gpao-mcp-source-connector-pack",
+    category: "connector",
+    tier: "connector",
+    phase: "phase-2",
+    title: "MCP Source Connector",
+    productionStatus: "planned_candidate",
+    userProblem: "AI가 필요한 공식 자료와 파일에 직접 닿아 확인해야 한다.",
+    tcellFocus: "connector_read_evidence_boundary",
+    buildReason: "리서치, 한국 사업, 문서 스킬의 근거 접근성을 높인다.",
+    dependencies: ["gpao-research-evidence-pack", "gpao-growth-governance-pack"],
+    shouldBuildWith: ["gpao-korean-business-pack"],
+    requiredProof: ["read_only_connector_policy", "source_tool_attribution"],
+  },
+  {
+    id: "gpao-personal-productivity-pack",
+    category: "domain",
+    tier: "daily",
+    phase: "phase-2",
+    title: "Personal Productivity",
+    productionStatus: "planned_candidate",
+    userProblem: "사용자의 할 일, 지연, 반복 루틴, 회고가 자연스럽게 정리되어야 한다.",
+    tcellFocus: "daily_flow_to_next_action_loop",
+    buildReason: "GPAO-T가 매일 쓰이는 개인 운영체제처럼 느껴지게 한다.",
+    dependencies: ["gpao-core-thinking-pack", "gpao-growth-governance-pack"],
+    shouldBuildWith: ["gpao-weekly-growth-report-pack"],
+    requiredProof: ["daily_review_card", "non_intrusive_next_action"],
+  },
+  {
+    id: "gpao-weekly-growth-report-pack",
+    category: "growth",
+    tier: "growth",
+    phase: "phase-2",
+    title: "Weekly Growth Report",
+    productionStatus: "planned_candidate",
+    userProblem: "사용자가 놓친 성장 제안과 진행 이력을 정기적으로 확인해야 한다.",
+    tcellFocus: "growth_history_to_user_visible_report",
+    buildReason: "자가 성장 기능을 사용자가 자연스럽게 인지하게 한다.",
+    dependencies: ["gpao-growth-governance-pack", "gpao-personal-productivity-pack"],
+    shouldBuildWith: ["gpao-notification-timing-pack"],
+    requiredProof: ["pending_upgrade_summary", "non_external_draft_boundary"],
+  },
+  {
+    id: "gpao-notification-timing-pack",
+    category: "experience",
+    tier: "ux",
+    phase: "phase-2",
+    title: "Notification Timing",
+    productionStatus: "planned_candidate",
+    userProblem: "좋은 제안도 작업을 방해하는 순간 나오면 피로가 된다.",
+    tcellFocus: "interruption_cost_aware_timing",
+    buildReason: "세션 내 알림과 정기 리포트의 사용자 체감을 조절한다.",
+    dependencies: ["gpao-growth-governance-pack"],
+    shouldBuildWith: ["gpao-weekly-growth-report-pack"],
+    requiredProof: ["quiet_timing_rule", "missed_report_fallback"],
+  },
+  {
+    id: "gpao-learning-coach-pack",
+    category: "domain",
+    tier: "learning",
+    phase: "phase-3",
+    title: "Learning Coach",
+    productionStatus: "planned_candidate",
+    userProblem: "사용자가 외우는 것보다 원리를 깨우치며 학습해야 한다.",
+    tcellFocus: "principle_understanding_to_transfer",
+    buildReason: "T-cell 이론의 교육/학습 확장성을 검증한다.",
+    dependencies: ["gpao-core-thinking-pack", "gpao-document-output-pack"],
+    shouldBuildWith: ["gpao-tcell-research-pack"],
+    requiredProof: ["explain_without_same_words", "transfer_task_success"],
+  },
+  {
+    id: "gpao-tcell-research-pack",
+    category: "research",
+    tier: "theory",
+    phase: "phase-3",
+    title: "T-cell Research",
+    productionStatus: "planned_candidate",
+    userProblem: "T-cell Engineering을 추상 이론이 아니라 연구/개발 가능한 도구로 발전시켜야 한다.",
+    tcellFocus: "theory_to_function_schema_replay",
+    buildReason: "GPAO-T의 고유 지능 구조를 계속 고도화한다.",
+    dependencies: ["gpao-research-evidence-pack", "gpao-replay-evaluation-pack"],
+    shouldBuildWith: ["gpao-learning-coach-pack"],
+    requiredProof: ["formal_claim_boundary", "implementation_mapping"],
+  },
+  {
+    id: "gpao-accessibility-usability-pack",
+    category: "experience",
+    tier: "ux",
+    phase: "phase-3",
+    title: "Accessibility Usability",
+    productionStatus: "planned_candidate",
+    userProblem: "아름다운 결과물이 실제 사용성과 접근성을 놓치면 제품 품질이 떨어진다.",
+    tcellFocus: "human_usable_interface_constraint",
+    buildReason: "디자인 품질을 취향이 아니라 사용 가능한 제품 기준으로 고정한다.",
+    dependencies: ["gpao-visual-design-pack", "gpao-local-app-qa-pack"],
+    shouldBuildWith: ["gpao-webapp-builder-pack"],
+    requiredProof: ["keyboard_text_fit_contrast", "mobile_desktop_check"],
+  },
+  {
+    id: "gpao-content-distribution-pack",
+    category: "domain",
+    tier: "content",
+    phase: "phase-3",
+    title: "Content Distribution",
+    productionStatus: "planned_candidate",
+    userProblem: "글과 문서를 플랫폼별 독자와 형식에 맞게 배포 가능한 상태로 바꿔야 한다.",
+    tcellFocus: "message_core_to_channel_variant",
+    buildReason: "사용자의 지식과 사업 콘텐츠를 실제 전달력으로 확장한다.",
+    dependencies: ["gpao-writing-style-pack", "gpao-document-output-pack"],
+    shouldBuildWith: ["gpao-visual-design-pack"],
+    requiredProof: ["channel_variant", "core_message_preserved"],
+  },
+  {
+    id: "gpao-automation-workflow-pack",
+    category: "connector",
+    tier: "automation",
+    phase: "phase-3",
+    title: "Automation Workflow",
+    productionStatus: "planned_candidate",
+    userProblem: "반복 업무를 자동화하고 싶지만 실행권한, 실패, 되돌리기 경계가 필요하다.",
+    tcellFocus: "repeatable_action_with_rollback",
+    buildReason: "GPAO-T가 단순 조언자가 아니라 운영체계로 작동하는 핵심이다.",
+    dependencies: ["gpao-growth-governance-pack", "gpao-mcp-source-connector-pack"],
+    shouldBuildWith: ["gpao-notification-timing-pack"],
+    requiredProof: ["dry_run_first", "rollback_plan"],
+  },
+  {
+    id: "gpao-dashboard-briefing-pack",
+    category: "experience",
+    tier: "ops",
+    phase: "phase-3",
+    title: "Dashboard Briefing",
+    productionStatus: "planned_candidate",
+    userProblem: "상태판과 리포트가 많아질수록 핵심만 빠르게 봐야 한다.",
+    tcellFocus: "state_compression_to_actionable_brief",
+    buildReason: "Control Center와 데이터 스킬의 사용자 체감을 높인다.",
+    dependencies: ["gpao-data-insight-pack", "gpao-core-thinking-pack"],
+    shouldBuildWith: ["gpao-weekly-growth-report-pack"],
+    requiredProof: ["one_screen_summary", "next_action_visible"],
+  },
 ];
 
 export function buildSkillManifestStandard() {
@@ -332,6 +748,206 @@ export function buildSkillManifestStandard() {
       "No authority boundary.",
       "Only a persona prompt with no executable procedure.",
     ],
+  };
+}
+
+export function buildSkillCandidateAtlas({ phase, category, tier } = {}) {
+  const filters = { phase, category, tier };
+  const candidates = SKILL_CANDIDATE_ATLAS
+    .filter((candidate) => !phase || candidate.phase === phase)
+    .filter((candidate) => !category || candidate.category === category)
+    .filter((candidate) => !tier || candidate.tier === tier)
+    .toSorted(compareSkillCandidate);
+
+  return {
+    schema: "gpao_t.skill_candidate_atlas.v0_1",
+    status: "ready",
+    atlasBaseline: "candidate_atlas_before_pack_production_v0_1_4",
+    purpose:
+      "List the whole GPAO-T skill production field before building individual packs, then phase the work by foundation, user impact, domain depth, growth, and connector risk.",
+    filters,
+    totalCandidates: candidates.length,
+    allCandidates: SKILL_CANDIDATE_ATLAS.length,
+    phaseSummary: buildCandidatePhaseSummary(SKILL_CANDIDATE_ATLAS),
+    categorySummary: buildCandidateCategorySummary(SKILL_CANDIDATE_ATLAS),
+    candidates: candidates.map(summarizeSkillCandidate),
+    productionPolicy: {
+      buildBundlesBeforeSinglePacks: true,
+      seedPacksAreImplementationBaseline: true,
+      plannedCandidatesNeedResearchProtocolAndReplayBeforePromotion: true,
+      liveSkillMutation: "blocked_until_replay_approval_audit_and_rollback",
+      externalConnectors: "read_or_draft_only_until_explicit_setup_and_approval",
+    },
+    nextSafeAction:
+      "Use skill roadmap and skill build-queue before turning any candidate into a production skill pack.",
+  };
+}
+
+export function buildSkillProductionRoadmap() {
+  const phases = [
+    {
+      id: "phase-1",
+      title: "Foundation And First Felt Quality",
+      goal:
+        "Lock the minimum skill bundle that makes GPAO-T feel useful: thinking, evidence, design, app building, documents, quality, replay, and growth governance.",
+      completionRule:
+        "The phase is ready when each candidate has a manifest, route fixture, execution artifact contract, quality gate replay, and growth signal path.",
+    },
+    {
+      id: "phase-2",
+      title: "Practical Domain And Growth Reports",
+      goal:
+        "Add Korean business, data insight, personal productivity, source connectors, and weekly growth report surfaces.",
+      completionRule:
+        "The phase is ready when domain source boundaries, user-visible report timing, and connector read-only policy are proven.",
+    },
+    {
+      id: "phase-3",
+      title: "Expansion And Advanced Operations",
+      goal:
+        "Extend into learning, T-cell research, accessibility, content distribution, automation workflows, and dashboard briefing.",
+      completionRule:
+        "The phase is ready when each expansion pack has a rejection condition, replay metric, and authority boundary before live automation.",
+    },
+  ];
+
+  return {
+    schema: "gpao_t.skill_production_roadmap.v0_1",
+    status: "ready",
+    roadmapBaseline: "phased_skill_ecosystem_build_v0_1_4",
+    strategy:
+      "Do not start with isolated skill craftsmanship. Build phase bundles so routing, execution, quality gates, replay, and growth signals mature together.",
+    phases: phases.map((phase) => ({
+      ...phase,
+      candidates: SKILL_CANDIDATE_ATLAS
+        .filter((candidate) => candidate.phase === phase.id)
+        .toSorted(compareSkillCandidate)
+        .map(summarizeSkillCandidate),
+    })),
+    buildBundles: [
+      {
+        id: "bundle.foundation-six",
+        phase: "phase-1",
+        title: "Foundation Six",
+        candidateIds: [
+          "gpao-core-thinking-pack",
+          "gpao-growth-governance-pack",
+          "gpao-research-evidence-pack",
+          "gpao-visual-design-pack",
+          "gpao-webapp-builder-pack",
+          "gpao-document-output-pack",
+        ],
+        reason:
+          "This is the smallest bundle that can understand vague intent, gather evidence, produce artifacts, build apps, improve visual quality, and govern growth.",
+      },
+      {
+        id: "bundle.quality-loop",
+        phase: "phase-1",
+        title: "Quality And Replay Loop",
+        candidateIds: [
+          "gpao-replay-evaluation-pack",
+          "gpao-quality-audit-pack",
+          "gpao-local-app-qa-pack",
+        ],
+        reason:
+          "This bundle prevents skill packs from becoming decorative prompts by forcing replay, completion, and first workflow proof.",
+      },
+      {
+        id: "bundle.korea-practicality",
+        phase: "phase-2",
+        title: "Korean Practicality",
+        candidateIds: [
+          "gpao-korean-business-pack",
+          "gpao-data-insight-pack",
+          "gpao-mcp-source-connector-pack",
+          "gpao-document-output-pack",
+        ],
+        reason:
+          "This bundle makes GPAO-T useful for Korean users who need official sources, data, and practical business documents.",
+      },
+      {
+        id: "bundle.self-growth-experience",
+        phase: "phase-2",
+        title: "Self-Growth Experience",
+        candidateIds: [
+          "gpao-personal-productivity-pack",
+          "gpao-weekly-growth-report-pack",
+          "gpao-notification-timing-pack",
+          "gpao-growth-governance-pack",
+        ],
+        reason:
+          "This bundle makes self-growth visible without interrupting the user's work.",
+      },
+    ],
+    nextSafeAction:
+      "Start with bundle.foundation-six and bundle.quality-loop, then only promote a candidate after manifest, route, execute, replay, and growth evidence exist.",
+  };
+}
+
+export function buildSkillBuildQueue({ phase = "phase-1", limit = 99 } = {}) {
+  const candidates = SKILL_CANDIDATE_ATLAS
+    .filter((candidate) => candidate.phase === phase)
+    .toSorted(compareSkillCandidate)
+    .slice(0, limit);
+
+  return {
+    schema: "gpao_t.skill_build_queue.v0_1",
+    status: candidates.length ? "ready" : "review",
+    phase,
+    queuePolicy: {
+      buildAsBundles: true,
+      productionChecklist: [
+        "manifest",
+        "intent route fixture",
+        "execution artifact contract",
+        "quality gate replay",
+        "growth signal",
+        "authority boundary",
+        "docs",
+        "tests",
+      ],
+      stopRule:
+        "Do not mark a candidate as produced if it has no replay case, no quality gate, or no authority boundary.",
+    },
+    items: candidates.map((candidate, index) => ({
+      order: index + 1,
+      ...summarizeSkillCandidate(candidate),
+      productionChecklist: buildCandidateProductionChecklist(candidate),
+    })),
+    nextSafeAction: candidates.length
+      ? `Build ${candidates[0].id} only as part of its phase bundle, not as an isolated prompt pack.`
+      : "No candidates found for this phase; inspect skill atlas without filters.",
+  };
+}
+
+export function buildSkillProductionStatus({ phase = "phase-1" } = {}) {
+  const candidates = SKILL_CANDIDATE_ATLAS
+    .filter((candidate) => candidate.phase === phase)
+    .toSorted(compareSkillCandidate);
+  const produced = candidates.map((candidate) => buildProducedSkillStatus(candidate));
+  const blockers = produced.flatMap((item) =>
+    item.productionChecks
+      .filter((check) => check.status !== "pass")
+      .map((check) => ({
+        candidateId: item.id,
+        check: check.id,
+        status: check.status,
+        message: check.message,
+      })));
+
+  return {
+    schema: "gpao_t.skill_production_status.v0_1",
+    status: blockers.length ? "review" : "ready",
+    phase,
+    totalCandidates: candidates.length,
+    producedPacks: produced.filter((item) => item.registryStatus === "registered").length,
+    blockers,
+    packs: produced,
+    productionRule:
+      "A phase skill is production-ready only when it is registered, routeable, executable, replay-covered, quality-gated, growth-aware, and authority-bounded.",
+    nextSafeAction: blockers.length
+      ? "Add the missing manifest, route, execution, replay, growth, or authority proof before treating this phase as produced."
+      : "Use phase-1 production packs as the first bundle for real skill-pack work, then add per-pack replay fixtures.",
   };
 }
 
@@ -398,13 +1014,26 @@ export function buildSkillEcosystemPlan() {
       "skill_governance",
     ],
     basePacks: listSkillPacks().packs,
+    candidateAtlas: {
+      surface: "gpao-t skill atlas [phase|category|tier]",
+      totalCandidates: SKILL_CANDIDATE_ATLAS.length,
+      phaseSummary: buildCandidatePhaseSummary(SKILL_CANDIDATE_ATLAS),
+      rule:
+        "List the whole candidate field before building individual skill packs so GPAO-T grows as an ecosystem rather than a pile of isolated prompts.",
+    },
+    phaseProductionBaseline: buildSkillProductionStatus({ phase: "phase-1" }),
     documentationContract: {
       userReadableBaseline: "docs/04-skill-ecosystem/GPAO-T-BASE-SKILL-PACKS-ko.md",
+      candidateAtlasBaseline: "docs/04-skill-ecosystem/GPAO-T-SKILL-CANDIDATE-ATLAS-ko.md",
       implementationTruthSource: "src/core/skill-ecosystem.js",
       rule: "Readable docs explain the product baseline; this module remains the executable registry contract.",
     },
     integrationContract: {
       registrySurface: "gpao-t skill packs",
+      atlasSurface: "gpao-t skill atlas [phase|category|tier]",
+      roadmapSurface: "gpao-t skill roadmap",
+      buildQueueSurface: "gpao-t skill build-queue [phase]",
+      productionStatusSurface: "gpao-t skill production-status [phase]",
       routerSurface: "gpao-t skill route <text>",
       executionPlanSurface: "gpao-t skill execute-plan <text>",
       executionAdapterSurface: "gpao-t skill execute <text>",
@@ -419,11 +1048,13 @@ export function buildSkillEcosystemPlan() {
         "GPAO-T turn kernel calls the registry to select skill packs before model/tool routing.",
     },
     nextBuildOrder: [
-      "Lock manifest standard and base pack registry.",
-      "Add per-pack scenario fixtures.",
-      "Expand per-pack replay fixtures now that intent-profile routing is connected to turn-kernel task packets.",
+      "Use skill atlas to inspect the full production field.",
+      "Use skill roadmap to select a phase bundle instead of an isolated pack.",
+      "Use skill build-queue phase-1 to produce foundation and quality-loop packs first.",
+      "Use skill production-status phase-1 to verify the phase baseline before deeper runtime integration.",
+      "Add per-pack scenario fixtures and execution artifact contracts.",
       "Promote skill execution adapter evidence into per-pack replay fixtures.",
-      "Let growth governance propose skill updates from replay evidence.",
+      "Let growth governance propose skill updates from replay evidence only after replay coverage.",
     ],
   };
 }
@@ -889,6 +1520,182 @@ function fallbackCoreSelection({ intentProfile }) {
     matchedSignals: [],
     intentReasons: ["fallback_core_intake", intentProfile.ambiguity === "high" ? "high_ambiguity" : "no_strong_skill_signal"],
   };
+}
+
+function buildCandidatePhaseSummary(candidates) {
+  return ["phase-1", "phase-2", "phase-3"].map((phase) => ({
+    phase,
+    total: candidates.filter((candidate) => candidate.phase === phase).length,
+    seedPacks: candidates.filter(
+      (candidate) => candidate.phase === phase && candidate.productionStatus === "seed_pack_exists",
+    ).length,
+    productionPacks: candidates.filter(
+      (candidate) => candidate.phase === phase && candidate.productionStatus === "production_pack_exists",
+    ).length,
+    plannedCandidates: candidates.filter(
+      (candidate) => candidate.phase === phase && candidate.productionStatus === "planned_candidate",
+    ).length,
+  }));
+}
+
+function buildCandidateCategorySummary(candidates) {
+  return [...new Set(candidates.map((candidate) => candidate.category))]
+    .sort()
+    .map((category) => ({
+      category,
+      total: candidates.filter((candidate) => candidate.category === category).length,
+    }));
+}
+
+function summarizeSkillCandidate(candidate) {
+  return {
+    id: candidate.id,
+    category: candidate.category,
+    tier: candidate.tier,
+    phase: candidate.phase,
+    title: candidate.title,
+    productionStatus: candidate.productionStatus,
+    userProblem: candidate.userProblem,
+    tcellFocus: candidate.tcellFocus,
+    buildReason: candidate.buildReason,
+    dependencies: candidate.dependencies,
+    shouldBuildWith: candidate.shouldBuildWith,
+    requiredProof: candidate.requiredProof,
+  };
+}
+
+function buildCandidateProductionChecklist(candidate) {
+  const manifestStatus = candidate.productionStatus === "production_pack_exists"
+    ? "present_production"
+    : candidate.productionStatus === "seed_pack_exists"
+    ? "present_seed"
+    : "needed";
+
+  return [
+    {
+      item: "manifest",
+      status: manifestStatus,
+    },
+    {
+      item: "route_fixture",
+      status: "needed_for_production_pack",
+    },
+    {
+      item: "execution_artifact_contract",
+      status: "needed_for_production_pack",
+    },
+    {
+      item: "quality_gate_replay",
+      status: "needed_for_production_pack",
+    },
+    {
+      item: "growth_signal",
+      status: candidate.requiredProof.length ? "defined_candidate" : "needed",
+    },
+    {
+      item: "authority_boundary",
+      status: "required_before_live_use",
+    },
+  ];
+}
+
+function buildProducedSkillStatus(candidate) {
+  const pack = BASE_SKILL_PACKS.find((item) => item.id === candidate.id);
+  const routeProbe = pack
+    ? routeSkillPacks({
+      request: `${candidate.title} ${candidate.userProblem} ${candidate.buildReason}`,
+    })
+    : null;
+  const executionPlan = routeProbe?.status === "ready"
+    ? buildSkillExecutionPlan({ skillRoute: routeProbe })
+    : null;
+  const selectedIds = routeProbe?.selectedPacks?.map((item) => item.id) || [];
+  const productionChecks = [
+    {
+      id: "registered_manifest",
+      status: pack ? "pass" : "missing",
+      message: pack
+        ? "Skill pack is present in the executable registry."
+        : "Candidate is not yet present in the executable registry.",
+    },
+    {
+      id: "routeable",
+      status: selectedIds.includes(candidate.id) ? "pass" : "review",
+      message: selectedIds.includes(candidate.id)
+        ? "Skill pack can be selected by the router from its own production probe."
+        : "Skill pack is registered but not selected by its own production probe.",
+    },
+    {
+      id: "execution_contract",
+      status: executionPlan?.selectedSkills?.some((skill) => skill.id === candidate.id) ? "pass" : "review",
+      message: "Selected skill must expand into execution steps and artifacts.",
+    },
+    {
+      id: "quality_gates",
+      status: pack?.qualityGates?.length ? "pass" : "missing",
+      message: "Skill pack must include quality gates before completion claims.",
+    },
+    {
+      id: "replay_cases",
+      status: pack?.replayCases?.length ? "pass" : "missing",
+      message: "Skill pack must include replay cases before promotion.",
+    },
+    {
+      id: "growth_signals",
+      status: pack?.growthSignals?.length ? "pass" : "missing",
+      message: "Skill pack must emit growth signals from repeated failure or use.",
+    },
+    {
+      id: "authority_boundary",
+      status: pack?.authorityBoundary && Object.keys(pack.authorityBoundary).length ? "pass" : "missing",
+      message: "Skill pack must state local automation and approval boundaries.",
+    },
+  ];
+
+  return {
+    id: candidate.id,
+    title: candidate.title,
+    phase: candidate.phase,
+    category: candidate.category,
+    tier: candidate.tier,
+    productionStatus: candidate.productionStatus,
+    registryStatus: pack ? "registered" : "not_registered",
+    selectedByOwnProbe: selectedIds.includes(candidate.id),
+    tcellFocus: candidate.tcellFocus,
+    outputArtifacts: pack?.outputArtifacts || [],
+    routeProbe: routeProbe
+      ? {
+        status: routeProbe.status,
+        selectedIds,
+        routeQuality: routeProbe.routeQuality,
+      }
+      : null,
+    productionChecks,
+  };
+}
+
+function compareSkillCandidate(a, b) {
+  const phaseOrder = { "phase-1": 1, "phase-2": 2, "phase-3": 3 };
+  const tierOrder = {
+    foundation: 1,
+    quality: 2,
+    experience: 3,
+    execution: 4,
+    artifact: 5,
+    domain: 6,
+    connector: 7,
+    growth: 8,
+    daily: 9,
+    ux: 10,
+    learning: 11,
+    theory: 12,
+    content: 13,
+    automation: 14,
+    ops: 15,
+  };
+  return (phaseOrder[a.phase] || 99) - (phaseOrder[b.phase] || 99)
+    || (tierOrder[a.tier] || 99) - (tierOrder[b.tier] || 99)
+    || a.id.localeCompare(b.id);
 }
 
 function addIf(list, value, condition) {

@@ -1,12 +1,14 @@
 # GPAO-T Base Skill Packs v0.1
 
-Status: implementation registry baseline v0.1  
+Status: phase-1 production registry baseline v0.2
 Owner: 윤 (@aigis0927) / GPAO-T  
 Date: 2026-07-08
 
 ## 1. 개요
 
 이 문서는 GPAO-T에 기본 탑재할 1차 스킬팩을 정리한다. 실제 실행 데이터 계약은 `src/core/skill-ecosystem.js`가 단일 진실 원천이다. 이 문서는 사용자가 읽을 수 있는 제품 설명과 개발 기준이다.
+
+현재 Phase 1 production baseline은 9개 스킬팩이다. 전체 registry에는 Phase 2/도메인용 seed pack까지 포함해 11개 기본 pack이 존재한다.
 
 ## 2. 기본 스킬팩
 
@@ -89,6 +91,58 @@ GPAO-T의 자가 성장, 승인, replay, audit, rollback을 관리한다.
 - broad capture는 적극 허용
 - durable promotion/live mutation은 승인과 replay 뒤
 - 모든 upgrade는 evidence와 rollback note 보유
+
+### gpao-replay-evaluation-pack
+
+업그레이드가 실제로 나아졌는지 before/after replay로 확인한다.
+
+핵심 품질:
+
+- 이전 실패/비효율 시나리오를 기준 사례로 고정
+- 적용 전후 점수와 회귀 위험 분리
+- 개선 증거 없이는 성장 완료 주장 금지
+
+### gpao-quality-audit-pack
+
+완료 주장, 품질 drift, 근거 누락, 검증 부족을 감사한다.
+
+핵심 품질:
+
+- completion claim 전에 evidence checklist 확인
+- 사실, 추론, 미검증, 위험을 분리
+- 품질 기준 위반은 growth signal로 남김
+
+### gpao-local-app-qa-pack
+
+로컬 앱/웹앱의 첫 사용자 흐름과 상태 품질을 검증한다.
+
+핵심 품질:
+
+- first workflow, empty state, error/recovery 확인
+- 반응형, 텍스트 overflow, 화면 전환 안정성 점검
+- local preview와 external deployment 경계 분리
+
+## 2.1 Phase 1 Production Baseline
+
+Phase 1은 다음 9개 pack을 생산 기준선으로 본다.
+
+- `gpao-core-thinking-pack`
+- `gpao-growth-governance-pack`
+- `gpao-research-evidence-pack`
+- `gpao-visual-design-pack`
+- `gpao-webapp-builder-pack`
+- `gpao-document-output-pack`
+- `gpao-replay-evaluation-pack`
+- `gpao-quality-audit-pack`
+- `gpao-local-app-qa-pack`
+
+완료 기준은 후보 문서에 적힌 의지나 설명이 아니다. 다음 명령에서 9개 모두 통과해야 한다.
+
+```sh
+node bin/gpao-t.js skill production-status phase-1
+```
+
+이 게이트는 각 pack이 registry에 있고, 자기 probe로 route되며, execution contract로 이어지고, quality gate, replay case, growth signal, authority boundary를 갖는지 확인한다.
 
 ## 3. 운영 원칙
 

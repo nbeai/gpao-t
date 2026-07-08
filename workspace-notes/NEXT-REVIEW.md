@@ -17,8 +17,8 @@ Review item: human scenario acceptance reviewed: human-scenario acceptance evide
 
 ## Recent Evidence
 
-- plan: Saved build plan.
 - verify: Executed 2 checks.
-- closeout: Closeout decision: blocked.
+- closeout: Closeout decision: review.
+- closeout: Closeout decision: review.
 - verify: Executed 2 checks.
 - closeout: Closeout decision: review.

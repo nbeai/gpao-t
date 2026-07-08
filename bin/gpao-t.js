@@ -23,6 +23,8 @@ import {
   buildOperationsReliabilityContract,
   buildRuntimeDataContract,
   buildSelfGrowthProposal,
+  buildSkillBuildQueue,
+  buildSkillCandidateAtlas,
   buildSkillEcosystemPlan,
   buildSkillExecutionPlan,
   buildSkillExecutionRun,
@@ -30,6 +32,8 @@ import {
   buildSkillIntentProfile,
   buildSkillManifestStandard,
   buildSkillManualFirstPlan,
+  buildSkillProductionRoadmap,
+  buildSkillProductionStatus,
   buildSkillReadinessReport,
   captureMemoryEntry,
   buildReplayRecoveryView,
@@ -80,6 +84,10 @@ function usage() {
     "  gpao-t growth gates",
     "  gpao-t growth gate-summary",
     "  gpao-t skill ecosystem",
+    "  gpao-t skill atlas [phase|category|tier]",
+    "  gpao-t skill roadmap",
+    "  gpao-t skill build-queue [phase]",
+    "  gpao-t skill production-status [phase]",
     "  gpao-t skill execute-plan <text>",
     "  gpao-t skill execute <text>",
     "  gpao-t skill execute-record <text>",
@@ -226,6 +234,14 @@ try {
     const [subcommand, firstArg, ...restArgs] = args;
     if (subcommand === "ecosystem") {
       printJson(buildSkillEcosystemPlan());
+    } else if (subcommand === "atlas") {
+      printJson(buildSkillCandidateAtlas(parseSkillAtlasFilter({ value: firstArg })));
+    } else if (subcommand === "roadmap") {
+      printJson(buildSkillProductionRoadmap());
+    } else if (subcommand === "build-queue") {
+      printJson(buildSkillBuildQueue({ phase: firstArg || "phase-1" }));
+    } else if (subcommand === "production-status") {
+      printJson(buildSkillProductionStatus({ phase: firstArg || "phase-1" }));
     } else if (subcommand === "execute-plan") {
       const request = [firstArg, ...restArgs].filter(Boolean).join(" ").trim();
       if (!request) {
@@ -274,7 +290,7 @@ try {
     } else if (subcommand === "readiness") {
       printJson(buildSkillReadinessReport());
     } else {
-      throw new Error("skill command requires ecosystem, execute-plan, execute, execute-record, execution-history, execution-summary, intent, manifest, manual-first, packs, inspect, route, or readiness");
+      throw new Error("skill command requires ecosystem, atlas, roadmap, build-queue, production-status, execute-plan, execute, execute-record, execution-history, execution-summary, intent, manifest, manual-first, packs, inspect, route, or readiness");
     }
   } else if (command === "connectors") {
     const [subcommand, connectorId, action] = args;
@@ -398,6 +414,22 @@ function parseGrowthGateArgs({ target, approvalStatus }) {
     ...selection,
     approvalStatus,
   };
+}
+
+function parseSkillAtlasFilter({ value }) {
+  if (!value) return {};
+  if (/^phase-\d+$/.test(value)) return { phase: value };
+  const categories = new Set([
+    "connector",
+    "domain",
+    "experience",
+    "foundation",
+    "growth",
+    "high-impact",
+    "research",
+  ]);
+  if (categories.has(value)) return { category: value };
+  return { tier: value };
 }
 
 function waitForStop(preview) {

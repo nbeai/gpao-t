@@ -31,6 +31,8 @@ The first slice implements a local, dependency-free runtime skeleton:
 - `Local Control Center Contract`: one snapshot for runtime, ops, memory, recovery, growth, adapters, connectors, and authority
 - `Local Control Center Design Recipe`: BEAI design doctrine adapted to GPAO-T UI implementation
 - `Skill Ecosystem Registry`: research-grounded base skill packs, manifest standard, routing, readiness, and future runtime integration contract
+- `Skill Candidate Atlas`: full skill production field, phased roadmap, and build queue before individual pack production
+- `Skill Production Status`: phase-1 production gate for registry, routing, execution contract, quality gate, replay, growth signal, and authority boundary
 - `Skill Execution Plan`: selected skill packs expanded into execution steps, artifact contracts, quality gates, authority boundaries, and replay signals
 - `Skill Execution Adapter`: selected skill execution plans converted into local artifact drafts, quality gate results, replay evidence, and growth signal candidates
 - `GpaoDoctor`: target health check
@@ -84,6 +86,11 @@ node bin/gpao-t.js growth gate-record release-file requested
 node bin/gpao-t.js growth gates
 node bin/gpao-t.js growth gate-summary
 node bin/gpao-t.js skill ecosystem
+node bin/gpao-t.js skill atlas
+node bin/gpao-t.js skill atlas phase-1
+node bin/gpao-t.js skill roadmap
+node bin/gpao-t.js skill build-queue phase-1
+node bin/gpao-t.js skill production-status phase-1
 node bin/gpao-t.js skill intent "디자인 좋은 웹앱을 만들어줘"
 node bin/gpao-t.js skill manifest
 node bin/gpao-t.js skill manual-first
@@ -233,6 +240,7 @@ Skill Ecosystem readiness is exposed as data before live execution:
 - `skill execute <text>` creates a local preview run with artifact drafts, quality gate results, replay evidence, and growth signal candidates
 - `skill execute-record <text>` records that local preview evidence under `.gpao-t/skill-execution/history.jsonl`
 - `skill execution-history` and `skill execution-summary` expose recorded skill execution evidence
+- `skill production-status [phase]` verifies that phase skill candidates have become registered, routeable, executable, quality-gated, replay-backed, growth-aware, authority-bounded production packs
 - `skill readiness` verifies every base pack has target problem, T-cell principle, research protocol, quality gates, replay cases, authority boundary, and growth signals
 
 This keeps GPAO-T skills practical: a skill is accepted only when it maps research into an operating principle, execution procedure, quality gate, replay case, and growth signal. A selected skill is not treated as a vague recommendation; it must become a local execution contract that states what artifact will be produced, which quality gates block completion, which authority boundaries remain approval-gated, and which replay cases can improve the skill later.

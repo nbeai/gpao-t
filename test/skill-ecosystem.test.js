@@ -8,6 +8,8 @@ import { describe, it } from "node:test";
 import {
   appendSkillExecutionRun,
   buildControlCenterSummary,
+  buildSkillBuildQueue,
+  buildSkillCandidateAtlas,
   buildSkillEcosystemPlan,
   buildSkillExecutionPlan,
   buildSkillExecutionRun,
@@ -15,6 +17,8 @@ import {
   buildSkillIntentProfile,
   buildSkillManifestStandard,
   buildSkillManualFirstPlan,
+  buildSkillProductionRoadmap,
+  buildSkillProductionStatus,
   buildSkillReadinessReport,
   handleGatewayRequest,
   listSkillPacks,
@@ -55,12 +59,12 @@ describe("GPAO-T Skill Ecosystem", () => {
     assert.match(plan.completionRule, /manual preview/);
   });
 
-  it("ships base packs across core, design, builder, domain, data, evidence, and governance work", () => {
+  it("ships base packs across core, design, builder, domain, data, evidence, governance, and quality work", () => {
     const registry = listSkillPacks();
 
     assert.equal(registry.schema, "gpao_t.skill_pack_registry.v0_1");
     assert.equal(registry.status, "ready");
-    assert.equal(registry.total >= 8, true);
+    assert.equal(registry.total >= 11, true);
     assert.deepEqual(registry.categories, [
       "artifact",
       "builder",
@@ -70,9 +74,60 @@ describe("GPAO-T Skill Ecosystem", () => {
       "domain",
       "evidence",
       "governance",
+      "quality",
     ]);
     assert.equal(registry.packs.some((pack) => pack.id === "gpao-visual-design-pack"), true);
     assert.equal(registry.packs.some((pack) => pack.id === "gpao-korean-business-pack"), true);
+    assert.equal(registry.packs.some((pack) => pack.id === "gpao-replay-evaluation-pack"), true);
+    assert.equal(registry.packs.some((pack) => pack.id === "gpao-quality-audit-pack"), true);
+    assert.equal(registry.packs.some((pack) => pack.id === "gpao-local-app-qa-pack"), true);
+  });
+
+  it("lists the full skill candidate atlas before individual pack production", () => {
+    const atlas = buildSkillCandidateAtlas();
+    const phaseOne = buildSkillCandidateAtlas({ phase: "phase-1" });
+
+    assert.equal(atlas.schema, "gpao_t.skill_candidate_atlas.v0_1");
+    assert.equal(atlas.status, "ready");
+    assert.equal(atlas.allCandidates >= 20, true);
+    assert.deepEqual(atlas.phaseSummary.find((item) => item.phase === "phase-1"), {
+      phase: "phase-1",
+      total: 9,
+      seedPacks: 6,
+      productionPacks: 3,
+      plannedCandidates: 0,
+    });
+    assert.equal(atlas.productionPolicy.buildBundlesBeforeSinglePacks, true);
+    assert.equal(atlas.candidates.some((candidate) => candidate.id === "gpao-replay-evaluation-pack"), true);
+    assert.equal(atlas.candidates.some((candidate) => candidate.id === "gpao-tcell-research-pack"), true);
+    assert.equal(phaseOne.candidates.every((candidate) => candidate.phase === "phase-1"), true);
+    assert.equal(phaseOne.candidates.some((candidate) => candidate.id === "gpao-quality-audit-pack"), true);
+  });
+
+  it("turns the skill atlas into a phased production roadmap and build queue", () => {
+    const roadmap = buildSkillProductionRoadmap();
+    const queue = buildSkillBuildQueue({ phase: "phase-1" });
+    const productionStatus = buildSkillProductionStatus({ phase: "phase-1" });
+
+    assert.equal(roadmap.schema, "gpao_t.skill_production_roadmap.v0_1");
+    assert.equal(roadmap.status, "ready");
+    assert.equal(roadmap.phases.length, 3);
+    assert.equal(roadmap.buildBundles.some((bundle) => bundle.id === "bundle.foundation-six"), true);
+    assert.equal(roadmap.buildBundles.some((bundle) => bundle.id === "bundle.quality-loop"), true);
+    assert.equal(queue.schema, "gpao_t.skill_build_queue.v0_1");
+    assert.equal(queue.status, "ready");
+    assert.equal(queue.items[0].phase, "phase-1");
+    assert.equal(queue.items[0].productionChecklist.some((item) => item.item === "quality_gate_replay"), true);
+    assert.equal(queue.items
+      .find((item) => item.id === "gpao-replay-evaluation-pack")
+      .productionChecklist
+      .some((item) => item.item === "manifest" && item.status === "present_production"), true);
+    assert.equal(productionStatus.schema, "gpao_t.skill_production_status.v0_1");
+    assert.equal(productionStatus.status, "ready");
+    assert.equal(productionStatus.totalCandidates, 9);
+    assert.equal(productionStatus.producedPacks, 9);
+    assert.equal(productionStatus.blockers.length, 0);
+    assert.equal(productionStatus.packs.every((pack) => pack.registryStatus === "registered"), true);
   });
 
   it("keeps the ecosystem ready only when every pack has research, gates, replay, authority, and growth signals", () => {
@@ -202,6 +257,27 @@ describe("GPAO-T Skill Ecosystem", () => {
       cwd: ROOT,
       encoding: "utf8",
     }));
+    const atlas = JSON.parse(execFileSync(process.execPath, [CLI, "skill", "atlas", "phase-1"], {
+      cwd: ROOT,
+      encoding: "utf8",
+    }));
+    const roadmap = JSON.parse(execFileSync(process.execPath, [CLI, "skill", "roadmap"], {
+      cwd: ROOT,
+      encoding: "utf8",
+    }));
+    const buildQueue = JSON.parse(execFileSync(process.execPath, [CLI, "skill", "build-queue", "phase-1"], {
+      cwd: ROOT,
+      encoding: "utf8",
+    }));
+    const productionStatus = JSON.parse(execFileSync(process.execPath, [
+      CLI,
+      "skill",
+      "production-status",
+      "phase-1",
+    ], {
+      cwd: ROOT,
+      encoding: "utf8",
+    }));
     const readiness = JSON.parse(execFileSync(process.execPath, [CLI, "skill", "readiness"], {
       cwd: ROOT,
       encoding: "utf8",
@@ -252,6 +328,13 @@ describe("GPAO-T Skill Ecosystem", () => {
     }));
 
     assert.equal(ecosystem.status, "ready");
+    assert.equal(ecosystem.candidateAtlas.totalCandidates >= 20, true);
+    assert.equal(atlas.status, "ready");
+    assert.equal(atlas.candidates.every((candidate) => candidate.phase === "phase-1"), true);
+    assert.equal(roadmap.status, "ready");
+    assert.equal(buildQueue.status, "ready");
+    assert.equal(productionStatus.status, "ready");
+    assert.equal(productionStatus.producedPacks, 9);
     assert.equal(intent.primaryIntents.includes("build_or_modify_app"), true);
     assert.equal(readiness.status, "ready");
     assert.equal(manualFirst.status, "ready");
@@ -267,6 +350,20 @@ describe("GPAO-T Skill Ecosystem", () => {
 
   it("exposes skill execution adapter through the gateway", () => {
     const root = tempRoot();
+    const atlas = handleGatewayRequest({ root, method: "GET", path: "/skill/atlas" });
+    const roadmap = handleGatewayRequest({ root, method: "GET", path: "/skill/roadmap" });
+    const queue = handleGatewayRequest({
+      root,
+      method: "GET",
+      path: "/skill/build-queue",
+      body: { phase: "phase-1" },
+    });
+    const productionStatus = handleGatewayRequest({
+      root,
+      method: "GET",
+      path: "/skill/production-status",
+      body: { phase: "phase-1" },
+    });
     const run = handleGatewayRequest({
       root,
       method: "POST",
@@ -282,6 +379,15 @@ describe("GPAO-T Skill Ecosystem", () => {
     const history = handleGatewayRequest({ root, method: "GET", path: "/skill/execution-history" });
     const summary = handleGatewayRequest({ root, method: "GET", path: "/skill/execution-summary" });
 
+    assert.equal(atlas.status, 200);
+    assert.equal(atlas.body.schema, "gpao_t.skill_candidate_atlas.v0_1");
+    assert.equal(roadmap.status, 200);
+    assert.equal(roadmap.body.schema, "gpao_t.skill_production_roadmap.v0_1");
+    assert.equal(queue.status, 200);
+    assert.equal(queue.body.schema, "gpao_t.skill_build_queue.v0_1");
+    assert.equal(productionStatus.status, 200);
+    assert.equal(productionStatus.body.schema, "gpao_t.skill_production_status.v0_1");
+    assert.equal(productionStatus.body.status, "ready");
     assert.equal(run.status, 200);
     assert.equal(run.body.schema, "gpao_t.skill_execution_run.v0_1");
     assert.equal(record.status, 200);
@@ -296,7 +402,10 @@ describe("GPAO-T Skill Ecosystem", () => {
 
     assert.equal(Boolean(panel), true);
     assert.equal(panel.status, "ready");
-    assert.equal(summary.counts.skillPacks >= 8, true);
+    assert.equal(summary.counts.skillPacks >= 11, true);
+    assert.equal(summary.counts.skillCandidates >= 20, true);
+    assert.equal(summary.counts.phaseOneProducedSkillPacks, 9);
+    assert.equal(summary.counts.phaseOneSkillProductionBlockers, 0);
   });
 
   it("documents the future GPAO-T integration contract without pretending live skill execution exists", () => {
@@ -307,6 +416,9 @@ describe("GPAO-T Skill Ecosystem", () => {
     assert.equal(plan.documentationContract.implementationTruthSource, "src/core/skill-ecosystem.js");
     assert.match(plan.documentationContract.userReadableBaseline, /GPAO-T-BASE-SKILL-PACKS-ko\.md/);
     assert.equal(plan.integrationContract.registrySurface, "gpao-t skill packs");
+    assert.equal(plan.integrationContract.productionStatusSurface, "gpao-t skill production-status [phase]");
+    assert.equal(plan.phaseProductionBaseline.status, "ready");
+    assert.equal(plan.phaseProductionBaseline.producedPacks, 9);
     assert.match(plan.integrationContract.runtimeHook, /turn kernel/);
     assert.equal(plan.positioning.notThis.includes("a pile of prompt templates"), true);
   });

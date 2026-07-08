@@ -14,6 +14,10 @@ GPAO-T 스킬 생태계는 스킬을 많이 모으는 카탈로그가 아니다.
 GPAO-T 본체가 완성되면 이 생태계는 결합 가능한 독립 하위 시스템으로 붙는다. 따라서 지금 단계의 산출물은 단순 계획 문서가 아니라 다음 세 표면을 갖는다.
 
 - `gpao-t skill ecosystem`
+- `gpao-t skill atlas [phase|category|tier]`
+- `gpao-t skill roadmap`
+- `gpao-t skill build-queue [phase]`
+- `gpao-t skill production-status [phase]`
 - `gpao-t skill intent <text>`
 - `gpao-t skill packs`
 - `gpao-t skill manual-first`
@@ -202,7 +206,7 @@ skill execution plan
 
 ## 5. Base Skill Packs
 
-v0.1 기본 스킬팩은 다음 8개다.
+v0.2 기본 스킬팩은 다음 11개다.
 
 | ID | 역할 |
 | --- | --- |
@@ -214,6 +218,48 @@ v0.1 기본 스킬팩은 다음 8개다.
 | `gpao-korean-business-pack` | 한국 사업자용 공식 자료, 문서, 세무/법률/공시/통계 흐름을 돕는다. |
 | `gpao-data-insight-pack` | 스프레드시트, 지표, 통계, 운영 데이터를 판단 자료로 바꾼다. |
 | `gpao-growth-governance-pack` | 자가 성장, 승인, replay, audit, rollback 경계를 관리한다. |
+| `gpao-replay-evaluation-pack` | before/after replay와 회귀 검증으로 개선 효과를 증거화한다. |
+| `gpao-quality-audit-pack` | 완료 주장, drift, 근거 누락, 품질 기준 위반을 감사한다. |
+| `gpao-local-app-qa-pack` | 로컬 앱/웹앱의 첫 사용자 흐름, 상태, 복구, 반응형 품질을 점검한다. |
+
+## 5.1 Skill Candidate Atlas
+
+개별 스킬 제작에 바로 들어가기 전에 전체 제작 후보를 먼저 펼친다.
+
+GPAO-T 스킬 생태계는 스킬을 하나씩 모으는 방식이 아니라, 사용자의 실제 결핍과 작업 흐름을 기준으로 phase bundle을 만든다. 실행 가능한 후보 지도는 `src/core/skill-ecosystem.js`에 있고, 사용자가 읽을 수 있는 기준 문서는 `GPAO-T-SKILL-CANDIDATE-ATLAS-ko.md`다.
+
+명령 표면:
+
+```text
+gpao-t skill atlas
+gpao-t skill atlas phase-1
+gpao-t skill roadmap
+gpao-t skill build-queue phase-1
+gpao-t skill production-status phase-1
+```
+
+제작 phase:
+
+- `phase-1`: Foundation And First Felt Quality
+- `phase-2`: Practical Domain And Growth Reports
+- `phase-3`: Expansion And Advanced Operations
+
+1차 제작은 `Foundation Six`와 `Quality And Replay Loop`를 함께 본다. 그래야 사고, 근거, 디자인, 앱 제작, 문서, 성장 거버넌스, replay, 품질 감사가 따로 놀지 않는다.
+
+현재 Phase 1의 9개 스킬팩은 production baseline으로 올라와 있다. 이 말은 공개 marketplace나 live mutation을 뜻하지 않는다. 뜻은 좁고 정확하다.
+
+```text
+candidate
+-> registered pack
+-> routeable
+-> execution contract
+-> quality gates
+-> replay cases
+-> growth signals
+-> authority boundary
+```
+
+이 전체 조건을 `gpao-t skill production-status phase-1`가 확인한다. 이 명령이 `ready`가 아니면 Phase 1은 생산 기준선으로 닫지 않는다.
 
 ## 6. Design Skill Priority
 
@@ -292,6 +338,7 @@ gpao-t skill execute <text>
 gpao-t skill execute-record <text>
 gpao-t skill execution-history
 gpao-t skill execution-summary
+gpao-t skill production-status [phase]
 gpao-t skill readiness
 ```
 
@@ -322,11 +369,12 @@ GPAO-T 스킬 생태계의 v0.1 baseline 완료 기준은 다음이다.
 - turn kernel task packet이 skill route와 skill execution plan을 모두 담아 model/tool routing 전에 작업 품질 기준을 고정한다.
 - skill execution adapter가 로컬 산출물 초안, 품질 게이트 결과, replay evidence, growth signal 후보를 생성한다.
 - 기록형 실행 증거가 `.gpao-t/skill-execution/history.jsonl`에 저장되고 Control Center summary에 노출된다.
+- Phase 1 skill production status가 9/9 ready로 통과하고 Control Center summary에 생산 기준선 상태가 노출된다.
 
 ## 10. 다음 개발 순서
 
-1. 기본 스킬팩별 상세 replay fixture 추가
-2. turn-kernel task packet에 skill route 결과 주입
+1. Phase 1 생산 기준선을 turn-kernel task packet에 더 깊게 주입
+2. 기본 스킬팩별 상세 replay fixture 확장
 3. 디자인 스킬팩의 screenshot QA 및 responsive QA 연결
 4. 한국 사업 스킬팩의 MCP/source registry 연결
 5. 스킬 실행 결과를 growth proposal과 weekly report 후보로 연결

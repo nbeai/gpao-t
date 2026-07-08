@@ -8,7 +8,13 @@ import { readMemoryWiki, readTCellCandidates } from "./memory-wiki.js";
 import { buildOperationsContractSummary } from "./operations-contract.js";
 import { buildRecoveryHistorySummary, readReplayRecoveryHistory } from "./replay-history.js";
 import { buildSkillExecutionSummary } from "./skill-execution-adapter.js";
-import { buildSkillReadinessReport, listSkillPacks } from "./skill-ecosystem.js";
+import {
+  buildSkillCandidateAtlas,
+  buildSkillProductionRoadmap,
+  buildSkillProductionStatus,
+  buildSkillReadinessReport,
+  listSkillPacks,
+} from "./skill-ecosystem.js";
 import { readAuditEvents, readRuntimeState } from "./storage.js";
 
 export function buildControlCenterSnapshot({ root } = {}) {
@@ -29,11 +35,21 @@ export function buildControlCenterSnapshot({ root } = {}) {
   const skillPacks = listSkillPacks();
   const skillReadiness = buildSkillReadinessReport();
   const skillExecution = buildSkillExecutionSummary({ root });
+  const skillAtlas = buildSkillCandidateAtlas();
+  const skillRoadmap = buildSkillProductionRoadmap();
+  const skillProductionStatus = buildSkillProductionStatus({ phase: "phase-1" });
 
   const panels = [
     buildRuntimePanel({ doctor, runtimeState, auditEvents }),
     buildOpsPanel({ installHardening, operationsContract }),
-    buildSkillPanel({ skillPacks, skillReadiness, skillExecution }),
+    buildSkillPanel({
+      skillPacks,
+      skillReadiness,
+      skillExecution,
+      skillAtlas,
+      skillRoadmap,
+      skillProductionStatus,
+    }),
     buildMemoryPanel({ memoryWiki, tcellCandidates }),
     buildRecoveryPanel({ recoveryHistory, recoverySummary }),
     buildGrowthPanel({ growthProposals, growthApplicationGates }),
@@ -62,6 +78,9 @@ export function buildControlCenterSnapshot({ root } = {}) {
       installHardeningReports: installHardening.totalReports,
       dataSurfaces: operationsContract.dataSurfaces,
       skillPacks: skillPacks.total,
+      skillCandidates: skillAtlas.allCandidates,
+      phaseOneProducedSkillPacks: skillProductionStatus.producedPacks,
+      phaseOneSkillProductionBlockers: skillProductionStatus.blockers.length,
       skillPackReadinessFindings: skillReadiness.totalFindings,
       skillExecutionRuns: skillExecution.totalRuns,
       skillExecutionGrowthSignals: skillExecution.growthSignalCandidates.length,
@@ -112,9 +131,18 @@ export function buildControlCenterSummary({ root } = {}) {
   };
 }
 
-function buildSkillPanel({ skillPacks, skillReadiness, skillExecution }) {
+function buildSkillPanel({
+  skillPacks,
+  skillReadiness,
+  skillExecution,
+  skillAtlas,
+  skillRoadmap,
+  skillProductionStatus,
+}) {
   const status = skillReadiness.status === "blocked"
     ? "blocked"
+    : skillProductionStatus.status === "review"
+    ? "review"
     : skillExecution.status === "review" && skillExecution.totalRuns > 0
     ? "review"
     : skillReadiness.status;
@@ -129,7 +157,11 @@ function buildSkillPanel({ skillPacks, skillReadiness, skillExecution }) {
       : "Skill ecosystem manifest needs review before runtime attachment.",
     data: {
       totalPacks: skillPacks.total,
+      totalCandidates: skillAtlas.allCandidates,
       categories: skillPacks.categories,
+      phaseSummary: skillAtlas.phaseSummary,
+      roadmapNextAction: skillRoadmap.nextSafeAction,
+      phaseOneProductionStatus: skillProductionStatus,
       readinessFindings: skillReadiness.findings,
       executionSummary: skillExecution,
       primeRule: "Every GPAO-T skill must solve a real user problem through research-grounded practical procedures.",
