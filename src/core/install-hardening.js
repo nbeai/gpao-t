@@ -36,6 +36,7 @@ export function buildInstallHardeningReport({
   const hasTest = typeof scripts.test === "string";
   const hasBin = Boolean(packageJson?.bin?.["gpao-t"]);
   const hasGit = existsSync(resolve(root, ".git"));
+  const gitHeadCommit = readGitHeadCommit({ root });
   const status = missingFiles.length ? "blocked" : hasVerify && hasCheck && hasTest && hasBin ? "review" : "blocked";
 
   return {
@@ -74,6 +75,21 @@ export function buildInstallHardeningReport({
     rollbackGate: {
       status: hasGit ? "review" : "blocked",
       rollbackSubstrate: hasGit ? "git_available" : "git_not_detected_use_harness_snapshots",
+      sourceControlBaseline: {
+        mode: hasGit ? "independent_local_git_repository" : "not_available",
+        publicRemote: "not_configured",
+        deployment: "out_of_scope",
+        currentCommit: gitHeadCommit,
+        ignoredLocalState: [
+          ".gpao-t/",
+          ".beai-harness/",
+          "node_modules/",
+          "coverage/",
+          "dist/",
+          "tmp/",
+          "*.log",
+        ],
+      },
       stateBackupPath: ".gpao-t/",
       rollbackExecution: "not_implemented",
       postRollbackCheck: hasVerify ? "npm_run_verify_required" : "missing_verify_script",
@@ -149,6 +165,19 @@ function readPackageJson({ root }) {
     return null;
   }
   return JSON.parse(readFileSync(file, "utf8"));
+}
+
+function readGitHeadCommit({ root }) {
+  const headFile = resolve(root, ".git/HEAD");
+  if (!existsSync(headFile)) {
+    return null;
+  }
+  const head = readFileSync(headFile, "utf8").trim();
+  if (head.startsWith("ref: ")) {
+    const refFile = resolve(root, ".git", head.slice(5));
+    return existsSync(refFile) ? readFileSync(refFile, "utf8").trim() : null;
+  }
+  return head || null;
 }
 
 function buildNextSafeAction({ missingFiles, hasVerify, hasGit }) {

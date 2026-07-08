@@ -41,6 +41,12 @@ describe("GPAO-T install/update/rollback hardening", () => {
     assert.equal(report.installGate.installerExecution, "not_implemented");
     assert.equal(report.updateGate.updateMode, "local_manifest_review_only");
     assert.equal(report.rollbackGate.rollbackExecution, "not_implemented");
+    assert.equal(report.rollbackGate.sourceControlBaseline.mode, "independent_local_git_repository");
+    assert.equal(report.rollbackGate.sourceControlBaseline.publicRemote, "not_configured");
+    assert.equal(report.rollbackGate.sourceControlBaseline.deployment, "out_of_scope");
+    assert.ok(report.rollbackGate.sourceControlBaseline.currentCommit);
+    assert.ok(report.rollbackGate.sourceControlBaseline.ignoredLocalState.includes(".gpao-t/"));
+    assert.ok(report.rollbackGate.sourceControlBaseline.ignoredLocalState.includes(".beai-harness/"));
     assert.deepEqual(report.authorityBoundary.realExecutorRequirements, [
       "explicit_approval",
       "recovery_evidence",
@@ -81,6 +87,7 @@ describe("GPAO-T install/update/rollback hardening", () => {
     assert.equal(history.status, 200);
     assert.equal(summary.status, 200);
     assert.equal(report.body.application.canInstallNow, false);
+    assert.equal(report.body.rollbackGate.sourceControlBaseline.mode, "independent_local_git_repository");
     assert.equal(summary.body.schema, "gpao_t.install_hardening_summary.v0_1");
   });
 });

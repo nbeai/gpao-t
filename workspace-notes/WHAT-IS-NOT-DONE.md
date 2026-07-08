@@ -15,4 +15,5 @@
 
 ## Blockers
 
-- No unresolved session blocker is recorded.
+- No unresolved blocker is recorded for the local source-control baseline.
+- Public GitHub push, deployment, installer execution, update execution, destructive rollback, external account setup, and secret storage remain excluded until explicit approval.

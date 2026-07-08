@@ -4,9 +4,9 @@ The first real user can route a vague request, see the plan, run checks, and und
 
 ## Current Phase
 
-- Phase: plan
-- Command: plan
-- Status: completed
+- Phase: rollback substrate baseline
+- Command: local git baseline
+- Status: source-controlled locally
 
 ## User Mode
 
@@ -35,4 +35,4 @@ AI does the work. User keeps authority.
 
 ## Latest Summary
 
-Saved build plan for Create independent local git rollback substrate for GPAO-T, ignore runtime/generated artifacts, verify current baseline, commit source-controlled baseline, and update master plan evidence.
+Initialized GPAO-T as an independent local git repository and established source-control/rollback substrate boundaries before browser-safe Control Center verification.

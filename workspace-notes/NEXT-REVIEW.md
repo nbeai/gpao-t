@@ -2,7 +2,7 @@
 
 ## Next Safe Action
 
-Run beai verify to inspect available checks before implementation.
+Proceed to browser-safe local serving plus screenshot verification for the Local Control Center.
 
 ## Review Before Continuing
 
@@ -13,12 +13,11 @@ Run beai verify to inspect available checks before implementation.
 
 ## Session Resume
 
-Implement the plan, then run beai verify.
+Start from the independent local git baseline, keep `.gpao-t/` runtime state ignored, and avoid public push/deploy unless explicitly approved.
 
 ## Recent Evidence
 
-- verify: Executed 2 checks.
-- closeout: Closeout decision: ready.
-- preflight: Read-only workspace check completed for gpao-t.
-- route: Routed work as strict.
-- plan: Saved build plan.
+- git: Initialized independent local repository for GPAO-T.
+- commit: `29afc38 chore: establish gpao-t local source baseline`.
+- verify: `npm run verify` passed with 66 tests after source-control baseline work.
+- hardening: `ops hardening` reports `rollbackSubstrate: git_available`.
