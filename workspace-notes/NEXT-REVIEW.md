@@ -17,8 +17,8 @@ Continue only after reviewing verification evidence.
 
 ## Recent Evidence
 
-- closeout: Closeout decision: blocked.
 - verify: Executed 2 checks.
-- closeout: Closeout decision: review.
-- closeout: Closeout decision: review.
+- closeout: Closeout decision: ready.
+- verify: Executed 2 checks.
+- closeout: Closeout decision: ready.
 - verify: Executed 2 checks.

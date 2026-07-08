@@ -286,10 +286,15 @@ describe("GPAO-T Local Control Center readiness", () => {
     assert.match(html, /max-width: 100vw/);
     assert.match(html, /mobile-next-action/);
     assert.match(html, /aria-label="Mobile next safe action"/);
+    assert.match(html, /class="topbar-action">다음 행동:/);
     assert.match(html, /focus-strip/);
     assert.match(html, /\.focus-strip \{[\s\S]*flex-wrap: wrap/);
-    assert.match(html, /\.focus-strip \{[\s\S]*position: sticky/);
     assert.match(html, /\.topbar \{[\s\S]*position: sticky/);
+    assert.match(html, /\.topbar \{[\s\S]*position: fixed/);
+    assert.match(html, /\.layout \{[\s\S]*padding-top: 140px/);
+    assert.match(html, /\.topbar-action \{[\s\S]*-webkit-line-clamp: 2/);
+    assert.match(html, /\.side-section \{[\s\S]*scroll-margin-top: 140px/);
+    assert.match(html, /#next-safe-action-aside \{[\s\S]*display: none/);
     assert.match(html, /nav \{ order: 3; \}/);
     assert.match(html, /main \{ order: 1; \}/);
     assert.match(html, /aside \{ order: 2; \}/);

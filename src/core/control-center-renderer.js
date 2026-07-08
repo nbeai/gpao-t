@@ -115,6 +115,9 @@ export function buildControlCenterHtml({ snapshot, designContract } = {}) {
       font-size: 13px;
       overflow-wrap: anywhere;
     }
+    .topbar-action {
+      display: none;
+    }
     .layout {
       display: grid;
       grid-template-columns: 180px minmax(0, 1fr) 320px;
@@ -328,6 +331,9 @@ export function buildControlCenterHtml({ snapshot, designContract } = {}) {
     .side-section + .side-section {
       margin-top: 18px;
     }
+    .side-section {
+      scroll-margin-top: 92px;
+    }
     .side-list {
       display: grid;
       gap: 8px;
@@ -390,6 +396,11 @@ export function buildControlCenterHtml({ snapshot, designContract } = {}) {
       .topbar {
         gap: 10px;
         padding: 12px 14px;
+        position: fixed;
+        width: 100%;
+      }
+      .layout {
+        padding-top: 140px;
       }
       .brand {
         align-items: flex-start;
@@ -403,6 +414,18 @@ export function buildControlCenterHtml({ snapshot, designContract } = {}) {
       }
       .subtitle {
         font-size: 12px;
+      }
+      .topbar-action {
+        display: -webkit-box;
+        width: 100%;
+        max-height: 34px;
+        overflow: hidden;
+        color: var(--muted);
+        font-size: 11px;
+        line-height: 1.35;
+        overflow-wrap: anywhere;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
       }
       main,
       aside,
@@ -432,9 +455,6 @@ export function buildControlCenterHtml({ snapshot, designContract } = {}) {
         margin-bottom: 10px;
       }
       .focus-strip {
-        position: sticky;
-        top: 104px;
-        z-index: 1;
         margin-bottom: 10px;
         padding: 7px;
       }
@@ -471,7 +491,13 @@ export function buildControlCenterHtml({ snapshot, designContract } = {}) {
       .panel {
         min-height: 0;
         padding: 12px;
-        scroll-margin-top: 160px;
+        scroll-margin-top: 202px;
+      }
+      .side-section {
+        scroll-margin-top: 140px;
+      }
+      #next-safe-action-aside {
+        display: none;
       }
       .panel-head {
         align-items: flex-start;
@@ -509,6 +535,7 @@ export function buildControlCenterHtml({ snapshot, designContract } = {}) {
         <h1>GPAO-T Local Control Center</h1>
         <span class="subtitle">정적 UI reader · 외부 활성화 없음</span>
       </div>
+      <span class="topbar-action">다음 행동: ${escapeHtml(uiSnapshot.firstViewport.nextSafeAction)}</span>
       ${statusChip(controlSnapshot.status)}
     </header>
     <div class="layout">
