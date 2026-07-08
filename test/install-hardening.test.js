@@ -10,6 +10,7 @@ import {
   buildInstallHardeningReport,
   buildInstallHardeningSummary,
   buildTauriInstallDryRunPlan,
+  buildTauriInstallDryRunApprovalRecordStorageDesign,
   buildTauriInstallDryRunExecutorContract,
   buildTauriInstallDryRunImplementationDesign,
   buildTauriInstallDryRunInvocationApprovalContract,
@@ -19,6 +20,7 @@ import {
   readInstallHardeningReports,
   renderTauriInstallDryRunPreview,
   verifyTauriInstallDryRunPlan,
+  verifyTauriInstallDryRunApprovalRecordStorageDesign,
   verifyTauriInstallDryRunExecutorContract,
   verifyTauriInstallDryRunImplementationDesign,
   verifyTauriInstallDryRunInvocationApprovalContract,
@@ -369,5 +371,59 @@ describe("GPAO-T install/update/rollback hardening", () => {
     assert.equal(gatewayContract.status, 200);
     assert.equal(gatewayContract.body.schema, contract.schema);
     assert.equal(gatewayContractCheck.body.status, "ready");
+  });
+
+  it("designs dry-run approval-record storage without writing records or invoking dry-run", () => {
+    const design = buildTauriInstallDryRunApprovalRecordStorageDesign({ root: ROOT });
+    const designCheck = verifyTauriInstallDryRunApprovalRecordStorageDesign({ root: ROOT, design });
+    const cliDesign = JSON.parse(execFileSync(process.execPath, [CLI, "control", "tauri-dry-run-approval-storage"], {
+      cwd: ROOT,
+      encoding: "utf8",
+    }));
+    const cliDesignCheck = JSON.parse(execFileSync(process.execPath, [CLI, "control", "tauri-dry-run-approval-storage-check"], {
+      cwd: ROOT,
+      encoding: "utf8",
+    }));
+    const gatewayDesign = handleGatewayRequest({
+      root: ROOT,
+      method: "GET",
+      path: "/app-shell/tauri-dry-run-approval-storage",
+    });
+    const gatewayDesignCheck = handleGatewayRequest({
+      root: ROOT,
+      method: "GET",
+      path: "/app-shell/tauri-dry-run-approval-storage/verify",
+    });
+
+    assert.equal(design.schema, "gpao_t.tauri_install_dry_run_approval_record_storage_design.v0_1");
+    assert.equal(design.status, "ready");
+    assert.equal(design.designMode, "storage_design_only_no_record_write_no_invocation");
+    assert.equal(design.storageLocation.primaryRecordFile, ".gpao-t/approvals/tauri-dry-run-invocation-approvals.jsonl");
+    assert.equal(design.storageLocation.writesApprovalRecordNow, false);
+    assert.equal(design.storageLocation.createsDirectoriesNow, false);
+    assert.equal(design.storageLocation.readsApprovalRecordsNow, false);
+    assert.equal(design.recordSchema.requiredFields.includes("replayRefs"), true);
+    assert.equal(design.recordSchema.requiredFields.includes("auditRefs"), true);
+    assert.equal(design.recordSchema.requiredFields.includes("rollbackRef"), true);
+    assert.equal(design.recordSchema.approvalStateValues.includes("revoked"), true);
+    assert.equal(design.lifecycle.retention.mutableInPlace, false);
+    assert.equal(design.referenceContract.replayRefs.every((ref) => ref.writeNow === false), true);
+    assert.equal(design.referenceContract.auditRefs.every((ref) => ref.writeNow === false), true);
+    assert.equal(design.referenceContract.rollbackRef.rollbackExecutionNow, "blocked");
+    assert.equal(design.writeGateBoundary.approvalRecordWriteAllowedNow, false);
+    assert.equal(design.writeGateBoundary.dryRunInvocationAllowedNow, false);
+    assert.equal(design.writeGateBoundary.commandExecutionAllowedNow, false);
+    assert.equal(design.writeGateBoundary.fileMutationAllowedNow, false);
+    assert.equal(design.writeGateBoundary.tauriBuildAllowedNow, false);
+    assert.equal(design.writeGateBoundary.connectorModelToolActivationAllowedNow, false);
+    assert.equal(design.safetyInvariants.writesApprovalRecord, false);
+    assert.equal(design.safetyInvariants.invokesDryRunExecutor, false);
+    assert.equal(design.failureRecoveryStates.some((state) => state.id === "approval_record_write_requested_too_early"), true);
+    assert.equal(designCheck.status, "ready");
+    assert.equal(cliDesign.schema, design.schema);
+    assert.equal(cliDesignCheck.status, "ready");
+    assert.equal(gatewayDesign.status, 200);
+    assert.equal(gatewayDesign.body.schema, design.schema);
+    assert.equal(gatewayDesignCheck.body.status, "ready");
   });
 });

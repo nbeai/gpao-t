@@ -1,9 +1,9 @@
 # Tauri Prerequisite Doctor And Dry-Run Executor Contract
 
-Status: invocation approval contract added, invocation blocked
-Scope: packaged desktop install/update/rollback prerequisite doctor, dry-run executor contract, approval-gated implementation design, pure dry-run plan/verify/preview objects, and future invocation approval contract
+Status: approval-record storage design added, record write and invocation blocked
+Scope: packaged desktop install/update/rollback prerequisite doctor, dry-run executor contract, approval-gated implementation design, pure dry-run plan/verify/preview objects, future invocation approval contract, and future approval-record storage design
 
-This stage does not install dependencies, run Cargo, run Tauri, build a package, create an installer, open IPC, write files as a dry-run, write approval records, download externally, invoke a dry-run executor, or execute install/update/rollback. It defines what must be inspected before a future dry-run executor may exist, exposes pure JSON plan/verify/preview objects, and now defines the approval contract that must exist before any future invocation gate.
+This stage does not install dependencies, run Cargo, run Tauri, build a package, create an installer, open IPC, write files as a dry-run, write approval records, download externally, invoke a dry-run executor, or execute install/update/rollback. It defines what must be inspected before a future dry-run executor may exist, exposes pure JSON plan/verify/preview objects, defines the approval contract that must exist before any future invocation gate, and now designs where future approval records should live without writing them.
 
 ## Machine Contract
 
@@ -20,6 +20,8 @@ node bin/gpao-t.js control tauri-dry-run-preview
 node bin/gpao-t.js control tauri-dry-run-preview-check
 node bin/gpao-t.js control tauri-dry-run-invocation-approval
 node bin/gpao-t.js control tauri-dry-run-invocation-approval-check
+node bin/gpao-t.js control tauri-dry-run-approval-storage
+node bin/gpao-t.js control tauri-dry-run-approval-storage-check
 node bin/gpao-t.js gateway GET /app-shell/tauri-prerequisite-doctor
 node bin/gpao-t.js gateway GET /app-shell/tauri-prerequisite-doctor/verify
 node bin/gpao-t.js gateway GET /app-shell/tauri-dry-run-contract
@@ -32,6 +34,8 @@ node bin/gpao-t.js gateway GET /app-shell/tauri-dry-run-preview
 node bin/gpao-t.js gateway GET /app-shell/tauri-dry-run-preview/verify
 node bin/gpao-t.js gateway GET /app-shell/tauri-dry-run-invocation-approval
 node bin/gpao-t.js gateway GET /app-shell/tauri-dry-run-invocation-approval/verify
+node bin/gpao-t.js gateway GET /app-shell/tauri-dry-run-approval-storage
+node bin/gpao-t.js gateway GET /app-shell/tauri-dry-run-approval-storage/verify
 ```
 
 Loopback preview also exposes:
@@ -48,6 +52,8 @@ Loopback preview also exposes:
 - `GET /app-shell/tauri-dry-run-preview/verify`
 - `GET /app-shell/tauri-dry-run-invocation-approval`
 - `GET /app-shell/tauri-dry-run-invocation-approval/verify`
+- `GET /app-shell/tauri-dry-run-approval-storage`
+- `GET /app-shell/tauri-dry-run-approval-storage/verify`
 
 ## Prerequisite Doctor
 
@@ -202,11 +208,79 @@ Current contract boundary:
 - executor existence: `missing_by_design`
 - audit writes now: `false`
 
+## Approval-Record Storage Design
+
+The approval-record storage design defines where and how a future dry-run invocation approval record should be stored. It is still design-only and does not create directories, read approval records, append approval records, or invoke dry-run.
+
+Current surfaces:
+
+- `buildTauriInstallDryRunApprovalRecordStorageDesign`: returns future approval-record storage location, schema, lifecycle, replay/audit/rollback references, and write gate boundary.
+- `verifyTauriInstallDryRunApprovalRecordStorageDesign`: rejects any design that enables approval writes, directory creation, dry-run invocation, command execution, file mutation, build, IPC, network, connector/model/tool activation, or install/update/rollback execution.
+
+Future local storage contract:
+
+- runtime root: `.gpao-t/`
+- approvals root: `.gpao-t/approvals/`
+- primary record file: `.gpao-t/approvals/tauri-dry-run-invocation-approvals.jsonl`
+- index file: `.gpao-t/approvals/index.json`
+- audit reference root: `.gpao-t/audit/`
+- dry-run preview root: `.gpao-t/tauri-dry-run/`
+- storage mode: future local append-only JSONL
+- local only: `true`
+
+Required future record fields:
+
+- record id
+- request id
+- requested operation
+- approval state
+- approved scope
+- source commit
+- preview reference
+- plan reference
+- invocation approval contract reference
+- replay references
+- audit references
+- rollback reference
+- authority boundary
+- blocked actions
+- created, expiration, decision, and integrity fields
+
+Required lifecycle states:
+
+- `draft_previewed`
+- `approval_requested`
+- `approved_for_dry_run_invocation_only`
+- `rejected`
+- `expired`
+- `revoked`
+- `archived`
+
+Required references:
+
+- replay refs for dry-run preview verification and future invocation decision replay
+- audit refs for approval requested and approval decided events
+- rollback ref anchored to the current source commit
+
+Current storage design boundary:
+
+- approval record write now: `false`
+- directory creation now: `false`
+- approval record read now: `false`
+- dry-run invocation now: `false`
+- command execution now: `false`
+- file mutation now: `false`
+- Tauri build now: `false`
+- dependency installation now: `false`
+- IPC/network/connector/model/tool activation now: `false`
+
 ## Blocked Now
 
 - dry-run execution
 - dry-run executor invocation
 - approval record write
+- approval record directory creation
+- approval record read/store mutation
 - real dry-run executor implementation beyond the pure object builders
 - real install/update/rollback execution
 - dependency installation
@@ -229,4 +303,4 @@ Current contract boundary:
 
 ## Next Safe Action
 
-After this invocation approval contract remains verified, the next gate may design approval-record storage for a future dry-run invocation. Dry-run invocation and real install/update/rollback, Tauri build, IPC, external download, deployment, messenger, and automation remain blocked.
+After this approval-record storage design remains verified, the next gate may design the approval-record write path. Actual approval record write, dry-run invocation, command execution, file mutation, install/update/rollback, Tauri build, IPC, external download, deployment, messenger, and automation remain blocked.
