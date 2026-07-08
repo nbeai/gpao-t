@@ -277,10 +277,45 @@ export function buildControlCenterHtml({ snapshot, designContract } = {}) {
       font-size: 13px;
       overflow-wrap: anywhere;
     }
+    .panel-actions {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 7px;
+      margin-top: 10px;
+    }
+    .panel-action {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 32px;
+      padding: 6px 8px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: var(--surface-muted);
+      color: var(--text);
+      font-size: 12px;
+      font-weight: 700;
+      line-height: 1.2;
+      text-align: center;
+      text-decoration: none;
+      overflow-wrap: anywhere;
+    }
+    .panel-action:hover,
+    .panel-action:focus-visible {
+      background: var(--surface);
+      outline: 2px solid var(--approval);
+      outline-offset: 1px;
+    }
     .inspector {
       margin-top: 10px;
       border-top: 1px solid var(--line);
       padding-top: 10px;
+      scroll-margin-top: 92px;
+    }
+    .inspector:target {
+      outline: 2px solid var(--approval);
+      outline-offset: 3px;
+      border-radius: 6px;
     }
     .inspector summary {
       cursor: pointer;
@@ -493,6 +528,18 @@ export function buildControlCenterHtml({ snapshot, designContract } = {}) {
         padding: 12px;
         scroll-margin-top: 202px;
       }
+      .panel-actions {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 6px;
+      }
+      .panel-action {
+        min-height: 34px;
+        padding: 6px;
+        font-size: 11px;
+      }
+      .inspector {
+        scroll-margin-top: 202px;
+      }
       .side-section {
         scroll-margin-top: 140px;
       }
@@ -656,14 +703,22 @@ function panelHtml(panel) {
               ${statusChip(panel.status)}
             </div>
             <p class="next">${escapeHtml(panel.nextSafeAction)}</p>
-            <details class="inspector" data-panel-inspector="${escapeHtml(panel.id)}">
-              <summary>패널 인스펙터</summary>
+            <div class="panel-actions" aria-label="${escapeHtml(panel.label)} local drilldown actions">
+              <a class="panel-action" data-panel-action="inspect" href="#inspect-${escapeHtml(panel.id)}">인스펙터</a>
+              <a class="panel-action" data-panel-action="authority" href="#authority-boundary">권한</a>
+              <a class="panel-action" data-panel-action="next" href="#next-safe-action">다음 행동</a>
+            </div>
+            <details class="inspector" id="inspect-${escapeHtml(panel.id)}" data-panel-inspector="${escapeHtml(panel.id)}">
+              <summary>운영 드릴다운</summary>
               <div class="inspector-grid" aria-label="Control Center panel inspector">
                 ${inspectorRow("Panel ID", panel.id)}
                 ${inspectorRow("Group", group)}
                 ${inspectorRow("Status", STATUS_LABELS[panel.status] || panel.status)}
                 ${inspectorRow("Headline", panel.headline)}
                 ${inspectorRow("Next", panel.nextSafeAction)}
+                ${inspectorRow("Authority", authorityLens(group))}
+                ${inspectorRow("Evidence", evidenceLens(panel))}
+                ${inspectorLinks(panel)}
               </div>
             </details>
           </section>`;
@@ -688,6 +743,24 @@ function inspectorRow(label, value) {
                   <strong>${escapeHtml(label)}</strong>
                   <span>${escapeHtml(value)}</span>
                 </div>`;
+}
+
+function inspectorLinks(panel) {
+  return `
+                <div class="inspector-row">
+                  <strong>Return</strong>
+                  <span><a href="#panel-${escapeHtml(panel.id)}">패널</a> · <a href="#authority-boundary">권한 경계</a> · <a href="#next-safe-action">다음 행동</a></span>
+                </div>`;
+}
+
+function authorityLens(group) {
+  return group === "Authority"
+    ? "권한 경계를 먼저 확인하고 외부 활성화는 차단한다."
+    : "로컬 검사만 허용하고 외부 계정, 모델, 도구 호출은 열지 않는다.";
+}
+
+function evidenceLens(panel) {
+  return `${STATUS_LABELS[panel.status] || panel.status} 상태와 다음 안전 행동을 함께 확인한다.`;
 }
 
 function escapeHtml(value) {

@@ -17,8 +17,8 @@ Continue only after reviewing verification evidence.
 
 ## Recent Evidence
 
-- verify: Executed 2 checks.
-- closeout: Closeout decision: ready.
-- verify: Executed 2 checks.
+- preflight: Read-only workspace check completed for gpao-t.
+- brief: Saved product brief.
+- plan: Saved build plan.
 - closeout: Closeout decision: ready.
 - verify: Executed 2 checks.

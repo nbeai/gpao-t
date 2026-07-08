@@ -59,6 +59,7 @@ export function buildControlCenterUiContract() {
         "anchor_panel_navigation",
         "focus_navigation",
         "details_summary_panel_inspector",
+        "panel_drilldown_links",
         "mobile_next_safe_action_strip",
       ],
     },
@@ -93,6 +94,8 @@ export function buildControlCenterUiContract() {
       "The static reader must not include scripts or live external actions.",
       "Initial interactivity must use no-script local inspection controls only.",
       "Richer Control Center behavior must preserve no-script, no external activation, no overflow, authority boundary visibility, and next safe action visibility.",
+      "Panel drilldown behavior must use local hash links and details summaries only.",
+      "Mobile fixed topbar action line and authority anchor spacing must remain visible after behavior additions.",
       "Renderer output must report static_html_file_written before visual quality claims.",
     ],
     nextSafeAction:
