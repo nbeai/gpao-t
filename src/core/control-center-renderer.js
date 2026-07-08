@@ -234,6 +234,42 @@ export function buildControlCenterHtml({ snapshot, designContract } = {}) {
       color: var(--muted);
       font-size: 12px;
     }
+    .workflow-state-view {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+    .state-card {
+      min-width: 0;
+      min-height: 82px;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--surface);
+      box-shadow: var(--shadow);
+    }
+    .state-card strong {
+      display: block;
+      font-size: 12px;
+      color: var(--muted);
+      overflow-wrap: anywhere;
+    }
+    .state-card span {
+      display: block;
+      margin-top: 4px;
+      font-size: 13px;
+      font-weight: 700;
+      overflow-wrap: anywhere;
+    }
+    .state-card small {
+      display: block;
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.35;
+      overflow-wrap: anywhere;
+    }
     .panel-grid {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -276,6 +312,34 @@ export function buildControlCenterHtml({ snapshot, designContract } = {}) {
       color: var(--text);
       font-size: 13px;
       overflow-wrap: anywhere;
+    }
+    .state-ribbon {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 6px;
+      margin-top: 10px;
+    }
+    .state-pill {
+      min-width: 0;
+      min-height: 46px;
+      padding: 6px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: #fbfcfd;
+      font-size: 11px;
+      line-height: 1.25;
+      overflow-wrap: anywhere;
+    }
+    .state-pill strong {
+      display: block;
+      color: var(--muted);
+      font-size: 10px;
+      text-transform: uppercase;
+    }
+    .state-pill span {
+      display: block;
+      margin-top: 3px;
+      font-weight: 700;
     }
     .panel-actions {
       display: grid;
@@ -415,6 +479,7 @@ export function buildControlCenterHtml({ snapshot, designContract } = {}) {
       main { order: 1; }
       aside { order: 2; }
       .decision-strip,
+      .workflow-state-view,
       .panel-grid {
         grid-template-columns: 1fr;
       }
@@ -489,6 +554,15 @@ export function buildControlCenterHtml({ snapshot, designContract } = {}) {
         gap: 8px;
         margin-bottom: 10px;
       }
+      .workflow-state-view {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+        margin-bottom: 10px;
+      }
+      .state-card {
+        min-height: 72px;
+        padding: 10px;
+      }
       .focus-strip {
         margin-bottom: 10px;
         padding: 7px;
@@ -526,10 +600,14 @@ export function buildControlCenterHtml({ snapshot, designContract } = {}) {
       .panel {
         min-height: 0;
         padding: 12px;
-        scroll-margin-top: 202px;
+        scroll-margin-top: 242px;
       }
       .panel-actions {
         grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 6px;
+      }
+      .state-ribbon {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: 6px;
       }
       .panel-action {
@@ -538,7 +616,7 @@ export function buildControlCenterHtml({ snapshot, designContract } = {}) {
         font-size: 11px;
       }
       .inspector {
-        scroll-margin-top: 202px;
+        scroll-margin-top: 242px;
       }
       .side-section {
         scroll-margin-top: 140px;
@@ -597,15 +675,21 @@ export function buildControlCenterHtml({ snapshot, designContract } = {}) {
       <main>
         <section class="focus-strip" aria-label="Control Center focus navigation">
           <a class="focus-link" href="#decision-strip">상태</a>
+          <a class="focus-link" href="#workflow-state-view">흐름</a>
           <a class="focus-link" href="#next-safe-action">다음 행동</a>
           <a class="focus-link" href="#authority-boundary">권한</a>
-          <a class="focus-link" href="#panel-authority">Authority</a>
         </section>
         <section class="decision-strip" id="decision-strip" aria-label="Current operating state">
           ${metric("Panels", uiSnapshot.firstViewport.counts.panels, "visible OS surfaces")}
           ${metric("Blocked", uiSnapshot.firstViewport.counts.blocked, "requires recovery before action")}
           ${metric("Review", uiSnapshot.firstViewport.counts.review, "needs human-readable inspection")}
           ${metric("Evidence", uiSnapshot.firstViewport.counts.evidence, "recorded replay signals")}
+        </section>
+        <section class="workflow-state-view" id="workflow-state-view" aria-label="Workflow, recovery, authority, and next action states">
+          ${stateCard("Workflow", workflowState(controlSnapshot), "전체 Control Center 진행 상태")}
+          ${stateCard("Recovery", recoveryState(controlSnapshot), "복구 우선순위와 검토 필요성")}
+          ${stateCard("Authority", authorityState(controlSnapshot), "외부 실행과 권한 경계")}
+          ${stateCard("Next", nextActionState(controlSnapshot), "지금 이어갈 안전 행동")}
         </section>
         <section class="mobile-next-action" id="next-safe-action" aria-label="Mobile next safe action">
           <h2>다음 안전 행동</h2>
@@ -693,6 +777,7 @@ export function renderControlCenterHtml({ root, outputPath = DEFAULT_OUTPUT_PATH
 
 function panelHtml(panel) {
   const group = PANEL_GROUPS[panel.id] || "Work";
+  const states = panelStateLens(panel, group);
   return `
           <section class="panel" id="panel-${escapeHtml(panel.id)}" data-panel="${escapeHtml(panel.id)}" data-group="${escapeHtml(group)}">
             <div class="panel-head">
@@ -703,6 +788,12 @@ function panelHtml(panel) {
               ${statusChip(panel.status)}
             </div>
             <p class="next">${escapeHtml(panel.nextSafeAction)}</p>
+            <div class="state-ribbon" aria-label="${escapeHtml(panel.label)} workflow state">
+              ${statePill("Workflow", states.workflow)}
+              ${statePill("Recovery", states.recovery)}
+              ${statePill("Authority", states.authority)}
+              ${statePill("Next", states.next)}
+            </div>
             <div class="panel-actions" aria-label="${escapeHtml(panel.label)} local drilldown actions">
               <a class="panel-action" data-panel-action="inspect" href="#inspect-${escapeHtml(panel.id)}">인스펙터</a>
               <a class="panel-action" data-panel-action="authority" href="#authority-boundary">권한</a>
@@ -716,6 +807,10 @@ function panelHtml(panel) {
                 ${inspectorRow("Status", STATUS_LABELS[panel.status] || panel.status)}
                 ${inspectorRow("Headline", panel.headline)}
                 ${inspectorRow("Next", panel.nextSafeAction)}
+                ${inspectorRow("Workflow State", states.workflow)}
+                ${inspectorRow("Recovery State", states.recovery)}
+                ${inspectorRow("Authority State", states.authority)}
+                ${inspectorRow("Next State", states.next)}
                 ${inspectorRow("Authority", authorityLens(group))}
                 ${inspectorRow("Evidence", evidenceLens(panel))}
                 ${inspectorLinks(panel)}
@@ -730,6 +825,23 @@ function metric(label, value, hint) {
             <b>${escapeHtml(value)}</b>
             <span>${escapeHtml(label)} · ${escapeHtml(hint)}</span>
           </div>`;
+}
+
+function stateCard(label, value, hint) {
+  return `
+          <div class="state-card" data-state-card="${escapeHtml(label.toLowerCase())}">
+            <strong>${escapeHtml(label)}</strong>
+            <span>${escapeHtml(value)}</span>
+            <small>${escapeHtml(hint)}</small>
+          </div>`;
+}
+
+function statePill(label, value) {
+  return `
+              <div class="state-pill" data-state-pill="${escapeHtml(label.toLowerCase())}">
+                <strong>${escapeHtml(label)}</strong>
+                <span>${escapeHtml(value)}</span>
+              </div>`;
 }
 
 function statusChip(status) {
@@ -761,6 +873,56 @@ function authorityLens(group) {
 
 function evidenceLens(panel) {
   return `${STATUS_LABELS[panel.status] || panel.status} 상태와 다음 안전 행동을 함께 확인한다.`;
+}
+
+function panelStateLens(panel, group) {
+  return {
+    workflow: panel.status === "blocked"
+      ? "복구 우선"
+      : panel.status === "review"
+      ? "검토 흐름"
+      : "진행 가능",
+    recovery: panel.status === "blocked"
+      ? "복구 필요"
+      : panel.status === "review"
+      ? "검토 후 진행"
+      : "복구 대기 없음",
+    authority: group === "Authority"
+      ? "권한 확인"
+      : "로컬 검사",
+    next: panel.nextSafeAction ? "다음 행동 있음" : "다음 행동 없음",
+  };
+}
+
+function workflowState(snapshot) {
+  if (snapshot.counts?.blocked) {
+    return `복구 우선 · blocked ${snapshot.counts.blocked}`;
+  }
+  if (snapshot.counts?.review) {
+    return `검토 흐름 · review ${snapshot.counts.review}`;
+  }
+  return "진행 가능 · blocked 0";
+}
+
+function recoveryState(snapshot) {
+  const evidence = snapshot.counts?.recoveryRecords ?? 0;
+  if (snapshot.counts?.blocked) {
+    return `복구 필요 · evidence ${evidence}`;
+  }
+  if (snapshot.counts?.review) {
+    return `검토 필요 · evidence ${evidence}`;
+  }
+  return `복구 대기 없음 · evidence ${evidence}`;
+}
+
+function authorityState(snapshot) {
+  const entries = Object.values(snapshot.authorityBoundary || {});
+  const blocked = entries.filter((value) => String(value).includes("blocked")).length;
+  return blocked ? `외부 실행 차단 · blocked ${blocked}` : "로컬 preview 허용";
+}
+
+function nextActionState(snapshot) {
+  return snapshot.nextSafeAction ? "다음 안전 행동 표시됨" : "다음 행동 누락";
 }
 
 function escapeHtml(value) {
