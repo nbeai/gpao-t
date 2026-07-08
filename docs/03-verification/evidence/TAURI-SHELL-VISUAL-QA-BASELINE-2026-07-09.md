@@ -44,4 +44,4 @@ Boundary:
 
 Next safe action:
 
-Use this packaged-shell visual baseline before opening any Tauri build, IPC, installer, connector, model, tool, deployment, messenger, or automation gate.
+Use this packaged-shell visual baseline together with the install/update/rollback readiness gate before designing prerequisite doctor or dry-run executor contracts. Keep real Tauri build, IPC, installer, connector, model, tool, deployment, messenger, automation, and install/update/rollback execution blocked.

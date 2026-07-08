@@ -43,3 +43,11 @@ Packaged-shell visual QA baseline:
 - Checked invariant: nonblank viewport, panel navigation, state lanes, evidence inspector, failure/recovery state, no horizontal overflow, authority boundary, next safe action, mobile fixed topbar action line, no script, no form, and no external activation.
 - Browser policy note: direct `file://` inspection was blocked by browser policy, so visual QA uses the safer read-only `127.0.0.1` loopback route.
 - Next gate: use this visual baseline before opening any Tauri build, local IPC, installer, install/update/rollback executor, connector, model, tool, deployment, messenger, or automation gate.
+
+Tauri install / update / rollback readiness gate:
+
+- Gate document: `docs/03-engineering/TAURI-INSTALL-UPDATE-ROLLBACK-READINESS-GATE.md`
+- Contract check: `node bin/gpao-t.js control tauri-install-gate-check`
+- Loopback routes: `GET /app-shell/tauri-install-gate` and `GET /app-shell/tauri-install-gate/verify`
+- Required invariant: this gate is read-only and review-only. It may inspect package hardening, Tauri gate status, Tauri shell status, visual QA evidence, source files, and rollback substrate, but it must not install dependencies, run Cargo/Tauri build, bundle, sign, create an installer, execute install/update/rollback, activate IPC, download externally, mutate state, or activate connectors/models/tools.
+- Next gate: prerequisite doctor and dry-run executor contract design only; real install/update/rollback execution remains blocked until explicit later approval.

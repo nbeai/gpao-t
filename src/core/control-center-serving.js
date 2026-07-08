@@ -20,6 +20,10 @@ import {
   verifyTauriPackagedDesktopGate,
 } from "./tauri-packaged-desktop-gate.js";
 import {
+  buildTauriInstallReadinessGate,
+  verifyTauriInstallReadinessGate,
+} from "./tauri-install-readiness-gate.js";
+import {
   buildTauriReadOnlyShellHtml,
   buildTauriReadOnlyShellSlice,
   verifyTauriReadOnlyShellSlice,
@@ -51,6 +55,8 @@ export function buildControlCenterServingContract({
       { path: "/app-shell/verify", content: "browser_local_app_shell_verification" },
       { path: "/app-shell/tauri-gate", content: "tauri_packaged_desktop_gate" },
       { path: "/app-shell/tauri-gate/verify", content: "tauri_packaged_desktop_gate_verification" },
+      { path: "/app-shell/tauri-install-gate", content: "tauri_install_update_rollback_readiness_gate" },
+      { path: "/app-shell/tauri-install-gate/verify", content: "tauri_install_update_rollback_readiness_gate_verification" },
       { path: "/app-shell/tauri-shell", content: "tauri_readonly_shell_html" },
       { path: "/app-shell/tauri-shell.html", content: "tauri_readonly_shell_html" },
       { path: "/app-shell/tauri-shell/slice", content: "tauri_readonly_shell_slice" },
@@ -227,6 +233,16 @@ export async function startControlCenterPreviewServer({
       return;
     }
 
+    if (url.pathname === "/app-shell/tauri-install-gate") {
+      respondJson(response, 200, buildTauriInstallReadinessGate());
+      return;
+    }
+
+    if (url.pathname === "/app-shell/tauri-install-gate/verify") {
+      respondJson(response, 200, verifyTauriInstallReadinessGate());
+      return;
+    }
+
     if (url.pathname === "/app-shell/tauri-shell/slice") {
       respondJson(response, 200, buildTauriReadOnlyShellSlice());
       return;
@@ -313,6 +329,8 @@ export async function verifyControlCenterPreviewServing({
     const appShellState = await fetchJson(`http://${host}:${preview.port}/app-shell/state`);
     const tauriGate = await fetchJson(`http://${host}:${preview.port}/app-shell/tauri-gate`);
     const tauriGateVerify = await fetchJson(`http://${host}:${preview.port}/app-shell/tauri-gate/verify`);
+    const tauriInstallGate = await fetchJson(`http://${host}:${preview.port}/app-shell/tauri-install-gate`);
+    const tauriInstallGateVerify = await fetchJson(`http://${host}:${preview.port}/app-shell/tauri-install-gate/verify`);
     const tauriShell = await fetchText(`http://${host}:${preview.port}/app-shell/tauri-shell`);
     const tauriShellSlice = await fetchJson(`http://${host}:${preview.port}/app-shell/tauri-shell/slice`);
     const tauriShellVerify = await fetchJson(`http://${host}:${preview.port}/app-shell/tauri-shell/verify`);
@@ -354,6 +372,12 @@ export async function verifyControlCenterPreviewServing({
     if (tauriGateVerify.status !== 200 || tauriGateVerify.body.status !== "ready") {
       findings.push("tauri_gate_verify_not_ready");
     }
+    if (tauriInstallGate.status !== 200 || tauriInstallGate.body.schema !== "gpao_t.tauri_install_update_rollback_readiness_gate.v0_1") {
+      findings.push("tauri_install_gate_not_ready");
+    }
+    if (tauriInstallGateVerify.status !== 200 || tauriInstallGateVerify.body.status !== "ready") {
+      findings.push("tauri_install_gate_verify_not_ready");
+    }
     if (tauriShell.status !== 200) {
       findings.push("tauri_shell_route_not_200");
     }
@@ -379,12 +403,14 @@ export async function verifyControlCenterPreviewServing({
       url: preview.url,
       appShellUrl: `http://${host}:${preview.port}/app-shell`,
       tauriGateUrl: `http://${host}:${preview.port}/app-shell/tauri-gate`,
+      tauriInstallGateUrl: `http://${host}:${preview.port}/app-shell/tauri-install-gate`,
       tauriShellUrl: `http://${host}:${preview.port}/app-shell/tauri-shell`,
       tauriShellSliceUrl: `http://${host}:${preview.port}/app-shell/tauri-shell/slice`,
       healthStatus: health.status,
       pageStatus: page.status,
       appShellStatus: appShell.status,
       tauriGateStatus: tauriGate.status,
+      tauriInstallGateStatus: tauriInstallGate.status,
       tauriShellStatus: tauriShell.status,
       tauriShellSliceStatus: tauriShellSlice.status,
       blockedPostStatus: blockedPost.status,

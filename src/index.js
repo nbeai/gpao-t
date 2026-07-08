@@ -109,6 +109,10 @@ import {
   verifyTauriPackagedDesktopGate,
 } from "./core/tauri-packaged-desktop-gate.js";
 import {
+  buildTauriInstallReadinessGate,
+  verifyTauriInstallReadinessGate,
+} from "./core/tauri-install-readiness-gate.js";
+import {
   buildTauriReadOnlyShellHtml,
   buildTauriReadOnlyShellSlice,
   verifyTauriReadOnlyShellSlice,
@@ -158,6 +162,7 @@ export {
   buildSkillProductionStatus,
   buildSkillReadinessReport,
   buildToolPlan,
+  buildTauriInstallReadinessGate,
   buildTauriPackagedDesktopGate,
   buildTauriReadOnlyShellHtml,
   buildTauriReadOnlyShellSlice,
@@ -190,6 +195,7 @@ export {
   validateControlCenterUiSnapshot,
   verifyBrowserLocalAppShell,
   verifyControlCenterPreviewServing,
+  verifyTauriInstallReadinessGate,
   verifyTauriPackagedDesktopGate,
   verifyTauriReadOnlyShellSlice,
   selectModelAdapter,

@@ -713,6 +713,8 @@ describe("GPAO-T Local Control Center readiness", () => {
       const appShellVerify = await fetchJson(`http://127.0.0.1:${preview.port}/app-shell/verify`);
       const tauriGate = await fetchJson(`http://127.0.0.1:${preview.port}/app-shell/tauri-gate`);
       const tauriGateVerify = await fetchJson(`http://127.0.0.1:${preview.port}/app-shell/tauri-gate/verify`);
+      const tauriInstallGate = await fetchJson(`http://127.0.0.1:${preview.port}/app-shell/tauri-install-gate`);
+      const tauriInstallGateVerify = await fetchJson(`http://127.0.0.1:${preview.port}/app-shell/tauri-install-gate/verify`);
       const tauriShell = await fetchText(`http://127.0.0.1:${preview.port}/app-shell/tauri-shell`);
       const tauriShellSlice = await fetchJson(`http://127.0.0.1:${preview.port}/app-shell/tauri-shell/slice`);
       const tauriShellVerify = await fetchJson(`http://127.0.0.1:${preview.port}/app-shell/tauri-shell/verify`);
@@ -738,6 +740,10 @@ describe("GPAO-T Local Control Center readiness", () => {
       assert.equal(appShellVerify.body.status, "ready");
       assert.equal(tauriGate.body.schema, "gpao_t.tauri_packaged_desktop_gate.v0_1");
       assert.equal(tauriGateVerify.body.status, "ready");
+      assert.equal(tauriInstallGate.body.schema, "gpao_t.tauri_install_update_rollback_readiness_gate.v0_1");
+      assert.equal(tauriInstallGate.body.executionMode, "readiness_review_only");
+      assert.equal(tauriInstallGate.body.authorityBoundary.installExecution, "blocked");
+      assert.equal(tauriInstallGateVerify.body.status, "ready");
       assert.equal(tauriShell.status, 200);
       assert.match(tauriShell.body, /GPAO-T Read-Mostly Tauri Shell/);
       assert.match(tauriShell.body, /data-mobile-action-line="visible"/);

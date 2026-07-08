@@ -97,7 +97,7 @@ export function buildTauriReadOnlyShellSlice({
     },
     failureRecoveryStates: gate.failureRecoveryStates,
     nextSafeAction:
-      "Design the packaged desktop install/update/rollback readiness gate next; keep execution, Tauri build, IPC, connectors, models, tools, deployment, messenger, and automation blocked.",
+      "Design prerequisite doctor and dry-run executor contracts next; keep real install, update, rollback, Tauri build, IPC, connectors, models, tools, deployment, messenger, and automation blocked.",
   };
 }
 
@@ -360,7 +360,7 @@ export function buildTauriReadOnlyShellHtml({
         <strong>GPAO-T</strong>
         <span>Read-mostly packaged shell source slice</span>
       </div>
-      <div class="decision-strip">Next: install/update/rollback readiness gate design only. Build, IPC, mutation, execution, connectors, models, tools, deployment, messenger, and automation stay blocked.</div>
+      <div class="decision-strip">Next: prerequisite doctor and dry-run executor contracts only. Build, IPC, mutation, execution, connectors, models, tools, deployment, messenger, and automation stay blocked.</div>
     </header>
     <main>
       <div class="hero">
@@ -476,7 +476,7 @@ export function verifyTauriReadOnlyShellSlice({
     screenshotQa: slice.screenshotQa,
     nextSafeAction: findings.length
       ? "Fix read-mostly Tauri shell source-slice findings before any visual QA or packaged desktop work."
-      : "Design the packaged desktop install/update/rollback readiness gate next; keep execution, Tauri build, IPC, connectors, models, tools, deployment, messenger, and automation blocked.",
+      : "Design prerequisite doctor and dry-run executor contracts next; keep real install, update, rollback, Tauri build, IPC, connectors, models, tools, deployment, messenger, and automation blocked.",
   };
 }
 

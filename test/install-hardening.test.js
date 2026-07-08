@@ -9,8 +9,10 @@ import {
   appendInstallHardeningReport,
   buildInstallHardeningReport,
   buildInstallHardeningSummary,
+  buildTauriInstallReadinessGate,
   handleGatewayRequest,
   readInstallHardeningReports,
+  verifyTauriInstallReadinessGate,
 } from "../src/index.js";
 
 const CLI = fileURLToPath(new URL("../bin/gpao-t.js", import.meta.url));
@@ -89,5 +91,51 @@ describe("GPAO-T install/update/rollback hardening", () => {
     assert.equal(report.body.application.canInstallNow, false);
     assert.equal(report.body.rollbackGate.sourceControlBaseline.mode, "independent_local_git_repository");
     assert.equal(summary.body.schema, "gpao_t.install_hardening_summary.v0_1");
+  });
+
+  it("defines packaged desktop install/update/rollback readiness without executing operations", () => {
+    const gate = buildTauriInstallReadinessGate({ root: ROOT });
+    const verification = verifyTauriInstallReadinessGate({ root: ROOT, gate });
+    const cliGate = JSON.parse(execFileSync(process.execPath, [CLI, "control", "tauri-install-gate"], {
+      cwd: ROOT,
+      encoding: "utf8",
+    }));
+    const cliCheck = JSON.parse(execFileSync(process.execPath, [CLI, "control", "tauri-install-gate-check"], {
+      cwd: ROOT,
+      encoding: "utf8",
+    }));
+    const gatewayGate = handleGatewayRequest({ root: ROOT, method: "GET", path: "/app-shell/tauri-install-gate" });
+    const gatewayCheck = handleGatewayRequest({ root: ROOT, method: "GET", path: "/app-shell/tauri-install-gate/verify" });
+
+    assert.equal(gate.schema, "gpao_t.tauri_install_update_rollback_readiness_gate.v0_1");
+    assert.equal(gate.status, "ready");
+    assert.equal(gate.executionMode, "readiness_review_only");
+    assert.equal(gate.prerequisiteStatus.visualQa, "ready");
+    assert.equal(gate.prerequisiteStatus.tauriGate, "ready");
+    assert.equal(gate.prerequisiteStatus.tauriShell, "ready");
+    assert.equal(gate.evidenceFiles.every((file) => file.status === "present"), true);
+    assert.equal(gate.sourceFiles.every((file) => file.status === "present"), true);
+    assert.equal(gate.installGate.allowedNow, false);
+    assert.equal(gate.updateGate.allowedNow, false);
+    assert.equal(gate.rollbackGate.allowedNow, false);
+    assert.equal(gate.installGate.executorImplemented, false);
+    assert.equal(gate.updateGate.executorImplemented, false);
+    assert.equal(gate.rollbackGate.executorImplemented, false);
+    assert.equal(gate.installGate.dependencyInstallExecuted, false);
+    assert.equal(gate.installGate.tauriBuildExecuted, false);
+    assert.equal(gate.authorityBoundary.installExecution, "blocked");
+    assert.equal(gate.authorityBoundary.updateExecution, "blocked");
+    assert.equal(gate.authorityBoundary.rollbackExecution, "blocked");
+    assert.equal(gate.authorityBoundary.localIpc, "blocked");
+    assert.equal(gate.authorityBoundary.externalDownload, "blocked");
+    assert.equal(gate.implementationOrder.includes("5_dry_run_executor_gate_after_approval"), true);
+    assert.equal(gate.failureRecoveryStates.some((state) => state.id === "executor_requested_too_early"), true);
+    assert.equal(verification.status, "ready");
+    assert.equal(cliGate.schema, gate.schema);
+    assert.equal(cliCheck.status, "ready");
+    assert.equal(gatewayGate.status, 200);
+    assert.equal(gatewayGate.body.schema, gate.schema);
+    assert.equal(gatewayCheck.status, 200);
+    assert.equal(gatewayCheck.body.status, "ready");
   });
 });

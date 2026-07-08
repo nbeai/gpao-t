@@ -1,6 +1,6 @@
 # Tauri Packaged Desktop Gate
 
-Status: gate closed, first read-mostly source slice added, packaged-shell visual QA baseline captured
+Status: gate closed, first read-mostly source slice added, packaged-shell visual QA baseline captured, install/update/rollback readiness gate added
 Scope: transition from browser-local app-shell proof to the first packaged desktop shell slice
 
 GPAO-T's next shell target is Tauri, but the first step is not a full Tauri app. This gate defines the minimum safe boundary for moving from the browser-local app-shell to a packaged desktop shell.
@@ -162,6 +162,8 @@ Loopback preview also exposes:
 
 - `GET /app-shell/tauri-gate`
 - `GET /app-shell/tauri-gate/verify`
+- `GET /app-shell/tauri-install-gate`
+- `GET /app-shell/tauri-install-gate/verify`
 - `GET /app-shell/tauri-shell`
 - `GET /app-shell/tauri-shell.html`
 
@@ -174,6 +176,15 @@ node bin/gpao-t.js control tauri-shell-check
 node bin/gpao-t.js gateway GET /app-shell/tauri-shell
 node bin/gpao-t.js gateway GET /app-shell/tauri-shell/slice
 node bin/gpao-t.js gateway GET /app-shell/tauri-shell/verify
+```
+
+The install/update/rollback readiness gate is inspectable through:
+
+```sh
+node bin/gpao-t.js control tauri-install-gate
+node bin/gpao-t.js control tauri-install-gate-check
+node bin/gpao-t.js gateway GET /app-shell/tauri-install-gate
+node bin/gpao-t.js gateway GET /app-shell/tauri-install-gate/verify
 ```
 
 Source scaffold:
@@ -198,4 +209,4 @@ This gate is closed only when:
 - BEAI verify and closeout pass
 - master plan history and backlog are updated
 
-The next safe implementation after this visual QA baseline is the install/update/rollback readiness gate design for packaged desktop, not execution. Full desktop build, dependency installation, IPC, signing, installer creation, distribution, or install/update/rollback execution remain blocked until their later gates are explicit.
+The next safe implementation after this readiness gate is prerequisite doctor and dry-run executor contract design only, not execution. Full desktop build, dependency installation, IPC, signing, installer creation, distribution, or install/update/rollback execution remain blocked until their later gates are explicit and approved.

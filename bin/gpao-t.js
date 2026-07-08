@@ -38,6 +38,7 @@ import {
   buildSkillProductionRoadmap,
   buildSkillProductionStatus,
   buildSkillReadinessReport,
+  buildTauriInstallReadinessGate,
   buildTauriPackagedDesktopGate,
   buildTauriReadOnlyShellHtml,
   buildTauriReadOnlyShellSlice,
@@ -68,6 +69,7 @@ import {
   validateControlCenterUiSnapshot,
   verifyBrowserLocalAppShell,
   verifyControlCenterPreviewServing,
+  verifyTauriInstallReadinessGate,
   verifyTauriPackagedDesktopGate,
   verifyTauriReadOnlyShellSlice,
   appendSkillExecutionRun,
@@ -139,6 +141,8 @@ function usage() {
     "  gpao-t control app-shell-check",
     "  gpao-t control tauri-gate",
     "  gpao-t control tauri-gate-check",
+    "  gpao-t control tauri-install-gate",
+    "  gpao-t control tauri-install-gate-check",
     "  gpao-t control tauri-shell-slice",
     "  gpao-t control tauri-shell-html",
     "  gpao-t control tauri-shell-check",
@@ -413,6 +417,10 @@ try {
       printJson(buildTauriPackagedDesktopGate());
     } else if (subcommand === "tauri-gate-check") {
       printJson(verifyTauriPackagedDesktopGate());
+    } else if (subcommand === "tauri-install-gate") {
+      printJson(buildTauriInstallReadinessGate());
+    } else if (subcommand === "tauri-install-gate-check") {
+      printJson(verifyTauriInstallReadinessGate());
     } else if (subcommand === "tauri-shell-slice") {
       printJson(buildTauriReadOnlyShellSlice());
     } else if (subcommand === "tauri-shell-html") {
@@ -420,7 +428,7 @@ try {
     } else if (subcommand === "tauri-shell-check") {
       printJson(verifyTauriReadOnlyShellSlice());
     } else {
-      throw new Error("control command requires snapshot, summary, design, ui-contract, ui-snapshot, ui-validate, html, render, serve-contract, serve-check, serve, app-shell-contract, app-shell-state, app-shell-html, app-shell-check, tauri-gate, tauri-gate-check, tauri-shell-slice, tauri-shell-html, or tauri-shell-check");
+      throw new Error("control command requires snapshot, summary, design, ui-contract, ui-snapshot, ui-validate, html, render, serve-contract, serve-check, serve, app-shell-contract, app-shell-state, app-shell-html, app-shell-check, tauri-gate, tauri-gate-check, tauri-install-gate, tauri-install-gate-check, tauri-shell-slice, tauri-shell-html, or tauri-shell-check");
     }
   } else if (command === "gateway") {
     const [method, requestPath, rawBody] = args;

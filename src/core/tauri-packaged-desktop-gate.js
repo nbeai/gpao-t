@@ -221,7 +221,7 @@ export function buildTauriPackagedDesktopGate({ browserLocalContract = buildBrow
     ],
     failureRecoveryStates: FAILURE_RECOVERY_STATES,
     nextSafeAction:
-      "Use the packaged-shell visual QA baseline before designing the install/update/rollback readiness gate; do not execute packaged desktop build, IPC, mutation, connectors, models, tools, installer, updater, rollback, self-growth apply, deployment, messenger, or automation until the relevant explicit gate is closed.",
+      "Use the install/update/rollback readiness gate before designing prerequisite doctor or dry-run executor contracts; do not execute packaged desktop build, IPC, mutation, connectors, models, tools, installer, updater, rollback, self-growth apply, deployment, messenger, or automation until the relevant explicit gate is closed.",
   };
 }
 
@@ -267,6 +267,6 @@ export function verifyTauriPackagedDesktopGate({ gate = buildTauriPackagedDeskto
     screenshotQa: gate.screenshotQa,
     nextSafeAction: findings.length
       ? "Fix Tauri gate findings before opening any packaged desktop implementation slice."
-      : "Proceed only to install/update/rollback readiness gate design; keep packaged desktop build, IPC, mutation, connectors, models, tools, installer, updater, rollback execution, deployment, messenger, and automation blocked.",
+      : "Proceed only to prerequisite doctor and dry-run executor contract design; keep packaged desktop build, IPC, mutation, connectors, models, tools, installer, updater, rollback execution, deployment, messenger, and automation blocked.",
   };
 }

@@ -15,6 +15,10 @@ import {
   verifyTauriPackagedDesktopGate,
 } from "./tauri-packaged-desktop-gate.js";
 import {
+  buildTauriInstallReadinessGate,
+  verifyTauriInstallReadinessGate,
+} from "./tauri-install-readiness-gate.js";
+import {
   buildTauriReadOnlyShellHtml,
   buildTauriReadOnlyShellSlice,
   verifyTauriReadOnlyShellSlice,
@@ -179,6 +183,22 @@ export function handleGatewayRequest({ method = "GET", path = "/", body = {}, ro
       schema: "gpao_t.gateway_response.v0_1",
       status: 200,
       body: verifyTauriPackagedDesktopGate(),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/app-shell/tauri-install-gate") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: buildTauriInstallReadinessGate({ root }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/app-shell/tauri-install-gate/verify") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: verifyTauriInstallReadinessGate({ root }),
     };
   }
 
@@ -469,7 +489,7 @@ export function handleGatewayRequest({ method = "GET", path = "/", body = {}, ro
     status: 404,
     body: {
       error: "not_found",
-      nextSafeAction: "Use GET /health, POST /init, GET /state, GET /events, GET /memory, GET /tcells, GET /control-center, GET /control-center/summary, GET /control-center/design, GET /control-center/ui-contract, GET /control-center/ui-snapshot, GET /control-center/ui-validate, GET /connectors, GET /connectors/governance, POST /connectors/review, GET /adapters/models, GET /adapters/tools, POST /adapters/plan, POST /memory/capture, POST /mesh/resolve, GET /skill/atlas, GET /skill/roadmap, GET /skill/build-queue, GET /skill/production-status, POST /skill/execute, POST /skill/execute/record, GET /skill/execution-history, GET /skill/execution-summary, POST /replay/recovery, POST /replay/record, GET /recovery/history, GET /recovery/summary, POST /growth/preview, POST /growth/propose, GET /growth/proposals, POST /growth/application-gate, POST /growth/application-gate/record, GET /growth/application-gates, GET /growth/application-gates/summary, GET /ops/install-hardening, POST /ops/install-hardening/record, GET /ops/install-hardening/history, GET /ops/install-hardening/summary, or POST /turn.",
+      nextSafeAction: "Use GET /health, POST /init, GET /state, GET /events, GET /memory, GET /tcells, GET /control-center, GET /control-center/summary, GET /control-center/design, GET /control-center/ui-contract, GET /control-center/ui-snapshot, GET /control-center/ui-validate, GET /app-shell/tauri-install-gate, GET /app-shell/tauri-install-gate/verify, GET /connectors, GET /connectors/governance, POST /connectors/review, GET /adapters/models, GET /adapters/tools, POST /adapters/plan, POST /memory/capture, POST /mesh/resolve, GET /skill/atlas, GET /skill/roadmap, GET /skill/build-queue, GET /skill/production-status, POST /skill/execute, POST /skill/execute/record, GET /skill/execution-history, GET /skill/execution-summary, POST /replay/recovery, POST /replay/record, GET /recovery/history, GET /recovery/summary, POST /growth/preview, POST /growth/propose, GET /growth/proposals, POST /growth/application-gate, POST /growth/application-gate/record, GET /growth/application-gates, GET /growth/application-gates/summary, GET /ops/install-hardening, POST /ops/install-hardening/record, GET /ops/install-hardening/history, GET /ops/install-hardening/summary, or POST /turn.",
     },
   };
 }

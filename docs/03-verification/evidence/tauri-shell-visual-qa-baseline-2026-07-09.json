@@ -1,8 +1,8 @@
 {
   "schema": "gpao_t.tauri_shell_visual_qa_baseline.v0_1",
   "status": "ready",
-  "capturedAt": "2026-07-08T17:33:46.727Z",
-  "target": "http://127.0.0.1:63326/app-shell/tauri-shell",
+  "capturedAt": "2026-07-08T17:47:42.774Z",
+  "target": "http://127.0.0.1:63327/app-shell/tauri-shell",
   "evidenceFiles": {
     "desktop": "/Users/jyp/Documents/Playground 2/gpao-t/docs/03-verification/evidence/tauri-shell-visual-qa-2026-07-09-desktop-viewport-1440x960.jpg",
     "mobile": "/Users/jyp/Documents/Playground 2/gpao-t/docs/03-verification/evidence/tauri-shell-visual-qa-2026-07-09-mobile-viewport-390x844.jpg"
@@ -86,5 +86,5 @@
     }
   ],
   "fileFormat": "jpeg",
-  "nextSafeAction": "Design the packaged desktop install/update/rollback readiness gate next; keep execution, Tauri build, IPC, connectors, models, tools, deployment, messenger, and automation blocked."
+  "nextSafeAction": "Design prerequisite doctor and dry-run executor contracts next; keep real install/update/rollback execution, Tauri build, IPC, external download, connectors, models, tools, deployment, messenger, and automation blocked."
 }

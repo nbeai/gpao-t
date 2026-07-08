@@ -1,38 +1,36 @@
 # What We Are Building
 
-The first real user can route a vague request, see the plan, run checks, and understand the result without reading the whole codebase so that a user can move from vague request to safer implementation with visible gates and evidence.
+GPAO-T is a local-first Growth Personal AI Operating System with T-cell as its runtime decision kernel. The current build path is moving from browser-local Control Center inspection toward a packaged desktop shell while preserving read-mostly operation, explicit authority boundaries, replayable evidence, and rollback discipline.
 
 ## Current Phase
 
-- Phase: closeout
-- Command: closeout
-- Status: ready
+- Phase: tauri-install-update-rollback-readiness-gate
+- Command: `control tauri-install-gate`, `control tauri-install-gate-check`
+- Status: verified by local product checks; BEAI closeout still records a session-history review blocker caused by route/plan evidence being refreshed after implementation during context recovery.
 
-## User Mode
+## Current Surface
 
-- Mode: beginner
-- Task type: plugin
-
-## First Workflow
-
-Guided First Workflow
+- Browser-local Control Center and app-shell remain GET-only and read-mostly.
+- Packaged desktop/Tauri gate is closed as a decision contract.
+- First read-mostly Tauri shell source scaffold exists under `src-tauri/` and `tauri-shell/`.
+- Packaged-shell desktop/mobile visual QA baseline evidence exists under `docs/03-verification/evidence/`.
+- Packaged desktop install/update/rollback readiness gate now exposes:
+  - `gpao-t control tauri-install-gate`
+  - `gpao-t control tauri-install-gate-check`
+  - `GET /app-shell/tauri-install-gate`
+  - `GET /app-shell/tauri-install-gate/verify`
 
 ## Companion Principle
 
 AI does the work. User keeps authority.
 
-## AI First
+## Verification Anchor
 
-- AI/developer verifies first success path for Guided First Workflow.
-- AI/developer verifies empty or first-time state before asking the user to test.
-- AI/developer verifies likely failure or recovery state before claiming completion.
-- AI/developer inspects the main visual flow when a UI exists.
+- `npm run verify`: 89 tests / 16 suites passed.
+- `node bin/gpao-t.js control tauri-install-gate-check`: ready.
+- `node bin/gpao-t.js control serve-check`: ready with loopback preview routes, including the Tauri install gate.
+- `beai verify --run --scenario --meaning`: checks passed; BEAI product-quality history remains review because route/plan evidence was refreshed after implementation during context recovery.
 
 ## User Authority
 
-- Confirm whether "Guided First Workflow" feels like the intended product direction.
-- Approve any taste, brand, operating policy, or business decision that AI cannot know.
-
-## Latest Summary
-
-Closeout decision: ready.
+Real install/update/rollback execution, dependency installation, Tauri build, IPC activation, signing, installer creation, external download, connector/model/tool activation, deployment, messenger, and automation remain blocked until explicit future approval and gate closure.
