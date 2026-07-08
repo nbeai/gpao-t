@@ -414,6 +414,13 @@ describe("GPAO-T Local Control Center readiness", () => {
     assert.equal(state.sourceRoutes.every((route) => route.method === "GET"), true);
     assert.equal(state.blockedRoutes.every((route) => route.method === "POST" && route.mode === "blocked"), true);
     assert.equal(state.panels.length > 0, true);
+    assert.equal(state.uiValidation.status, "ready");
+    assert.equal(state.stateLanes.length, 4);
+    assert.equal(state.stateLanes.some((lane) => lane.id === "workflow" && lane.source === "GET /control-center/summary"), true);
+    assert.equal(state.stateLanes.some((lane) => lane.id === "recovery"), true);
+    assert.equal(state.stateLanes.some((lane) => lane.id === "authority" && lane.status === "ready"), true);
+    assert.equal(state.stateLanes.some((lane) => lane.id === "next"), true);
+    assert.equal(state.panels.every((panel) => panel.workflowState && panel.recoveryState && panel.authorityState && panel.nextActionState), true);
   });
 
   it("renders the browser-local app shell with panel navigation, evidence inspection, and recovery state", () => {
@@ -433,6 +440,17 @@ describe("GPAO-T Local Control Center readiness", () => {
     assert.match(html, /data-interaction-mode="read-mostly-get"/);
     assert.match(html, /href="#shell-panel-runtime"/);
     assert.match(html, /data-shell-panel="runtime"/);
+    assert.match(html, /id="shell-state-lanes"/);
+    assert.match(html, /data-state-lane="workflow"/);
+    assert.match(html, /data-state-lane="recovery"/);
+    assert.match(html, /data-state-lane="authority"/);
+    assert.match(html, /data-state-lane="next"/);
+    assert.match(html, /data-workflow-state="runtime"/);
+    assert.match(html, /state drilldown/);
+    assert.match(html, /Workflow State/);
+    assert.match(html, /Recovery State/);
+    assert.match(html, /Authority State/);
+    assert.match(html, /Next Action State/);
     assert.match(html, /data-evidence-inspection="runtime"/);
     assert.match(html, /id="shell-failure-recovery"/);
     assert.match(html, /data-failure-recovery-state="runtime_unavailable" data-active="true"/);

@@ -1,11 +1,11 @@
 # What We Are Building
 
-GPAO-T is moving from the no-script Control Center reader into a browser-local app-shell proof. The first app-shell slice is a read-mostly 127.0.0.1 surface that reads health/control-center/app-shell state, exposes panel navigation and evidence inspection, and keeps all mutating or external activation paths blocked.
+GPAO-T is building a browser-local app-shell proof over the Local Control Center. The current shell remains read-mostly over 127.0.0.1 and now exposes workflow, recovery, authority, and next-action state lanes plus per-panel state drilldowns without opening any mutating route.
 
 ## Current Phase
 
-- Phase: visual-baseline
-- Command: app-shell screenshot QA baseline
+- Phase: deeper-read-only-app-shell
+- Command: app-shell state lanes and panel drilldowns
 - Status: ready
 
 ## User Mode
@@ -24,8 +24,8 @@ AI does the work. User keeps authority.
 ## AI First
 
 - AI/developer verifies GET-only routes, blocked POST routes, and no external activation.
-- AI/developer verifies desktop/mobile visual QA before claiming the app-shell proof is ready.
-- AI/developer verifies failure/recovery, authority, next safe action, and screenshot QA visibility.
+- AI/developer verifies desktop/mobile visual QA after app-shell UI changes.
+- AI/developer verifies state lanes, panel state drilldowns, failure/recovery, authority, next safe action, and screenshot QA visibility.
 - AI/developer keeps Tauri/Electron, local IPC, connector/model/tool activation, durable memory promotion, install/update/rollback execution, deployment, messenger, and automation outside this slice.
 
 ## User Authority
@@ -35,4 +35,4 @@ AI does the work. User keeps authority.
 
 ## Latest Summary
 
-App-shell-specific desktop/mobile screenshot QA baseline evidence is captured under `docs/03-verification/evidence/`, separate from the existing Control Center screen evidence.
+Deeper read-only app-shell behavior is implemented and verified: workflow/recovery/authority/next-action lanes and per-panel state drilldowns are available while mutation gates remain blocked.

@@ -2,25 +2,24 @@
 
 ## Next Safe Action
 
-Proceed to deeper read-only Control Center/app-shell behavior using the app-shell-specific screenshot baseline as the visual regression anchor.
+Continue with the next read-only app-shell refinement or decide the packaged desktop/Tauri gate, using the app-shell state lanes, per-panel drilldowns, and app-shell screenshot baseline as regression anchors.
 
 ## Review Before Continuing
 
-- Check whether the current phase has pass/blocked evidence.
 - Confirm desktop/mobile `/app-shell` visual QA still passes after any UI change.
-- Keep GET-only, read-mostly, no external activation, POST blocking, authority boundary, failure/recovery state, and next safe action visibility as invariants.
-- Keep POST routes, connector/model/tool activation, install/update/rollback, durable memory promotion, deployment, messenger, and recurring automation blocked until explicit gates.
+- Keep GET-only, read-mostly, no external activation, POST blocking, authority boundary, failure/recovery state, next safe action visibility, state lanes, and panel drilldowns as invariants.
+- Keep POST routes, connector/model/tool activation, install/update/rollback, durable memory promotion, self-growth apply, deployment, messenger, and recurring automation blocked until explicit gates.
 - Keep Tauri packaged desktop work deferred until the browser-local proof is accepted.
 
 ## Session Resume
 
-App-shell-specific desktop/mobile screenshot QA baseline is captured and covered by tests. Continue from deeper read-only app-shell behavior only after preserving current invariants.
+Deeper read-only app-shell behavior is implemented and verified. Continue only after preserving current browser-local invariants.
 
 ## Recent Evidence
 
-- plan: Saved build plan.
-- verify: Executed 2 checks.
-- verify: Executed 2 checks.
-- verify: Executed 2 checks.
-- closeout: Closeout decision: ready.
-- visual baseline: `/app-shell` desktop/mobile screenshots and QA report captured under `docs/03-verification/evidence/`.
+- route/preflight/plan: standard GPAO-T product workflow saved for deeper read-only app-shell behavior.
+- implementation: workflow, recovery, authority, and next-action state lanes plus per-panel state drilldowns were added.
+- app-shell check: GET-only/read-mostly contract and POST blocking passed.
+- visual QA: desktop and mobile `/app-shell` checks passed for nonblank viewport, panel navigation, state visibility, no overflow, authority boundary, failure/recovery state, next safe action, no script/form/external activation, and screenshot QA visibility.
+- verify: `npm run verify` and `beai verify --scenario --meaning` passed.
+- closeout: Closeout decision was ready for the deeper read-only app-shell slice.

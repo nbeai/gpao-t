@@ -157,7 +157,7 @@ export function buildBrowserLocalAppShellContract() {
     screenshotQa: SCREENSHOT_QA,
     failureRecoveryStates: FAILURE_RECOVERY_STATES,
     nextSafeAction:
-      "Build and verify the browser-local shell against GET-only state, failure/recovery visibility, and screenshot QA before any packaged desktop work.",
+      "Use browser-local state lanes and screenshot QA as the regression anchor before any packaged desktop, IPC, mutation, connector, model, tool, deployment, messenger, or automation gate.",
   };
 }
 
@@ -204,6 +204,13 @@ export function buildBrowserLocalAppShellState({
     active: Boolean(stateFlags[state.id]),
   }));
   const activeFailureStates = failureRecoveryStates.filter((state) => state.active);
+  const stateLanes = buildAppShellStateLanes({
+    contract,
+    health,
+    summary,
+    uiValidation,
+    activeFailureStates,
+  });
 
   return {
     schema: "gpao_t.browser_local_app_shell_state.v0_1",
@@ -224,12 +231,18 @@ export function buildBrowserLocalAppShellState({
     })),
     health,
     summary,
+    uiValidation,
+    stateLanes,
     panels: summary.panels.map((panel) => ({
       ...panel,
       anchor: `#shell-panel-${panel.id}`,
       inspector: `#shell-evidence-${panel.id}`,
       evidenceLabel: `${panel.id} evidence`,
       authority: derivePanelAuthority({ panelId: panel.id, authorityBoundary: summary.authorityBoundary }),
+      workflowState: derivePanelWorkflowState(panel),
+      recoveryState: derivePanelRecoveryState({ panel, activeFailureStates }),
+      authorityState: derivePanelAuthority({ panelId: panel.id, authorityBoundary: summary.authorityBoundary }),
+      nextActionState: panel.nextSafeAction || "Inspect this panel before any deeper behavior is added.",
     })),
     authorityBoundary: contract.authorityBoundary,
     blockedActions: contract.blockedActions,
@@ -238,7 +251,7 @@ export function buildBrowserLocalAppShellState({
     activeFailureStates,
     nextSafeAction: activeFailureStates.length
       ? activeFailureStates[0].recovery
-      : "Use panel navigation and evidence inspection; keep all mutating actions blocked.",
+      : "Use panel navigation, state lanes, and evidence inspection; keep all mutating actions blocked.",
   };
 }
 
@@ -346,6 +359,12 @@ export function buildBrowserLocalAppShellHtml({ state } = {}) {
       gap: 10px;
       margin-bottom: 12px;
     }
+    .state-lanes {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+      margin-bottom: 12px;
+    }
     .card, .panel, .side {
       border: 1px solid var(--line);
       border-radius: 8px;
@@ -428,6 +447,12 @@ export function buildBrowserLocalAppShellHtml({ state } = {}) {
     }
     .row strong { color: var(--muted); overflow-wrap: anywhere; }
     .row span { overflow-wrap: anywhere; }
+    .state-card h3 {
+      margin-bottom: 6px;
+      font-size: 13px;
+    }
+    .state-card p { font-size: 12px; overflow-wrap: anywhere; }
+    .state-card .source { margin-top: 8px; color: var(--muted); font-size: 11px; }
     .side + .side { margin-top: 12px; }
     .blocked-list {
       margin: 8px 0 0;
@@ -453,6 +478,7 @@ export function buildBrowserLocalAppShellHtml({ state } = {}) {
       .layout { padding-top: 220px; }
       main, nav, aside { padding: 12px; }
       .strip { grid-template-columns: 1fr; }
+      .state-lanes { grid-template-columns: 1fr; }
       .actions { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .panel, .evidence { scroll-margin-top: 260px; }
     }
@@ -491,6 +517,9 @@ export function buildBrowserLocalAppShellHtml({ state } = {}) {
         <div class="card"><h2>${escapeHtml(shellState.status)}</h2><p class="muted">Shell state</p></div>
         <div class="card"><h2>${shellState.panels.length}</h2><p class="muted">Readable panels</p></div>
         <div class="card"><h2>${shellState.activeFailureStates.length}</h2><p class="muted">Active recovery states</p></div>
+      </section>
+      <section class="state-lanes" id="shell-state-lanes" aria-label="Workflow, recovery, authority, and next action state lanes">
+        ${shellState.stateLanes.map(renderStateLane).join("")}
       </section>
       ${shellState.panels.map(renderPanel).join("")}
     </main>
@@ -543,6 +572,11 @@ export function verifyBrowserLocalAppShell({ html, state } = {}) {
   if (!/data-app-shell="browser-local"/.test(shellHtml)) findings.push("missing_browser_local_marker");
   if (!/data-shell-panel=/.test(shellHtml)) findings.push("missing_panel_marker");
   if (!/data-failure-recovery-state=/.test(shellHtml)) findings.push("missing_failure_recovery_marker");
+  if (!/data-state-lane="workflow"/.test(shellHtml)) findings.push("missing_workflow_state_lane");
+  if (!/data-state-lane="recovery"/.test(shellHtml)) findings.push("missing_recovery_state_lane");
+  if (!/data-state-lane="authority"/.test(shellHtml)) findings.push("missing_authority_state_lane");
+  if (!/data-state-lane="next"/.test(shellHtml)) findings.push("missing_next_action_state_lane");
+  if (!/data-workflow-state=/.test(shellHtml)) findings.push("missing_panel_state_drilldown");
 
   return {
     schema: "gpao_t.browser_local_app_shell_verification.v0_1",
@@ -552,7 +586,7 @@ export function verifyBrowserLocalAppShell({ html, state } = {}) {
     authorityBoundary: buildBrowserLocalAppShellContract().authorityBoundary,
     nextSafeAction: findings.length
       ? "Fix browser-local shell findings before screenshot QA."
-      : "Serve /app-shell and capture desktop/mobile screenshot QA before adding richer behavior.",
+      : "Use /app-shell state lanes and screenshot QA as the read-only regression anchor before opening packaged desktop or mutation gates.",
   };
 }
 
@@ -570,6 +604,15 @@ function renderPanel(panel) {
       <a class="action" href="${panel.inspector}">Evidence</a>
       <a class="action" href="#shell-authority">Authority</a>
     </div>
+    <details class="evidence" id="shell-state-${escapeHtml(panel.id)}" data-workflow-state="${escapeHtml(panel.id)}">
+      <summary>state drilldown</summary>
+      <div class="list">
+        <div class="row"><strong>Workflow</strong><span>${escapeHtml(panel.workflowState)}</span></div>
+        <div class="row"><strong>Recovery</strong><span>${escapeHtml(panel.recoveryState)}</span></div>
+        <div class="row"><strong>Authority</strong><span>${escapeHtml(panel.authorityState)}</span></div>
+        <div class="row"><strong>Next</strong><span>${escapeHtml(panel.nextActionState)}</span></div>
+      </div>
+    </details>
     <details class="evidence" id="shell-evidence-${escapeHtml(panel.id)}" data-evidence-inspection="${escapeHtml(panel.id)}">
       <summary>${escapeHtml(panel.evidenceLabel)}</summary>
       <div class="list">
@@ -579,6 +622,15 @@ function renderPanel(panel) {
         <div class="row"><strong>Transport</strong><span>GET-only 127.0.0.1 HTTP source routes</span></div>
       </div>
     </details>
+  </article>`;
+}
+
+function renderStateLane(lane) {
+  return `<article class="card state-card" data-state-lane="${escapeHtml(lane.id)}">
+    <h3>${escapeHtml(lane.label)}</h3>
+    <p><span class="status status-${escapeHtml(lane.status)}">${escapeHtml(lane.status)}</span></p>
+    <p style="margin-top:8px;">${escapeHtml(lane.summary)}</p>
+    <p class="source">${escapeHtml(lane.source)}</p>
   </article>`;
 }
 
@@ -600,6 +652,53 @@ function derivePanelAuthority({ panelId, authorityBoundary }) {
     authority: "read_only_boundary_review",
   };
   return authorityMap[panelId] || "read_only";
+}
+
+function buildAppShellStateLanes({ contract, health, summary, uiValidation, activeFailureStates }) {
+  return [
+    {
+      id: "workflow",
+      label: "Workflow State",
+      status: summary.status === "blocked" ? "blocked" : "ready",
+      summary: `${summary.panels.length} panels are readable through GET-only shell state.`,
+      source: "GET /control-center/summary",
+    },
+    {
+      id: "recovery",
+      label: "Recovery State",
+      status: activeFailureStates.length ? "review" : "ready",
+      summary: activeFailureStates.length
+        ? `${activeFailureStates.length} recovery state(s) need attention before deeper behavior.`
+        : "No active recovery state blocks read-only inspection.",
+      source: "GET /health + GET /control-center/ui-validate",
+    },
+    {
+      id: "authority",
+      label: "Authority State",
+      status: "ready",
+      summary: `${contract.blockedActions.length} mutating action classes remain blocked.`,
+      source: "browser-local app-shell contract",
+    },
+    {
+      id: "next",
+      label: "Next Action State",
+      status: health.status === "ready" && uiValidation.status === "ready" ? "ready" : "review",
+      summary: activeFailureStates[0]?.recovery || "Continue with read-only inspection; do not activate connectors, tools, deployment, or memory promotion.",
+      source: "derived from doctor, UI validation, and active recovery state",
+    },
+  ];
+}
+
+function derivePanelWorkflowState(panel) {
+  if (panel.status === "blocked") return "blocked_panel_requires_recovery_before_deeper_behavior";
+  if (panel.status === "review") return "review_panel_readable_but_not_actionable";
+  return "ready_panel_readable";
+}
+
+function derivePanelRecoveryState({ panel, activeFailureStates }) {
+  if (activeFailureStates.length) return `shell_recovery_attention:${activeFailureStates[0].id}`;
+  if (panel.status === "blocked") return "panel_blocked_but_shell_actions_remain_read_only";
+  return "no_active_shell_recovery";
 }
 
 function escapeHtml(value) {

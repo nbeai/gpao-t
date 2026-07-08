@@ -241,7 +241,7 @@ This keeps the future Codex-like desktop surface light: the first visual layer r
 
 Browser-safe serving is local preview only. It binds to `127.0.0.1`, does not configure OAuth, does not call external models or tools, does not store secrets, does not deploy, and does not become a persistent daemon. The purpose is to capture desktop/mobile screenshots and verify visible state before interactive Control Center work.
 
-Browser-local app-shell first slice is also local preview only. It reads `GET /health` and `GET /control-center/*`, supports panel navigation and evidence inspection, exposes failure/recovery states, and keeps screenshot QA visible. It blocks `POST` routes, connector/model/tool activation, install/update/rollback execution, durable memory promotion, self-growth application, deployment, messenger surfaces, and recurring automation.
+Browser-local app-shell first slice is also local preview only. It reads `GET /health` and `GET /control-center/*`, supports panel navigation and evidence inspection, exposes failure/recovery states, and keeps screenshot QA visible. It now includes read-only state lanes for workflow, recovery, authority, and next action, plus per-panel state drilldowns. It blocks `POST` routes, connector/model/tool activation, install/update/rollback execution, durable memory promotion, self-growth application, deployment, messenger surfaces, and recurring automation.
 
 The app-shell-specific visual baseline is stored separately from the older Control Center screenshots:
 
