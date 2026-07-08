@@ -11,7 +11,9 @@ import {
   validateControlCenterUiSnapshot,
 } from "./control-center-ui-contract.js";
 import {
+  buildPackagedDesktopPlanningReview,
   buildTauriPackagedDesktopGate,
+  verifyPackagedDesktopPlanningReview,
   verifyTauriPackagedDesktopGate,
 } from "./tauri-packaged-desktop-gate.js";
 import {
@@ -201,6 +203,24 @@ export function handleGatewayRequest({ method = "GET", path = "/", body = {}, ro
       schema: "gpao_t.gateway_response.v0_1",
       status: 200,
       body: verifyTauriPackagedDesktopGate(),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/app-shell/packaged-desktop-review") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: buildPackagedDesktopPlanningReview(),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/app-shell/packaged-desktop-review/verify") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: verifyPackagedDesktopPlanningReview({
+        review: buildPackagedDesktopPlanningReview(),
+      }),
     };
   }
 

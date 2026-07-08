@@ -105,7 +105,9 @@ import {
 } from "./core/storage.js";
 import { buildToolPlan } from "./core/tool-runtime.js";
 import {
+  buildPackagedDesktopPlanningReview,
   buildTauriPackagedDesktopGate,
+  verifyPackagedDesktopPlanningReview,
   verifyTauriPackagedDesktopGate,
 } from "./core/tauri-packaged-desktop-gate.js";
 import {
@@ -161,6 +163,7 @@ export {
   buildLocalControlCenterDesignContract,
   buildOperationsContractSummary,
   buildOperationsReliabilityContract,
+  buildPackagedDesktopPlanningReview,
   buildRecoveryHistorySummary,
   buildRuntimeDataContract,
   buildAuthorityDecision,
@@ -221,6 +224,7 @@ export {
   validateControlCenterUiSnapshot,
   verifyBrowserLocalAppShell,
   verifyControlCenterPreviewServing,
+  verifyPackagedDesktopPlanningReview,
   verifyTauriInstallDryRunPlan,
   verifyTauriInstallDryRunApprovalRecordStorageDesign,
   verifyTauriInstallDryRunApprovalRecordWriteGateDesign,

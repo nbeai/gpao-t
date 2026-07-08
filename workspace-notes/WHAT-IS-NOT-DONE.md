@@ -1,25 +1,29 @@
 # What Is Not Done
 
-## Still Intentionally Closed
+## Still Excluded By Authority
 
-- Approval-record write.
-- Approval-store directory creation, read, append, or mutation.
-- Approval-record write gate implementation or invocation.
-- Dry-run executor invocation.
-- Real dry-run executor implementation beyond pure object builders and approval contracts.
-- Install/update/rollback execution.
-- Tauri dependency installation, Cargo/Tauri build, bundle, signing, packaged installer creation, or release channel activation.
-- Local IPC command activation.
-- Connector/model/tool activation.
-- OAuth, token vault, secret storage, external send, external account connection, or deployment.
-- Durable memory promotion and self-growth apply.
-- Messenger adapters and recurring automation.
-- Public GitHub publication or public release.
+- approval record actual write
+- dry-run invocation
+- command execution from dry-run plans
+- file mutation from approval or install executors
+- Tauri build or dependency installation
+- bundle/signing/installer creation
+- install/update/rollback execution
+- local IPC commands
+- external network/download
+- connector/model/tool activation
+- OAuth/token/secret storage
+- deployment/public release
+- messenger surfaces
+- recurring automation
+- unrelated refactor
 
 ## Current Completion Boundary
 
-This slice refines the approval/preview UX inside Control Center. It makes dry-run plan, user preview, invocation approval, approval storage, and write-gate states easier to understand as a pre-approval preview where nothing has executed yet. It does not open approval-record writes, approval-store reads, dry-run invocation, command execution, file mutation, Tauri build, dependency install, IPC, external network, connector/model/tool activation, or install/update/rollback execution.
+- The packaged desktop planning review slice has passing verification evidence.
+- The remaining exclusions above are intentional authority boundaries, not unresolved implementation blockers.
+- Current status: verified
 
-## Open Authority Gates
+## Open Product Work
 
-No unresolved technical stop condition is recorded for the current UX refinement slice. Future approval-record write or dry-run invocation work still requires an explicit later gate because those actions cross user-authority boundaries.
+- Build the user-facing GPAO-T core work surface next.

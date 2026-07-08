@@ -1,6 +1,6 @@
 # Tauri Packaged Desktop Gate
 
-Status: gate closed, first read-mostly source slice added, packaged-shell visual QA baseline captured, install/update/rollback readiness gate added
+Status: gate closed, first read-mostly source slice added, packaged-shell visual QA baseline captured, install/update/rollback readiness gate added, packaged desktop planning review stop-line added
 Scope: transition from browser-local app-shell proof to the first packaged desktop shell slice
 
 GPAO-T's next shell target is Tauri, but the first step is not a full Tauri app. This gate defines the minimum safe boundary for moving from the browser-local app-shell to a packaged desktop shell.
@@ -130,10 +130,35 @@ The order is:
 3. Read-mostly Tauri shell slice.
 4. Packaged-shell screenshot QA.
 5. Install/update/rollback readiness review.
-6. Signed or distributed package gate.
-7. Install/update/rollback executor gate after approval.
+6. Prerequisite doctor, dry-run preview, approval storage/write-gate design.
+7. Approval/preview UX integration and visual refinement.
+8. Packaged desktop planning review stop-line.
+9. Return to user-facing GPAO-T core work surface.
+10. Signed or distributed package gate only after explicit later approval.
+11. Install/update/rollback executor gate only after explicit later approval.
 
 This keeps a packaged window separate from real installation, update, rollback, signing, or distribution.
+
+## Packaged Desktop Planning Review Stop-Line
+
+The packaged desktop planning review closes the Local Control Center / browser-local app-shell / Tauri substrate planning track before the next product stage.
+
+Machine contract:
+
+```sh
+node bin/gpao-t.js control packaged-desktop-review
+node bin/gpao-t.js control packaged-desktop-review-check
+node bin/gpao-t.js gateway GET /app-shell/packaged-desktop-review
+node bin/gpao-t.js gateway GET /app-shell/packaged-desktop-review/verify
+```
+
+The review must show:
+
+- closed read-only, preview, approval UX, app-shell, and Tauri source-slice surfaces
+- approval record write, dry-run invocation, Tauri build, dependency install, install/update/rollback execution, IPC, external network, and connector/model/tool activation still blocked
+- minimum conditions before any packaged desktop build or executor
+- next safe action: return to the user-facing GPAO-T core work surface
+- stop-line: do not add another approval/write/dry-run/packaged desktop meta-gate unless a concrete mutating action is explicitly approved
 
 ## Failure And Recovery States
 
@@ -164,6 +189,8 @@ Loopback preview also exposes:
 - `GET /app-shell/tauri-gate/verify`
 - `GET /app-shell/tauri-install-gate`
 - `GET /app-shell/tauri-install-gate/verify`
+- `GET /app-shell/packaged-desktop-review`
+- `GET /app-shell/packaged-desktop-review/verify`
 - `GET /app-shell/tauri-shell`
 - `GET /app-shell/tauri-shell.html`
 
@@ -209,4 +236,4 @@ This gate is closed only when:
 - BEAI verify and closeout pass
 - master plan history and backlog are updated
 
-The next safe implementation after this readiness gate is prerequisite doctor and dry-run executor contract design only, not execution. Full desktop build, dependency installation, IPC, signing, installer creation, distribution, or install/update/rollback execution remain blocked until their later gates are explicit and approved.
+The next safe product step after this review is the user-facing GPAO-T core work surface, not another meta-gate. Full desktop build, dependency installation, IPC, signing, installer creation, distribution, approval write, dry-run invocation, or install/update/rollback execution remain blocked until a later concrete mutating action is explicit and approved.

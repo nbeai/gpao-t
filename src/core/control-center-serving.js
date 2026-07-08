@@ -16,7 +16,9 @@ import {
 import { buildLocalControlCenterDesignContract } from "./design-contract.js";
 import { runDoctor } from "./doctor.js";
 import {
+  buildPackagedDesktopPlanningReview,
   buildTauriPackagedDesktopGate,
+  verifyPackagedDesktopPlanningReview,
   verifyTauriPackagedDesktopGate,
 } from "./tauri-packaged-desktop-gate.js";
 import {
@@ -73,6 +75,8 @@ export function buildControlCenterServingContract({
       { path: "/app-shell/verify", content: "browser_local_app_shell_verification" },
       { path: "/app-shell/tauri-gate", content: "tauri_packaged_desktop_gate" },
       { path: "/app-shell/tauri-gate/verify", content: "tauri_packaged_desktop_gate_verification" },
+      { path: "/app-shell/packaged-desktop-review", content: "packaged_desktop_planning_review" },
+      { path: "/app-shell/packaged-desktop-review/verify", content: "packaged_desktop_planning_review_verification" },
       { path: "/app-shell/tauri-install-gate", content: "tauri_install_update_rollback_readiness_gate" },
       { path: "/app-shell/tauri-install-gate/verify", content: "tauri_install_update_rollback_readiness_gate_verification" },
       { path: "/app-shell/tauri-prerequisite-doctor", content: "tauri_install_prerequisite_doctor" },
@@ -267,6 +271,18 @@ export async function startControlCenterPreviewServer({
       return;
     }
 
+    if (url.pathname === "/app-shell/packaged-desktop-review") {
+      respondJson(response, 200, buildPackagedDesktopPlanningReview());
+      return;
+    }
+
+    if (url.pathname === "/app-shell/packaged-desktop-review/verify") {
+      respondJson(response, 200, verifyPackagedDesktopPlanningReview({
+        review: buildPackagedDesktopPlanningReview(),
+      }));
+      return;
+    }
+
     if (url.pathname === "/app-shell/tauri-install-gate") {
       respondJson(response, 200, buildTauriInstallReadinessGate());
       return;
@@ -443,6 +459,8 @@ export async function verifyControlCenterPreviewServing({
     const appShellState = await fetchJson(`http://${host}:${preview.port}/app-shell/state`);
     const tauriGate = await fetchJson(`http://${host}:${preview.port}/app-shell/tauri-gate`);
     const tauriGateVerify = await fetchJson(`http://${host}:${preview.port}/app-shell/tauri-gate/verify`);
+    const packagedDesktopReview = await fetchJson(`http://${host}:${preview.port}/app-shell/packaged-desktop-review`);
+    const packagedDesktopReviewVerify = await fetchJson(`http://${host}:${preview.port}/app-shell/packaged-desktop-review/verify`);
     const tauriInstallGate = await fetchJson(`http://${host}:${preview.port}/app-shell/tauri-install-gate`);
     const tauriInstallGateVerify = await fetchJson(`http://${host}:${preview.port}/app-shell/tauri-install-gate/verify`);
     const tauriPrerequisiteDoctor = await fetchJson(`http://${host}:${preview.port}/app-shell/tauri-prerequisite-doctor`);
@@ -501,6 +519,15 @@ export async function verifyControlCenterPreviewServing({
     }
     if (tauriGateVerify.status !== 200 || tauriGateVerify.body.status !== "ready") {
       findings.push("tauri_gate_verify_not_ready");
+    }
+    if (
+      packagedDesktopReview.status !== 200
+      || packagedDesktopReview.body.schema !== "gpao_t.packaged_desktop_planning_review.v0_1"
+    ) {
+      findings.push("packaged_desktop_review_not_ready");
+    }
+    if (packagedDesktopReviewVerify.status !== 200 || packagedDesktopReviewVerify.body.status !== "ready") {
+      findings.push("packaged_desktop_review_verify_not_ready");
     }
     if (tauriInstallGate.status !== 200 || tauriInstallGate.body.schema !== "gpao_t.tauri_install_update_rollback_readiness_gate.v0_1") {
       findings.push("tauri_install_gate_not_ready");
@@ -605,6 +632,7 @@ export async function verifyControlCenterPreviewServing({
       url: preview.url,
       appShellUrl: `http://${host}:${preview.port}/app-shell`,
       tauriGateUrl: `http://${host}:${preview.port}/app-shell/tauri-gate`,
+      packagedDesktopReviewUrl: `http://${host}:${preview.port}/app-shell/packaged-desktop-review`,
       tauriInstallGateUrl: `http://${host}:${preview.port}/app-shell/tauri-install-gate`,
       tauriPrerequisiteDoctorUrl: `http://${host}:${preview.port}/app-shell/tauri-prerequisite-doctor`,
       tauriDryRunContractUrl: `http://${host}:${preview.port}/app-shell/tauri-dry-run-contract`,
@@ -620,6 +648,7 @@ export async function verifyControlCenterPreviewServing({
       pageStatus: page.status,
       appShellStatus: appShell.status,
       tauriGateStatus: tauriGate.status,
+      packagedDesktopReviewStatus: packagedDesktopReview.status,
       tauriInstallGateStatus: tauriInstallGate.status,
       tauriPrerequisiteDoctorStatus: tauriPrerequisiteDoctor.status,
       tauriDryRunContractStatus: tauriDryRunContract.status,

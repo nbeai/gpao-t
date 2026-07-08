@@ -1,4 +1,9 @@
+import { existsSync } from "node:fs";
+import { resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { buildBrowserLocalAppShellContract, verifyBrowserLocalAppShell } from "./browser-local-app-shell.js";
+
+const PROJECT_ROOT = fileURLToPath(new URL("../..", import.meta.url));
 
 const FIRST_SLICE_ALLOWED_ACTIONS = [
   "load_loopback_app_shell",
@@ -111,6 +116,65 @@ const SCREENSHOT_QA = {
   ],
 };
 
+const PLANNING_REVIEW_EVIDENCE = [
+  "docs/03-verification/evidence/app-shell-screenshot-qa-baseline-2026-07-09.json",
+  "docs/03-verification/evidence/tauri-shell-visual-qa-baseline-2026-07-09.json",
+  "docs/03-verification/evidence/control-center-approval-preview-ux-qa-2026-07-09.json",
+];
+
+const CLOSED_READ_ONLY_SURFACES = [
+  {
+    id: "local_control_center_static_reader",
+    status: "closed",
+    evidence: "control snapshot, summary, ui-contract, ui-snapshot, ui-validate, static HTML, responsive visual QA",
+    authority: "no_script_no_external_activation_no_mutation",
+  },
+  {
+    id: "browser_local_app_shell",
+    status: "closed",
+    evidence: "GET /health and GET /control-center/* based read-mostly app-shell with desktop/mobile screenshot baseline",
+    authority: "GET_only_POST_blocked_read_mostly",
+  },
+  {
+    id: "read_mostly_tauri_shell_source_slice",
+    status: "closed",
+    evidence: "src-tauri source scaffold, tauri-shell/index.html, packaged-shell visual QA baseline",
+    authority: "source_only_no_build_no_ipc_no_packaging",
+  },
+  {
+    id: "install_update_rollback_readiness",
+    status: "closed",
+    evidence: "readiness gate, prerequisite doctor, dry-run plan/verify/preview, approval storage/write-gate design",
+    authority: "readiness_and_preview_only_no_execution",
+  },
+  {
+    id: "approval_preview_user_understanding",
+    status: "closed",
+    evidence: "Control Center Approval / Preview visual UX QA with five stages and calm locked-state actions",
+    authority: "preview_only_no_approval_write_no_dry_run_invocation",
+  },
+];
+
+const STILL_BLOCKED_DESKTOP_BOUNDARIES = [
+  "approval record write",
+  "dry-run invocation",
+  "command execution from dry-run plans",
+  "file mutation from approval or install executors",
+  "Tauri build",
+  "dependency install",
+  "bundle/signing/installer creation",
+  "install execution",
+  "update execution",
+  "rollback execution",
+  "local IPC commands",
+  "external network/download",
+  "connector/model/tool activation",
+  "OAuth/token/secret storage",
+  "deployment/public release",
+  "messenger surfaces",
+  "recurring automation",
+];
+
 export function buildTauriPackagedDesktopGate({ browserLocalContract = buildBrowserLocalAppShellContract() } = {}) {
   return {
     schema: "gpao_t.tauri_packaged_desktop_gate.v0_1",
@@ -216,12 +280,16 @@ export function buildTauriPackagedDesktopGate({ browserLocalContract = buildBrow
       "3_read_mostly_tauri_shell_slice",
       "4_packaged_shell_screenshot_qa",
       "5_install_update_rollback_readiness_review",
-      "6_signed_or_distributed_package_gate",
-      "7_install_update_rollback_executor_gate_after_approval",
+      "6_prerequisite_doctor_dry_run_preview_approval_design",
+      "7_approval_preview_ux_integration",
+      "8_packaged_desktop_planning_review_stop_line",
+      "9_return_to_user_facing_core_work_surface",
+      "10_signed_or_distributed_package_gate_after_approval",
+      "11_install_update_rollback_executor_gate_after_approval",
     ],
     failureRecoveryStates: FAILURE_RECOVERY_STATES,
     nextSafeAction:
-      "Use the install/update/rollback readiness gate before designing prerequisite doctor or dry-run executor contracts; do not execute packaged desktop build, IPC, mutation, connectors, models, tools, installer, updater, rollback, self-growth apply, deployment, messenger, or automation until the relevant explicit gate is closed.",
+      "After the packaged desktop planning review, return to the user-facing GPAO-T core work surface; do not execute packaged desktop build, IPC, mutation, connectors, models, tools, installer, updater, rollback, self-growth apply, deployment, messenger, or automation until the relevant explicit gate is closed.",
   };
 }
 
@@ -250,6 +318,12 @@ export function verifyTauriPackagedDesktopGate({ gate = buildTauriPackagedDeskto
   if (!gate.installUpdateRollbackOrder.includes("5_install_update_rollback_readiness_review")) {
     findings.push("install_update_rollback_order_missing_readiness_review");
   }
+  if (!gate.installUpdateRollbackOrder.includes("8_packaged_desktop_planning_review_stop_line")) {
+    findings.push("install_update_rollback_order_missing_planning_review_stop_line");
+  }
+  if (!gate.installUpdateRollbackOrder.includes("9_return_to_user_facing_core_work_surface")) {
+    findings.push("install_update_rollback_order_missing_user_facing_core_return");
+  }
   if (!gate.failureRecoveryStates.some((state) => state.id === "loopback_runtime_unavailable")) {
     findings.push("missing_loopback_runtime_recovery_state");
   }
@@ -267,6 +341,148 @@ export function verifyTauriPackagedDesktopGate({ gate = buildTauriPackagedDeskto
     screenshotQa: gate.screenshotQa,
     nextSafeAction: findings.length
       ? "Fix Tauri gate findings before opening any packaged desktop implementation slice."
-      : "Proceed only to prerequisite doctor and dry-run executor contract design; keep packaged desktop build, IPC, mutation, connectors, models, tools, installer, updater, rollback execution, deployment, messenger, and automation blocked.",
+      : "Return to the user-facing GPAO-T core work surface after the packaged desktop planning review; keep packaged desktop build, IPC, mutation, connectors, models, tools, installer, updater, rollback execution, deployment, messenger, and automation blocked.",
+  };
+}
+
+export function buildPackagedDesktopPlanningReview({
+  root = PROJECT_ROOT,
+  tauriGate = buildTauriPackagedDesktopGate(),
+  tauriGateVerification = verifyTauriPackagedDesktopGate({ gate: tauriGate }),
+} = {}) {
+  const evidenceFiles = PLANNING_REVIEW_EVIDENCE.map((path) => ({
+    path,
+    status: existsSync(resolve(root, path)) ? "present" : "missing",
+  }));
+  const missingEvidence = evidenceFiles.filter((file) => file.status !== "present").map((file) => file.path);
+  const minimumConditions = [
+    {
+      id: "regression_anchor",
+      status: tauriGateVerification.status,
+      condition: "Browser-local app-shell and read-mostly Tauri shell remain verified regression anchors.",
+    },
+    {
+      id: "visual_evidence",
+      status: missingEvidence.length ? "blocked" : "ready",
+      condition: "Desktop/mobile screenshot QA evidence exists for app-shell, packaged shell, and approval/preview UX.",
+    },
+    {
+      id: "authority_boundary",
+      status: "ready",
+      condition: "Write, invocation, build, install/update/rollback, IPC, network, and activation authority remain blocked.",
+    },
+    {
+      id: "rollback_substrate",
+      status: "ready",
+      condition: "Source rollback remains local git; runtime rollback remains blocked until snapshot export/import exists.",
+    },
+    {
+      id: "user_facing_core_return",
+      status: "ready",
+      condition: "Next product work should return to the user-facing core work surface instead of extending meta-gates.",
+    },
+  ];
+  const findings = [
+    ...missingEvidence.map((path) => `missing_evidence:${path}`),
+  ];
+
+  if (tauriGateVerification.status !== "ready") findings.push("tauri_gate_not_ready");
+
+  return {
+    schema: "gpao_t.packaged_desktop_planning_review.v0_1",
+    status: findings.length ? "blocked" : "ready",
+    reviewKind: "packaged_desktop_planning_review",
+    goal:
+      "Summarize the Local Control Center, app-shell, and Tauri substrate before moving to the next larger product stage without opening execution authority.",
+    closedSurfaces: CLOSED_READ_ONLY_SURFACES,
+    stillBlockedBoundaries: STILL_BLOCKED_DESKTOP_BOUNDARIES,
+    evidenceFiles,
+    minimumConditionsBeforePackagedDesktop: minimumConditions,
+    readinessDecision: {
+      localControlCenterAppShellTauriSubstrate: findings.length ? "review_blocked" : "ready_for_next_planning_step",
+      packagedDesktopBuild: "not_allowed_yet",
+      installUpdateRollbackExecution: "not_allowed_yet",
+      approvalWriteOrDryRunInvocation: "not_allowed_yet",
+      reason:
+        "The read-only/preview substrate is coherent enough to stop adding meta-gates, but mutation/build/install authority is still intentionally closed.",
+    },
+    returnToUserFacingCoreTiming: {
+      decision: "return_after_this_review",
+      nextProductSurface:
+        "user-facing core work surface that feels like the GPAO-T body: workspace thread, state lanes, authority center, memory/context view, model/tool routing view, and next safe action.",
+      rationale:
+        "The substrate now has enough read-only evidence. More planning gates would delay the product's felt operating surface without improving safety.",
+    },
+    stopLine: {
+      metaGateRepetition: "stop_after_this_review",
+      allowedNextMetaWork:
+        "Only fix a failing prerequisite or define a narrow authority gate when a real mutating action is explicitly approved.",
+      blockedNextMetaWork: [
+        "another approval storage/write-gate design",
+        "another dry-run invocation meta-gate",
+        "another packaged desktop readiness document without user-facing core progress",
+      ],
+    },
+    authorityBoundary: {
+      approvalRecordWrite: "blocked",
+      dryRunInvocation: "blocked",
+      commandExecution: "blocked",
+      fileMutationFromExecutors: "blocked",
+      tauriBuild: "blocked",
+      dependencyInstall: "blocked",
+      installUpdateRollbackExecution: "blocked",
+      localIpc: "blocked",
+      externalNetwork: "blocked",
+      connectorModelToolActivation: "blocked",
+    },
+    findings,
+    nextSafeAction:
+      "Stop extending meta-gates and move to the user-facing GPAO-T core work surface plan/build, while keeping approval write, dry-run invocation, Tauri build, install/update/rollback, IPC, external network, and connector/model/tool activation blocked.",
+  };
+}
+
+export function verifyPackagedDesktopPlanningReview({
+  review = buildPackagedDesktopPlanningReview(),
+} = {}) {
+  const findings = [];
+
+  if (review.schema !== "gpao_t.packaged_desktop_planning_review.v0_1") findings.push("invalid_review_schema");
+  if (review.status !== "ready") findings.push("planning_review_not_ready");
+  if (!review.closedSurfaces.some((surface) => surface.id === "approval_preview_user_understanding")) {
+    findings.push("approval_preview_surface_not_recorded");
+  }
+  if (!review.closedSurfaces.some((surface) => surface.id === "read_mostly_tauri_shell_source_slice")) {
+    findings.push("tauri_shell_surface_not_recorded");
+  }
+  if (!review.stillBlockedBoundaries.includes("approval record write")) findings.push("approval_write_not_blocked");
+  if (!review.stillBlockedBoundaries.includes("dry-run invocation")) findings.push("dry_run_invocation_not_blocked");
+  if (!review.stillBlockedBoundaries.includes("Tauri build")) findings.push("tauri_build_not_blocked");
+  if (!review.stillBlockedBoundaries.includes("install execution")) findings.push("install_execution_not_blocked");
+  if (!review.stillBlockedBoundaries.includes("rollback execution")) findings.push("rollback_execution_not_blocked");
+  if (!review.stillBlockedBoundaries.includes("connector/model/tool activation")) findings.push("activation_not_blocked");
+  if (!review.minimumConditionsBeforePackagedDesktop.some((condition) => condition.id === "user_facing_core_return")) {
+    findings.push("missing_user_facing_core_return_condition");
+  }
+  if (review.readinessDecision.packagedDesktopBuild !== "not_allowed_yet") findings.push("packaged_build_opened");
+  if (review.readinessDecision.approvalWriteOrDryRunInvocation !== "not_allowed_yet") {
+    findings.push("approval_or_invocation_opened");
+  }
+  if (review.returnToUserFacingCoreTiming.decision !== "return_after_this_review") {
+    findings.push("does_not_return_to_user_facing_core");
+  }
+  if (review.stopLine.metaGateRepetition !== "stop_after_this_review") findings.push("missing_meta_gate_stop_line");
+  if (review.authorityBoundary.localIpc !== "blocked") findings.push("local_ipc_not_blocked");
+  if (review.authorityBoundary.externalNetwork !== "blocked") findings.push("external_network_not_blocked");
+
+  return {
+    schema: "gpao_t.packaged_desktop_planning_review_verification.v0_1",
+    status: findings.length ? "blocked" : "ready",
+    findings,
+    checkedSurfaces: review.closedSurfaces.map((surface) => surface.id),
+    checkedBlockedBoundaries: review.stillBlockedBoundaries,
+    stopLine: review.stopLine,
+    nextSafeAction: findings.length
+      ? "Fix planning review findings before moving to the next product stage."
+      : review.nextSafeAction,
   };
 }

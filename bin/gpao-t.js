@@ -24,6 +24,7 @@ import {
   buildLocalControlCenterDesignContract,
   buildOperationsContractSummary,
   buildOperationsReliabilityContract,
+  buildPackagedDesktopPlanningReview,
   buildRuntimeDataContract,
   buildSelfGrowthProposal,
   buildSkillBuildQueue,
@@ -77,6 +78,7 @@ import {
   validateControlCenterUiSnapshot,
   verifyBrowserLocalAppShell,
   verifyControlCenterPreviewServing,
+  verifyPackagedDesktopPlanningReview,
   verifyTauriInstallDryRunPlan,
   verifyTauriInstallDryRunApprovalRecordStorageDesign,
   verifyTauriInstallDryRunApprovalRecordWriteGateDesign,
@@ -157,6 +159,8 @@ function usage() {
     "  gpao-t control app-shell-check",
     "  gpao-t control tauri-gate",
     "  gpao-t control tauri-gate-check",
+    "  gpao-t control packaged-desktop-review",
+    "  gpao-t control packaged-desktop-review-check",
     "  gpao-t control tauri-install-gate",
     "  gpao-t control tauri-install-gate-check",
     "  gpao-t control tauri-prerequisite-doctor",
@@ -449,6 +453,10 @@ try {
       printJson(buildTauriPackagedDesktopGate());
     } else if (subcommand === "tauri-gate-check") {
       printJson(verifyTauriPackagedDesktopGate());
+    } else if (subcommand === "packaged-desktop-review") {
+      printJson(buildPackagedDesktopPlanningReview());
+    } else if (subcommand === "packaged-desktop-review-check") {
+      printJson(verifyPackagedDesktopPlanningReview());
     } else if (subcommand === "tauri-install-gate") {
       printJson(buildTauriInstallReadinessGate());
     } else if (subcommand === "tauri-install-gate-check") {
@@ -492,7 +500,7 @@ try {
     } else if (subcommand === "tauri-shell-check") {
       printJson(verifyTauriReadOnlyShellSlice());
     } else {
-      throw new Error("control command requires snapshot, summary, design, ui-contract, ui-snapshot, ui-validate, html, render, serve-contract, serve-check, serve, app-shell-contract, app-shell-state, app-shell-html, app-shell-check, tauri-gate, tauri-gate-check, tauri-install-gate, tauri-install-gate-check, tauri-prerequisite-doctor, tauri-prerequisite-doctor-check, tauri-dry-run-contract, tauri-dry-run-contract-check, tauri-dry-run-design, tauri-dry-run-design-check, tauri-dry-run-plan, tauri-dry-run-plan-check, tauri-dry-run-preview, tauri-dry-run-preview-check, tauri-dry-run-invocation-approval, tauri-dry-run-invocation-approval-check, tauri-dry-run-approval-storage, tauri-dry-run-approval-storage-check, tauri-dry-run-approval-write-gate, tauri-dry-run-approval-write-gate-check, tauri-shell-slice, tauri-shell-html, or tauri-shell-check");
+      throw new Error("control command requires snapshot, summary, design, ui-contract, ui-snapshot, ui-validate, html, render, serve-contract, serve-check, serve, app-shell-contract, app-shell-state, app-shell-html, app-shell-check, tauri-gate, tauri-gate-check, packaged-desktop-review, packaged-desktop-review-check, tauri-install-gate, tauri-install-gate-check, tauri-prerequisite-doctor, tauri-prerequisite-doctor-check, tauri-dry-run-contract, tauri-dry-run-contract-check, tauri-dry-run-design, tauri-dry-run-design-check, tauri-dry-run-plan, tauri-dry-run-plan-check, tauri-dry-run-preview, tauri-dry-run-preview-check, tauri-dry-run-invocation-approval, tauri-dry-run-invocation-approval-check, tauri-dry-run-approval-storage, tauri-dry-run-approval-storage-check, tauri-dry-run-approval-write-gate, tauri-dry-run-approval-write-gate-check, tauri-shell-slice, tauri-shell-html, or tauri-shell-check");
     }
   } else if (command === "gateway") {
     const [method, requestPath, rawBody] = args;

@@ -17,6 +17,7 @@ import {
   buildControlCenterSummary,
   buildControlCenterUiContract,
   buildControlCenterUiSnapshot,
+  buildPackagedDesktopPlanningReview,
   buildTauriPackagedDesktopGate,
   buildTauriReadOnlyShellHtml,
   buildTauriReadOnlyShellSlice,
@@ -30,6 +31,7 @@ import {
   validateControlCenterUiSnapshot,
   verifyBrowserLocalAppShell,
   verifyControlCenterPreviewServing,
+  verifyPackagedDesktopPlanningReview,
   verifyTauriPackagedDesktopGate,
   verifyTauriReadOnlyShellSlice,
 } from "../src/index.js";
@@ -65,6 +67,10 @@ const CONTROL_APPROVAL_PREVIEW_QA_JSON = fileURLToPath(new URL(
 ));
 const CONTROL_APPROVAL_PREVIEW_QA_DOC = fileURLToPath(new URL(
   "../docs/03-verification/evidence/CONTROL-CENTER-APPROVAL-PREVIEW-UX-QA-2026-07-09.md",
+  import.meta.url,
+));
+const PACKAGED_DESKTOP_REVIEW_DOC = fileURLToPath(new URL(
+  "../docs/03-engineering/PACKAGED-DESKTOP-PLANNING-REVIEW.md",
   import.meta.url,
 ));
 
@@ -584,7 +590,9 @@ describe("GPAO-T Local Control Center readiness", () => {
     assert.equal(gate.screenshotQa.requiredSignals.includes("panel_drilldown_visible"), true);
     assert.equal(gate.screenshotQa.requiredSignals.includes("mobile_fixed_topbar_action_or_decision_strip_visible"), true);
     assert.equal(gate.installUpdateRollbackOrder[0], "1_browser_local_app_shell_proof");
-    assert.equal(gate.installUpdateRollbackOrder.includes("7_install_update_rollback_executor_gate_after_approval"), true);
+    assert.equal(gate.installUpdateRollbackOrder.includes("8_packaged_desktop_planning_review_stop_line"), true);
+    assert.equal(gate.installUpdateRollbackOrder.includes("9_return_to_user_facing_core_work_surface"), true);
+    assert.equal(gate.installUpdateRollbackOrder.includes("11_install_update_rollback_executor_gate_after_approval"), true);
     assert.equal(gate.failureRecoveryStates.some((state) => state.id === "loopback_runtime_unavailable"), true);
     assert.equal(gate.failureRecoveryStates.some((state) => state.id === "ipc_not_allowed"), true);
     assert.equal(verification.status, "ready");
@@ -594,6 +602,59 @@ describe("GPAO-T Local Control Center readiness", () => {
     assert.equal(gatewayGate.body.schema, gate.schema);
     assert.equal(gatewayCheck.status, 200);
     assert.equal(gatewayCheck.body.status, "ready");
+  });
+
+  it("closes packaged desktop planning review without opening build or invocation authority", () => {
+    const review = buildPackagedDesktopPlanningReview({ root: ROOT });
+    const verification = verifyPackagedDesktopPlanningReview({ review });
+    const cliReview = JSON.parse(execFileSync(process.execPath, [CLI, "control", "packaged-desktop-review"], {
+      cwd: ROOT,
+      encoding: "utf8",
+    }));
+    const cliCheck = JSON.parse(execFileSync(process.execPath, [CLI, "control", "packaged-desktop-review-check"], {
+      cwd: ROOT,
+      encoding: "utf8",
+    }));
+    const gatewayReview = handleGatewayRequest({ method: "GET", path: "/app-shell/packaged-desktop-review", root: ROOT });
+    const gatewayCheck = handleGatewayRequest({
+      method: "GET",
+      path: "/app-shell/packaged-desktop-review/verify",
+      root: ROOT,
+    });
+    const doc = readFileSync(PACKAGED_DESKTOP_REVIEW_DOC, "utf8");
+
+    assert.equal(review.schema, "gpao_t.packaged_desktop_planning_review.v0_1");
+    assert.equal(review.status, "ready");
+    assert.equal(review.readinessDecision.packagedDesktopBuild, "not_allowed_yet");
+    assert.equal(review.readinessDecision.installUpdateRollbackExecution, "not_allowed_yet");
+    assert.equal(review.readinessDecision.approvalWriteOrDryRunInvocation, "not_allowed_yet");
+    assert.equal(review.returnToUserFacingCoreTiming.decision, "return_after_this_review");
+    assert.equal(review.stopLine.metaGateRepetition, "stop_after_this_review");
+    assert.equal(review.authorityBoundary.approvalRecordWrite, "blocked");
+    assert.equal(review.authorityBoundary.dryRunInvocation, "blocked");
+    assert.equal(review.authorityBoundary.tauriBuild, "blocked");
+    assert.equal(review.authorityBoundary.installUpdateRollbackExecution, "blocked");
+    assert.equal(review.authorityBoundary.localIpc, "blocked");
+    assert.equal(review.authorityBoundary.connectorModelToolActivation, "blocked");
+    assert.equal(review.closedSurfaces.some((surface) => surface.id === "approval_preview_user_understanding"), true);
+    assert.equal(review.closedSurfaces.some((surface) => surface.id === "read_mostly_tauri_shell_source_slice"), true);
+    assert.equal(review.stillBlockedBoundaries.includes("approval record write"), true);
+    assert.equal(review.stillBlockedBoundaries.includes("dry-run invocation"), true);
+    assert.equal(review.stillBlockedBoundaries.includes("Tauri build"), true);
+    assert.equal(review.stillBlockedBoundaries.includes("install execution"), true);
+    assert.equal(review.stillBlockedBoundaries.includes("connector/model/tool activation"), true);
+    assert.equal(review.minimumConditionsBeforePackagedDesktop.some((condition) => condition.id === "user_facing_core_return"), true);
+    assert.equal(review.evidenceFiles.every((evidence) => evidence.status === "present"), true);
+    assert.equal(verification.status, "ready");
+    assert.equal(cliReview.schema, review.schema);
+    assert.equal(cliCheck.status, "ready");
+    assert.equal(gatewayReview.status, 200);
+    assert.equal(gatewayReview.body.schema, review.schema);
+    assert.equal(gatewayCheck.status, 200);
+    assert.equal(gatewayCheck.body.status, "ready");
+    assert.match(doc, /Stop-Line/);
+    assert.match(doc, /user-facing GPAO-T core work surface/);
+    assert.match(doc, /node bin\/gpao-t\.js control packaged-desktop-review-check/);
   });
 
   it("adds the first read-mostly Tauri shell source slice without enabling IPC or packaging", () => {
@@ -851,6 +912,8 @@ describe("GPAO-T Local Control Center readiness", () => {
       const tauriDryRunApprovalStorageVerify = await fetchJson(`http://127.0.0.1:${preview.port}/app-shell/tauri-dry-run-approval-storage/verify`);
       const tauriDryRunApprovalWriteGate = await fetchJson(`http://127.0.0.1:${preview.port}/app-shell/tauri-dry-run-approval-write-gate`);
       const tauriDryRunApprovalWriteGateVerify = await fetchJson(`http://127.0.0.1:${preview.port}/app-shell/tauri-dry-run-approval-write-gate/verify`);
+      const packagedDesktopReview = await fetchJson(`http://127.0.0.1:${preview.port}/app-shell/packaged-desktop-review`);
+      const packagedDesktopReviewVerify = await fetchJson(`http://127.0.0.1:${preview.port}/app-shell/packaged-desktop-review/verify`);
       const tauriShell = await fetchText(`http://127.0.0.1:${preview.port}/app-shell/tauri-shell`);
       const tauriShellSlice = await fetchJson(`http://127.0.0.1:${preview.port}/app-shell/tauri-shell/slice`);
       const tauriShellVerify = await fetchJson(`http://127.0.0.1:${preview.port}/app-shell/tauri-shell/verify`);
@@ -919,6 +982,11 @@ describe("GPAO-T Local Control Center readiness", () => {
       assert.equal(tauriDryRunApprovalWriteGate.body.writeGateBoundary.writeGateImplemented, false);
       assert.equal(tauriDryRunApprovalWriteGate.body.safetyInvariants.invokesDryRunExecutor, false);
       assert.equal(tauriDryRunApprovalWriteGateVerify.body.status, "ready");
+      assert.equal(packagedDesktopReview.body.schema, "gpao_t.packaged_desktop_planning_review.v0_1");
+      assert.equal(packagedDesktopReview.body.status, "ready");
+      assert.equal(packagedDesktopReview.body.readinessDecision.packagedDesktopBuild, "not_allowed_yet");
+      assert.equal(packagedDesktopReview.body.returnToUserFacingCoreTiming.decision, "return_after_this_review");
+      assert.equal(packagedDesktopReviewVerify.body.status, "ready");
       assert.equal(tauriShell.status, 200);
       assert.match(tauriShell.body, /GPAO-T Read-Mostly Tauri Shell/);
       assert.match(tauriShell.body, /data-mobile-action-line="visible"/);
@@ -964,6 +1032,7 @@ describe("GPAO-T Local Control Center readiness", () => {
     assert.equal(verification.tauriDryRunInvocationApprovalStatus, 200);
     assert.equal(verification.tauriDryRunApprovalStorageStatus, 200);
     assert.equal(verification.tauriDryRunApprovalWriteGateStatus, 200);
+    assert.equal(verification.packagedDesktopReviewStatus, 200);
     assert.equal(verification.tauriShellSliceStatus, 200);
     assert.equal(verification.blockedPostStatus, 405);
     assert.equal(verification.authorityBoundary.loopbackOnly, true);
