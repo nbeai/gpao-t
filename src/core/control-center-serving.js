@@ -26,6 +26,7 @@ import {
 import {
   buildTauriInstallDryRunPlan,
   buildTauriInstallDryRunApprovalRecordStorageDesign,
+  buildTauriInstallDryRunApprovalRecordWriteGateDesign,
   buildTauriInstallDryRunExecutorContract,
   buildTauriInstallDryRunImplementationDesign,
   buildTauriInstallDryRunInvocationApprovalContract,
@@ -33,6 +34,7 @@ import {
   renderTauriInstallDryRunPreview,
   verifyTauriInstallDryRunPlan,
   verifyTauriInstallDryRunApprovalRecordStorageDesign,
+  verifyTauriInstallDryRunApprovalRecordWriteGateDesign,
   verifyTauriInstallDryRunExecutorContract,
   verifyTauriInstallDryRunImplementationDesign,
   verifyTauriInstallDryRunInvocationApprovalContract,
@@ -87,6 +89,8 @@ export function buildControlCenterServingContract({
       { path: "/app-shell/tauri-dry-run-invocation-approval/verify", content: "tauri_install_dry_run_invocation_approval_contract_verification" },
       { path: "/app-shell/tauri-dry-run-approval-storage", content: "tauri_install_dry_run_approval_record_storage_design" },
       { path: "/app-shell/tauri-dry-run-approval-storage/verify", content: "tauri_install_dry_run_approval_record_storage_design_verification" },
+      { path: "/app-shell/tauri-dry-run-approval-write-gate", content: "tauri_install_dry_run_approval_record_write_gate_design" },
+      { path: "/app-shell/tauri-dry-run-approval-write-gate/verify", content: "tauri_install_dry_run_approval_record_write_gate_design_verification" },
       { path: "/app-shell/tauri-shell", content: "tauri_readonly_shell_html" },
       { path: "/app-shell/tauri-shell.html", content: "tauri_readonly_shell_html" },
       { path: "/app-shell/tauri-shell/slice", content: "tauri_readonly_shell_slice" },
@@ -343,6 +347,16 @@ export async function startControlCenterPreviewServer({
       return;
     }
 
+    if (url.pathname === "/app-shell/tauri-dry-run-approval-write-gate") {
+      respondJson(response, 200, buildTauriInstallDryRunApprovalRecordWriteGateDesign());
+      return;
+    }
+
+    if (url.pathname === "/app-shell/tauri-dry-run-approval-write-gate/verify") {
+      respondJson(response, 200, verifyTauriInstallDryRunApprovalRecordWriteGateDesign());
+      return;
+    }
+
     if (url.pathname === "/app-shell/tauri-shell/slice") {
       respondJson(response, 200, buildTauriReadOnlyShellSlice());
       return;
@@ -445,6 +459,8 @@ export async function verifyControlCenterPreviewServing({
     const tauriDryRunInvocationApprovalVerify = await fetchJson(`http://${host}:${preview.port}/app-shell/tauri-dry-run-invocation-approval/verify`);
     const tauriDryRunApprovalStorage = await fetchJson(`http://${host}:${preview.port}/app-shell/tauri-dry-run-approval-storage`);
     const tauriDryRunApprovalStorageVerify = await fetchJson(`http://${host}:${preview.port}/app-shell/tauri-dry-run-approval-storage/verify`);
+    const tauriDryRunApprovalWriteGate = await fetchJson(`http://${host}:${preview.port}/app-shell/tauri-dry-run-approval-write-gate`);
+    const tauriDryRunApprovalWriteGateVerify = await fetchJson(`http://${host}:${preview.port}/app-shell/tauri-dry-run-approval-write-gate/verify`);
     const tauriShell = await fetchText(`http://${host}:${preview.port}/app-shell/tauri-shell`);
     const tauriShellSlice = await fetchJson(`http://${host}:${preview.port}/app-shell/tauri-shell/slice`);
     const tauriShellVerify = await fetchJson(`http://${host}:${preview.port}/app-shell/tauri-shell/verify`);
@@ -555,6 +571,15 @@ export async function verifyControlCenterPreviewServing({
     if (tauriDryRunApprovalStorageVerify.status !== 200 || tauriDryRunApprovalStorageVerify.body.status !== "ready") {
       findings.push("tauri_dry_run_approval_storage_verify_not_ready");
     }
+    if (
+      tauriDryRunApprovalWriteGate.status !== 200
+      || tauriDryRunApprovalWriteGate.body.schema !== "gpao_t.tauri_install_dry_run_approval_record_write_gate_design.v0_1"
+    ) {
+      findings.push("tauri_dry_run_approval_write_gate_not_ready");
+    }
+    if (tauriDryRunApprovalWriteGateVerify.status !== 200 || tauriDryRunApprovalWriteGateVerify.body.status !== "ready") {
+      findings.push("tauri_dry_run_approval_write_gate_verify_not_ready");
+    }
     if (tauriShell.status !== 200) {
       findings.push("tauri_shell_route_not_200");
     }
@@ -588,6 +613,7 @@ export async function verifyControlCenterPreviewServing({
       tauriDryRunPreviewUrl: `http://${host}:${preview.port}/app-shell/tauri-dry-run-preview`,
       tauriDryRunInvocationApprovalUrl: `http://${host}:${preview.port}/app-shell/tauri-dry-run-invocation-approval`,
       tauriDryRunApprovalStorageUrl: `http://${host}:${preview.port}/app-shell/tauri-dry-run-approval-storage`,
+      tauriDryRunApprovalWriteGateUrl: `http://${host}:${preview.port}/app-shell/tauri-dry-run-approval-write-gate`,
       tauriShellUrl: `http://${host}:${preview.port}/app-shell/tauri-shell`,
       tauriShellSliceUrl: `http://${host}:${preview.port}/app-shell/tauri-shell/slice`,
       healthStatus: health.status,
@@ -602,6 +628,7 @@ export async function verifyControlCenterPreviewServing({
       tauriDryRunPreviewStatus: tauriDryRunPreview.status,
       tauriDryRunInvocationApprovalStatus: tauriDryRunInvocationApproval.status,
       tauriDryRunApprovalStorageStatus: tauriDryRunApprovalStorage.status,
+      tauriDryRunApprovalWriteGateStatus: tauriDryRunApprovalWriteGate.status,
       tauriShellStatus: tauriShell.status,
       tauriShellSliceStatus: tauriShellSlice.status,
       blockedPostStatus: blockedPost.status,

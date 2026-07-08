@@ -11,6 +11,7 @@ import {
   buildInstallHardeningSummary,
   buildTauriInstallDryRunPlan,
   buildTauriInstallDryRunApprovalRecordStorageDesign,
+  buildTauriInstallDryRunApprovalRecordWriteGateDesign,
   buildTauriInstallDryRunExecutorContract,
   buildTauriInstallDryRunImplementationDesign,
   buildTauriInstallDryRunInvocationApprovalContract,
@@ -21,6 +22,7 @@ import {
   renderTauriInstallDryRunPreview,
   verifyTauriInstallDryRunPlan,
   verifyTauriInstallDryRunApprovalRecordStorageDesign,
+  verifyTauriInstallDryRunApprovalRecordWriteGateDesign,
   verifyTauriInstallDryRunExecutorContract,
   verifyTauriInstallDryRunImplementationDesign,
   verifyTauriInstallDryRunInvocationApprovalContract,
@@ -419,6 +421,68 @@ describe("GPAO-T install/update/rollback hardening", () => {
     assert.equal(design.safetyInvariants.writesApprovalRecord, false);
     assert.equal(design.safetyInvariants.invokesDryRunExecutor, false);
     assert.equal(design.failureRecoveryStates.some((state) => state.id === "approval_record_write_requested_too_early"), true);
+    assert.equal(designCheck.status, "ready");
+    assert.equal(cliDesign.schema, design.schema);
+    assert.equal(cliDesignCheck.status, "ready");
+    assert.equal(gatewayDesign.status, 200);
+    assert.equal(gatewayDesign.body.schema, design.schema);
+    assert.equal(gatewayDesignCheck.body.status, "ready");
+  });
+
+  it("designs approval-record write gate without writing records or invoking dry-run", () => {
+    const design = buildTauriInstallDryRunApprovalRecordWriteGateDesign({ root: ROOT });
+    const designCheck = verifyTauriInstallDryRunApprovalRecordWriteGateDesign({ root: ROOT, design });
+    const cliDesign = JSON.parse(execFileSync(process.execPath, [CLI, "control", "tauri-dry-run-approval-write-gate"], {
+      cwd: ROOT,
+      encoding: "utf8",
+    }));
+    const cliDesignCheck = JSON.parse(execFileSync(process.execPath, [CLI, "control", "tauri-dry-run-approval-write-gate-check"], {
+      cwd: ROOT,
+      encoding: "utf8",
+    }));
+    const gatewayDesign = handleGatewayRequest({
+      root: ROOT,
+      method: "GET",
+      path: "/app-shell/tauri-dry-run-approval-write-gate",
+    });
+    const gatewayDesignCheck = handleGatewayRequest({
+      root: ROOT,
+      method: "GET",
+      path: "/app-shell/tauri-dry-run-approval-write-gate/verify",
+    });
+
+    assert.equal(design.schema, "gpao_t.tauri_install_dry_run_approval_record_write_gate_design.v0_1");
+    assert.equal(design.status, "ready");
+    assert.equal(design.designMode, "write_gate_design_only_no_record_write_no_invocation");
+    assert.equal(design.allowedApprovalPacket.allowedOperations.includes("install"), true);
+    assert.equal(design.allowedApprovalPacket.requiredFields.includes("previewVerificationStatus"), true);
+    assert.equal(design.allowedApprovalPacket.requiredFields.includes("planVerificationStatus"), true);
+    assert.equal(design.allowedApprovalPacket.packetMustBeRejectedIfMissing.includes("integrity"), true);
+    assert.equal(design.duplicateExpiryScopeControls.duplicatePolicy, "future_write_gate_must_reject_duplicate_active_record");
+    assert.equal(design.duplicateExpiryScopeControls.expiryPolicy, "future_write_gate_must_reject_packets_with_expiresAt_at_or_before_write_time");
+    assert.equal(design.duplicateExpiryScopeControls.scopePolicy, "future_write_gate_must_reject_scope_beyond_dry_run_invocation_only");
+    assert.equal(design.preWritePreviewVerifyGate.requiredBeforeFutureWrite, true);
+    assert.equal(design.preWritePreviewVerifyGate.requiredStatuses.dryRunPreviewVerification, "ready");
+    assert.equal(design.preWritePreviewVerifyGate.noDryRunInvocationDuringPreview, true);
+    assert.equal(design.postWriteReferenceContract.writeNow, false);
+    assert.equal(design.postWriteReferenceContract.requiredAfterFutureWrite.includes("append audit event reference"), true);
+    assert.equal(design.postWriteReferenceContract.requiredAfterFutureWrite.includes("append replay decision reference"), true);
+    assert.equal(design.postWriteReferenceContract.rollbackReference.rollbackExecutionNow, "blocked");
+    assert.equal(design.rejectionRules.includes("reject_if_duplicate_active_record"), true);
+    assert.equal(design.rejectionRules.includes("reject_if_packet_expired"), true);
+    assert.equal(design.rejectionRules.includes("reject_if_approved_scope_exceeds_dry_run_invocation_only"), true);
+    assert.equal(design.rejectionRules.includes("reject_if_dry_run_invocation_present"), true);
+    assert.equal(design.failureRecoveryStates.some((state) => state.id === "approval_packet_missing_required_field"), true);
+    assert.equal(design.failureRecoveryStates.some((state) => state.id === "duplicate_active_approval"), true);
+    assert.equal(design.writeGateBoundary.approvalRecordWriteAllowedNow, false);
+    assert.equal(design.writeGateBoundary.writeGateImplemented, false);
+    assert.equal(design.writeGateBoundary.writeGateInvoked, false);
+    assert.equal(design.writeGateBoundary.dryRunInvocationAllowedNow, false);
+    assert.equal(design.writeGateBoundary.commandExecutionAllowedNow, false);
+    assert.equal(design.writeGateBoundary.fileMutationAllowedNow, false);
+    assert.equal(design.safetyInvariants.writesApprovalRecord, false);
+    assert.equal(design.safetyInvariants.implementsWriteGate, false);
+    assert.equal(design.safetyInvariants.invokesDryRunExecutor, false);
     assert.equal(designCheck.status, "ready");
     assert.equal(cliDesign.schema, design.schema);
     assert.equal(cliDesignCheck.status, "ready");

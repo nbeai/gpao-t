@@ -40,6 +40,7 @@ import {
   buildSkillReadinessReport,
   buildTauriInstallDryRunPlan,
   buildTauriInstallDryRunApprovalRecordStorageDesign,
+  buildTauriInstallDryRunApprovalRecordWriteGateDesign,
   buildTauriInstallReadinessGate,
   buildTauriInstallDryRunExecutorContract,
   buildTauriInstallDryRunImplementationDesign,
@@ -78,6 +79,7 @@ import {
   verifyControlCenterPreviewServing,
   verifyTauriInstallDryRunPlan,
   verifyTauriInstallDryRunApprovalRecordStorageDesign,
+  verifyTauriInstallDryRunApprovalRecordWriteGateDesign,
   verifyTauriInstallReadinessGate,
   verifyTauriInstallDryRunExecutorContract,
   verifyTauriInstallDryRunImplementationDesign,
@@ -171,6 +173,8 @@ function usage() {
     "  gpao-t control tauri-dry-run-invocation-approval-check",
     "  gpao-t control tauri-dry-run-approval-storage",
     "  gpao-t control tauri-dry-run-approval-storage-check",
+    "  gpao-t control tauri-dry-run-approval-write-gate",
+    "  gpao-t control tauri-dry-run-approval-write-gate-check",
     "  gpao-t control tauri-shell-slice",
     "  gpao-t control tauri-shell-html",
     "  gpao-t control tauri-shell-check",
@@ -477,6 +481,10 @@ try {
       printJson(buildTauriInstallDryRunApprovalRecordStorageDesign());
     } else if (subcommand === "tauri-dry-run-approval-storage-check") {
       printJson(verifyTauriInstallDryRunApprovalRecordStorageDesign());
+    } else if (subcommand === "tauri-dry-run-approval-write-gate") {
+      printJson(buildTauriInstallDryRunApprovalRecordWriteGateDesign());
+    } else if (subcommand === "tauri-dry-run-approval-write-gate-check") {
+      printJson(verifyTauriInstallDryRunApprovalRecordWriteGateDesign());
     } else if (subcommand === "tauri-shell-slice") {
       printJson(buildTauriReadOnlyShellSlice());
     } else if (subcommand === "tauri-shell-html") {
@@ -484,7 +492,7 @@ try {
     } else if (subcommand === "tauri-shell-check") {
       printJson(verifyTauriReadOnlyShellSlice());
     } else {
-      throw new Error("control command requires snapshot, summary, design, ui-contract, ui-snapshot, ui-validate, html, render, serve-contract, serve-check, serve, app-shell-contract, app-shell-state, app-shell-html, app-shell-check, tauri-gate, tauri-gate-check, tauri-install-gate, tauri-install-gate-check, tauri-prerequisite-doctor, tauri-prerequisite-doctor-check, tauri-dry-run-contract, tauri-dry-run-contract-check, tauri-dry-run-design, tauri-dry-run-design-check, tauri-dry-run-plan, tauri-dry-run-plan-check, tauri-dry-run-preview, tauri-dry-run-preview-check, tauri-dry-run-invocation-approval, tauri-dry-run-invocation-approval-check, tauri-dry-run-approval-storage, tauri-dry-run-approval-storage-check, tauri-shell-slice, tauri-shell-html, or tauri-shell-check");
+      throw new Error("control command requires snapshot, summary, design, ui-contract, ui-snapshot, ui-validate, html, render, serve-contract, serve-check, serve, app-shell-contract, app-shell-state, app-shell-html, app-shell-check, tauri-gate, tauri-gate-check, tauri-install-gate, tauri-install-gate-check, tauri-prerequisite-doctor, tauri-prerequisite-doctor-check, tauri-dry-run-contract, tauri-dry-run-contract-check, tauri-dry-run-design, tauri-dry-run-design-check, tauri-dry-run-plan, tauri-dry-run-plan-check, tauri-dry-run-preview, tauri-dry-run-preview-check, tauri-dry-run-invocation-approval, tauri-dry-run-invocation-approval-check, tauri-dry-run-approval-storage, tauri-dry-run-approval-storage-check, tauri-dry-run-approval-write-gate, tauri-dry-run-approval-write-gate-check, tauri-shell-slice, tauri-shell-html, or tauri-shell-check");
     }
   } else if (command === "gateway") {
     const [method, requestPath, rawBody] = args;

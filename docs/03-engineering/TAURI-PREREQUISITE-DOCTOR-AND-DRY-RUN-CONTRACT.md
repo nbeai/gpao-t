@@ -1,9 +1,9 @@
 # Tauri Prerequisite Doctor And Dry-Run Executor Contract
 
-Status: approval-record storage design added, record write and invocation blocked
-Scope: packaged desktop install/update/rollback prerequisite doctor, dry-run executor contract, approval-gated implementation design, pure dry-run plan/verify/preview objects, future invocation approval contract, and future approval-record storage design
+Status: approval-record write gate design added, record write and invocation blocked
+Scope: packaged desktop install/update/rollback prerequisite doctor, dry-run executor contract, approval-gated implementation design, pure dry-run plan/verify/preview objects, future invocation approval contract, future approval-record storage design, and future approval-record write gate design
 
-This stage does not install dependencies, run Cargo, run Tauri, build a package, create an installer, open IPC, write files as a dry-run, write approval records, download externally, invoke a dry-run executor, or execute install/update/rollback. It defines what must be inspected before a future dry-run executor may exist, exposes pure JSON plan/verify/preview objects, defines the approval contract that must exist before any future invocation gate, and now designs where future approval records should live without writing them.
+This stage does not install dependencies, run Cargo, run Tauri, build a package, create an installer, open IPC, write files as a dry-run, write approval records, download externally, invoke a dry-run executor, or execute install/update/rollback. It defines what must be inspected before a future dry-run executor may exist, exposes pure JSON plan/verify/preview objects, defines the approval contract that must exist before any future invocation gate, designs where future approval records should live, and now defines the gate that a future approval packet must pass before any write could be implemented.
 
 ## Machine Contract
 
@@ -22,6 +22,8 @@ node bin/gpao-t.js control tauri-dry-run-invocation-approval
 node bin/gpao-t.js control tauri-dry-run-invocation-approval-check
 node bin/gpao-t.js control tauri-dry-run-approval-storage
 node bin/gpao-t.js control tauri-dry-run-approval-storage-check
+node bin/gpao-t.js control tauri-dry-run-approval-write-gate
+node bin/gpao-t.js control tauri-dry-run-approval-write-gate-check
 node bin/gpao-t.js gateway GET /app-shell/tauri-prerequisite-doctor
 node bin/gpao-t.js gateway GET /app-shell/tauri-prerequisite-doctor/verify
 node bin/gpao-t.js gateway GET /app-shell/tauri-dry-run-contract
@@ -36,6 +38,8 @@ node bin/gpao-t.js gateway GET /app-shell/tauri-dry-run-invocation-approval
 node bin/gpao-t.js gateway GET /app-shell/tauri-dry-run-invocation-approval/verify
 node bin/gpao-t.js gateway GET /app-shell/tauri-dry-run-approval-storage
 node bin/gpao-t.js gateway GET /app-shell/tauri-dry-run-approval-storage/verify
+node bin/gpao-t.js gateway GET /app-shell/tauri-dry-run-approval-write-gate
+node bin/gpao-t.js gateway GET /app-shell/tauri-dry-run-approval-write-gate/verify
 ```
 
 Loopback preview also exposes:
@@ -54,6 +58,8 @@ Loopback preview also exposes:
 - `GET /app-shell/tauri-dry-run-invocation-approval/verify`
 - `GET /app-shell/tauri-dry-run-approval-storage`
 - `GET /app-shell/tauri-dry-run-approval-storage/verify`
+- `GET /app-shell/tauri-dry-run-approval-write-gate`
+- `GET /app-shell/tauri-dry-run-approval-write-gate/verify`
 
 ## Prerequisite Doctor
 
@@ -274,6 +280,88 @@ Current storage design boundary:
 - dependency installation now: `false`
 - IPC/network/connector/model/tool activation now: `false`
 
+## Approval-Record Write Gate Design
+
+The approval-record write gate design defines what a future approval packet must prove before a write implementation could be considered. It is still design-only and does not implement a write gate, invoke a write gate, append an approval record, create directories, invoke dry-run, run commands, or mutate files.
+
+Current surfaces:
+
+- `buildTauriInstallDryRunApprovalRecordWriteGateDesign`: returns packet requirements, missing-field rejection conditions, duplicate/expiry/scope controls, pre-write preview/verify requirements, post-write reference requirements, and recovery states.
+- `verifyTauriInstallDryRunApprovalRecordWriteGateDesign`: rejects any design that enables record writes, write gate invocation, dry-run invocation, command execution, file mutation, build, IPC, network, connector/model/tool activation, or install/update/rollback execution.
+
+Only these future approval packet states are allowed:
+
+- `approved_for_dry_run_invocation_only`
+- `rejected`
+
+Only these future operations are allowed:
+
+- `install`
+- `update`
+- `rollback`
+
+Required packet fields include:
+
+- request id and record id
+- requested operation
+- approval state
+- approved scope
+- source commit
+- preview reference and preview verification status
+- plan reference and plan verification status
+- storage design reference
+- write gate reference
+- replay references
+- audit references
+- rollback reference
+- authority boundary
+- blocked actions
+- created, expiration, decision, and integrity fields
+
+The future write gate must reject:
+
+- missing required fields
+- operations outside install/update/rollback
+- approval states outside dry-run-only approval or rejection
+- scope beyond dry-run invocation only
+- duplicate active approval records
+- expired approval packets
+- source commit drift
+- preview or plan verification that is not ready
+- missing replay/audit/rollback references
+- integrity field gaps
+- write roots outside approval storage
+- any dry-run invocation, command execution, file mutation, Tauri build, dependency install, IPC, external network, connector/model/tool activation, or install/update/rollback execution
+
+Required pre-write evidence:
+
+- invocation approval contract verification: `ready`
+- approval-record storage verification: `ready`
+- dry-run plan verification: `ready`
+- dry-run preview verification: `ready`
+- source commit matches preview
+- preview is user-visible
+
+Required future post-write references:
+
+- append approval record to primary JSONL
+- append audit event reference
+- append replay decision reference
+- link rollback source commit
+- update approval index
+
+Current write gate boundary:
+
+- approval record write now: `false`
+- write gate implemented: `false`
+- write gate invoked: `false`
+- dry-run invocation now: `false`
+- command execution now: `false`
+- file mutation now: `false`
+- Tauri build now: `false`
+- dependency installation now: `false`
+- IPC/network/connector/model/tool activation now: `false`
+
 ## Blocked Now
 
 - dry-run execution
@@ -281,6 +369,8 @@ Current storage design boundary:
 - approval record write
 - approval record directory creation
 - approval record read/store mutation
+- approval-record write gate implementation
+- approval-record write gate invocation
 - real dry-run executor implementation beyond the pure object builders
 - real install/update/rollback execution
 - dependency installation
@@ -300,7 +390,12 @@ Current storage design boundary:
 - `planned_write_outside_allowed_root`: block executor invocation and require a revised file write set.
 - `verification_command_missing`: block executor invocation until post-operation verification commands are defined.
 - `rollback_plan_missing`: block executor invocation until rollback triggers and recovery messages are defined.
+- `approval_packet_missing_required_field`: reject the future write and return the missing-field list without appending any record.
+- `duplicate_active_approval`: reject the future write and show the existing active approval record reference for review.
+- `approval_packet_expired`: reject the future write and require a new preview, verification, and approval packet.
+- `approval_scope_exceeded`: reject the future write because approval can only cover dry-run invocation preparation.
+- `source_commit_drift_before_write`: reject the future write and rebuild plan/preview evidence from the current source checkpoint.
 
 ## Next Safe Action
 
-After this approval-record storage design remains verified, the next gate may design the approval-record write path. Actual approval record write, dry-run invocation, command execution, file mutation, install/update/rollback, Tauri build, IPC, external download, deployment, messenger, and automation remain blocked.
+After this approval-record write gate design remains verified, the next gate may design or implement pure approval-packet validation. Actual approval record write, dry-run invocation, command execution, file mutation, install/update/rollback, Tauri build, IPC, external download, deployment, messenger, and automation remain blocked.
