@@ -35,6 +35,28 @@ const PANEL_GROUPS = {
   ops: "Authority",
 };
 
+const UI_LABELS = {
+  ready: "준비됨",
+  review: "검토 필요",
+  blocked: "잠김",
+  allowed: "허용됨",
+  draft_not_sent: "초안 · 미전송",
+  preview_only: "미리보기만",
+  local_execution_plan: "로컬 계획",
+  local_reasoning_stub: "로컬 추론 후보",
+  "external action": "외부 행동",
+  "tool activation": "도구 실행",
+  "model connector live execution": "모델 연결 실행",
+  "connector activation": "커넥터 활성화",
+  "approval record write": "승인 기록 쓰기",
+  "dry-run invocation": "미리보기 실행",
+  "durable memory promotion": "지속 기억 승격",
+  "self-growth apply": "자가성장 적용",
+  deployment: "배포",
+  "messenger send": "메신저 전송",
+  "recurring automation": "반복 자동화",
+};
+
 export function buildControlCenterHtml({ snapshot, designContract } = {}) {
   const controlSnapshot = snapshot || buildControlCenterSnapshot();
   const contract = designContract || buildLocalControlCenterDesignContract();
@@ -56,18 +78,29 @@ export function buildControlCenterHtml({ snapshot, designContract } = {}) {
   <style>
     :root {
       color-scheme: light;
-      --bg: #f6f7f9;
+      --bg: #f5f7f2;
+      --bg-soft: #eef3ec;
       --surface: #ffffff;
-      --surface-muted: #eef2f6;
-      --text: #17202a;
-      --muted: #5c6b7a;
-      --line: #d8e0e8;
-      --ready: #0b7a53;
-      --review: #9a6200;
-      --blocked: #b42318;
-      --approval: #2857a3;
-      --unknown: #596579;
-      --shadow: 0 1px 2px rgba(23, 32, 42, 0.08);
+      --surface-muted: #eef3ec;
+      --surface-warm: #fbfcf8;
+      --surface-raised: #ffffff;
+      --text: #17211b;
+      --muted: #526257;
+      --soft-text: #6d7b70;
+      --faint: #8b978f;
+      --line: #dde5dc;
+      --line-strong: #bfd0c0;
+      --ready: #1f7a64;
+      --review: #a86f1d;
+      --blocked: #a9473f;
+      --approval: #2e6dae;
+      --unknown: #6d7b70;
+      --primary-soft: #e4f3ed;
+      --blue-soft: #e8f1fa;
+      --amber-soft: #fff4d8;
+      --red-soft: #fbe9e7;
+      --violet-soft: #efecfa;
+      --shadow: 0 1px 2px rgba(23, 33, 27, 0.05), 0 14px 36px rgba(23, 33, 27, 0.06);
     }
     * { box-sizing: border-box; }
     html {
@@ -76,10 +109,11 @@ export function buildControlCenterHtml({ snapshot, designContract } = {}) {
     }
     body {
       margin: 0;
-      background: var(--bg);
+      background:
+        radial-gradient(circle at 0 0, rgba(255, 255, 255, 0.96), rgba(245, 247, 242, 0.88) 34%, rgba(238, 243, 236, 0.94) 100%);
       color: var(--text);
-      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      line-height: 1.45;
+      font-family: Pretendard, "Apple SD Gothic Neo", "SF Pro Display", "SF Pro Text", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      line-height: 1.55;
       max-width: 100%;
       overflow-x: hidden;
     }
@@ -93,9 +127,10 @@ export function buildControlCenterHtml({ snapshot, designContract } = {}) {
       align-items: center;
       justify-content: space-between;
       gap: 16px;
-      padding: 14px 20px;
+      padding: 14px 22px;
       border-bottom: 1px solid var(--line);
-      background: var(--surface);
+      background: rgba(255, 255, 255, 0.86);
+      backdrop-filter: blur(18px);
       position: sticky;
       top: 0;
       z-index: 2;
@@ -109,7 +144,7 @@ export function buildControlCenterHtml({ snapshot, designContract } = {}) {
     }
     h1 {
       margin: 0;
-      font-size: 19px;
+      font-size: 20px;
       line-height: 1.2;
       letter-spacing: 0;
       white-space: nowrap;
@@ -124,7 +159,7 @@ export function buildControlCenterHtml({ snapshot, designContract } = {}) {
     }
     .layout {
       display: grid;
-      grid-template-columns: 180px minmax(0, 1fr) 320px;
+      grid-template-columns: 196px minmax(0, 1fr) 336px;
       min-height: 0;
       max-width: 100vw;
       overflow-x: hidden;
@@ -132,7 +167,8 @@ export function buildControlCenterHtml({ snapshot, designContract } = {}) {
     nav {
       border-right: 1px solid var(--line);
       padding: 16px 12px;
-      background: var(--surface-muted);
+      background: rgba(255, 255, 255, 0.66);
+      backdrop-filter: blur(14px);
       min-width: 0;
     }
     .nav-title {
@@ -169,7 +205,8 @@ export function buildControlCenterHtml({ snapshot, designContract } = {}) {
     aside {
       border-left: 1px solid var(--line);
       padding: 18px;
-      background: var(--surface);
+      background: rgba(255, 255, 255, 0.72);
+      backdrop-filter: blur(14px);
       min-width: 0;
     }
     .decision-strip {
@@ -220,7 +257,7 @@ export function buildControlCenterHtml({ snapshot, designContract } = {}) {
     .authority-row,
     .mobile-next-action {
       border: 1px solid var(--line);
-      border-radius: 8px;
+      border-radius: 12px;
       background: var(--surface);
       box-shadow: var(--shadow);
     }
@@ -249,14 +286,15 @@ export function buildControlCenterHtml({ snapshot, designContract } = {}) {
       min-height: 82px;
       padding: 12px;
       border: 1px solid var(--line);
-      border-radius: 8px;
-      background: var(--surface);
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.92);
       box-shadow: var(--shadow);
     }
     .state-card strong {
       display: block;
       font-size: 12px;
       color: var(--muted);
+      text-transform: none;
       overflow-wrap: anywhere;
     }
     .state-card span {
@@ -265,6 +303,7 @@ export function buildControlCenterHtml({ snapshot, designContract } = {}) {
       font-size: 13px;
       font-weight: 700;
       overflow-wrap: anywhere;
+      word-break: keep-all;
     }
     .state-card small {
       display: block;
@@ -277,13 +316,14 @@ export function buildControlCenterHtml({ snapshot, designContract } = {}) {
     .panel-grid {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 12px;
+      gap: 14px;
     }
     .panel {
-      padding: 14px;
+      padding: 18px;
       min-width: 0;
       min-height: 142px;
       scroll-margin-top: 78px;
+      background: rgba(255, 255, 255, 0.92);
     }
     .panel[data-panel="approval-preview"] {
       grid-column: 1 / -1;
@@ -313,12 +353,13 @@ export function buildControlCenterHtml({ snapshot, designContract } = {}) {
       margin: 0;
       letter-spacing: 0;
     }
-    h2 { font-size: 16px; }
+    h2 { font-size: 17px; }
     h3 { font-size: 15px; }
     p { margin: 0; }
     .headline {
       color: var(--muted);
-      font-size: 13px;
+      font-size: 14px;
+      line-height: 1.55;
       overflow-wrap: anywhere;
     }
     .next {
@@ -326,7 +367,8 @@ export function buildControlCenterHtml({ snapshot, designContract } = {}) {
       padding-top: 10px;
       border-top: 1px solid var(--line);
       color: var(--text);
-      font-size: 13px;
+      font-size: 14px;
+      line-height: 1.5;
       overflow-wrap: anywhere;
     }
     .state-ribbon {
@@ -340,10 +382,10 @@ export function buildControlCenterHtml({ snapshot, designContract } = {}) {
       min-height: 46px;
       padding: 6px;
       border: 1px solid var(--line);
-      border-radius: 6px;
-      background: #fbfcfd;
-      font-size: 11px;
-      line-height: 1.25;
+      border-radius: 8px;
+      background: var(--surface-warm);
+      font-size: 12px;
+      line-height: 1.35;
       overflow-wrap: anywhere;
     }
     .state-pill strong {
@@ -376,42 +418,42 @@ export function buildControlCenterHtml({ snapshot, designContract } = {}) {
       margin-top: 10px;
       padding: 9px 10px;
       border: 1px solid #b7d2c5;
-      border-radius: 6px;
-      background: #f0f8f4;
+      border-radius: 10px;
+      background: var(--primary-soft);
       color: #1e5d43;
-      font-size: 12px;
+      font-size: 13px;
       font-weight: 700;
-      line-height: 1.35;
+      line-height: 1.5;
       overflow-wrap: anywhere;
     }
     .approval-stage {
       min-width: 0;
       min-height: 112px;
-      padding: 9px;
+      padding: 13px;
       border: 1px solid var(--line);
-      border-radius: 6px;
-      background: #fbfcfd;
-      font-size: 11px;
-      line-height: 1.25;
+      border-radius: 10px;
+      background: linear-gradient(180deg, #ffffff, var(--surface-warm));
+      font-size: 12px;
+      line-height: 1.35;
       overflow-wrap: anywhere;
     }
     .approval-stage-number {
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      width: 22px;
-      height: 22px;
-      margin-bottom: 5px;
+      width: 26px;
+      height: 26px;
+      margin-bottom: 8px;
       border-radius: 50%;
       background: var(--approval);
       color: #fff;
-      font-size: 11px;
+      font-size: 12px;
       font-weight: 800;
     }
     .approval-stage strong {
       display: block;
       color: var(--text);
-      font-size: 12px;
+      font-size: 13px;
     }
     .blocked-actions strong {
       display: block;
@@ -429,16 +471,16 @@ export function buildControlCenterHtml({ snapshot, designContract } = {}) {
       display: block;
       margin-top: 3px;
       color: var(--muted);
-      font-size: 10px;
-      line-height: 1.25;
+      font-size: 11px;
+      line-height: 1.4;
       word-break: keep-all;
       overflow-wrap: anywhere;
     }
     .blocked-actions {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(154px, 1fr));
-      gap: 5px;
-      margin-top: 8px;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 8px;
+      margin-top: 10px;
     }
     .blocked-actions strong {
       grid-column: 1 / -1;
@@ -446,27 +488,62 @@ export function buildControlCenterHtml({ snapshot, designContract } = {}) {
     }
     .blocked-action {
       min-width: 0;
-      padding: 6px 7px;
+      padding: 10px 11px;
       border: 1px solid var(--line);
-      border-radius: 6px;
-      background: #fffaf0;
+      border-radius: 9px;
+      background: var(--amber-soft);
       color: #725200;
-      font-size: 10px;
+      font-size: 12px;
       font-weight: 700;
       overflow-wrap: anywhere;
     }
+    .blocked-action[data-authority-tone="ready"],
+    .blocked-action[data-authority-level="read_only"] {
+      border-color: #b7dacd;
+      background: var(--primary-soft);
+      color: var(--ready);
+    }
+    .blocked-action[data-authority-tone="review"],
+    .blocked-action[data-authority-level="write"] {
+      border-color: #e1c987;
+      background: var(--amber-soft);
+      color: var(--review);
+    }
+    .blocked-action[data-authority-tone="approval_required"],
+    .blocked-action[data-authority-level="dry_run"],
+    .blocked-action[data-authority-level="external_send"] {
+      border-color: #c2d5ea;
+      background: var(--blue-soft);
+      color: var(--approval);
+    }
+    .blocked-action[data-authority-tone="blocked"],
+    .blocked-action[data-authority-level="destructive"] {
+      border-color: #e7b3ad;
+      background: var(--red-soft);
+      color: var(--blocked);
+    }
+    .blocked-action[data-authority-level="paid_action"] {
+      border-color: #d4ccef;
+      background: var(--violet-soft);
+      color: #6e5aa8;
+    }
     .blocked-action-detail {
       display: block;
-      margin-top: 2px;
+      margin-top: 4px;
       color: var(--muted);
-      font-size: 9px;
+      font-size: 11px;
       font-weight: 600;
+      line-height: 1.4;
     }
     .blocked-action-label {
-      display: block;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
       color: var(--muted);
-      font-size: 9px;
-      text-transform: uppercase;
+      font-size: 11px;
+      text-transform: none;
+      margin-right: 4px;
+      margin-bottom: 4px;
     }
     .work-thread-preview {
       display: grid;
@@ -478,28 +555,29 @@ export function buildControlCenterHtml({ snapshot, designContract } = {}) {
     .work-signal {
       min-width: 0;
       border: 1px solid var(--line);
-      border-radius: 6px;
-      background: #fbfcfd;
-      padding: 8px;
-      font-size: 12px;
+      border-radius: 10px;
+      background: var(--surface-warm);
+      padding: 12px;
+      font-size: 13px;
       overflow-wrap: anywhere;
     }
     .work-composer {
-      background: #f7fafc;
+      background: var(--blue-soft);
+      border-color: #c2d5ea;
     }
     .work-composer strong,
     .work-message strong,
     .work-signal strong {
       display: block;
       color: var(--muted);
-      font-size: 10px;
-      text-transform: uppercase;
+      font-size: 11px;
+      text-transform: none;
     }
     .work-surface-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-      gap: 6px;
-      margin-top: 8px;
+      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      gap: 8px;
+      margin-top: 10px;
     }
     .panel-action {
       display: inline-flex;
@@ -508,8 +586,8 @@ export function buildControlCenterHtml({ snapshot, designContract } = {}) {
       min-height: 32px;
       padding: 6px 8px;
       border: 1px solid var(--line);
-      border-radius: 6px;
-      background: var(--surface-muted);
+      border-radius: 8px;
+      background: var(--surface-warm);
       color: var(--text);
       font-size: 12px;
       font-weight: 700;
@@ -569,16 +647,16 @@ export function buildControlCenterHtml({ snapshot, designContract } = {}) {
       flex: 0 0 auto;
       border: 1px solid currentColor;
       border-radius: 999px;
-      padding: 3px 8px;
+      padding: 4px 9px;
       font-size: 12px;
       font-weight: 700;
       white-space: nowrap;
-      background: #fff;
+      background: var(--surface-warm);
     }
-    .status-ready { color: var(--ready); }
-    .status-review { color: var(--review); }
-    .status-blocked { color: var(--blocked); }
-    .status-approval_required { color: var(--approval); }
+    .status-ready { color: var(--ready); background: var(--primary-soft); }
+    .status-review { color: var(--review); background: var(--amber-soft); }
+    .status-blocked { color: var(--blocked); background: var(--red-soft); }
+    .status-approval_required { color: var(--approval); background: var(--blue-soft); }
     .status-not_applicable,
     .status-unknown { color: var(--unknown); }
     .side-section + .side-section {
@@ -1019,7 +1097,7 @@ function coreWorkSurfaceHtml(panel) {
               </div>
               ${surface.workspaceThread.threadPreview.map((message) => `
               <div class="work-message" data-work-message-role="${escapeHtml(message.role)}">
-                <strong>${escapeHtml(message.label)} · ${escapeHtml(message.state)}</strong>
+                <strong>${escapeHtml(message.label)} · ${escapeHtml(uiLabel(message.state))}</strong>
                 ${escapeHtml(message.text)}
               </div>`).join("")}
               <div class="work-surface-grid" aria-label="Core work surface state">
@@ -1036,8 +1114,8 @@ function coreWorkSurfaceHtml(panel) {
               </div>
               <div class="blocked-actions" aria-label="Core work surface closed authority actions" data-authority-boundary="closed">
                 <strong>닫힌 실행 경계</strong>
-                <span class="blocked-action"><span class="blocked-action-label">요약</span>no external action · no tool activation · no live model connector execution<span class="blocked-action-detail">아직 전송/실행/연결은 열리지 않음</span></span>
-                ${closedActions.slice(0, 6).map((action) => `<span class="blocked-action"><span class="blocked-action-label">잠김</span>${escapeHtml(action)}<span class="blocked-action-detail">preview only</span></span>`).join("")}
+                <span class="blocked-action"><span class="blocked-action-label">요약</span>외부 행동 없음 · 도구 실행 없음 · 모델 연결 실행 없음<span class="blocked-action-detail">아직 전송/실행/연결은 열리지 않음</span></span>
+                ${closedActions.slice(0, 6).map((action) => `<span class="blocked-action"><span class="blocked-action-label">잠김</span>${escapeHtml(uiLabel(action))}<span class="blocked-action-detail">미리보기만</span></span>`).join("")}
               </div>
               <div class="work-surface-grid" aria-label="Context and skill route anchors">
                 ${workSignal("Context Anchor", contextCandidates[0]?.anchor || "none")}
@@ -1049,7 +1127,7 @@ function coreWorkSurfaceHtml(panel) {
 }
 
 function workSignal(label, value) {
-  return `<div class="work-signal"><strong>${escapeHtml(label)}</strong>${escapeHtml(value || "none")}</div>`;
+  return `<div class="work-signal"><strong>${escapeHtml(label)}</strong>${escapeHtml(uiLabel(value || "none"))}</div>`;
 }
 
 function coreWorkSurfaceInspectorRows(panel) {
@@ -1199,7 +1277,7 @@ function executionApprovalHtml(panel) {
             <div class="approval-flow" aria-label="Execution proposal confirmation" data-execution-proposal-confirmation="preview-only">
               <p class="approval-safe-note" data-execution-no-write="true">${escapeHtml(data.uxContract.noExecutionNotice)} ${escapeHtml(data.uxContract.primaryQuestion)}</p>
               <div class="approval-stage" data-execution-proposal="${escapeHtml(proposal.id || "unknown")}">
-                <span class="approval-stage-number" data-authority-icon="${escapeHtml(data.authorityDisplay.icon)}">${escapeHtml(data.authorityDisplay.shortLabel)}</span>
+                <span class="approval-stage-number" data-authority-icon="${escapeHtml(data.authorityDisplay.icon)}">${escapeHtml(iconSymbol(data.authorityDisplay.icon))}</span>
                 <strong>${escapeHtml(proposal.title || "실행 전 확인")}</strong>
                 <span class="approval-stage-status">${escapeHtml(data.authorityDisplay.label)}</span>
                 <small>${escapeHtml(proposal.userSummary || proposal.expectedEffect || "")}</small>
@@ -1214,7 +1292,7 @@ function executionApprovalHtml(panel) {
                 <strong>권한 단계</strong>
                 ${authorityLegend.map((level) => `
                 <span class="blocked-action" data-authority-level="${escapeHtml(level.id)}" data-authority-tone="${escapeHtml(level.tone)}">
-                  <span class="blocked-action-label">${escapeHtml(level.icon)}</span>${escapeHtml(level.label)}
+                  <span class="blocked-action-label">${escapeHtml(iconSymbol(level.icon))}</span>${escapeHtml(level.label)}
                   <span class="blocked-action-detail">${escapeHtml(level.description)}</span>
                 </span>`).join("")}
               </div>
@@ -1304,6 +1382,26 @@ function statePill(label, value) {
 function statusChip(status) {
   const normalized = String(status || "unknown");
   return `<span class="status status-${escapeHtml(normalized)}">${escapeHtml(STATUS_LABELS[normalized] || normalized)}</span>`;
+}
+
+function uiLabel(value) {
+  return UI_LABELS[String(value)] || value;
+}
+
+function iconSymbol(icon) {
+  const symbols = {
+    eye: "○",
+    scan: "◇",
+    "edit-3": "✎",
+    send: "→",
+    "octagon-alert": "!",
+    "circle-dollar-sign": "$",
+    shield: "◇",
+    history: "↺",
+    rotate: "↻",
+    route: "⇄",
+  };
+  return symbols[icon] || "•";
 }
 
 function inspectorRow(label, value) {

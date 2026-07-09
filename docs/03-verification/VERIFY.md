@@ -190,3 +190,19 @@ GPAO-T design reference gate:
   - Mobile full page: `docs/03-verification/evidence/design-reference-gate-2026-07-09-control-center-mobile-full-390x844.png`
 - Required invariant: future UI/UX slices may not close with "design reference applied" unless the affected screens have screenshot evidence and a human-eye visual polish, color, layout, icon, Korean typography, tone, and product-quality-risk review.
 - Required blocked boundary: actual approval record write, audit write, dry-run invocation, tool/CLI/MCP execution, connector activation, credential access, external send, paid/destructive action, and durable memory promotion remain blocked.
+
+GPAO-T Design Reference Realization Pass 001:
+
+- QA report: `docs/03-verification/evidence/design-realization-pass-001-qa-2026-07-09.json`
+- Human-readable report: `docs/03-verification/evidence/DESIGN-REALIZATION-PASS-001-QA-2026-07-09.md`
+- Screens changed: Control Center Work Surface panel, Control Center Execution Approval panel, Work Surface, Execution Approval / Approval Record Write UX surfaces, and Design Reference Gate tone system.
+- Visual evidence:
+  - Control Center desktop: `docs/03-verification/evidence/design-realization-pass-001-control-center-desktop-1440x960.png`
+  - Control Center mobile: `docs/03-verification/evidence/design-realization-pass-001-control-center-mobile-390x844.png`
+  - Work Surface desktop: `docs/03-verification/evidence/design-realization-pass-001-work-surface-desktop-1440x960.png`
+  - Work Surface mobile: `docs/03-verification/evidence/design-realization-pass-001-work-surface-mobile-390x844.png`
+- Applied tokens: `#F5F7F2`, `#EEF3EC`, `#FBFCF8`, `#DDE5DC`, `#BFD0C0`, `#17211B`, `#526257`, `#1F7A64`, `#2E6DAE`, `#A86F1D`, `#A9473F`, and `#6E5AA8`.
+- Required score threshold: human visual QA, visual polish, color quality, layout rhythm, Korean typography, and tone-and-manner must all be 4.0 or higher before calling the pass ready.
+- QA result: human visual QA 4.2, visual polish 4.1, color quality 4.4, layout rhythm 4.1, Korean typography 4.2, tone-and-manner 4.2.
+- Remaining risk: Control Center technical sidebar language, English pack descriptions in Work Surface right rail, fallback icon system, and one fallback desktop capture dimension should be improved in the next visual readiness pass.
+- Required blocked boundary: actual approval record write, audit write, dry-run invocation, tool/CLI/MCP execution, connector activation, credential access, external send, paid/destructive action, and durable memory promotion remain blocked.

@@ -22,6 +22,38 @@ const CLOSED_ACTIONS = [
   "recurring automation",
 ];
 
+const UI_LABELS = {
+  ready: "준비됨",
+  review: "검토 필요",
+  blocked: "잠김",
+  allowed: "허용됨",
+  draft_not_sent: "초안 · 미전송",
+  preview_only: "미리보기만",
+  visible_preview_only: "미리보기만",
+  visible_local_preview_structure: "로컬 preview",
+  confirm_before_draft: "초안 전 확인",
+  attached_preview: "근거 연결됨",
+  review_needed: "확인 필요",
+  locked: "잠김",
+  locked_before_execution: "실행 전 잠김",
+  blocked_until_future_approval: "승인 전 잠김",
+  local_execution_plan: "로컬 계획",
+  "external action": "외부 행동",
+  "tool activation": "도구 실행",
+  "model connector live execution": "모델 연결 실행",
+  "connector activation": "커넥터 활성화",
+  "approval record write": "승인 기록 쓰기",
+  "dry-run invocation": "미리보기 실행",
+  "durable memory promotion": "지속 기억 승격",
+  "self-growth apply": "자가성장 적용",
+  deployment: "배포",
+  "messenger send": "메신저 전송",
+  "recurring automation": "반복 자동화",
+  general_request: "일반 요청",
+  cli: "CLI 후보",
+  dry_run: "미리보기 실행 후보",
+};
+
 export function buildCoreWorkSurface({
   root,
   draftRequest = DEFAULT_DRAFT_REQUEST,
@@ -610,25 +642,37 @@ export function buildCoreWorkSurfaceHtml({ surface } = {}) {
   <style>
     :root {
       color-scheme: light;
-      --bg: #f6f7f9;
+      --bg: #f5f7f2;
+      --bg-soft: #eef3ec;
       --surface: #ffffff;
-      --muted: #607080;
-      --text: #17202a;
-      --line: #d9e1e8;
-      --soft: #eef3f7;
-      --ready: #0b7a53;
-      --review: #986000;
-      --blocked: #b42318;
-      --accent: #2857a3;
+      --surface-warm: #fbfcf8;
+      --surface-soft: #eef3ec;
+      --muted: #526257;
+      --soft-text: #6d7b70;
+      --text: #17211b;
+      --line: #dde5dc;
+      --line-strong: #bfd0c0;
+      --soft: #eef3ec;
+      --ready: #1f7a64;
+      --review: #a86f1d;
+      --blocked: #a9473f;
+      --accent: #2e6dae;
+      --primary-soft: #e4f3ed;
+      --blue-soft: #e8f1fa;
+      --amber-soft: #fff4d8;
+      --red-soft: #fbe9e7;
+      --violet-soft: #efecfa;
+      --shadow: 0 1px 2px rgba(23, 33, 27, 0.05), 0 16px 42px rgba(23, 33, 27, 0.07);
     }
     * { box-sizing: border-box; }
     html, body { max-width: 100%; overflow-x: hidden; }
     body {
       margin: 0;
-      background: var(--bg);
+      background:
+        radial-gradient(circle at 12% 0, rgba(255, 255, 255, 0.95), rgba(245, 247, 242, 0.88) 34%, rgba(238, 243, 236, 0.95) 100%);
       color: var(--text);
-      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      line-height: 1.45;
+      font-family: Pretendard, "Apple SD Gothic Neo", "SF Pro Display", "SF Pro Text", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      line-height: 1.55;
     }
     .topbar {
       position: sticky;
@@ -639,9 +683,10 @@ export function buildCoreWorkSurfaceHtml({ surface } = {}) {
       justify-content: flex-start;
       flex-wrap: wrap;
       gap: 16px;
-      padding: 14px 18px;
+      padding: 14px 22px;
       border-bottom: 1px solid var(--line);
-      background: var(--surface);
+      background: rgba(255, 255, 255, 0.88);
+      backdrop-filter: blur(18px);
     }
     .topbar-main {
       min-width: 0;
@@ -649,49 +694,62 @@ export function buildCoreWorkSurfaceHtml({ surface } = {}) {
     }
     .topbar-action {
       margin-top: 4px;
-      color: var(--review);
+      color: var(--muted);
       font-size: 12px;
       font-weight: 800;
       overflow-wrap: anywhere;
       word-break: keep-all;
     }
     h1, h2, h3, p { margin: 0; letter-spacing: 0; }
-    h1 { font-size: 19px; line-height: 1.2; }
-    h2 { font-size: 15px; }
-    h3 { font-size: 13px; }
-    .subtitle, .muted { color: var(--muted); font-size: 12px; overflow-wrap: anywhere; }
+    h1 { font-size: 20px; line-height: 1.2; }
+    h2 { font-size: 16px; }
+    h3 { font-size: 14px; }
+    .subtitle, .muted {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.5;
+      overflow-wrap: anywhere;
+      word-break: keep-all;
+    }
     .status {
-      border: 1px solid currentColor;
+      border: 1px solid #b7dacd;
       border-radius: 999px;
-      padding: 3px 8px;
+      padding: 4px 9px;
       color: var(--ready);
-      background: #fff;
+      background: var(--primary-soft);
       flex: 0 0 auto;
       font-size: 12px;
       font-weight: 800;
       white-space: nowrap;
+      align-self: flex-start;
     }
     .layout {
       display: grid;
       grid-template-columns: minmax(0, 1.1fr) minmax(280px, 0.9fr);
-      gap: 14px;
-      padding: 16px;
-      max-width: 1280px;
+      gap: 16px;
+      padding: 18px;
+      max-width: 1320px;
       margin: 0 auto;
     }
     .thread, .panel, .composer, .message, .state-card {
       border: 1px solid var(--line);
-      border-radius: 8px;
-      background: var(--surface);
-      box-shadow: 0 1px 2px rgba(23, 32, 42, 0.06);
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.94);
+      box-shadow: var(--shadow);
     }
-    .thread, .panel { padding: 14px; min-width: 0; }
+    .thread {
+      border-color: var(--line-strong);
+      background: rgba(255, 255, 255, 0.96);
+    }
+    .thread, .panel { padding: 18px; min-width: 0; }
     .panel + .panel { margin-top: 12px; }
     .composer {
       min-height: 118px;
       margin-top: 12px;
       padding: 12px;
-      background: #fbfcfd;
+      background: var(--blue-soft);
+      border-color: #c2d5ea;
+      box-shadow: none;
     }
     .composer-label {
       display: flex;
@@ -709,14 +767,17 @@ export function buildCoreWorkSurfaceHtml({ surface } = {}) {
       margin-top: 8px;
       min-height: 62px;
       color: var(--text);
-      font-size: 14px;
+      font-size: 15px;
+      line-height: 1.55;
       overflow-wrap: anywhere;
+      word-break: keep-all;
     }
     .composer-lock {
       margin-top: 8px;
       color: var(--review);
       font-size: 12px;
       font-weight: 800;
+      line-height: 1.4;
     }
     .message-list {
       display: grid;
@@ -734,18 +795,18 @@ export function buildCoreWorkSurfaceHtml({ surface } = {}) {
       min-height: 82px;
       padding: 10px;
       border: 1px solid var(--line);
-      border-radius: 8px;
-      background: #fbfcfd;
+      border-radius: 10px;
+      background: var(--surface-warm);
     }
     .understanding-card[data-tone="locked"] {
-      border-color: #efd2a8;
-      background: #fffaf0;
+      border-color: #e1c987;
+      background: var(--amber-soft);
     }
     .understanding-card strong {
       display: block;
       color: var(--muted);
       font-size: 11px;
-      text-transform: uppercase;
+      text-transform: none;
       overflow-wrap: anywhere;
     }
     .understanding-card span {
@@ -754,6 +815,7 @@ export function buildCoreWorkSurfaceHtml({ surface } = {}) {
       font-size: 12px;
       font-weight: 800;
       overflow-wrap: anywhere;
+      word-break: keep-all;
     }
     .readability-panel {
       display: grid;
@@ -763,8 +825,8 @@ export function buildCoreWorkSurfaceHtml({ surface } = {}) {
     .readability-panel details {
       min-width: 0;
       border: 1px solid var(--line);
-      border-radius: 8px;
-      background: #fbfcfd;
+      border-radius: 10px;
+      background: var(--surface-warm);
       padding: 10px;
     }
     .readability-panel summary {
@@ -776,8 +838,10 @@ export function buildCoreWorkSurfaceHtml({ surface } = {}) {
     .readability-panel p,
     .readability-panel li {
       color: var(--muted);
-      font-size: 12px;
+      font-size: 13px;
+      line-height: 1.55;
       overflow-wrap: anywhere;
+      word-break: keep-all;
     }
     .readability-panel ul {
       margin: 8px 0 0;
@@ -787,15 +851,15 @@ export function buildCoreWorkSurfaceHtml({ surface } = {}) {
       margin-top: 10px;
       padding: 10px;
       border: 1px solid #c9dccf;
-      border-radius: 8px;
-      background: #f5fbf7;
+      border-radius: 10px;
+      background: var(--primary-soft);
     }
     .confirmation-card {
       margin-top: 12px;
       padding: 12px;
       border: 1px solid #b9c9df;
-      border-radius: 8px;
-      background: #f8fbff;
+      border-radius: 12px;
+      background: var(--blue-soft);
     }
     .confirmation-head {
       display: flex;
@@ -815,12 +879,12 @@ export function buildCoreWorkSurfaceHtml({ surface } = {}) {
       min-height: 90px;
       padding: 10px;
       border: 1px solid var(--line);
-      border-radius: 8px;
+      border-radius: 10px;
       background: var(--surface);
     }
     .confirmation-item[data-state="locked"] {
       border-color: #efd2a8;
-      background: #fffaf0;
+      background: var(--amber-soft);
     }
     .confirmation-item strong,
     .confirmation-item span {
@@ -830,12 +894,13 @@ export function buildCoreWorkSurfaceHtml({ surface } = {}) {
     .confirmation-item strong {
       color: var(--muted);
       font-size: 11px;
-      text-transform: uppercase;
+      text-transform: none;
     }
     .confirmation-item span {
       margin-top: 6px;
       font-size: 12px;
       font-weight: 800;
+      line-height: 1.45;
     }
     .confirmation-note {
       margin-top: 10px;
@@ -848,8 +913,8 @@ export function buildCoreWorkSurfaceHtml({ surface } = {}) {
       margin-top: 12px;
       padding: 12px;
       border: 1px solid #b7d7c6;
-      border-radius: 8px;
-      background: #f8fcfa;
+      border-radius: 12px;
+      background: var(--primary-soft);
     }
     .draft-preview-head {
       display: flex;
@@ -869,17 +934,17 @@ export function buildCoreWorkSurfaceHtml({ surface } = {}) {
       min-height: 92px;
       padding: 10px;
       border: 1px solid var(--line);
-      border-radius: 8px;
+      border-radius: 10px;
       background: var(--surface);
     }
     .draft-preview-item[data-state*="blocked"],
     .draft-preview-item[data-state*="locked"] {
       border-color: #efd2a8;
-      background: #fffaf0;
+      background: var(--amber-soft);
     }
     .draft-preview-item[data-state*="review"] {
       border-color: #e0cc8f;
-      background: #fffdf3;
+      background: var(--amber-soft);
     }
     .draft-preview-item strong,
     .draft-preview-item span {
@@ -889,12 +954,13 @@ export function buildCoreWorkSurfaceHtml({ surface } = {}) {
     .draft-preview-item strong {
       color: var(--muted);
       font-size: 11px;
-      text-transform: uppercase;
+      text-transform: none;
     }
     .draft-preview-item span {
       margin-top: 6px;
       font-size: 12px;
       font-weight: 800;
+      line-height: 1.45;
     }
     .draft-state-strip {
       display: grid;
@@ -906,12 +972,12 @@ export function buildCoreWorkSurfaceHtml({ surface } = {}) {
       min-width: 0;
       padding: 9px;
       border: 1px solid var(--line);
-      border-radius: 8px;
-      background: #fbfcfd;
+      border-radius: 10px;
+      background: var(--surface-warm);
     }
     .draft-state[data-local-draft-state="blocked"] {
       border-color: #efd2a8;
-      background: #fffaf0;
+      background: var(--amber-soft);
     }
     .draft-state strong,
     .draft-state span {
@@ -923,17 +989,19 @@ export function buildCoreWorkSurfaceHtml({ surface } = {}) {
       margin-top: 4px;
       color: var(--muted);
       font-size: 12px;
+      line-height: 1.5;
     }
     .preview-bridge {
       margin-top: 10px;
       padding: 9px;
       border: 1px solid #cdd8e5;
-      border-radius: 8px;
-      background: #f8fbff;
+      border-radius: 10px;
+      background: var(--blue-soft);
       color: var(--accent);
       font-size: 12px;
       font-weight: 800;
       overflow-wrap: anywhere;
+      word-break: keep-all;
     }
     .preview-decision-strip {
       display: grid;
@@ -946,20 +1014,20 @@ export function buildCoreWorkSurfaceHtml({ surface } = {}) {
       min-height: 106px;
       padding: 10px;
       border: 1px solid var(--line);
-      border-radius: 8px;
+      border-radius: 10px;
       background: var(--surface);
     }
     .preview-decision[data-state="preview_only"] {
       border-color: #b7d7c6;
-      background: #f8fcfa;
+      background: var(--primary-soft);
     }
     .preview-decision[data-state="review_needed"] {
       border-color: #e0cc8f;
-      background: #fffdf3;
+      background: var(--amber-soft);
     }
     .preview-decision[data-state="held"] {
       border-color: #cdd8e5;
-      background: #fbfcfd;
+      background: var(--surface-warm);
     }
     .preview-decision strong,
     .preview-decision span {
@@ -973,13 +1041,14 @@ export function buildCoreWorkSurfaceHtml({ surface } = {}) {
       margin-top: 5px;
       color: var(--muted);
       font-size: 12px;
+      line-height: 1.5;
     }
     .preview-checklist {
       margin-top: 10px;
       padding: 10px;
       border: 1px solid #c9dccf;
-      border-radius: 8px;
-      background: #f5fbf7;
+      border-radius: 10px;
+      background: var(--primary-soft);
     }
     .preview-checklist strong {
       display: block;
@@ -996,8 +1065,8 @@ export function buildCoreWorkSurfaceHtml({ surface } = {}) {
       margin-top: 12px;
       padding: 12px;
       border: 1px solid #d8c8f0;
-      border-radius: 8px;
-      background: #fbf8ff;
+      border-radius: 12px;
+      background: var(--violet-soft);
     }
     .execution-proposal-head {
       display: flex;
@@ -1010,7 +1079,7 @@ export function buildCoreWorkSurfaceHtml({ surface } = {}) {
       margin-top: 10px;
       padding: 10px;
       border: 1px solid #d8c8f0;
-      border-radius: 8px;
+      border-radius: 10px;
       background: var(--surface);
       overflow-wrap: anywhere;
     }
@@ -1029,24 +1098,24 @@ export function buildCoreWorkSurfaceHtml({ surface } = {}) {
       min-height: 104px;
       padding: 10px;
       border: 1px solid var(--line);
-      border-radius: 8px;
+      border-radius: 10px;
       background: var(--surface);
     }
     .authority-level[data-tone="ready"] {
       border-color: #b7d7c6;
-      background: #f8fcfa;
+      background: var(--primary-soft);
     }
     .authority-level[data-tone="review"] {
       border-color: #e0cc8f;
-      background: #fffdf3;
+      background: var(--amber-soft);
     }
     .authority-level[data-tone="approval_required"] {
       border-color: #c9d8ee;
-      background: #f8fbff;
+      background: var(--blue-soft);
     }
     .authority-level[data-tone="blocked"] {
       border-color: #e7b3ad;
-      background: #fff7f6;
+      background: var(--red-soft);
     }
     .authority-level strong,
     .authority-level span,
@@ -1063,6 +1132,7 @@ export function buildCoreWorkSurfaceHtml({ surface } = {}) {
     .approval-rule strong,
     .audit-item strong {
       font-size: 12px;
+      line-height: 1.4;
     }
     .authority-level span,
     .approval-rule span,
@@ -1070,6 +1140,7 @@ export function buildCoreWorkSurfaceHtml({ surface } = {}) {
       margin-top: 5px;
       color: var(--muted);
       font-size: 12px;
+      line-height: 1.5;
     }
     .audit-item span {
       color: var(--text);
@@ -1096,7 +1167,12 @@ export function buildCoreWorkSurfaceHtml({ surface } = {}) {
       color: var(--muted);
       font-size: 12px;
     }
-    .message p { font-size: 13px; overflow-wrap: anywhere; }
+    .message p {
+      font-size: 14px;
+      line-height: 1.55;
+      overflow-wrap: anywhere;
+      word-break: keep-all;
+    }
     .state-grid {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1112,7 +1188,7 @@ export function buildCoreWorkSurfaceHtml({ surface } = {}) {
       display: block;
       color: var(--muted);
       font-size: 11px;
-      text-transform: uppercase;
+      text-transform: none;
     }
     .state-card span {
       display: block;
@@ -1129,8 +1205,8 @@ export function buildCoreWorkSurfaceHtml({ surface } = {}) {
     .item {
       padding: 9px;
       border: 1px solid var(--line);
-      border-radius: 7px;
-      background: var(--soft);
+      border-radius: 10px;
+      background: var(--surface-warm);
       min-width: 0;
     }
     .item strong, .item span {
@@ -1148,12 +1224,13 @@ export function buildCoreWorkSurfaceHtml({ surface } = {}) {
     .lock {
       padding: 7px 8px;
       border: 1px solid #efd2a8;
-      border-radius: 7px;
-      background: #fffaf0;
+      border-radius: 8px;
+      background: var(--amber-soft);
       color: #775200;
       font-size: 11px;
       font-weight: 800;
       overflow-wrap: anywhere;
+      line-height: 1.35;
     }
     .next {
       margin-top: 12px;
@@ -1180,6 +1257,10 @@ export function buildCoreWorkSurfaceHtml({ surface } = {}) {
       }
       .topbar-main { width: 100%; }
       .topbar-action { max-width: 100%; }
+      .status {
+        align-self: flex-start;
+        max-width: 120px;
+      }
       .layout { padding-top: 160px; }
       .state-grid, .authority-strip, .understanding-strip, .confirmation-grid, .draft-preview-grid, .preview-decision-strip { grid-template-columns: 1fr; }
       .authority-level-grid, .approval-packet-grid, .audit-preview-grid { grid-template-columns: 1fr; }
@@ -1194,7 +1275,7 @@ export function buildCoreWorkSurfaceHtml({ surface } = {}) {
       <p class="subtitle">작업 초안 · 맥락 프리뷰 · 권한 경계</p>
       <p class="topbar-action">다음 안전 행동: 의도 확인 · 수정/보류 선택 · 실행 없음</p>
     </div>
-    <span class="status">${escapeHtml(workSurface.status)}</span>
+    <span class="status">${escapeHtml(uiLabel(workSurface.status))}</span>
   </header>
   <main class="layout">
     <section class="thread" aria-label="GPAO-T work thread">
@@ -1211,7 +1292,7 @@ export function buildCoreWorkSurfaceHtml({ surface } = {}) {
       <div class="message-list">
         ${workSurface.workspaceThread.threadPreview.map((message) => `
         <article class="message" data-message-role="${escapeHtml(message.role)}">
-          <strong>${escapeHtml(message.label)} · ${escapeHtml(message.state)}</strong>
+          <strong>${escapeHtml(message.label)} · ${escapeHtml(uiLabel(message.state))}</strong>
           <p>${escapeHtml(message.text)}</p>
         </article>`).join("")}
       </div>
@@ -1244,13 +1325,13 @@ export function buildCoreWorkSurfaceHtml({ surface } = {}) {
             <h2>${escapeHtml(workSurface.confirmationUx.title)}</h2>
             <p class="muted">${escapeHtml(workSurface.confirmationUx.userMessage)}</p>
           </div>
-          <span class="status">${escapeHtml(workSurface.confirmationUx.status)}</span>
+          <span class="status">${escapeHtml(uiLabel(workSurface.confirmationUx.status))}</span>
         </div>
         <div class="confirmation-grid">
           ${confirmationCards.map((card) => `
           <div class="confirmation-item" data-confirmation-card="${escapeHtml(card.id)}" data-state="${escapeHtml(card.state)}">
             <strong>${escapeHtml(card.label)}</strong>
-            <span>${escapeHtml(card.value)}</span>
+            <span>${escapeHtml(uiLabel(card.value))}</span>
           </div>`).join("")}
         </div>
         <p class="confirmation-note">${escapeHtml(workSurface.confirmationUx.noExecutionNotice)} · ${escapeHtml(workSurface.confirmationUx.confirmMeaning)}</p>
@@ -1261,14 +1342,14 @@ export function buildCoreWorkSurfaceHtml({ surface } = {}) {
             <h2>${escapeHtml(workSurface.localDraftPreview.headline)}</h2>
             <p class="muted">${escapeHtml(workSurface.localDraftPreview.purpose)}</p>
           </div>
-          <span class="status">${escapeHtml(workSurface.localDraftPreview.status)}</span>
+          <span class="status">${escapeHtml(uiLabel(workSurface.localDraftPreview.status))}</span>
         </div>
         <p class="preview-bridge">${escapeHtml(workSurface.localDraftPreview.bridgeFromConfirmation)}</p>
         <div class="draft-preview-grid">
           ${draftPreviewSections.map((section) => `
           <div class="draft-preview-item" data-local-draft-section="${escapeHtml(section.id)}" data-state="${escapeHtml(section.state)}">
             <strong>${escapeHtml(section.label)}</strong>
-            <span>${escapeHtml(section.value)}</span>
+            <span>${escapeHtml(uiLabel(section.value))}</span>
           </div>`).join("")}
         </div>
         <div class="draft-state-strip" aria-label="Local draft preview product states">
@@ -1312,13 +1393,13 @@ export function buildCoreWorkSurfaceHtml({ surface } = {}) {
         <div class="execution-proposal-summary">
           <strong>${escapeHtml(executionConfirmation.proposal.title)}</strong>
           <p>${escapeHtml(executionConfirmation.proposal.userSummary)}</p>
-          <p class="muted">tool kind: ${escapeHtml(executionConfirmation.proposal.toolKind)} · action: ${escapeHtml(executionConfirmation.proposal.actionType)} · risk: ${escapeHtml(executionConfirmation.proposal.risk)}</p>
+          <p class="muted">도구: ${escapeHtml(uiLabel(executionConfirmation.proposal.toolKind))} · 행동: ${escapeHtml(uiLabel(executionConfirmation.proposal.actionType))} · 위험: ${escapeHtml(executionConfirmation.proposal.risk)}</p>
           <p class="muted">rollback: ${escapeHtml(executionConfirmation.proposal.rollbackReference)}</p>
         </div>
         <div class="authority-level-grid" aria-label="Korean authority level display">
           ${authorityLegend.map((level) => `
           <div class="authority-level" data-authority-level="${escapeHtml(level.id)}" data-tone="${escapeHtml(level.tone)}">
-            <strong>${escapeHtml(level.icon)} · ${escapeHtml(level.label)}</strong>
+            <strong>${escapeHtml(iconSymbol(level.icon))} · ${escapeHtml(level.label)}</strong>
             <span>${escapeHtml(level.description)}</span>
           </div>`).join("")}
         </div>
@@ -1372,7 +1453,7 @@ export function buildCoreWorkSurfaceHtml({ surface } = {}) {
           ${(contextCandidates.length ? contextCandidates : [{ id: "empty", anchor: "no candidate admitted", score: 0, lifecycle: "preview" }]).map((candidate) => `
           <div class="item" data-context-candidate="${escapeHtml(candidate.id)}">
             <strong>${escapeHtml(candidate.anchor)}</strong>
-            <span>${escapeHtml(candidate.lifecycle)} · score ${escapeHtml(candidate.score)}</span>
+            <span>${escapeHtml(uiLabel(candidate.lifecycle))} · score ${escapeHtml(candidate.score)}</span>
           </div>`).join("")}
         </div>
       </article>
@@ -1383,7 +1464,7 @@ export function buildCoreWorkSurfaceHtml({ surface } = {}) {
           ${(selectedPacks.length ? selectedPacks : [{ id: "none", title: "No pack selected", routeRole: "review", firstQualityGate: "clarify request" }]).map((pack) => `
           <div class="item" data-skill-pack="${escapeHtml(pack.id)}">
             <strong>${escapeHtml(pack.title)}</strong>
-            <span>${escapeHtml(pack.routeRole)} · ${escapeHtml(pack.firstQualityGate)}</span>
+            <span>${escapeHtml(uiLabel(pack.routeRole))} · ${escapeHtml(pack.firstQualityGate)}</span>
           </div>`).join("")}
         </div>
       </article>
@@ -1391,7 +1472,7 @@ export function buildCoreWorkSurfaceHtml({ surface } = {}) {
         <h2>Authority / Approval</h2>
         <p class="muted">${escapeHtml(workSurface.authoritySummary.approvalStatus)}</p>
         <div class="authority-strip">
-          ${workSurface.authoritySummary.closedActions.slice(0, 8).map((action) => `<span class="lock">${escapeHtml(action)}</span>`).join("")}
+          ${workSurface.authoritySummary.closedActions.slice(0, 8).map((action) => `<span class="lock">${escapeHtml(uiLabel(action))}</span>`).join("")}
         </div>
       </article>
     </section>
@@ -1401,7 +1482,27 @@ export function buildCoreWorkSurfaceHtml({ surface } = {}) {
 }
 
 function stateCard(label, value) {
-  return `<div class="state-card"><strong>${escapeHtml(label)}</strong><span>${escapeHtml(value || "none")}</span></div>`;
+  return `<div class="state-card"><strong>${escapeHtml(label)}</strong><span>${escapeHtml(uiLabel(value || "none"))}</span></div>`;
+}
+
+function uiLabel(value) {
+  return UI_LABELS[String(value)] || value;
+}
+
+function iconSymbol(icon) {
+  const symbols = {
+    eye: "○",
+    scan: "◇",
+    "edit-3": "✎",
+    send: "→",
+    "octagon-alert": "!",
+    "circle-dollar-sign": "$",
+    shield: "◇",
+    history: "↺",
+    rotate: "↻",
+    route: "⇄",
+  };
+  return symbols[icon] || "•";
 }
 
 function escapeHtml(value) {

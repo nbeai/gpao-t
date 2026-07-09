@@ -108,6 +108,14 @@ const DESIGN_REFERENCE_GATE_QA_DOC = fileURLToPath(new URL(
   "../docs/03-verification/evidence/DESIGN-REFERENCE-GATE-QA-2026-07-09.md",
   import.meta.url,
 ));
+const DESIGN_REALIZATION_PASS_001_QA_JSON = fileURLToPath(new URL(
+  "../docs/03-verification/evidence/design-realization-pass-001-qa-2026-07-09.json",
+  import.meta.url,
+));
+const DESIGN_REALIZATION_PASS_001_QA_DOC = fileURLToPath(new URL(
+  "../docs/03-verification/evidence/DESIGN-REALIZATION-PASS-001-QA-2026-07-09.md",
+  import.meta.url,
+));
 const WORK_SURFACE_VISUAL_QA_JSON = fileURLToPath(new URL(
   "../docs/03-verification/evidence/work-surface-visual-qa-baseline-2026-07-09.json",
   import.meta.url,
@@ -432,7 +440,7 @@ describe("GPAO-T Local Control Center readiness", () => {
     assert.match(html, /data-composer-state="draft-not-sent"/);
     assert.match(html, /작업 입력/);
     assert.match(html, /닫힌 실행 경계/);
-    assert.match(html, /no external action/);
+    assert.match(html, /외부 행동 없음/);
     assert.match(html, /다음 안전 행동/);
     assert.match(html, /권한 경계/);
     assert.match(html, /data-panel="memory"/);
@@ -796,6 +804,7 @@ describe("GPAO-T Local Control Center readiness", () => {
     assert.match(html, /외부 전송 전 확인/);
     assert.match(html, /되돌리기 어려움/);
     assert.match(html, /비용 발생 가능/);
+    assert.doesNotMatch(html, />\s*(eye|scan|edit-3|send|octagon-alert|circle-dollar-sign)\s*·/);
     assert.match(html, /data-approval-packet-validation="design-only"/);
     assert.match(html, /data-audit-write-design="no-write"/);
     assert.match(html, /data-audit-preview="design-only"/);
@@ -941,8 +950,8 @@ describe("GPAO-T Local Control Center readiness", () => {
     assert.match(html, /\.panel\[data-panel="approval-preview"\] \{[\s\S]*grid-column: 1 \/ -1/);
     assert.match(html, /\.panel\[data-panel="execution-approval"\] \{[\s\S]*grid-column: 1 \/ -1/);
     assert.match(html, /\.approval-flow \{[\s\S]*grid-template-columns: repeat\(5, minmax\(0, 1fr\)\)/);
-    assert.match(html, /\.blocked-actions \{[\s\S]*grid-template-columns: repeat\(auto-fit, minmax\(154px, 1fr\)\)/);
-    assert.match(html, /\.work-surface-grid \{[\s\S]*grid-template-columns: repeat\(auto-fit, minmax\(150px, 1fr\)\)/);
+    assert.match(html, /\.blocked-actions \{[\s\S]*grid-template-columns: repeat\(auto-fit, minmax\(180px, 1fr\)\)/);
+    assert.match(html, /\.work-surface-grid \{[\s\S]*grid-template-columns: repeat\(auto-fit, minmax\(170px, 1fr\)\)/);
     assert.match(html, /\.state-pill \{[\s\S]*overflow-wrap: anywhere/);
     assert.match(html, /\.topbar \{[\s\S]*position: sticky/);
     assert.match(html, /\.topbar \{[\s\S]*position: fixed/);
@@ -1636,6 +1645,50 @@ describe("GPAO-T Local Control Center readiness", () => {
     assert.match(qaDoc, /Claude Code급 운영\/권한 UX/);
     assert.match(verifyDoc, /design-reference-gate-qa-2026-07-09\.json/);
     assert.match(verifyDoc, /GPAO-T design reference gate/);
+  });
+
+  it("keeps design realization pass 001 visual evidence and scores replayable", () => {
+    const qa = JSON.parse(readFileSync(DESIGN_REALIZATION_PASS_001_QA_JSON, "utf8"));
+    const qaDoc = readFileSync(DESIGN_REALIZATION_PASS_001_QA_DOC, "utf8");
+    const verifyDoc = readFileSync(VERIFY_DOC_PATH, "utf8");
+    const screenshotPaths = Object.values(qa.evidenceFiles);
+    const screenshots = screenshotPaths.map((relativePath) => readFileSync(join(ROOT, relativePath)));
+
+    assert.equal(qa.schema, "gpao_t.design_realization_pass_001_visual_qa.v0_1");
+    assert.equal(qa.status, "ready");
+    assert.equal(qa.scope, "GPAO-T Design Reference Realization Pass 001");
+    assert.equal(qa.fileFormat, "png");
+    assert.equal(qa.appliedScreens.includes("Control Center Work Surface panel"), true);
+    assert.equal(qa.appliedScreens.includes("Work Surface"), true);
+    assert.equal(qa.appliedScreens.includes("Execution Approval / Approval Record Write UX surfaces inside Work Surface"), true);
+    assert.equal(qa.appliedDesignTokens.background, "#F5F7F2");
+    assert.equal(qa.appliedDesignTokens.primary, "#1F7A64");
+    assert.equal(qa.appliedDesignTokens.blue, "#2E6DAE");
+    assert.equal(qa.appliedDesignTokens.amber, "#A86F1D");
+    assert.equal(qa.appliedDesignTokens.red, "#A9473F");
+    assert.equal(qa.appliedDesignTokens.violet, "#6E5AA8");
+    assert.equal(qa.visualAdjustments.some((item) => item.includes("raw icon names")), true);
+    assert.equal(qa.checks.length, 4);
+    assert.equal(qa.checks.every((check) => check.nonblankViewport), true);
+    assert.equal(qa.checks.every((check) => check.noHorizontalOverflow), true);
+    assert.equal(qa.checks.every((check) => check.authorityBoundaryVisible), true);
+    assert.equal(qa.checks.every((check) => check.nextSafeActionVisible), true);
+    assert.ok(qa.scores.humanVisualQa >= 4);
+    assert.ok(qa.scores.visualPolish >= 4);
+    assert.ok(qa.scores.colorQuality >= 4);
+    assert.ok(qa.scores.layoutRhythm >= 4);
+    assert.ok(qa.scores.koreanTypography >= 4);
+    assert.ok(qa.scores.toneAndManner >= 4);
+    assert.equal(qa.blockedActionsRemainClosed.includes("actual approval record write"), true);
+    assert.equal(qa.blockedActionsRemainClosed.includes("audit write"), true);
+    assert.equal(qa.blockedActionsRemainClosed.includes("tool/CLI/MCP execution"), true);
+    assert.equal(qa.blockedActionsRemainClosed.includes("durable memory promotion"), true);
+    assert.equal(screenshotPaths.every((relativePath) => existsSync(join(ROOT, relativePath))), true);
+    assert.equal(screenshots.every((bytes) => bytes[0] === 0x89 && bytes[1] === 0x50), true);
+    assert.match(qaDoc, /Human visual QA: 4\.2/);
+    assert.match(qaDoc, /All required categories are 4\.0 or higher/);
+    assert.match(verifyDoc, /design-realization-pass-001-qa-2026-07-09\.json/);
+    assert.match(verifyDoc, /human visual QA 4\.2/);
   });
 
   it("keeps execution approval UX visual QA evidence replayable and execution-free", () => {

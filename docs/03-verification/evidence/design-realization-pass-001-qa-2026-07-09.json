@@ -1,0 +1,127 @@
+{
+  "schema": "gpao_t.design_realization_pass_001_visual_qa.v0_1",
+  "status": "ready",
+  "capturedAt": "2026-07-09T15:23:00+09:00",
+  "scope": "GPAO-T Design Reference Realization Pass 001",
+  "fileFormat": "png",
+  "appliedScreens": [
+    "Control Center Work Surface panel",
+    "Control Center Execution Approval panel",
+    "Work Surface",
+    "Execution Approval / Approval Record Write UX surfaces inside Work Surface",
+    "Design Reference Gate tone system"
+  ],
+  "appliedDesignTokens": {
+    "background": "#F5F7F2",
+    "backgroundSoft": "#EEF3EC",
+    "surface": "#FFFFFF",
+    "surfaceWarm": "#FBFCF8",
+    "border": "#DDE5DC",
+    "borderStrong": "#BFD0C0",
+    "text": "#17211B",
+    "mutedText": "#526257",
+    "primary": "#1F7A64",
+    "blue": "#2E6DAE",
+    "amber": "#A86F1D",
+    "red": "#A9473F",
+    "violet": "#6E5AA8",
+    "radius": "10-12px",
+    "koreanBodyRhythm": "13-15px / 1.5-1.55"
+  },
+  "visualAdjustments": [
+    "Applied warm local-desk background, raised white surfaces, subtle green-tinted borders, and softer shadows.",
+    "Upgraded Control Center panels from raw card grid toward product inspector surfaces.",
+    "Upgraded Work Surface composer, confirmation card, local draft preview, execution approval, approval record preview, and authority locks with consistent card/chip grammar.",
+    "Replaced visible raw icon names with compact symbol fallback in user-facing authority labels.",
+    "Changed visible status and authority state strings from raw enum-like labels toward Korean product language where the primary UI reads them.",
+    "Improved Korean line-height, keep-all wrapping, mobile topbar rhythm, card spacing, and authority chip density."
+  ],
+  "evidenceFiles": {
+    "controlCenterDesktop": "docs/03-verification/evidence/design-realization-pass-001-control-center-desktop-1440x960.png",
+    "controlCenterMobile": "docs/03-verification/evidence/design-realization-pass-001-control-center-mobile-390x844.png",
+    "workSurfaceDesktop": "docs/03-verification/evidence/design-realization-pass-001-work-surface-desktop-1440x960.png",
+    "workSurfaceMobile": "docs/03-verification/evidence/design-realization-pass-001-work-surface-mobile-390x844.png"
+  },
+  "imageDimensionsObserved": {
+    "controlCenterDesktop": "1407x960",
+    "controlCenterMobile": "390x844",
+    "workSurfaceDesktop": "1200x729",
+    "workSurfaceMobile": "390x844"
+  },
+  "checks": [
+    {
+      "id": "control-center-desktop",
+      "nonblankViewport": true,
+      "noHorizontalOverflow": true,
+      "authorityBoundaryVisible": true,
+      "nextSafeActionVisible": true,
+      "inspectorProductSurfaceVisible": true,
+      "rawDashboardRisk": "reduced_but_technical_sidebar_remains"
+    },
+    {
+      "id": "control-center-mobile",
+      "nonblankViewport": true,
+      "noHorizontalOverflow": true,
+      "authorityBoundaryVisible": true,
+      "nextSafeActionVisible": true,
+      "mobileTopbarActionLineVisible": true,
+      "rawDashboardRisk": "reduced"
+    },
+    {
+      "id": "work-surface-desktop",
+      "nonblankViewport": true,
+      "noHorizontalOverflow": true,
+      "authorityBoundaryVisible": true,
+      "nextSafeActionVisible": true,
+      "workSurfaceFeelsPrimary": true,
+      "captureLimitation": "re-captured through fallback Playwright default viewport after in-app browser timeout"
+    },
+    {
+      "id": "work-surface-mobile",
+      "nonblankViewport": true,
+      "noHorizontalOverflow": true,
+      "authorityBoundaryVisible": true,
+      "nextSafeActionVisible": true,
+      "mobileTopbarActionLineVisible": true,
+      "cardDensity": "acceptable"
+    }
+  ],
+  "scores": {
+    "humanVisualQa": 4.2,
+    "visualPolish": 4.1,
+    "colorQuality": 4.4,
+    "layoutRhythm": 4.1,
+    "koreanTypography": 4.2,
+    "toneAndManner": 4.2,
+    "authorityUx": 4.3,
+    "average": 4.21
+  },
+  "codexLevelUxFit": [
+    "Work Surface now has a clearer primary work area, calmer status language, and inline review/preview rhythm.",
+    "The next safe action remains visible and small rather than turning into a large warning block.",
+    "Details remain inspectable without requiring script or external activation."
+  ],
+  "claudeCodeLevelAuthorityUxFit": [
+    "Permission and execution boundaries are visible before any invocation.",
+    "Preview, confirmation, approval, audit, replay, and rollback wording remains separated from actual write/execution.",
+    "Tool/CLI/MCP/connector execution remains proposal-only in the visible product language."
+  ],
+  "blockedActionsRemainClosed": [
+    "actual approval record write",
+    "audit write",
+    "dry-run invocation",
+    "tool/CLI/MCP execution",
+    "connector activation",
+    "credential access",
+    "external send",
+    "paid/destructive action",
+    "durable memory promotion"
+  ],
+  "remainingPerceivedProductQualityRisk": [
+    "Control Center still exposes some technical sidebar/inspector strings and should get a second language-polish pass.",
+    "Work Surface right rail still contains some English technical pack descriptions; later content mapping should localize product-facing summaries.",
+    "The icon system is polished fallback symbols, not a real icon component system yet.",
+    "Fallback screenshot path produced a 1200x729 desktop capture for one final Work Surface evidence file; next visual gate should restore exact 1440x960 capture automation."
+  ],
+  "nextSafeAction": "Move to the next planned product slice only after preserving this visual system as the baseline; do not open write, invocation, connector, model, external-send, or durable-memory boundaries."
+}

@@ -8,6 +8,8 @@ Design reference bridge:
 - Codex is a quality bar for clarity, rhythm, and product confidence, not a layout to copy.
 - Use `CLAUDE-CODE-LEVEL-OPERATING-UX-REFERENCE.md` before first-production operating UX readiness, model/router work, connector/tool governance, approval UX, app-shell, packaged desktop, install/update/rollback, or automation work.
 - Claude Code is a quality bar for permission, execution governance, multi-surface continuity, memory/instruction discipline, hooks, skills, MCP, and review-before-action, not a product to copy.
+- Use `GPAO-T-VISUAL-REFERENCE.md` before every UI/UX implementation or review.
+- GPAO-T visual reference is the concrete bar for color, surface, card style, icon treatment, Korean typography, layout rhythm, tone-and-manner, and human-perceived product quality.
 
 ## Core Work Surface
 

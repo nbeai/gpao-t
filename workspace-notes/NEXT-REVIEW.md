@@ -2,25 +2,25 @@
 
 ## Next Safe Action
 
-Proceed to `approval record write gate implementation design` or `audit/write storage consistency design` only after preserving the GPAO-T design reference gate. The next slice is still design/contract/read-only proof; it must not open actual writes or invocation.
+Proceed from `GPAO-T Design Reference Realization Pass 001` into the next product slice only after preserving the new visual baseline. The next slice should not be another design-reference registration gate; use this pass as the baseline for user-facing work.
 
 ## Review Before Continuing
 
-- Review `docs/03-verification/evidence/design-reference-gate-qa-2026-07-09.json` and the desktop/mobile screenshots before closing any new UI/UX slice.
-- Every UI/UX slice must report applied surfaces, visual adjustments, desktop/mobile findings, Codex-level fit, Claude-Code-level fit, remaining aesthetic risks, and user-perceived product quality risk.
+- Review `docs/03-verification/evidence/design-realization-pass-001-qa-2026-07-09.json` and the four screenshot evidence files before claiming any later UI/UX surface is visually aligned.
+- Preserve the applied Visual Reference Pack tokens: warm local-desk background, raised white surfaces, green/blue/amber/red/violet authority tones, 10-12px card radius, Korean-first line rhythm, and calm permission language.
 - Keep actual approval record write, audit write, dry-run invocation, command/tool/CLI/MCP execution, connector activation, credential access, external send, paid/destructive action, and durable memory promotion blocked.
-- Treat the current Control Center design as trustworthy but still dense; schedule a later Design Readiness Pass for product-wide icon grammar and softer Korean-first labels.
+- Treat the closeout blocker as a BEAI session-language/product-quality review blocker, not as a failing npm/test gate. Use `implemented but needs review` unless the blocker is explicitly cleared.
 
 ## Session Resume
 
-Current position: GPAO-T design reference gate is implemented as a Control Center panel, CLI/Gateway/loopback route, tests, docs, and screenshot-backed QA evidence. The gate is mandatory for future UI/UX slices.
+Current position: Design Reference Realization Pass 001 has applied the visual reference to actual Control Center and Work Surface rendering, added screenshot-backed QA evidence, and connected the evidence to tests and `VERIFY.md`.
 
 ## Recent Evidence
 
+- preflight: Read-only workspace check completed for gpao-t.
 - route: Routed work as strict.
 - plan: Saved build plan.
-- `node --test test/design-recipe.test.js test/control-center.test.js`: pass, 36 tests.
-- `npm run verify`: pass, 115 tests across 16 suites.
-- `beai verify --cwd "/Users/jyp/Documents/Playground 2/gpao-t" --run --scenario --meaning`: pass; product quality gate pass.
-- Visual QA: design-reference desktop/mobile viewport and full-page evidence recorded.
-- Closeout: completion language allowed; review signal is from intentional blocked-boundary wording in evidence.
+- `node --test test/control-center.test.js`: pass, 30 tests.
+- `npm run verify`: pass, 116 tests across 16 suites.
+- `beai verify --cwd "/Users/jyp/Documents/Playground 2/gpao-t" --run --scenario --meaning`: completion gate ready 100/100, scenario pass, product quality review warning.
+- closeout: blocked only by unresolved BEAI session blocker `product-quality`, while automated checks and QA evidence pass.
