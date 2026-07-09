@@ -27,6 +27,7 @@ import {
   buildInstallHardeningSummary,
   buildLocalControlCenterDesignContract,
   buildModelRouterBoundary,
+  buildModelRouterPolicy,
   buildOperationsContractSummary,
   buildOperationsReliabilityContract,
   buildPackagedDesktopPlanningReview,
@@ -85,6 +86,7 @@ import {
   verifyControlCenterPreviewServing,
   verifyCoreWorkSurface,
   verifyModelRouterBoundary,
+  verifyModelRouterPolicy,
   verifyWorkSurfaceSubmissionDecisionGate,
   verifyWorkSurfaceSubmissionValidationGate,
   verifyPackagedDesktopPlanningReview,
@@ -152,6 +154,8 @@ function usage() {
     "  gpao-t adapters tools",
     "  gpao-t adapters model-router-boundary [text]",
     "  gpao-t adapters model-router-boundary-check",
+    "  gpao-t adapters model-router-policy [text]",
+    "  gpao-t adapters model-router-policy-check",
     "  gpao-t adapters plan <text>",
     "  gpao-t control snapshot",
     "  gpao-t control summary",
@@ -412,6 +416,11 @@ try {
       printJson(buildModelRouterBoundary(request ? { request } : undefined));
     } else if (subcommand === "model-router-boundary-check") {
       printJson(verifyModelRouterBoundary());
+    } else if (subcommand === "model-router-policy") {
+      const request = textParts.join(" ").trim();
+      printJson(buildModelRouterPolicy(request ? { request } : undefined));
+    } else if (subcommand === "model-router-policy-check") {
+      printJson(verifyModelRouterPolicy());
     } else if (subcommand === "plan") {
       const text = textParts.join(" ").trim();
       if (!text) {
@@ -419,7 +428,7 @@ try {
       }
       printJson(runRuntimeTurn({ input: { text } }).adapterPlan);
     } else {
-      throw new Error("adapters command requires models, tools, model-router-boundary, model-router-boundary-check, or plan");
+      throw new Error("adapters command requires models, tools, model-router-boundary, model-router-boundary-check, model-router-policy, model-router-policy-check, or plan");
     }
   } else if (command === "control") {
     const [subcommand] = args;

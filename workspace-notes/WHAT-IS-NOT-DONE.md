@@ -7,7 +7,7 @@
 - external network request
 - paid token spend
 - model output persistence
-- tool execution from model output
+- tool, CLI, or MCP execution from model output
 - connector activation
 - approval record actual write
 - install, update, or rollback execution
@@ -19,12 +19,12 @@
 
 ## Current Completion Boundary
 
-The Model Router boundary first slice is implemented and verified as a read-only routing contract. It explains route profile, selected preview adapter, provider boundary, latency/cost policy, fallback chain, and blocked model actions.
+The Model Router replay/policy slice is implemented and verified as a read-only routing policy contract. It explains request-type route profiles, speed/quality/cost/risk criteria, Context Mesh task-packet candidate conditions, fallback/failure states, model-output-to-tool boundary, and replay/audit criteria.
 
-It does not configure providers, store secrets, call external APIs, spend tokens, persist model output, activate tools, or promote durable memory.
+It does not configure providers, store secrets, call external APIs, spend tokens, persist model output, activate tools, invoke replay, write audit records, activate connectors, or promote durable memory.
 
 BEAI closeout reports conservative review items for human lived acceptance and blocked-boundary wording. Completion language is allowed by BEAI verify/closeout; those review items remain stop-line reminders, not implementation blockers for this local preview slice.
 
 ## Next Product Gap
 
-The next product gap is either deeper read-only Model Router policy proof or connector/tool governance. Do not open provider execution until setup, approval, audit, replay, fallback, and rollback gates exist.
+The next product gap is connector/tool governance. The handoff should start from the rule that model output is a candidate/preview artifact, not execution authority.

@@ -75,8 +75,10 @@ import {
 } from "./core/memory-wiki.js";
 import {
   buildModelRouterBoundary,
+  buildModelRouterPolicy,
   routeModel,
   verifyModelRouterBoundary,
+  verifyModelRouterPolicy,
 } from "./core/model-router.js";
 import {
   buildOperationsContractSummary,
@@ -183,6 +185,7 @@ export {
   buildInstallHardeningSummary,
   buildLocalControlCenterDesignContract,
   buildModelRouterBoundary,
+  buildModelRouterPolicy,
   buildOperationsContractSummary,
   buildOperationsReliabilityContract,
   buildPackagedDesktopPlanningReview,
@@ -241,6 +244,7 @@ export {
   routeSkillPacks,
   routeModel,
   verifyModelRouterBoundary,
+  verifyModelRouterPolicy,
   renderControlCenterHtml,
   renderTauriInstallDryRunPreview,
   startControlCenterPreviewServer,

@@ -50,10 +50,13 @@ Model Router boundary:
 
 - CLI surface: `node bin/gpao-t.js adapters model-router-boundary [text]`
 - CLI check: `node bin/gpao-t.js adapters model-router-boundary-check`
-- Gateway routes: `GET /adapters/model-router-boundary` and `GET /adapters/model-router-boundary/verify`
-- Control Center integration: `control snapshot`, `control summary`, and `control html` must expose the router boundary through the `Model / Tool Adapters` panel.
+- Policy surface: `node bin/gpao-t.js adapters model-router-policy [text]`
+- Policy check: `node bin/gpao-t.js adapters model-router-policy-check`
+- Gateway routes: `GET /adapters/model-router-boundary`, `GET /adapters/model-router-boundary/verify`, `GET /adapters/model-router-policy`, and `GET /adapters/model-router-policy/verify`
+- Control Center integration: `control snapshot`, `control summary`, and `control html` must expose the router boundary and policy through the `Model / Tool Adapters` panel.
 - Required invariant: the boundary may show route profile, selected preview adapter, provider boundary, latency budget, cost policy, fallback chain, audit/replay/rollback references, and blocked model actions.
 - Required blocked boundary: it must not call providers, read or write secrets, send network requests, spend tokens, store model output, activate tools, promote durable memory, invoke replay, write audit records, or mutate provider configuration in this slice.
+- Required policy invariant: the policy may show request-type route profiles, speed/quality/cost/risk criteria, Context Mesh task-packet model-input candidate conditions, fallback failure states, model-output-to-tool boundary, and replay/audit criteria. It must not let model output become tool/CLI/MCP execution authority.
 - Cleanup note: duplicate workspace note files ending in ` 2.md` are cleanup candidates only and should not be deleted during feature work.
 
 Work surface submission decision gate:

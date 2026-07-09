@@ -16,8 +16,8 @@ List screens or command surfaces and what each one must make obvious.
 ## Model Router Boundary
 
 - Purpose: show how GPAO-T would choose a model path before any provider call exists.
-- Must show: route profile, selected preview adapter, provider boundary, latency budget, cost policy, fallback chain, blocked model actions, and audit/replay/rollback references.
-- Must not show as available: live provider call, credential access, network send, token spend, model output persistence, tool activation from model output, or durable memory promotion.
+- Must show: route profile, request-type policy, selected preview adapter, provider boundary, speed/quality/cost/risk criteria, latency budget, cost policy, fallback chain, failure states, Context Mesh task-packet candidate conditions, model-output-to-tool boundary, blocked model actions, and audit/replay/rollback references.
+- Must not show as available: live provider call, credential access, network send, token spend, model output persistence, tool/CLI/MCP activation from model output, connector activation, or durable memory promotion.
 
 ## Browser-Local App Shell
 

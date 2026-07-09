@@ -130,6 +130,8 @@ node bin/gpao-t.js adapters models
 node bin/gpao-t.js adapters tools
 node bin/gpao-t.js adapters model-router-boundary "GPAO-T 작업 표면 preview를 라우팅해줘"
 node bin/gpao-t.js adapters model-router-boundary-check
+node bin/gpao-t.js adapters model-router-policy "후속 질문의 route policy를 보여줘"
+node bin/gpao-t.js adapters model-router-policy-check
 node bin/gpao-t.js adapters plan "그럼 배포파일은?"
 node bin/gpao-t.js control snapshot
 node bin/gpao-t.js control summary
@@ -237,10 +239,12 @@ Adapter Boundary keeps model freedom and tool safety separate:
 - external model APIs are listed but blocked until provider setup and approval gates exist
 - `adapters model-router-boundary [text]` shows the read-only Model Router boundary: route profile, selected preview adapter, provider boundary, latency budget, cost policy, fallback chain, audit/replay/rollback references, and blocked model actions
 - `adapters model-router-boundary-check` verifies that the router boundary does not call providers, read secrets, send network requests, spend tokens, store model output, activate tools, or promote durable memory
+- `adapters model-router-policy [text]` shows the deeper read-only router policy: request-type profiles, speed/quality/cost/risk criteria, Context Mesh task-packet input candidate conditions, failure states, model-output-to-tool boundary, and replay/audit criteria
+- `adapters model-router-policy-check` verifies that route policy remains preview-only and does not invoke replay, write audit records, persist model output, execute tool/CLI/MCP actions, activate connectors, or promote durable memory
 - local preview tools can be admitted for draft/replay work
 - external send, public release, deletion, secret write, and recurring automation remain blocked until explicit authority gates exist
 
-This boundary is intentionally visible in `modelRoute`, `toolPlan`, `adapterPlan`, `modelRouterBoundary`, CLI, Gateway, and the Local Control Center adapter panel so a future live provider path can be judged before it is opened.
+This boundary is intentionally visible in `modelRoute`, `toolPlan`, `adapterPlan`, `modelRouterBoundary`, `modelRouterPolicy`, CLI, Gateway, and the Local Control Center adapter panel so a future live provider or tool path can be judged before it is opened.
 
 Connector Governance keeps account visibility separate from account execution:
 

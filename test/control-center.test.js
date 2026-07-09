@@ -122,8 +122,10 @@ describe("GPAO-T Local Control Center readiness", () => {
     assert.equal(snapshot.counts.installHardeningReports, 0);
     assert.equal(snapshot.counts.dataSurfaces >= 8, true);
     assert.equal(snapshot.counts.modelAdapters, 4);
-    assert.equal(snapshot.counts.modelRouterProfiles, 3);
+    assert.equal(snapshot.counts.modelRouterProfiles, 4);
     assert.equal(snapshot.counts.modelRouterBlockedActions, 8);
+    assert.equal(snapshot.counts.modelRouterFailureStates, 5);
+    assert.equal(snapshot.counts.modelRouterReplayCriteria, 6);
     assert.equal(snapshot.counts.connectors, 6);
     assert.equal(snapshot.counts.growthApplicationGates, 0);
     assert.equal(snapshot.counts.approvalPreviewStages, 5);
@@ -172,6 +174,11 @@ describe("GPAO-T Local Control Center readiness", () => {
       && panel.data.modelRouterBoundary.safetyInvariants.sendsNetworkRequest === false
       && panel.data.modelRouterBoundary.providerBoundary.externalProviderCall === "blocked_until_provider_setup_task_approval_and_audit"
       && panel.data.modelRouterBoundary.latencyCostFallback.fallbackChain.length >= 1
+      && panel.data.modelRouterPolicy.schema === "gpao_t.model_router_policy.v0_1"
+      && panel.data.modelRouterPolicy.modelOutputBoundary.outputIsActionAuthority === false
+      && panel.data.modelRouterPolicy.contextMeshTaskPacket.rawMemoryDumpAllowed === false
+      && panel.data.modelRouterPolicy.replayAudit.invokesReplayNow === false
+      && panel.data.modelRouterPolicy.fallbackAndFailure.failureStates.length === 5
     ));
     assert.ok(snapshot.panels.some((panel) => panel.id === "skill-ecosystem" && panel.status === "ready"));
   });

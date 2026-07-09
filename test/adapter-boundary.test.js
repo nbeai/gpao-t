@@ -5,11 +5,13 @@ import { describe, it } from "node:test";
 import {
   handleGatewayRequest,
   buildModelRouterBoundary,
+  buildModelRouterPolicy,
   listModelAdapters,
   listToolAdapters,
   runTurn,
   selectModelAdapter,
   verifyModelRouterBoundary,
+  verifyModelRouterPolicy,
 } from "../src/index.js";
 import releaseFixture from "../fixtures/replay/release-file-active-target.json" with { type: "json" };
 
@@ -69,6 +71,41 @@ describe("GPAO-T model and tool adapter boundary", () => {
     assert.deepEqual(verification.findings, []);
   });
 
+  it("builds read-only router replay policy with route profiles and task-packet gates", () => {
+    const policy = buildModelRouterPolicy({
+      request: "짧은 후속 질문이면 빠르게 회수하고, 위험하면 실행하지 마.",
+      inputSignal: { kind: "follow_up" },
+    });
+    const verification = verifyModelRouterPolicy({ policy });
+
+    assert.equal(policy.schema, "gpao_t.model_router_policy.v0_1");
+    assert.equal(policy.surface, "read_only_replay_policy_contract");
+    assert.ok(policy.routeProfiles.some((profile) =>
+      profile.id === "fast_context_recovery"
+      && profile.requestTypes.includes("active_target_recovery")
+      && profile.speed === "high"
+      && profile.risk === "wrong_anchor_or_stale_context"
+    ));
+    assert.ok(policy.routeProfiles.some((profile) => profile.id === "deep_design_review"));
+    assert.ok(policy.decisionMatrix.speed.includes("fast path"));
+    assert.ok(policy.decisionMatrix.quality.includes("context"));
+    assert.ok(policy.decisionMatrix.cost.includes("local"));
+    assert.ok(policy.decisionMatrix.risk.includes("tool execution"));
+    assert.equal(policy.contextMeshTaskPacket.candidateOnly, true);
+    assert.equal(policy.contextMeshTaskPacket.rawMemoryDumpAllowed, false);
+    assert.equal(policy.contextMeshTaskPacket.becomesModelInputWhen.length, 4);
+    assert.ok(policy.fallbackAndFailure.failureStates.some((state) => state.id === "tool_execution_requested"));
+    assert.equal(policy.modelOutputBoundary.outputIsActionAuthority, false);
+    assert.equal(policy.modelOutputBoundary.toolCliMcpExecution, "blocked_until_preview_approval_replay_and_audit");
+    assert.equal(policy.replayAudit.invokesReplayNow, false);
+    assert.equal(policy.replayAudit.writesAuditNow, false);
+    assert.equal(policy.safetyInvariants.callsProvider, false);
+    assert.equal(policy.safetyInvariants.executesToolFromOutput, false);
+    assert.equal(policy.safetyInvariants.promotesDurableMemory, false);
+    assert.equal(verification.status, "ready");
+    assert.deepEqual(verification.findings, []);
+  });
+
   it("adds adapter plan evidence to a turn without external activation", () => {
     const result = runTurn(releaseFixture);
 
@@ -97,6 +134,8 @@ describe("GPAO-T model and tool adapter boundary", () => {
     const models = handleGatewayRequest({ method: "GET", path: "/adapters/models" });
     const routerBoundary = handleGatewayRequest({ method: "GET", path: "/adapters/model-router-boundary" });
     const routerBoundaryCheck = handleGatewayRequest({ method: "GET", path: "/adapters/model-router-boundary/verify" });
+    const routerPolicy = handleGatewayRequest({ method: "GET", path: "/adapters/model-router-policy" });
+    const routerPolicyCheck = handleGatewayRequest({ method: "GET", path: "/adapters/model-router-policy/verify" });
     const plan = handleGatewayRequest({
       method: "POST",
       path: "/adapters/plan",
@@ -110,6 +149,10 @@ describe("GPAO-T model and tool adapter boundary", () => {
     assert.equal(routerBoundary.body.safetyInvariants.callsProvider, false);
     assert.equal(routerBoundaryCheck.status, 200);
     assert.equal(routerBoundaryCheck.body.status, "ready");
+    assert.equal(routerPolicy.status, 200);
+    assert.equal(routerPolicy.body.modelOutputBoundary.outputIsActionAuthority, false);
+    assert.equal(routerPolicyCheck.status, 200);
+    assert.equal(routerPolicyCheck.body.status, "ready");
     assert.equal(plan.status, 200);
     assert.equal(plan.body.model.selected.id, "local.fast.stub");
   });
@@ -139,6 +182,35 @@ describe("GPAO-T model and tool adapter boundary", () => {
     assert.equal(boundary.safetyInvariants.callsProvider, false);
     assert.equal(boundary.safetyInvariants.sendsNetworkRequest, false);
     assert.equal(boundary.providerBoundary.credentialAccess, "blocked");
+    assert.equal(check.status, "ready");
+  });
+
+  it("exposes the model router policy through CLI without opening replay or tools", () => {
+    const cliOutput = execFileSync(process.execPath, [
+      CLI,
+      "adapters",
+      "model-router-policy",
+      "후속 질문의 route policy를 보여줘",
+    ], {
+      cwd: ROOT,
+      encoding: "utf8",
+    });
+    const cliCheckOutput = execFileSync(process.execPath, [
+      CLI,
+      "adapters",
+      "model-router-policy-check",
+    ], {
+      cwd: ROOT,
+      encoding: "utf8",
+    });
+    const policy = JSON.parse(cliOutput);
+    const check = JSON.parse(cliCheckOutput);
+
+    assert.equal(policy.schema, "gpao_t.model_router_policy.v0_1");
+    assert.equal(policy.replayAudit.invokesReplayNow, false);
+    assert.equal(policy.replayAudit.storesModelOutputNow, false);
+    assert.equal(policy.modelOutputBoundary.outputIsActionAuthority, false);
+    assert.equal(policy.safetyInvariants.executesToolFromOutput, false);
     assert.equal(check.status, "ready");
   });
 });

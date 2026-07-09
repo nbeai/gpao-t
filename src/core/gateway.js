@@ -77,7 +77,9 @@ import {
 import { captureMemoryEntry, readMemoryWiki, readTCellCandidates, resolveContextMesh } from "./memory-wiki.js";
 import {
   buildModelRouterBoundary,
+  buildModelRouterPolicy,
   verifyModelRouterBoundary,
+  verifyModelRouterPolicy,
 } from "./model-router.js";
 import {
   appendReplayRecoveryRecord,
@@ -516,6 +518,22 @@ export function handleGatewayRequest({ method = "GET", path = "/", body = {}, ro
       schema: "gpao_t.gateway_response.v0_1",
       status: 200,
       body: verifyModelRouterBoundary(),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/adapters/model-router-policy") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: buildModelRouterPolicy(),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/adapters/model-router-policy/verify") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: verifyModelRouterPolicy(),
     };
   }
 

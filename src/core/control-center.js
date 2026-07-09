@@ -5,7 +5,7 @@ import { runDoctor } from "./doctor.js";
 import { buildGrowthApplicationGateSummary } from "./growth-application-gates.js";
 import { readSelfGrowthProposals } from "./growth-proposals.js";
 import { buildInstallHardeningSummary } from "./install-hardening.js";
-import { buildModelRouterBoundary } from "./model-router.js";
+import { buildModelRouterBoundary, buildModelRouterPolicy } from "./model-router.js";
 import { readMemoryWiki, readTCellCandidates } from "./memory-wiki.js";
 import { buildOperationsContractSummary } from "./operations-contract.js";
 import { buildRecoveryHistorySummary, readReplayRecoveryHistory } from "./replay-history.js";
@@ -31,6 +31,7 @@ export function buildControlCenterSnapshot({ root } = {}) {
   const growthApplicationGates = buildGrowthApplicationGateSummary({ root });
   const modelAdapters = listModelAdapters();
   const modelRouterBoundary = buildModelRouterBoundary();
+  const modelRouterPolicy = buildModelRouterPolicy();
   const toolAdapters = listToolAdapters();
   const connectorGovernance = buildConnectorGovernanceSummary();
   const installHardening = buildInstallHardeningSummary({ root });
@@ -60,7 +61,7 @@ export function buildControlCenterSnapshot({ root } = {}) {
     buildMemoryPanel({ memoryWiki, tcellCandidates }),
     buildRecoveryPanel({ recoveryHistory, recoverySummary }),
     buildGrowthPanel({ growthProposals, growthApplicationGates }),
-    buildAdapterPanel({ modelAdapters, modelRouterBoundary, toolAdapters }),
+    buildAdapterPanel({ modelAdapters, modelRouterBoundary, modelRouterPolicy, toolAdapters }),
     buildConnectorPanel({ connectorGovernance }),
     buildAuthorityPanel({ runtimeState }),
   ];
@@ -103,6 +104,8 @@ export function buildControlCenterSnapshot({ root } = {}) {
       modelAdapters: modelAdapters.adapters.length,
       modelRouterProfiles: modelRouterBoundary.profiles.length,
       modelRouterBlockedActions: modelRouterBoundary.blockedActions.length,
+      modelRouterFailureStates: modelRouterPolicy.fallbackAndFailure.failureStates.length,
+      modelRouterReplayCriteria: modelRouterPolicy.replayAudit.requiredCriteria.length,
       toolAdapters: toolAdapters.adapters.length,
       connectors: connectorGovernance.totalConnectors,
       blockedConnectors: connectorGovernance.blockedConnectors.length,
@@ -442,7 +445,7 @@ function buildGrowthPanel({ growthProposals, growthApplicationGates }) {
   };
 }
 
-function buildAdapterPanel({ modelAdapters, modelRouterBoundary, toolAdapters }) {
+function buildAdapterPanel({ modelAdapters, modelRouterBoundary, modelRouterPolicy, toolAdapters }) {
   const blockedExternalModels = modelAdapters.adapters.filter((adapter) =>
     adapter.provider === "external_api" && adapter.status !== "available"
   );
@@ -456,11 +459,12 @@ function buildAdapterPanel({ modelAdapters, modelRouterBoundary, toolAdapters })
     data: {
       modelAdapters: modelAdapters.adapters.length,
       modelRouterBoundary,
+      modelRouterPolicy,
       toolAdapters: toolAdapters.adapters.length,
       blockedExternalModels: blockedExternalModels.map((adapter) => adapter.id),
       blockedTools: blockedTools.map((adapter) => adapter.id),
     },
-    nextSafeAction: modelRouterBoundary.nextSafeAction,
+    nextSafeAction: modelRouterPolicy.nextSafeAction,
   };
 }
 

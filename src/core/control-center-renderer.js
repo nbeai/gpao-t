@@ -1049,12 +1049,18 @@ function coreWorkSurfaceInspectorRows(panel) {
 function adapterInspectorRows(panel) {
   if (panel.id !== "adapters" || !panel.data) return "";
   const boundary = panel.data.modelRouterBoundary;
+  const policy = panel.data.modelRouterPolicy;
   if (!boundary) return "";
   return [
     inspectorRow("Model Router", `${boundary.route.route} · ${boundary.route.adapterSelection.selected?.id || "none"}`),
     inspectorRow("Provider Boundary", boundary.providerBoundary.externalProviderCall),
     inspectorRow("Latency / Cost", `${boundary.latencyCostFallback.latencyBudget} · ${boundary.latencyCostFallback.costPolicy}`),
     inspectorRow("Fallback", (boundary.latencyCostFallback.fallbackChain || []).map((item) => item.id).join(" · ") || "none"),
+    inspectorRow("Route Profiles", (policy?.routeProfiles || []).map((profile) => profile.id).join(" · ") || "none"),
+    inspectorRow("Failure States", (policy?.fallbackAndFailure?.failureStates || []).map((state) => state.id).join(" · ") || "none"),
+    inspectorRow("Task Packet Conditions", (policy?.contextMeshTaskPacket?.becomesModelInputWhen || []).map((condition) => condition.id).join(" · ") || "none"),
+    inspectorRow("Output Boundary", policy?.modelOutputBoundary?.toolCliMcpExecution || "none"),
+    inspectorRow("Replay Criteria", `${policy?.replayAudit?.requiredCriteria?.length || 0}`),
     inspectorRow("Blocked Model Actions", (boundary.blockedActions || []).join(" · ")),
   ].join("");
 }
