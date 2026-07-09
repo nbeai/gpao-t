@@ -2,7 +2,7 @@
   "schema": "gpao_t.work_surface_visual_qa_baseline.v0_1",
   "status": "ready",
   "target": "/work-surface",
-  "capturedAt": "2026-07-09T08:40:00+09:00",
+  "capturedAt": "2026-07-09T09:49:50+09:00",
   "fileFormat": "jpg",
   "evidenceFiles": {
     "desktop": "/Users/jyp/Documents/Playground 2/gpao-t/docs/03-verification/evidence/work-surface-visual-qa-2026-07-09-desktop-viewport-1440x960.jpg",
@@ -22,6 +22,8 @@
     "noForm": true,
     "noExternalLinks": true,
     "noHorizontalOverflow": true,
+    "nativeReadabilityDetailsVisible": true,
+    "readOnlyChecklistVisible": true,
     "topbarActionVisible": true,
     "authorityBoundaryVisible": true,
     "nextSafeActionVisible": true
@@ -29,7 +31,7 @@
   "checks": [
     {
       "id": "desktop-viewport",
-      "target": "http://127.0.0.1:58883/work-surface",
+      "target": "http://127.0.0.1:60031/work-surface",
       "viewport": {
         "width": 1440,
         "height": 960
@@ -41,6 +43,25 @@
       "nonblankViewport": true,
       "draftInputVisible": true,
       "composerVisible": true,
+      "nativeReadabilityDetailsVisible": true,
+      "readabilitySections": [
+        {
+          "id": "task-brief",
+          "summary": "작업 브리프",
+          "open": true
+        },
+        {
+          "id": "route-brief",
+          "summary": "맥락 / 스킬 라우트",
+          "open": false
+        },
+        {
+          "id": "authority-brief",
+          "summary": "권한 경계",
+          "open": false
+        }
+      ],
+      "readOnlyChecklistVisible": true,
       "taskStateVisible": true,
       "contextVisible": true,
       "skillRouteVisible": true,
@@ -56,11 +77,11 @@
       "hasScript": false,
       "hasForm": false,
       "externalLinks": [],
-      "screenshotBytes": 109083
+      "screenshotBytes": 119553
     },
     {
       "id": "mobile-viewport",
-      "target": "http://127.0.0.1:58883/work-surface",
+      "target": "http://127.0.0.1:60031/work-surface",
       "viewport": {
         "width": 390,
         "height": 844
@@ -72,6 +93,25 @@
       "nonblankViewport": true,
       "draftInputVisible": true,
       "composerVisible": true,
+      "nativeReadabilityDetailsVisible": true,
+      "readabilitySections": [
+        {
+          "id": "task-brief",
+          "summary": "작업 브리프",
+          "open": true
+        },
+        {
+          "id": "route-brief",
+          "summary": "맥락 / 스킬 라우트",
+          "open": false
+        },
+        {
+          "id": "authority-brief",
+          "summary": "권한 경계",
+          "open": false
+        }
+      ],
+      "readOnlyChecklistVisible": true,
       "taskStateVisible": true,
       "contextVisible": true,
       "skillRouteVisible": true,
@@ -87,7 +127,7 @@
       "hasScript": false,
       "hasForm": false,
       "externalLinks": [],
-      "screenshotBytes": 39070
+      "screenshotBytes": 45945
     }
   ],
   "blockedActionsRemainClosed": [
@@ -103,5 +143,5 @@
     "messenger send",
     "recurring automation"
   ],
-  "nextSafeAction": "Use this /work-surface visual baseline before adding richer read-only task interaction. Keep live submission, model/tool/connector execution, approval writes, dry-run invocation, durable memory promotion, self-growth apply, deployment, messenger, and automation blocked."
+  "nextSafeAction": "Use this /work-surface visual baseline before adding the next user-visible read-only refinement. Keep live submission, model/tool/connector execution, approval writes, dry-run invocation, durable memory promotion, self-growth apply, deployment, messenger, and automation blocked."
 }

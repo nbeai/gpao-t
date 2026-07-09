@@ -454,6 +454,12 @@ describe("GPAO-T Local Control Center readiness", () => {
     assert.equal(surface.interactionMode, "no_script_read_only_preview");
     assert.equal(surface.workspaceThread.composer.submission, "blocked_in_this_slice");
     assert.equal(surface.workspaceThread.threadPreview.length, 2);
+    assert.equal(surface.readabilityView.interaction, "native_details_no_script");
+    assert.equal(surface.readabilityView.sections.length, 3);
+    assert.equal(surface.readabilityView.sections.some((section) => section.id === "task-brief"), true);
+    assert.equal(surface.readabilityView.sections.some((section) => section.id === "route-brief"), true);
+    assert.equal(surface.readabilityView.sections.some((section) => section.id === "authority-brief"), true);
+    assert.equal(surface.readabilityView.checklist.length, 3);
     assert.equal(surface.taskState.objective.includes("GPAO-T"), true);
     assert.equal(surface.contextPreview.boundary.includes("preview only"), true);
     assert.equal(surface.skillRoutePreview.selectedPacks.length >= 1, true);
@@ -470,6 +476,9 @@ describe("GPAO-T Local Control Center readiness", () => {
     assert.equal(surface.safetyInvariants.usesForm, false);
     assert.match(html, /GPAO-T Work Surface/);
     assert.match(html, /data-core-work-surface="read-only"/);
+    assert.match(html, /data-readability-interaction="native-details"/);
+    assert.match(html, /data-readability-section="task-brief"/);
+    assert.match(html, /읽기 체크리스트/);
     assert.match(html, /data-composer-state="draft-not-sent"/);
     assert.match(html, /data-authority-boundary="closed"/);
     assert.doesNotMatch(html, /<script/i);

@@ -38,6 +38,8 @@ export function buildCoreWorkSurface({
     authorityDecision: turnPreview.authorityDecision,
   });
   const connectorGovernance = buildConnectorGovernanceSummary();
+  const primaryContext = contextPreview.retrievedCandidates[0];
+  const primarySkillPack = skillRoute.selectedPacks[0];
 
   return {
     schema: "gpao_t.core_work_surface.v0_1",
@@ -68,6 +70,47 @@ export function buildCoreWorkSurface({
           text: turnPreview.userVisibleState.summary,
           state: "preview_only",
         },
+      ],
+    },
+    readabilityView: {
+      status: "ready",
+      interaction: "native_details_no_script",
+      sections: [
+        {
+          id: "task-brief",
+          title: "작업 브리프",
+          summary: "현재 초안을 실행하지 않고 목표와 상태를 먼저 읽는다.",
+          items: [
+            `목표: ${turnPreview.taskPacket.objective}`,
+            `입력 신호: ${turnPreview.inputSignal.kind}`,
+            `현재 대상: ${turnPreview.taskPacket.activeTargetId}`,
+          ],
+        },
+        {
+          id: "route-brief",
+          title: "맥락 / 스킬 라우트",
+          summary: "Context Mesh와 Skill Pack 후보를 현재 요청의 읽기 힌트로만 보여준다.",
+          items: [
+            `주요 맥락: ${primaryContext?.anchor || "none"}`,
+            `주요 스킬: ${primarySkillPack?.title || "none"}`,
+            `라우트 모드: ${skillExecutionPlan.executionMode}`,
+          ],
+        },
+        {
+          id: "authority-brief",
+          title: "권한 경계",
+          summary: "읽기와 미리보기만 허용되고 실행 권한은 열리지 않는다.",
+          items: [
+            "입력 전송: blocked",
+            "외부 모델 호출: blocked",
+            "도구 / 커넥터 실행: blocked",
+          ],
+        },
+      ],
+      checklist: [
+        "요청 목표를 먼저 확인한다.",
+        "현재 맥락과 스킬 라우트가 맞는지 읽는다.",
+        "실행 전 권한 경계가 닫혀 있는지 확인한다.",
       ],
     },
     taskState: {
@@ -141,7 +184,7 @@ export function buildCoreWorkSurface({
       usesForm: false,
     },
     nextSafeAction:
-      "작업 표면의 입력, 상태, 맥락, 스킬 라우팅, 권한 요약을 읽고 다음에는 read-only visual QA를 닫는다. 실제 전송/모델/도구/커넥터 실행은 열지 않는다.",
+      "작업 표면의 입력, 상태, 맥락, 스킬 라우팅, 권한 요약을 읽고 다음에는 가장 작은 read-only 작업 이해 개선을 더한다. 실제 전송/모델/도구/커넥터 실행은 열지 않는다.",
   };
 }
 
@@ -153,6 +196,9 @@ export function verifyCoreWorkSurface({ surface = buildCoreWorkSurface(), html }
   if (surface.workspaceThread.composer.submission !== "blocked_in_this_slice") findings.push("composer_submission_open");
   if (!surface.workspaceThread.threadPreview.some((item) => item.role === "user")) findings.push("missing_user_thread_preview");
   if (!surface.workspaceThread.threadPreview.some((item) => item.role === "gpao-t")) findings.push("missing_gpao_thread_preview");
+  if (surface.readabilityView?.interaction !== "native_details_no_script") findings.push("missing_readability_interaction");
+  if ((surface.readabilityView?.sections || []).length < 3) findings.push("missing_readability_sections");
+  if (!(surface.readabilityView?.checklist || []).length) findings.push("missing_readability_checklist");
   if (!surface.taskState.objective) findings.push("missing_task_objective");
   if (!surface.contextPreview.boundary.includes("preview only")) findings.push("context_boundary_not_preview_only");
   if (!surface.skillRoutePreview.executionMode) findings.push("missing_skill_route_preview");
@@ -169,6 +215,7 @@ export function verifyCoreWorkSurface({ surface = buildCoreWorkSurface(), html }
   if (html) {
     if (!html.includes("GPAO-T Work Surface")) findings.push("html_missing_title");
     if (!html.includes("data-core-work-surface=\"read-only\"")) findings.push("html_missing_surface_marker");
+    if (!html.includes("data-readability-interaction=\"native-details\"")) findings.push("html_missing_readability_marker");
     if (!html.includes("data-composer-state=\"draft-not-sent\"")) findings.push("html_missing_composer_marker");
     if (!html.includes("data-authority-boundary=\"closed\"")) findings.push("html_missing_authority_marker");
     if (/<script/i.test(html)) findings.push("script_tag_present");
@@ -192,6 +239,7 @@ export function buildCoreWorkSurfaceHtml({ surface } = {}) {
   const workSurface = surface || buildCoreWorkSurface();
   const selectedPacks = workSurface.skillRoutePreview.selectedPacks;
   const contextCandidates = workSurface.contextPreview.retrievedCandidates;
+  const readabilitySections = workSurface.readabilityView.sections || [];
 
   return `<!doctype html>
 <html lang="ko">
@@ -308,6 +356,47 @@ export function buildCoreWorkSurfaceHtml({ surface } = {}) {
       display: grid;
       gap: 10px;
       margin-top: 12px;
+    }
+    .readability-panel {
+      display: grid;
+      gap: 8px;
+      margin-top: 12px;
+    }
+    .readability-panel details {
+      min-width: 0;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fbfcfd;
+      padding: 10px;
+    }
+    .readability-panel summary {
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 800;
+      overflow-wrap: anywhere;
+    }
+    .readability-panel p,
+    .readability-panel li {
+      color: var(--muted);
+      font-size: 12px;
+      overflow-wrap: anywhere;
+    }
+    .readability-panel ul {
+      margin: 8px 0 0;
+      padding-left: 18px;
+    }
+    .checklist {
+      margin-top: 10px;
+      padding: 10px;
+      border: 1px solid #c9dccf;
+      border-radius: 8px;
+      background: #f5fbf7;
+    }
+    .checklist strong {
+      display: block;
+      color: var(--ready);
+      font-size: 12px;
+      margin-bottom: 5px;
     }
     .message {
       padding: 12px;
@@ -430,6 +519,22 @@ export function buildCoreWorkSurfaceHtml({ surface } = {}) {
           <strong>${escapeHtml(message.label)} · ${escapeHtml(message.state)}</strong>
           <p>${escapeHtml(message.text)}</p>
         </article>`).join("")}
+      </div>
+      <div class="readability-panel" data-readability-interaction="native-details">
+        ${readabilitySections.map((section, index) => `
+        <details ${index === 0 ? "open" : ""} data-readability-section="${escapeHtml(section.id)}">
+          <summary>${escapeHtml(section.title)}</summary>
+          <p>${escapeHtml(section.summary)}</p>
+          <ul>
+            ${section.items.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}
+          </ul>
+        </details>`).join("")}
+        <div class="checklist" aria-label="Read-only task handoff checklist">
+          <strong>읽기 체크리스트</strong>
+          <ul>
+            ${workSurface.readabilityView.checklist.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}
+          </ul>
+        </div>
       </div>
       <div class="state-grid" aria-label="Current task state">
         ${stateCard("Task", workSurface.taskState.status)}

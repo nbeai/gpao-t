@@ -2,7 +2,7 @@
 
 Target: `/work-surface`
 
-This baseline verifies the first user-facing GPAO-T work surface before richer behavior. The surface remains read-only and does not submit chat input, call external models, execute tools, activate connectors, write approval records, invoke dry-run, promote durable memory, apply self-growth, deploy, send through messenger, or start automation.
+This baseline verifies the first user-facing GPAO-T work surface after adding native no-script readability details. The surface remains read-only and does not submit chat input, call external models, execute tools, activate connectors, write approval records, invoke dry-run, promote durable memory, apply self-growth, deploy, send through messenger, or start automation.
 
 ## Evidence Files
 
@@ -14,6 +14,8 @@ This baseline verifies the first user-facing GPAO-T work surface before richer b
 
 - Nonblank viewport: pass
 - Draft task input visible: pass
+- Native readability details visible: pass
+- Read-only checklist visible: pass
 - Current task state visible: pass
 - Context Mesh / Memory Wiki preview visible: pass
 - Skill Pack route preview visible: pass
@@ -27,8 +29,8 @@ This baseline verifies the first user-facing GPAO-T work surface before richer b
 
 ## Notes
 
-The mobile first viewport now shows the topbar action line and the composer-level closed boundary before deeper panels. Authority details remain available lower in the page, while the first screen already states that external action, tool activation, and live model connector execution are closed.
+The mobile first viewport shows the fixed topbar action line, the composer-level closed boundary, and the native readability detail controls before deeper panels. Authority details remain available lower in the page, while the first screen already states that external action, tool activation, and live model connector execution are closed.
 
 ## Next Safe Action
 
-Use this baseline before adding richer read-only task interaction. Keep live submission, model/tool/connector execution, approval writes, dry-run invocation, durable memory promotion, self-growth apply, deployment, messenger, and automation blocked.
+Use this baseline before adding the next user-visible read-only refinement. Keep live submission, model/tool/connector execution, approval writes, dry-run invocation, durable memory promotion, self-growth apply, deployment, messenger, and automation blocked.

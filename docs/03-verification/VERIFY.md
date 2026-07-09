@@ -30,9 +30,10 @@ Core work surface first slice:
   - Desktop viewport: `docs/03-verification/evidence/work-surface-visual-qa-2026-07-09-desktop-viewport-1440x960.jpg`
   - Mobile viewport: `docs/03-verification/evidence/work-surface-visual-qa-2026-07-09-mobile-viewport-390x844.jpg`
 - Required invariant: the surface may show a draft task input, preview thread, current task state, Context Mesh / Memory Wiki / T-cell candidate summary, Skill Pack route preview, model/tool route preview, authority/approval summary, and next safe action.
+- Required readability interaction: the surface may include native HTML `details` / `summary` task readability sections for task brief, context/skill route, authority boundary, and a read-only checklist. This is no-script local inspection only and must not become a submit, model, tool, connector, approval-write, or dry-run action.
 - Required blocked boundary: the surface must not submit input, call external models, execute tools, activate connectors, write approval records, invoke dry-run, promote durable memory, apply self-growth, deploy, send through messenger, start recurring automation, include script, include form submission, or link to external URLs.
 - Checked visual invariant: desktop/mobile evidence confirms nonblank viewport, draft input visibility, task state visibility, context/skill route readability, authority boundary visibility, next safe action visibility, no overflow, mobile topbar/action visibility, no script, no form, and no external activation.
-- Next gate: add only the smallest richer read-only task interaction that improves task readability. Live submission and all model/tool/connector execution remain blocked.
+- Next gate: refresh desktop/mobile visual QA for the richer read-only readability interaction, then add only the next smallest user-visible read-only refinement. Live submission and all model/tool/connector execution remain blocked.
 
 Packaged desktop / Tauri gate:
 
