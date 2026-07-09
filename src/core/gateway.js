@@ -108,6 +108,11 @@ import {
   verifyModelRouterPolicy,
 } from "./model-router.js";
 import {
+  applySessionWorkspaceAction,
+  readSessionWorkspaceState,
+  verifySessionWorkspaceBehavior,
+} from "./session-workspace.js";
+import {
   appendReplayRecoveryRecord,
   buildRecoveryHistorySummary,
   readReplayRecoveryHistory,
@@ -209,6 +214,36 @@ export function handleGatewayRequest({ method = "GET", path = "/", body = {}, ro
       schema: "gpao_t.gateway_response.v0_1",
       status: 200,
       body: verifyCoreWorkSurface({ surface }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/sessions") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: readSessionWorkspaceState({ root }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/sessions/verify") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: verifySessionWorkspaceBehavior({ root }),
+    };
+  }
+
+  if (normalizedMethod === "POST" && path === "/sessions/action") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: applySessionWorkspaceAction({
+        root,
+        action: body.action,
+        sessionId: body.sessionId,
+        title: body.title,
+        request: body.request,
+      }),
     };
   }
 

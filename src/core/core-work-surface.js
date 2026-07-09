@@ -4,6 +4,10 @@ import { buildExecutionApprovalPreview } from "./execution-approval.js";
 import { buildFirstLocalWorkLoop } from "./first-local-work-loop.js";
 import { readMemoryWiki, readTCellCandidates, resolveContextMesh } from "./memory-wiki.js";
 import { routeModel } from "./model-router.js";
+import {
+  readSessionWorkspaceState,
+  SESSION_STATE_LABELS,
+} from "./session-workspace.js";
 import { routeSkillPacks, buildSkillExecutionPlan } from "./skill-ecosystem.js";
 import { readRuntimeState } from "./storage.js";
 import { runTurn } from "./turn-kernel.js";
@@ -23,15 +27,6 @@ const CLOSED_ACTIONS = [
   "messenger send",
   "recurring automation",
 ];
-
-const SESSION_STATE_LABELS = {
-  active: "진행 중",
-  draft: "초안",
-  waiting_approval: "확인 필요",
-  blocked: "멈춤",
-  archived: "보관됨",
-  delete_pending: "삭제 대기",
-};
 
 const UI_LABELS = {
   ready: "준비됨",
@@ -493,6 +488,7 @@ export function buildCoreWorkSurface({
       nextSafeAction: firstLocalWorkLoopPreview.nextSafeAction,
     },
     sessionWorkspace: buildSessionWorkspace({
+      root,
       draftRequest,
       now,
       turnPreview,
@@ -622,6 +618,7 @@ export function buildCoreWorkSurface({
 }
 
 function buildSessionWorkspace({
+  root,
   draftRequest,
   now,
   turnPreview,
@@ -632,8 +629,16 @@ function buildSessionWorkspace({
   modelRoute,
   firstLocalWorkLoopPreview,
 }) {
-  const sessions = buildSessionList({ draftRequest, now, turnPreview });
-  const activeSession = sessions.find((session) => session.state === "active") || sessions[0];
+  const workspaceState = readSessionWorkspaceState({ root, now });
+  const sessions = mergeSessionRuntimeHints({
+    sessions: workspaceState.sessions,
+    draftRequest,
+    now,
+    turnPreview,
+  });
+  const activeSession = sessions.find((session) => session.id === workspaceState.activeSessionId)
+    || sessions.find((session) => session.state === "active")
+    || sessions[0];
   const sessionStates = Object.entries(SESSION_STATE_LABELS).map(([id, label]) => ({ id, label }));
   const sessionActions = [
     { id: "rename", label: "이름 변경", opensMutationNow: false },
@@ -646,6 +651,15 @@ function buildSessionWorkspace({
   return {
     schema: "gpao_t.session_workspace.v0_1",
     status: "ready",
+    behavior: {
+      schema: "gpao_t.interactive_session_behavior.v1",
+      status: "local_actions_enabled",
+      stateFile: ".gpao-t/state/session-workspace.json",
+      activeSessionId: workspaceState.activeSessionId,
+      allowedActions: workspaceState.allowedActions,
+      boundaries: workspaceState.boundaries,
+      permanentDelete: "blocked",
+    },
     designSource: "docs/02-design/GPAO-T-SESSION-WORKSPACE-DESIGN-REPAIR-PACK-v0.1-ko.md",
     repairPass: {
       id: "session_workspace_repair_pass_001",
@@ -660,8 +674,8 @@ function buildSessionWorkspace({
     sessionRail: {
       label: "세션",
       actions: [
-        { id: "new_session", label: "새 세션", enabled: false, reason: "read_only_preview" },
-        { id: "search_sessions", label: "세션 검색", enabled: false, reason: "read_only_preview" },
+        { id: "new_session", label: "새 세션", enabled: true, reason: "local_session_state_only" },
+        { id: "search_sessions", label: "세션 검색", enabled: false, reason: "read_only_filter_preview" },
       ],
       groups: [
         {
@@ -680,7 +694,11 @@ function buildSessionWorkspace({
           sessions: sessions.filter((session) => ["archived", "delete_pending"].includes(session.state)),
         },
       ],
-      sessionActions,
+      sessionActions: sessionActions.map((action) => ({
+        ...action,
+        enabled: true,
+        authority: "local_session_state_only",
+      })),
       permanentDelete: {
         enabled: false,
         replacement: "delete_pending",
@@ -829,69 +847,23 @@ function buildSessionWorkspace({
   };
 }
 
-function buildSessionList({ draftRequest, now, turnPreview }) {
-  return [
-    {
-      id: "session.current",
-      title: "지금 맡긴 작업",
-      state: "active",
-      stateLabel: SESSION_STATE_LABELS.active,
-      lastActivity: formatShortTime(now),
-      project: "GPAO-T",
+function mergeSessionRuntimeHints({ sessions, draftRequest, now, turnPreview }) {
+  return sessions.map((session) => {
+    if (session.id !== "session.current") {
+      return {
+        ...session,
+        stateLabel: SESSION_STATE_LABELS[session.state],
+        lastActivity: session.lastActivity ? formatShortTime(session.lastActivity) : "방금",
+      };
+    }
+    return {
+      ...session,
+      stateLabel: SESSION_STATE_LABELS[session.state],
+      lastActivity: formatShortTime(session.lastActivity || now),
       hint: turnPreview.taskPacket.activeTargetId === "general-runtime" ? "일반 작업 흐름" : turnPreview.taskPacket.activeTargetId,
-      request: draftRequest,
-    },
-    {
-      id: "session.draft.control-center",
-      title: "Control Center 정리",
-      state: "draft",
-      stateLabel: SESSION_STATE_LABELS.draft,
-      lastActivity: "오늘",
-      project: "GPAO-T",
-      hint: "보조 인스펙터",
-      request: "Control Center는 보조 검토 표면으로 유지",
-    },
-    {
-      id: "session.waiting.approval",
-      title: "승인 기록 검토",
-      state: "waiting_approval",
-      stateLabel: SESSION_STATE_LABELS.waiting_approval,
-      lastActivity: "오늘",
-      project: "GPAO-T",
-      hint: "저장 전 확인",
-      request: "승인/감사 로컬 기록 확인",
-    },
-    {
-      id: "session.blocked.connector",
-      title: "커넥터 실행",
-      state: "blocked",
-      stateLabel: SESSION_STATE_LABELS.blocked,
-      lastActivity: "어제",
-      project: "GPAO-T",
-      hint: "외부 전송 없음",
-      request: "커넥터 활성화는 승인 전 잠김",
-    },
-    {
-      id: "session.archived.design",
-      title: "디자인 기준 정리",
-      state: "archived",
-      stateLabel: SESSION_STATE_LABELS.archived,
-      lastActivity: "이번 주",
-      project: "GPAO-T",
-      hint: "보관됨",
-      request: "Visual Reference 기반 정리",
-    },
-    {
-      id: "session.delete-pending.old-dashboard",
-      title: "이전 대시보드 실험",
-      state: "delete_pending",
-      stateLabel: SESSION_STATE_LABELS.delete_pending,
-      lastActivity: "이번 주",
-      project: "GPAO-T",
-      hint: "복구 가능",
-      request: "영구 삭제 전 대기",
-    },
-  ];
+      request: draftRequest || session.request,
+    };
+  });
 }
 
 function formatShortTime(value) {
@@ -2394,7 +2366,8 @@ function renderSessionWorkspaceHtml({
       width: 100%;
       padding: 15px;
       border-radius: var(--gpao-radius-lg);
-      background: rgba(255,255,255,0.9);
+      background: linear-gradient(180deg, rgba(255,255,255,0.94), rgba(249,250,246,0.9));
+      box-shadow: none;
     }
     .note-head {
       display: flex;
@@ -2436,12 +2409,17 @@ function renderSessionWorkspaceHtml({
     .draft-inline-card {
       padding: 14px 15px;
       border-radius: var(--gpao-radius-lg);
+      border-left: 4px solid #9fbfd7;
+      background: rgba(255,255,255,0.86);
+      box-shadow: none;
     }
     .boundary-strip {
       padding: 12px 14px;
       border-radius: var(--gpao-radius-lg);
       background: var(--gpao-warn-soft);
       border-color: #e7c98b;
+      border-left: 4px solid #c9943b;
+      box-shadow: none;
     }
     .boundary-list span {
       border: 1px solid #e3c78b;
@@ -2459,6 +2437,7 @@ function renderSessionWorkspaceHtml({
       border-radius: 16px;
       background: var(--gpao-surface);
       border-color: var(--gpao-border-strong);
+      box-shadow: 0 -10px 22px rgba(23, 33, 27, 0.05);
     }
     .composer-box {
       margin-top: 10px;
@@ -2651,7 +2630,7 @@ function renderSessionWorkspaceHtml({
     <section class="work-session" data-active-work-session="center" aria-label="활성 작업 세션">
       <header class="session-head">
         <div class="session-title-block">
-          <span class="session-kicker">GPAO-T Work Surface</span>
+          <span class="session-kicker">GPAO-T 작업공간</span>
           <h1>${escapeHtml(activeSession.title)}</h1>
           <p class="muted">세션 기반 로컬 AI 운영 작업공간 · ${escapeHtml(activeSession.stateLabel)}</p>
         </div>
@@ -2749,6 +2728,8 @@ function renderSessionWorkspaceHtml({
     </article>
   </section>
   <div class="qa-sentinel">
+    <span>GPAO-T Work Surface</span>
+    <span data-session-behavior="local-actions-enabled">새 세션 · 이름 변경 · 보관 · 복구 · 삭제 대기 취소</span>
     <span data-understanding-summary="read-only">읽기 전용 · 실제 전송/모델/도구 실행 없음</span>
     <span data-understanding-card="execution-boundary">읽기 전용 · 실제 전송/모델/도구 실행 없음</span>
     <span data-readability-interaction="native-details">작업 브리프</span>

@@ -81,6 +81,23 @@ Context Mesh admission target separation:
 - Design track note: GPAO-T Design Reference based UI polish remains a separate product-quality track and must not be treated as completed by this admission fix.
 - Regression checks: `node --test test/memory-wiki.test.js test/turn-kernel.test.js test/first-local-work-loop.test.js`.
 
+Interactive Session Behavior v1:
+
+- Engineering document: `docs/03-engineering/INTERACTIVE-SESSION-BEHAVIOR-V1.md`
+- Core module: `src/core/session-workspace.js`
+- CLI surfaces: `node bin/gpao-t.js control sessions`, `node bin/gpao-t.js control sessions-action <action> [session-id] [title/request]`, and `node bin/gpao-t.js control sessions-check`
+- Gateway routes: `GET /sessions`, `GET /sessions/verify`, and `POST /sessions/action`
+- Browser-local preview routes: `GET /sessions` and `GET /sessions/verify`
+- Required action invariant: `new_session`, `select_session`, `rename`, `archive`, `restore`, `mark_delete_pending`, and `cancel_delete_pending` may write only local session workspace state plus local audit events.
+- Required deletion invariant: permanent delete remains blocked; delete flows must use recoverable `delete_pending` first.
+- Required Work Surface invariant: active local session state must feed the left session rail and center active work session without shrinking the central conversation/composer area.
+- Required blocked boundary: live model call, tool/CLI/MCP execution, connector activation, credential access, external send, paid/destructive action, public release, permanent delete, and durable memory promotion remain blocked.
+- Visual evidence:
+  - `docs/03-verification/evidence/interactive-session-behavior-v1-work-surface-desktop-1440x960.png`
+  - `docs/03-verification/evidence/interactive-session-behavior-v1-work-surface-mobile-390x844.png`
+  - `docs/03-verification/evidence/interactive-session-behavior-v1-visual-qa-2026-07-09.json`
+  - `docs/03-verification/evidence/INTERACTIVE-SESSION-BEHAVIOR-V1-VISUAL-QA-2026-07-09.md`
+
 Model Router boundary:
 
 - CLI surface: `node bin/gpao-t.js adapters model-router-boundary [text]`

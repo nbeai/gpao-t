@@ -1048,6 +1048,8 @@ describe("GPAO-T Local Control Center readiness", () => {
     assert.equal(contract.routes.some((route) => route.path === "/work-surface/submission-gate/verify"), true);
     assert.equal(contract.routes.some((route) => route.path === "/work-surface/submission-validation-gate"), true);
     assert.equal(contract.routes.some((route) => route.path === "/work-surface/submission-validation-gate/verify"), true);
+    assert.equal(contract.routes.some((route) => route.path === "/sessions"), true);
+    assert.equal(contract.routes.some((route) => route.path === "/sessions/verify"), true);
     assert.equal(contract.previewLifecycle.serveCheck, "ephemeral_start_verify_stop");
     assert.equal(contract.previewLifecycle.serve, "explicit_manual_preview_until_signal");
     assert.equal(contract.previewLifecycle.persistentDaemon, false);
@@ -1082,6 +1084,8 @@ describe("GPAO-T Local Control Center readiness", () => {
     assert.equal(contract.allowedGetRoutes.includes("/work-surface/submission-gate/verify"), true);
     assert.equal(contract.allowedGetRoutes.includes("/work-surface/submission-validation-gate"), true);
     assert.equal(contract.allowedGetRoutes.includes("/work-surface/submission-validation-gate/verify"), true);
+    assert.equal(contract.allowedGetRoutes.includes("/sessions"), true);
+    assert.equal(contract.allowedGetRoutes.includes("/sessions/verify"), true);
     assert.equal(contract.allowedGetRoutes.includes("/control-center/ui-validate"), true);
     assert.equal(contract.blockedPostRoutes.includes("/turn"), true);
     assert.equal(contract.blockedActions.includes("connector activation"), true);

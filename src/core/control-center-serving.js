@@ -19,6 +19,10 @@ import {
   buildWorkSurfaceSubmissionValidationGate,
   verifyWorkSurfaceSubmissionValidationGate,
 } from "./work-surface-submission-validation-gate.js";
+import {
+  readSessionWorkspaceState,
+  verifySessionWorkspaceBehavior,
+} from "./session-workspace.js";
 import { renderControlCenterHtml } from "./control-center-renderer.js";
 import { buildControlCenterSnapshot, buildControlCenterSummary } from "./control-center.js";
 import {
@@ -93,6 +97,8 @@ export function buildControlCenterServingContract({
       { path: "/work-surface/submission-gate/verify", content: "work_surface_submission_decision_gate_verification" },
       { path: "/work-surface/submission-validation-gate", content: "work_surface_submission_validation_gate" },
       { path: "/work-surface/submission-validation-gate/verify", content: "work_surface_submission_validation_gate_verification" },
+      { path: "/sessions", content: "session_workspace_state" },
+      { path: "/sessions/verify", content: "session_workspace_behavior_verification" },
       { path: "/app-shell", content: "browser_local_app_shell_html" },
       { path: "/app-shell.html", content: "browser_local_app_shell_html" },
       { path: "/app-shell/contract", content: "browser_local_app_shell_contract" },
@@ -321,6 +327,16 @@ export async function startControlCenterPreviewServer({
       return;
     }
 
+    if (url.pathname === "/sessions") {
+      respondJson(response, 200, readSessionWorkspaceState({ root, now }));
+      return;
+    }
+
+    if (url.pathname === "/sessions/verify") {
+      respondJson(response, 200, verifySessionWorkspaceBehavior({ root }));
+      return;
+    }
+
     if (url.pathname === "/app-shell/contract") {
       respondJson(response, 200, buildBrowserLocalAppShellContract());
       return;
@@ -543,6 +559,8 @@ export async function verifyControlCenterPreviewServing({
     const workSurfaceSubmissionGateVerify = await fetchJson(`http://${host}:${preview.port}/work-surface/submission-gate/verify`);
     const workSurfaceSubmissionValidationGate = await fetchJson(`http://${host}:${preview.port}/work-surface/submission-validation-gate`);
     const workSurfaceSubmissionValidationGateVerify = await fetchJson(`http://${host}:${preview.port}/work-surface/submission-validation-gate/verify`);
+    const sessionWorkspace = await fetchJson(`http://${host}:${preview.port}/sessions`);
+    const sessionWorkspaceVerify = await fetchJson(`http://${host}:${preview.port}/sessions/verify`);
     const appShell = await fetchText(`http://${host}:${preview.port}/app-shell`);
     const appShellState = await fetchJson(`http://${host}:${preview.port}/app-shell/state`);
     const tauriGate = await fetchJson(`http://${host}:${preview.port}/app-shell/tauri-gate`);
@@ -613,6 +631,12 @@ export async function verifyControlCenterPreviewServing({
       || workSurfaceSubmissionValidationGateVerify.body.status !== "ready"
     ) {
       findings.push("work_surface_submission_validation_gate_verify_not_ready");
+    }
+    if (sessionWorkspace.status !== 200 || sessionWorkspace.body.schema !== "gpao_t.session_workspace_state.v1") {
+      findings.push("session_workspace_route_not_ready");
+    }
+    if (sessionWorkspaceVerify.status !== 200 || sessionWorkspaceVerify.body.status !== "ready") {
+      findings.push("session_workspace_verify_not_ready");
     }
     if (page.status !== 200) {
       findings.push("control_center_route_not_200");

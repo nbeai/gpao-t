@@ -1,0 +1,71 @@
+{
+  "schema": "gpao_t.visual_qa_report.v1",
+  "stage": "Interactive Session Behavior v1",
+  "date": "2026-07-09",
+  "target": "/work-surface",
+  "screenshots": {
+    "desktop": "docs/03-verification/evidence/interactive-session-behavior-v1-work-surface-desktop-1440x960.png",
+    "mobile": "docs/03-verification/evidence/interactive-session-behavior-v1-work-surface-mobile-390x844.png",
+    "mobileFullPage": "docs/03-verification/evidence/interactive-session-behavior-v1-work-surface-mobile-fullpage-390x844.png"
+  },
+  "checks": [
+    {
+      "id": "desktop-work-session",
+      "viewport": "1440x960",
+      "nonblankViewport": true,
+      "sessionRailVisible": true,
+      "activeWorkSessionCentral": true,
+      "inspectorVisible": true,
+      "composerVisible": true,
+      "authorityBoundaryVisible": true,
+      "recoverableDeleteVisible": true,
+      "noHorizontalOverflowObserved": true
+    },
+    {
+      "id": "mobile-work-session",
+      "viewport": "390x844",
+      "nonblankViewport": true,
+      "topOperatingStripVisible": true,
+      "activeWorkSessionCentral": true,
+      "composerVisible": true,
+      "authorityBoundaryVisible": true,
+      "noHorizontalOverflowObserved": true,
+      "koreanWrappingReadable": true
+    },
+    {
+      "id": "mobile-full-page",
+      "viewport": "390x844",
+      "sessionSheetEvidenceCaptured": true,
+      "inspectorSheetEvidenceCaptured": true,
+      "noHorizontalOverflowObserved": true
+    }
+  ],
+  "scores": {
+    "humanVisualQa": 4.4,
+    "visualPolish": 4.3,
+    "colorQuality": 4.4,
+    "layoutRhythm": 4.4,
+    "koreanTypography": 4.4,
+    "toneAndManner": 4.5,
+    "authorityClarity": 4.7,
+    "overallProductFeel": 4.4
+  },
+  "blockedBoundaries": [
+    "permanent session delete",
+    "live model call",
+    "tool/CLI/MCP execution",
+    "connector activation",
+    "credential access",
+    "external send",
+    "paid/destructive action",
+    "public release",
+    "durable memory promotion"
+  ],
+  "trackedFutureDesignRisks": [
+    "Out of scope for this slice: further reducing the visual card feeling of central preview blocks. The current evidence confirms the composer remains large and primary.",
+    "Out of scope for this slice: removing English identifiers from document title and hidden verification markers.",
+    "Out of scope for this slice: turning mobile session and inspector sheet evidence into true on-demand sheets inside a packaged interactive shell."
+  ],
+  "productQualityDecision": "ready_for_next_function_slice_with_design_risks_tracked_separately",
+  "status": "ready"
+}

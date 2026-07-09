@@ -16,6 +16,8 @@ export const BROWSER_LOCAL_ALLOWED_GET_ROUTES = [
   "/work-surface/submission-gate/verify",
   "/work-surface/submission-validation-gate",
   "/work-surface/submission-validation-gate/verify",
+  "/sessions",
+  "/sessions/verify",
   "/control-center",
   "/control-center/summary",
   "/control-center/design",

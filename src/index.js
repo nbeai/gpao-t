@@ -107,6 +107,11 @@ import {
   verifyModelRouterPolicy,
 } from "./core/model-router.js";
 import {
+  applySessionWorkspaceAction,
+  readSessionWorkspaceState,
+  verifySessionWorkspaceBehavior,
+} from "./core/session-workspace.js";
+import {
   buildOperationsContractSummary,
   buildOperationsReliabilityContract,
   buildRuntimeDataContract,
@@ -234,6 +239,7 @@ export {
   buildExecutionApprovalPreview,
   buildFirstLocalWorkLoop,
   buildSessionOverlay,
+  applySessionWorkspaceAction,
   appendSkillExecutionRun,
   buildSkillBuildQueue,
   buildSkillCandidateAtlas,
@@ -278,6 +284,7 @@ export {
   readMemoryWiki,
   readReplayRecoveryHistory,
   readRuntimeState,
+  readSessionWorkspaceState,
   readSelfGrowthProposals,
   readSkillExecutionHistory,
   readTCellCandidates,
@@ -285,6 +292,7 @@ export {
   reviewConnectorPermission,
   routeSkillPacks,
   routeModel,
+  verifySessionWorkspaceBehavior,
   verifyModelRouterBoundary,
   verifyModelRouterPolicy,
   verifyConnectorToolGovernance,
