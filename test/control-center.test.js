@@ -454,6 +454,12 @@ describe("GPAO-T Local Control Center readiness", () => {
     assert.equal(surface.interactionMode, "no_script_read_only_preview");
     assert.equal(surface.workspaceThread.composer.submission, "blocked_in_this_slice");
     assert.equal(surface.workspaceThread.threadPreview.length, 2);
+    assert.equal(surface.understandingSummary.mode, "read_only_summary_strip");
+    assert.equal(surface.understandingSummary.cards.length, 4);
+    assert.equal(surface.understandingSummary.cards.some((card) => card.id === "understood-task"), true);
+    assert.equal(surface.understandingSummary.cards.some((card) => card.id === "context-source"), true);
+    assert.equal(surface.understandingSummary.cards.some((card) => card.id === "skill-route"), true);
+    assert.equal(surface.understandingSummary.cards.some((card) => card.id === "execution-boundary" && card.tone === "locked"), true);
     assert.equal(surface.readabilityView.interaction, "native_details_no_script");
     assert.equal(surface.readabilityView.sections.length, 3);
     assert.equal(surface.readabilityView.sections.some((section) => section.id === "task-brief"), true);
@@ -476,6 +482,9 @@ describe("GPAO-T Local Control Center readiness", () => {
     assert.equal(surface.safetyInvariants.usesForm, false);
     assert.match(html, /GPAO-T Work Surface/);
     assert.match(html, /data-core-work-surface="read-only"/);
+    assert.match(html, /data-understanding-summary="read-only"/);
+    assert.match(html, /data-understanding-card="execution-boundary"/);
+    assert.match(html, /읽기 전용 · 실제 전송\/모델\/도구 실행 없음/);
     assert.match(html, /data-readability-interaction="native-details"/);
     assert.match(html, /data-readability-section="task-brief"/);
     assert.match(html, /읽기 체크리스트/);

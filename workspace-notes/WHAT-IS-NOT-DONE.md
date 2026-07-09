@@ -19,7 +19,7 @@
 
 - Do not call this complete unless verification evidence and completion language guard pass.
 - Do not ask the user to test before AI/developer scenario verification covers success, empty, and failure states when applicable.
-- Current status: read-only work-surface interaction implemented and visually verified
+- Current status: read-only work-surface understanding summary implemented and visually verified
 
 ## Blockers
 

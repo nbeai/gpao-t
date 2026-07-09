@@ -2,7 +2,7 @@
   "schema": "gpao_t.work_surface_visual_qa_baseline.v0_1",
   "status": "ready",
   "target": "/work-surface",
-  "capturedAt": "2026-07-09T09:49:50+09:00",
+  "capturedAt": "2026-07-09T09:59:15+09:00",
   "fileFormat": "jpg",
   "evidenceFiles": {
     "desktop": "/Users/jyp/Documents/Playground 2/gpao-t/docs/03-verification/evidence/work-surface-visual-qa-2026-07-09-desktop-viewport-1440x960.jpg",
@@ -22,6 +22,8 @@
     "noForm": true,
     "noExternalLinks": true,
     "noHorizontalOverflow": true,
+    "readOnlyUnderstandingSummaryVisible": true,
+    "lockedExecutionBoundaryCardVisible": true,
     "nativeReadabilityDetailsVisible": true,
     "readOnlyChecklistVisible": true,
     "topbarActionVisible": true,
@@ -31,7 +33,7 @@
   "checks": [
     {
       "id": "desktop-viewport",
-      "target": "http://127.0.0.1:60031/work-surface",
+      "target": "http://127.0.0.1:60203/work-surface",
       "viewport": {
         "width": 1440,
         "height": 960
@@ -43,6 +45,26 @@
       "nonblankViewport": true,
       "draftInputVisible": true,
       "composerVisible": true,
+      "readOnlyUnderstandingSummaryVisible": true,
+      "understandingCards": [
+        {
+          "id": "understood-task",
+          "tone": "ready"
+        },
+        {
+          "id": "context-source",
+          "tone": "ready"
+        },
+        {
+          "id": "skill-route",
+          "tone": "ready"
+        },
+        {
+          "id": "execution-boundary",
+          "tone": "locked"
+        }
+      ],
+      "lockedExecutionBoundaryCardVisible": true,
       "nativeReadabilityDetailsVisible": true,
       "readabilitySections": [
         {
@@ -77,11 +99,11 @@
       "hasScript": false,
       "hasForm": false,
       "externalLinks": [],
-      "screenshotBytes": 119553
+      "screenshotBytes": 123223
     },
     {
       "id": "mobile-viewport",
-      "target": "http://127.0.0.1:60031/work-surface",
+      "target": "http://127.0.0.1:60203/work-surface",
       "viewport": {
         "width": 390,
         "height": 844
@@ -93,6 +115,26 @@
       "nonblankViewport": true,
       "draftInputVisible": true,
       "composerVisible": true,
+      "readOnlyUnderstandingSummaryVisible": true,
+      "understandingCards": [
+        {
+          "id": "understood-task",
+          "tone": "ready"
+        },
+        {
+          "id": "context-source",
+          "tone": "ready"
+        },
+        {
+          "id": "skill-route",
+          "tone": "ready"
+        },
+        {
+          "id": "execution-boundary",
+          "tone": "locked"
+        }
+      ],
+      "lockedExecutionBoundaryCardVisible": true,
       "nativeReadabilityDetailsVisible": true,
       "readabilitySections": [
         {
@@ -127,7 +169,7 @@
       "hasScript": false,
       "hasForm": false,
       "externalLinks": [],
-      "screenshotBytes": 45945
+      "screenshotBytes": 42461
     }
   ],
   "blockedActionsRemainClosed": [

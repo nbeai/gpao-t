@@ -72,6 +72,37 @@ export function buildCoreWorkSurface({
         },
       ],
     },
+    understandingSummary: {
+      status: "ready",
+      mode: "read_only_summary_strip",
+      purpose: "사용자가 세부 패널을 열기 전에 GPAO-T가 현재 요청을 어떻게 이해했는지 빠르게 읽게 한다.",
+      cards: [
+        {
+          id: "understood-task",
+          label: "이해한 일",
+          value: turnPreview.taskPacket.objective,
+          tone: "ready",
+        },
+        {
+          id: "context-source",
+          label: "맥락 근거",
+          value: primaryContext?.anchor || "admitted context 없음",
+          tone: primaryContext ? "ready" : "review",
+        },
+        {
+          id: "skill-route",
+          label: "스킬 방향",
+          value: primarySkillPack?.title || "스킬 후보 없음",
+          tone: primarySkillPack ? "ready" : "review",
+        },
+        {
+          id: "execution-boundary",
+          label: "실행 경계",
+          value: "읽기 전용 · 실제 전송/모델/도구 실행 없음",
+          tone: "locked",
+        },
+      ],
+    },
     readabilityView: {
       status: "ready",
       interaction: "native_details_no_script",
@@ -196,6 +227,9 @@ export function verifyCoreWorkSurface({ surface = buildCoreWorkSurface(), html }
   if (surface.workspaceThread.composer.submission !== "blocked_in_this_slice") findings.push("composer_submission_open");
   if (!surface.workspaceThread.threadPreview.some((item) => item.role === "user")) findings.push("missing_user_thread_preview");
   if (!surface.workspaceThread.threadPreview.some((item) => item.role === "gpao-t")) findings.push("missing_gpao_thread_preview");
+  if (surface.understandingSummary?.mode !== "read_only_summary_strip") findings.push("missing_understanding_summary");
+  if ((surface.understandingSummary?.cards || []).length < 4) findings.push("missing_understanding_cards");
+  if (!surface.understandingSummary?.cards?.some((card) => card.id === "execution-boundary" && card.tone === "locked")) findings.push("missing_locked_understanding_boundary");
   if (surface.readabilityView?.interaction !== "native_details_no_script") findings.push("missing_readability_interaction");
   if ((surface.readabilityView?.sections || []).length < 3) findings.push("missing_readability_sections");
   if (!(surface.readabilityView?.checklist || []).length) findings.push("missing_readability_checklist");
@@ -215,6 +249,7 @@ export function verifyCoreWorkSurface({ surface = buildCoreWorkSurface(), html }
   if (html) {
     if (!html.includes("GPAO-T Work Surface")) findings.push("html_missing_title");
     if (!html.includes("data-core-work-surface=\"read-only\"")) findings.push("html_missing_surface_marker");
+    if (!html.includes("data-understanding-summary=\"read-only\"")) findings.push("html_missing_understanding_summary");
     if (!html.includes("data-readability-interaction=\"native-details\"")) findings.push("html_missing_readability_marker");
     if (!html.includes("data-composer-state=\"draft-not-sent\"")) findings.push("html_missing_composer_marker");
     if (!html.includes("data-authority-boundary=\"closed\"")) findings.push("html_missing_authority_marker");
@@ -240,6 +275,7 @@ export function buildCoreWorkSurfaceHtml({ surface } = {}) {
   const selectedPacks = workSurface.skillRoutePreview.selectedPacks;
   const contextCandidates = workSurface.contextPreview.retrievedCandidates;
   const readabilitySections = workSurface.readabilityView.sections || [];
+  const understandingCards = workSurface.understandingSummary.cards || [];
 
   return `<!doctype html>
 <html lang="ko">
@@ -356,6 +392,38 @@ export function buildCoreWorkSurfaceHtml({ surface } = {}) {
       display: grid;
       gap: 10px;
       margin-top: 12px;
+    }
+    .understanding-strip {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 8px;
+      margin-top: 12px;
+    }
+    .understanding-card {
+      min-width: 0;
+      min-height: 82px;
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fbfcfd;
+    }
+    .understanding-card[data-tone="locked"] {
+      border-color: #efd2a8;
+      background: #fffaf0;
+    }
+    .understanding-card strong {
+      display: block;
+      color: var(--muted);
+      font-size: 11px;
+      text-transform: uppercase;
+      overflow-wrap: anywhere;
+    }
+    .understanding-card span {
+      display: block;
+      margin-top: 6px;
+      font-size: 12px;
+      font-weight: 800;
+      overflow-wrap: anywhere;
     }
     .readability-panel {
       display: grid;
@@ -478,6 +546,7 @@ export function buildCoreWorkSurfaceHtml({ surface } = {}) {
     @media (max-width: 820px) {
       .layout { grid-template-columns: 1fr; padding: 12px; }
       .topbar { flex-direction: column; gap: 8px; }
+      .understanding-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       h1 { font-size: 17px; }
     }
     @media (max-width: 520px) {
@@ -487,7 +556,7 @@ export function buildCoreWorkSurfaceHtml({ surface } = {}) {
         padding: 12px 14px;
       }
       .layout { padding-top: 146px; }
-      .state-grid, .authority-strip { grid-template-columns: 1fr; }
+      .state-grid, .authority-strip, .understanding-strip { grid-template-columns: 1fr; }
       .thread, .panel { padding: 12px; }
     }
   </style>
@@ -497,7 +566,7 @@ export function buildCoreWorkSurfaceHtml({ surface } = {}) {
     <div class="topbar-main">
       <h1>GPAO-T Work Surface</h1>
       <p class="subtitle">작업 초안 · 맥락 프리뷰 · 권한 경계</p>
-      <p class="topbar-action">다음 안전 행동: read-only visual QA · 실제 전송/모델/도구 실행 없음</p>
+      <p class="topbar-action">다음 안전 행동: read-only 작업 이해 개선 · 실제 전송/모델/도구 실행 없음</p>
     </div>
     <span class="status">${escapeHtml(workSurface.status)}</span>
   </header>
@@ -519,6 +588,13 @@ export function buildCoreWorkSurfaceHtml({ surface } = {}) {
           <strong>${escapeHtml(message.label)} · ${escapeHtml(message.state)}</strong>
           <p>${escapeHtml(message.text)}</p>
         </article>`).join("")}
+      </div>
+      <div class="understanding-strip" data-understanding-summary="read-only" aria-label="Read-only task understanding summary">
+        ${understandingCards.map((card) => `
+        <div class="understanding-card" data-understanding-card="${escapeHtml(card.id)}" data-tone="${escapeHtml(card.tone)}">
+          <strong>${escapeHtml(card.label)}</strong>
+          <span>${escapeHtml(card.value)}</span>
+        </div>`).join("")}
       </div>
       <div class="readability-panel" data-readability-interaction="native-details">
         ${readabilitySections.map((section, index) => `

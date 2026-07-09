@@ -1,16 +1,16 @@
 # What We Are Building
 
-The first real GPAO-T user can open a local work surface, see where to give GPAO-T a task, understand the current task state, preview which context and skill route would be used, inspect the task brief and authority boundary, and see the next safe action before any live execution exists.
+The first real GPAO-T user can open a local work surface, see where to give GPAO-T a task, scan how GPAO-T understood the task, preview which context and skill route would be used, inspect the authority boundary, and see the next safe action before any live execution exists.
 
 ## Current Phase
 
-- Phase: core work surface read-only readability interaction
+- Phase: core work surface read-only task understanding summary
 - Command: control work-surface / GET /work-surface
 - Status: implemented, visually verified, and evidence-backed
 
 ## First Workflow
 
-Core Work Surface First Workflow: the user opens `/work-surface`, sees a draft task input and preview thread, expands no-script readability details for task brief / context route / authority boundary, confirms the next safe action, and understands that no model, tool, connector, approval write, dry-run, deployment, messenger, or automation has executed.
+Core Work Surface First Workflow: the user opens `/work-surface`, sees a draft task input and preview thread, scans the read-only task understanding summary, expands no-script readability details for task brief / context route / authority boundary, confirms the next safe action, and understands that no model, tool, connector, approval write, dry-run, deployment, messenger, or automation has executed.
 
 ## Companion Principle
 
@@ -30,4 +30,4 @@ AI does the work. User keeps authority.
 
 ## Latest Summary
 
-Implemented and visually verified the smallest richer read-only task interaction on `/work-surface`: native HTML details/summary sections for task brief, context / skill route, authority boundary, plus a read-only checklist. Desktop/mobile evidence is refreshed under `docs/03-verification/evidence/work-surface-visual-qa-*`. Live send, external model calls, tool execution, connector activation, approval writes, dry-run invocation, durable memory promotion, self-growth apply, deployment, messenger, and automation remain blocked.
+Implemented and visually verified a compact read-only task understanding summary on `/work-surface`: understood task, context source, skill route, and locked execution boundary. Desktop/mobile evidence is refreshed under `docs/03-verification/evidence/work-surface-visual-qa-*`. Live send, external model calls, tool execution, connector activation, approval writes, dry-run invocation, durable memory promotion, self-growth apply, deployment, messenger, and automation remain blocked.

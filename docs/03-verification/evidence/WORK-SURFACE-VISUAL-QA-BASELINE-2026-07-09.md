@@ -2,7 +2,7 @@
 
 Target: `/work-surface`
 
-This baseline verifies the first user-facing GPAO-T work surface after adding native no-script readability details. The surface remains read-only and does not submit chat input, call external models, execute tools, activate connectors, write approval records, invoke dry-run, promote durable memory, apply self-growth, deploy, send through messenger, or start automation.
+This baseline verifies the first user-facing GPAO-T work surface after adding a compact read-only task understanding summary and native no-script readability details. The surface remains read-only and does not submit chat input, call external models, execute tools, activate connectors, write approval records, invoke dry-run, promote durable memory, apply self-growth, deploy, send through messenger, or start automation.
 
 ## Evidence Files
 
@@ -14,6 +14,8 @@ This baseline verifies the first user-facing GPAO-T work surface after adding na
 
 - Nonblank viewport: pass
 - Draft task input visible: pass
+- Read-only task understanding summary visible: pass
+- Locked execution boundary card visible: pass
 - Native readability details visible: pass
 - Read-only checklist visible: pass
 - Current task state visible: pass
@@ -29,7 +31,7 @@ This baseline verifies the first user-facing GPAO-T work surface after adding na
 
 ## Notes
 
-The mobile first viewport shows the fixed topbar action line, the composer-level closed boundary, and the native readability detail controls before deeper panels. Authority details remain available lower in the page, while the first screen already states that external action, tool activation, and live model connector execution are closed.
+The mobile first viewport shows the fixed topbar action line, the composer-level closed boundary, the read-only task understanding summary, and the native readability detail controls before deeper panels. Authority details remain available lower in the page, while the first screen already states that external action, tool activation, and live model connector execution are closed.
 
 ## Next Safe Action
 
