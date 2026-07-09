@@ -17,10 +17,10 @@
 
 ## Current Completion Boundary
 
-The first local draft preview is implemented and verified as a preview-only local inspection surface. It is not a live execution surface and it does not generate draft content through a model.
+The local draft preview confirmation-flow refinement is implemented and verified as a preview-only local inspection surface. It helps the user classify the preview as `의도와 맞음`, `수정 필요`, or `보류`; it is not a live execution surface and it does not generate draft content through a model.
 
-BEAI closeout reports conservative review items for human-scenario acceptance and intentional blocked-boundary language. Completion language is still allowed by BEAI verify/closeout; those review items remain next-stage product validation and stop-line notes, not implementation blockers for this local preview slice.
+BEAI closeout reports conservative review items for TODO/blocker wording because this product deliberately keeps multiple authority actions blocked. Completion language is allowed by BEAI verify/closeout; those review items remain stop-line reminders, not implementation blockers for this local preview slice.
 
 ## Next Product Gap
 
-The next product-facing gap is a clearer confirmation flow around the local draft preview, still without live model/tool/connector/external execution.
+The next gap should be a larger GPAO-T product axis, not another work-surface/submission meta-gate. Candidate axes include Memory Wiki / Context Mesh depth, Skill Pack production, safe local execution substrate, Control Center operational state, or packaged desktop preparation.

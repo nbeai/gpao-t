@@ -23,4 +23,4 @@ The first slice is read-only and no-script. It now includes a compact task under
 
 ## Next Action
 
-Use the first local draft preview as the next user-facing bridge: the user can see the understood task, expected output, context to use, skill route, and locked execution state before any future live submission gate. Live execution remains blocked.
+The core work surface substrate is closed for the current read-only preview phase. The user can see the understood task, expected output, context to use, skill route, locked execution state, and whether the preview is `의도와 맞음`, `수정 필요`, or `보류`. Live execution remains blocked. The next product move should choose the next major GPAO-T axis instead of adding another work-surface meta-gate.

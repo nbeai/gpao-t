@@ -16,11 +16,14 @@ Status: ready
 
 - The first local draft preview is visible.
 - The preview shows understood task, expected output, context to use, skill route, and locked execution state.
+- The preview confirmation flow shows intent match, needs changes, and hold states.
+- The user-facing checklist explains what to verify before proceeding.
 - Empty, blocked, and review-needed states are visible in product language.
 - Desktop and mobile viewports are nonblank.
 - No horizontal overflow was detected.
 - No script, form, or external link was present.
 - Live submission, model call, tool/CLI/MCP execution, connector activation, external network/send, approval write, install/update/rollback, and durable memory promotion remain blocked.
+- This evidence closes the core work surface substrate for this read-only preview phase.
 
 ## Boundary
 

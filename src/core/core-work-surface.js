@@ -190,6 +190,8 @@ export function buildCoreWorkSurface({
       purpose: "확인된 이해/맥락/스킬/권한을 바탕으로 GPAO-T가 어떻게 처리할 예정인지 한눈에 보여준다.",
       previewMode: "structure_only_no_model_no_submit",
       headline: "이렇게 처리될 예정입니다",
+      bridgeFromConfirmation:
+        "위 확인 카드가 맞다면 아래 preview가 다음 작업 흐름입니다. 다르면 수정 필요나 보류로 판단합니다.",
       understoodTask: turnPreview.taskPacket.objective,
       expectedOutputShape: {
         label: "예상 출력 형태",
@@ -246,23 +248,68 @@ export function buildCoreWorkSurface({
       productStates: [
         {
           id: "empty",
-          label: "입력이 비어 있으면",
-          userMessage: "작업 내용을 먼저 적어야 preview를 만들 수 있습니다.",
+          label: "입력이 없을 때",
+          userMessage: "맡길 일을 한 문장이라도 적으면 GPAO-T가 이해한 내용과 preview를 보여줍니다.",
           outcome: "empty",
         },
         {
           id: "blocked",
-          label: "위험 행동이 포함되면",
-          userMessage: "외부 전송, 모델 호출, 도구 실행, 커넥터 활성화는 이 화면에서 실행되지 않습니다.",
+          label: "실행 행동이 섞였을 때",
+          userMessage: "보내기, 모델 호출, 도구 실행, 커넥터 연결은 여기서 바로 실행하지 않고 잠근 상태로 보여줍니다.",
           outcome: "blocked",
         },
         {
           id: "review-needed",
-          label: "맥락이 애매하면",
-          userMessage: "GPAO-T가 이해한 일과 사용할 맥락을 사용자가 먼저 확인해야 합니다.",
+          label: "맥락이 애매할 때",
+          userMessage: "GPAO-T가 이해한 일이나 사용할 맥락이 애매하면 먼저 확인할 지점을 표시합니다.",
           outcome: "review_needed",
         },
       ],
+      confirmationFlow: {
+        schema: "gpao_t.local_draft_preview_confirmation_flow.v0_1",
+        status: "visible_preview_only",
+        mode: "read_only_decision_strip",
+        prompt: "이 preview가 내 의도와 맞는지 확인하세요.",
+        decisions: [
+          {
+            id: "intent-match",
+            label: "의도와 맞음",
+            userMeaning: "이해한 작업, 맥락, 예상 출력이 대체로 맞습니다.",
+            next: "다음 단계에서도 실제 실행 전 별도 승인 경계를 유지합니다.",
+            state: "preview_only",
+          },
+          {
+            id: "needs-changes",
+            label: "수정 필요",
+            userMeaning: "목표, 맥락, 출력 형태 중 바꿀 부분이 있습니다.",
+            next: "입력이나 확인 카드 내용을 먼저 고친 뒤 preview를 다시 봅니다.",
+            state: "review_needed",
+          },
+          {
+            id: "hold",
+            label: "보류",
+            userMeaning: "지금은 판단하지 않고 안전하게 멈춥니다.",
+            next: "아무 실행도 하지 않고 현재 preview만 보존합니다.",
+            state: "held",
+          },
+        ],
+        checkBeforeProceeding: [
+          "GPAO-T가 이해한 일이 내가 맡기려던 일과 같은가?",
+          "사용될 맥락과 스킬 경로가 엉뚱하지 않은가?",
+          "예상 출력 형태가 지금 필요한 결과와 맞는가?",
+          "실행 전 잠금 상태가 계속 보이는가?",
+        ],
+        connectsConfirmationToPreview: true,
+        closesCoreWorkSurfaceSubstrateAfterThisPass: true,
+        opensLiveSubmission: false,
+        invokesModel: false,
+        executesTools: false,
+        activatesConnectors: false,
+        sendsExternally: false,
+        writesApprovalRecord: false,
+        installsUpdatesOrRollsBack: false,
+        promotesDurableMemory: false,
+      },
       visualQaEvidence: {
         contract:
           "docs/03-verification/evidence/work-surface-local-draft-preview-qa-2026-07-09.json",
@@ -271,7 +318,7 @@ export function buildCoreWorkSurface({
         mobile:
           "docs/03-verification/evidence/work-surface-local-draft-preview-2026-07-09-mobile-viewport-390x844.jpg",
       },
-      nextAfterPreview: "사용자가 preview를 이해한 뒤에도 실제 제출/모델/도구/외부 실행은 별도 승인 경계에서 멈춘다.",
+      nextAfterPreview: "의도와 맞음, 수정 필요, 보류 중 하나로 읽기 판단만 한다. 실제 제출/모델/도구/외부 실행은 계속 별도 승인 경계에서 멈춘다.",
       structureVisible: true,
       draftContentGeneratedNow: false,
       generationMode: "local_structure_preview_only",
@@ -355,7 +402,7 @@ export function buildCoreWorkSurface({
       usesForm: false,
     },
     nextSafeAction:
-      "local draft preview에서 이해한 작업, 예상 출력, 사용될 맥락, 스킬 경로, 잠금 상태를 확인한다. 실제 제출/모델/도구/커넥터/외부 실행은 계속 열지 않는다.",
+      "local draft preview가 의도와 맞음, 수정 필요, 보류 중 어디에 해당하는지 읽기 판단한다. 실제 제출/모델/도구/커넥터/외부 실행은 계속 열지 않는다.",
   };
 }
 
@@ -388,6 +435,15 @@ export function verifyCoreWorkSurface({ surface = buildCoreWorkSurface(), html }
   if (!surface.localDraftPreview?.productStates?.some((state) => state.id === "empty")) findings.push("local_draft_missing_empty_state");
   if (!surface.localDraftPreview?.productStates?.some((state) => state.id === "blocked")) findings.push("local_draft_missing_blocked_state");
   if (!surface.localDraftPreview?.productStates?.some((state) => state.id === "review-needed")) findings.push("local_draft_missing_review_state");
+  if (surface.localDraftPreview?.confirmationFlow?.mode !== "read_only_decision_strip") findings.push("missing_local_draft_confirmation_flow");
+  if (!surface.localDraftPreview?.confirmationFlow?.decisions?.some((decision) => decision.id === "intent-match")) findings.push("missing_intent_match_decision");
+  if (!surface.localDraftPreview?.confirmationFlow?.decisions?.some((decision) => decision.id === "needs-changes")) findings.push("missing_needs_changes_decision");
+  if (!surface.localDraftPreview?.confirmationFlow?.decisions?.some((decision) => decision.id === "hold")) findings.push("missing_hold_decision");
+  if ((surface.localDraftPreview?.confirmationFlow?.checkBeforeProceeding || []).length < 4) findings.push("missing_preview_confirmation_checklist");
+  if (surface.localDraftPreview?.confirmationFlow?.connectsConfirmationToPreview !== true) findings.push("confirmation_to_preview_bridge_missing");
+  if (surface.localDraftPreview?.confirmationFlow?.closesCoreWorkSurfaceSubstrateAfterThisPass !== true) findings.push("substrate_close_marker_missing");
+  if (surface.localDraftPreview?.confirmationFlow?.opensLiveSubmission !== false) findings.push("confirmation_flow_submission_open");
+  if (surface.localDraftPreview?.confirmationFlow?.invokesModel !== false) findings.push("confirmation_flow_model_open");
   if (surface.localDraftPreview?.opensLiveSubmission !== false) findings.push("local_draft_submission_open");
   if (surface.localDraftPreview?.invokesModel !== false) findings.push("local_draft_model_open");
   if (surface.localDraftPreview?.executesTools !== false) findings.push("local_draft_tools_open");
@@ -417,6 +473,11 @@ export function verifyCoreWorkSurface({ surface = buildCoreWorkSurface(), html }
     if (!html.includes("이렇게 처리될 예정입니다")) findings.push("html_missing_local_draft_headline");
     if (!html.includes("data-local-draft-state=\"blocked\"")) findings.push("html_missing_local_draft_blocked_state");
     if (!html.includes("data-local-draft-state=\"review-needed\"")) findings.push("html_missing_local_draft_review_state");
+    if (!html.includes("data-preview-confirmation-flow=\"read-only\"")) findings.push("html_missing_preview_confirmation_flow");
+    if (!html.includes("data-preview-decision=\"intent-match\"")) findings.push("html_missing_intent_match_decision");
+    if (!html.includes("data-preview-decision=\"needs-changes\"")) findings.push("html_missing_needs_changes_decision");
+    if (!html.includes("data-preview-decision=\"hold\"")) findings.push("html_missing_hold_decision");
+    if (!html.includes("preview 확인 체크리스트")) findings.push("html_missing_preview_checklist");
     if (!html.includes("아직 실행된 것은 없습니다")) findings.push("html_missing_no_execution_notice");
     if (!html.includes("data-composer-state=\"draft-not-sent\"")) findings.push("html_missing_composer_marker");
     if (!html.includes("data-authority-boundary=\"closed\"")) findings.push("html_missing_authority_marker");
@@ -446,6 +507,8 @@ export function buildCoreWorkSurfaceHtml({ surface } = {}) {
   const confirmationCards = workSurface.confirmationUx.cards || [];
   const draftPreviewSections = workSurface.localDraftPreview.sections || [];
   const draftProductStates = workSurface.localDraftPreview.productStates || [];
+  const previewDecisions = workSurface.localDraftPreview.confirmationFlow?.decisions || [];
+  const previewChecklist = workSurface.localDraftPreview.confirmationFlow?.checkBeforeProceeding || [];
 
   return `<!doctype html>
 <html lang="ko">
@@ -764,6 +827,74 @@ export function buildCoreWorkSurfaceHtml({ surface } = {}) {
       color: var(--muted);
       font-size: 12px;
     }
+    .preview-bridge {
+      margin-top: 10px;
+      padding: 9px;
+      border: 1px solid #cdd8e5;
+      border-radius: 8px;
+      background: #f8fbff;
+      color: var(--accent);
+      font-size: 12px;
+      font-weight: 800;
+      overflow-wrap: anywhere;
+    }
+    .preview-decision-strip {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .preview-decision {
+      min-width: 0;
+      min-height: 106px;
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--surface);
+    }
+    .preview-decision[data-state="preview_only"] {
+      border-color: #b7d7c6;
+      background: #f8fcfa;
+    }
+    .preview-decision[data-state="review_needed"] {
+      border-color: #e0cc8f;
+      background: #fffdf3;
+    }
+    .preview-decision[data-state="held"] {
+      border-color: #cdd8e5;
+      background: #fbfcfd;
+    }
+    .preview-decision strong,
+    .preview-decision span {
+      display: block;
+      overflow-wrap: anywhere;
+    }
+    .preview-decision strong {
+      font-size: 12px;
+    }
+    .preview-decision span {
+      margin-top: 5px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .preview-checklist {
+      margin-top: 10px;
+      padding: 10px;
+      border: 1px solid #c9dccf;
+      border-radius: 8px;
+      background: #f5fbf7;
+    }
+    .preview-checklist strong {
+      display: block;
+      color: var(--ready);
+      font-size: 12px;
+      margin-bottom: 5px;
+    }
+    .preview-checklist li {
+      color: var(--muted);
+      font-size: 12px;
+      overflow-wrap: anywhere;
+    }
     .checklist strong {
       display: block;
       color: var(--ready);
@@ -852,7 +983,7 @@ export function buildCoreWorkSurfaceHtml({ surface } = {}) {
       .topbar { flex-direction: column; gap: 8px; }
       .understanding-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .confirmation-grid, .draft-preview-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-      .draft-state-strip { grid-template-columns: 1fr; }
+      .draft-state-strip, .preview-decision-strip { grid-template-columns: 1fr; }
       h1 { font-size: 17px; }
     }
     @media (max-width: 520px) {
@@ -862,7 +993,7 @@ export function buildCoreWorkSurfaceHtml({ surface } = {}) {
         padding: 12px 14px;
       }
       .layout { padding-top: 146px; }
-      .state-grid, .authority-strip, .understanding-strip, .confirmation-grid, .draft-preview-grid { grid-template-columns: 1fr; }
+      .state-grid, .authority-strip, .understanding-strip, .confirmation-grid, .draft-preview-grid, .preview-decision-strip { grid-template-columns: 1fr; }
       .thread, .panel { padding: 12px; }
     }
   </style>
@@ -872,7 +1003,7 @@ export function buildCoreWorkSurfaceHtml({ surface } = {}) {
     <div class="topbar-main">
       <h1>GPAO-T Work Surface</h1>
       <p class="subtitle">작업 초안 · 맥락 프리뷰 · 권한 경계</p>
-      <p class="topbar-action">다음 안전 행동: confirmation 확인 후 first local draft preview · 실제 전송/모델/도구 실행 없음</p>
+      <p class="topbar-action">다음 안전 행동: preview 의도 확인 · 맞음/수정 필요/보류 · 실제 전송/모델/도구 실행 없음</p>
     </div>
     <span class="status">${escapeHtml(workSurface.status)}</span>
   </header>
@@ -943,6 +1074,7 @@ export function buildCoreWorkSurfaceHtml({ surface } = {}) {
           </div>
           <span class="status">${escapeHtml(workSurface.localDraftPreview.status)}</span>
         </div>
+        <p class="preview-bridge">${escapeHtml(workSurface.localDraftPreview.bridgeFromConfirmation)}</p>
         <div class="draft-preview-grid">
           ${draftPreviewSections.map((section) => `
           <div class="draft-preview-item" data-local-draft-section="${escapeHtml(section.id)}" data-state="${escapeHtml(section.state)}">
@@ -956,6 +1088,20 @@ export function buildCoreWorkSurfaceHtml({ surface } = {}) {
             <strong>${escapeHtml(state.label)}</strong>
             <span>${escapeHtml(state.userMessage)}</span>
           </div>`).join("")}
+        </div>
+        <div class="preview-decision-strip" data-preview-confirmation-flow="read-only" aria-label="Preview confirmation decisions">
+          ${previewDecisions.map((decision) => `
+          <div class="preview-decision" data-preview-decision="${escapeHtml(decision.id)}" data-state="${escapeHtml(decision.state)}">
+            <strong>${escapeHtml(decision.label)}</strong>
+            <span>${escapeHtml(decision.userMeaning)}</span>
+            <span>${escapeHtml(decision.next)}</span>
+          </div>`).join("")}
+        </div>
+        <div class="preview-checklist" aria-label="Preview confirmation checklist">
+          <strong>preview 확인 체크리스트</strong>
+          <ul>
+            ${previewChecklist.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}
+          </ul>
         </div>
         <p class="confirmation-note">${escapeHtml(workSurface.localDraftPreview.nextAfterPreview)}</p>
         <p class="confirmation-note">draft content generated now: ${escapeHtml(workSurface.localDraftPreview.draftContentGeneratedNow)} · model: ${escapeHtml(workSurface.localDraftPreview.invokesModel)} · tools: ${escapeHtml(workSurface.localDraftPreview.executesTools)} · connectors: ${escapeHtml(workSurface.localDraftPreview.activatesConnectors)}</p>

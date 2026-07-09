@@ -17,6 +17,12 @@
     "emptyStateVisible": true,
     "blockedStateVisible": true,
     "reviewNeededStateVisible": true,
+    "previewConfirmationFlowVisible": true,
+    "intentMatchVisible": true,
+    "needsChangesVisible": true,
+    "holdVisible": true,
+    "previewChecklistVisible": true,
+    "coreWorkSurfaceSubstrateClosed": true,
     "noLiveSubmission": true,
     "noModelCall": true,
     "noToolCliMcpExecution": true,
@@ -51,10 +57,20 @@
         "blocked",
         "review-needed"
       ],
+      "previewConfirmationFlowVisible": true,
+      "previewDecisions": [
+        "intent-match",
+        "needs-changes",
+        "hold"
+      ],
+      "previewChecklistVisible": true,
       "expectedOutputVisible": true,
       "contextToUseVisible": true,
       "skillRouteVisible": true,
       "lockedExecutionVisible": true,
+      "intentMatchVisible": true,
+      "needsChangesVisible": true,
+      "holdVisible": true,
       "noExecutionVisible": true,
       "authorityBoundaryVisible": true,
       "nextSafeActionVisible": true,
@@ -84,10 +100,20 @@
         "blocked",
         "review-needed"
       ],
+      "previewConfirmationFlowVisible": true,
+      "previewDecisions": [
+        "intent-match",
+        "needs-changes",
+        "hold"
+      ],
+      "previewChecklistVisible": true,
       "expectedOutputVisible": true,
       "contextToUseVisible": true,
       "skillRouteVisible": true,
       "lockedExecutionVisible": true,
+      "intentMatchVisible": true,
+      "needsChangesVisible": true,
+      "holdVisible": true,
       "noExecutionVisible": true,
       "authorityBoundaryVisible": true,
       "nextSafeActionVisible": true,
@@ -108,5 +134,5 @@
     "install/update/rollback",
     "durable memory promotion"
   ],
-  "nextSafeAction": "Use the local draft preview structure as the next user-facing bridge before any future explicit live submission gate."
+  "nextSafeAction": "Close the core work surface substrate and move to the next major product axis after preserving the preview-only confirmation flow."
 }
