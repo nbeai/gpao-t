@@ -1127,6 +1127,9 @@ function executionApprovalHtml(panel) {
   const authorityLegend = data.authorityLegend || [];
   const validationRules = data.validation?.rules || [];
   const plannedAuditItems = data.auditWriteDesign?.plannedAuditItems || [];
+  const approvalRecordWriteUx = data.approvalRecordWriteUx || {};
+  const approvalRecordStages = approvalRecordWriteUx.flowStages || [];
+  const approvalRecordItems = approvalRecordWriteUx.recordItems || [];
   return `
             <div class="approval-flow" aria-label="Execution proposal confirmation" data-execution-proposal-confirmation="preview-only">
               <p class="approval-safe-note" data-execution-no-write="true">${escapeHtml(data.uxContract.noExecutionNotice)} ${escapeHtml(data.uxContract.primaryQuestion)}</p>
@@ -1166,6 +1169,22 @@ function executionApprovalHtml(panel) {
                   <span class="blocked-action-detail">${escapeHtml(item.userMeaning)}</span>
                 </span>`).join("")}
               </div>
+              <div class="blocked-actions" aria-label="Approval record write UX design" data-approval-record-write-ux="design-only">
+                <strong>승인 기록 저장 전 확인</strong>
+                ${approvalRecordStages.map((stage) => `
+                <span class="blocked-action" data-approval-record-stage="${escapeHtml(stage.id)}">
+                  <span class="blocked-action-label">${escapeHtml(stage.step)} · ${escapeHtml(stage.label)}</span>${escapeHtml(stage.status)}
+                  <span class="blocked-action-detail">${escapeHtml(stage.userMeaning)}</span>
+                </span>`).join("")}
+              </div>
+              <div class="blocked-actions" aria-label="Approval record preview items" data-approval-record-preview="no-write">
+                <strong>저장될 항목 미리보기</strong>
+                ${approvalRecordItems.map((item) => `
+                <span class="blocked-action" data-approval-record-item="${escapeHtml(item.id)}">
+                  <span class="blocked-action-label">${escapeHtml(item.label)}</span>${escapeHtml(item.value)}
+                  <span class="blocked-action-detail">${escapeHtml(item.userMeaning)}</span>
+                </span>`).join("")}
+              </div>
               <div class="blocked-actions" aria-label="Execution approval blocked actions" data-audit-write-design="no-write">
                 <strong>아직 열지 않음</strong>
                 ${data.blockedActions.slice(0, 8).map((action) => `
@@ -1186,6 +1205,8 @@ function executionApprovalInspectorRows(panel) {
     inspectorRow("Validation Rules", `${data.validation.rules.length}`),
     inspectorRow("Audit Items", `${data.auditWriteDesign.plannedAuditItems.length}`),
     inspectorRow("Audit Write", data.auditWriteDesign.auditWriteNow === false ? "기록 설계만 · 실제 기록 없음" : "write open"),
+    inspectorRow("Approval Record UX", data.approvalRecordWriteUx.writesApprovalRecordNow === false ? "저장 설계만 · 실제 저장 없음" : "write open"),
+    inspectorRow("Approval Record Items", `${data.approvalRecordWriteUx.recordItems.length}`),
     inspectorRow("UX Locale", data.uxContract.defaultLocale),
   ].join("");
 }

@@ -1,7 +1,11 @@
 import { listModelAdapters, listToolAdapters } from "./adapter-boundary.js";
 import { buildConnectorGovernanceSummary } from "./connector-governance.js";
 import { buildCoreWorkSurface } from "./core-work-surface.js";
-import { buildAuditWriteDesignProof, buildExecutionApprovalPreview } from "./execution-approval.js";
+import {
+  buildApprovalRecordWriteUxDesign,
+  buildAuditWriteDesignProof,
+  buildExecutionApprovalPreview,
+} from "./execution-approval.js";
 import { runDoctor } from "./doctor.js";
 import { buildGrowthApplicationGateSummary } from "./growth-application-gates.js";
 import { readSelfGrowthProposals } from "./growth-proposals.js";
@@ -37,6 +41,7 @@ export function buildControlCenterSnapshot({ root } = {}) {
   const connectorGovernance = buildConnectorGovernanceSummary();
   const executionApprovalPreview = buildExecutionApprovalPreview();
   const auditWriteDesignProof = buildAuditWriteDesignProof();
+  const approvalRecordWriteUx = buildApprovalRecordWriteUxDesign();
   const installHardening = buildInstallHardeningSummary({ root });
   const operationsContract = buildOperationsContractSummary();
   const skillPacks = listSkillPacks();
@@ -106,6 +111,9 @@ export function buildControlCenterSnapshot({ root } = {}) {
       auditWritePlannedItems: auditWriteDesignProof.plannedAuditItems.length,
       auditWriteRequiredFields: auditWriteDesignProof.requiredFields.length,
       auditWriteBlockedActions: auditWriteDesignProof.blockedActions.length,
+      approvalRecordFlowStages: approvalRecordWriteUx.flow.stages.length,
+      approvalRecordPreviewItems: approvalRecordWriteUx.recordItems.length,
+      approvalRecordBlockedActions: approvalRecordWriteUx.blockedActions.length,
       coreWorkSurfaceThreadMessages: coreWorkSurface.workspaceThread.threadPreview.length,
       coreWorkSurfaceSelectedSkillPacks: coreWorkSurface.skillRoutePreview.selectedPacks.length,
       coreWorkSurfaceContextCandidates: coreWorkSurface.contextPreview.retrievedCandidates.length,
@@ -134,6 +142,7 @@ export function buildControlCenterSnapshot({ root } = {}) {
       approvalPreviewFlow: "local_preview_only_no_write_no_invocation",
       executionApprovalPacket: "preview_validation_only_no_write_no_invocation",
       auditWriteDesign: "design_proof_only_no_write",
+      approvalRecordWriteUx: "ux_design_only_no_write",
       approvalRecordWrite: "blocked",
       dryRunInvocation: "blocked",
       tauriBuild: "blocked",

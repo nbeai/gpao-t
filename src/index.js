@@ -51,8 +51,10 @@ import { buildLocalControlCenterDesignContract } from "./core/design-contract.js
 import { buildContextRuntime } from "./core/context-runtime.js";
 import { runDoctor } from "./core/doctor.js";
 import {
+  buildApprovalRecordWriteUxDesign,
   buildAuditWriteDesignProof,
   buildExecutionApprovalPreview,
+  verifyApprovalRecordWriteUxDesign,
   verifyAuditWriteDesignProof,
   verifyExecutionApprovalPreview,
 } from "./core/execution-approval.js";
@@ -202,6 +204,7 @@ export {
   buildRuntimeDataContract,
   buildAuthorityDecision,
   buildContextRuntime,
+  buildApprovalRecordWriteUxDesign,
   buildAuditWriteDesignProof,
   buildExecutionApprovalPreview,
   buildSessionOverlay,
@@ -257,6 +260,7 @@ export {
   verifyModelRouterBoundary,
   verifyModelRouterPolicy,
   verifyConnectorToolGovernance,
+  verifyApprovalRecordWriteUxDesign,
   verifyAuditWriteDesignProof,
   verifyExecutionApprovalPreview,
   renderControlCenterHtml,

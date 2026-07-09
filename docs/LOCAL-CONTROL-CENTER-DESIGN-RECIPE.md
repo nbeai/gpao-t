@@ -284,6 +284,40 @@ Rules:
 - Do not imply approval, execution, or storage happened.
 - Keep the mobile layout one column when needed so Korean descriptions do not overflow.
 
+### ApprovalRecordWriteUxPreview
+
+Use after audit write design exists and before any approval record write, approval directory creation, approval store read, dry-run invocation, or execution.
+
+Required flow stages:
+
+- `미리보기`
+- `확인`
+- `승인 패킷`
+- `기록 미리보기`
+- `쓰기 잠금`
+
+Required preview fields:
+
+- `기록 ID`
+- `승인 패킷`
+- `실행 제안`
+- `권한 단계`
+- `확인 상태`
+- `범위`
+- `만료`
+- `감사 기준`
+- `리플레이 기준`
+- `되돌리기 기준`
+
+Rules:
+
+- Label the section `승인 기록 저장 전 확인` and the field list `저장될 항목 미리보기`.
+- State `저장 설계만 · 실제 저장 없음` and `아직 실행 없음` when no record exists yet.
+- Apply the GPAO-T design reference: Codex-level work/chat readability and Claude-Code-level permission/execution governance.
+- Make the flow feel like a calm pre-write review, not a danger wall.
+- Do not imply that approval was granted, an approval record was written, an audit event was written, or a dry-run was invoked.
+- Keep full-page mobile evidence available when the viewport starts above the approval record section.
+
 ### GrowthProposalCard
 
 Required fields:

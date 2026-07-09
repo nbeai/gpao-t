@@ -92,6 +92,14 @@ const AUDIT_WRITE_DESIGN_QA_DOC = fileURLToPath(new URL(
   "../docs/03-verification/evidence/AUDIT-WRITE-DESIGN-QA-2026-07-09.md",
   import.meta.url,
 ));
+const APPROVAL_RECORD_WRITE_UX_QA_JSON = fileURLToPath(new URL(
+  "../docs/03-verification/evidence/approval-record-write-ux-qa-2026-07-09.json",
+  import.meta.url,
+));
+const APPROVAL_RECORD_WRITE_UX_QA_DOC = fileURLToPath(new URL(
+  "../docs/03-verification/evidence/APPROVAL-RECORD-WRITE-UX-QA-2026-07-09.md",
+  import.meta.url,
+));
 const WORK_SURFACE_VISUAL_QA_JSON = fileURLToPath(new URL(
   "../docs/03-verification/evidence/work-surface-visual-qa-baseline-2026-07-09.json",
   import.meta.url,
@@ -156,6 +164,9 @@ describe("GPAO-T Local Control Center readiness", () => {
     assert.equal(snapshot.counts.auditWritePlannedItems, 8);
     assert.equal(snapshot.counts.auditWriteRequiredFields, 8);
     assert.equal(snapshot.counts.auditWriteBlockedActions, 12);
+    assert.equal(snapshot.counts.approvalRecordFlowStages, 5);
+    assert.equal(snapshot.counts.approvalRecordPreviewItems, 10);
+    assert.equal(snapshot.counts.approvalRecordBlockedActions, 14);
     assert.equal(snapshot.counts.coreWorkSurfaceThreadMessages, 2);
     assert.equal(snapshot.counts.coreWorkSurfaceSelectedSkillPacks >= 1, true);
     assert.equal(snapshot.authorityBoundary.connectorActivation, "blocked_until_explicit_approval");
@@ -166,6 +177,7 @@ describe("GPAO-T Local Control Center readiness", () => {
     assert.equal(snapshot.authorityBoundary.approvalPreviewFlow, "local_preview_only_no_write_no_invocation");
     assert.equal(snapshot.authorityBoundary.executionApprovalPacket, "preview_validation_only_no_write_no_invocation");
     assert.equal(snapshot.authorityBoundary.auditWriteDesign, "design_proof_only_no_write");
+    assert.equal(snapshot.authorityBoundary.approvalRecordWriteUx, "ux_design_only_no_write");
     assert.equal(snapshot.authorityBoundary.approvalRecordWrite, "blocked");
     assert.equal(snapshot.authorityBoundary.dryRunInvocation, "blocked");
     assert.equal(snapshot.authorityBoundary.externalModelCall, "blocked_until_configured_and_approved");
@@ -207,6 +219,10 @@ describe("GPAO-T Local Control Center readiness", () => {
       && panel.data.auditWriteDesign.plannedAuditItems.length === 8
       && panel.data.auditWriteDesign.requiredAuditFields.includes("requested_action")
       && panel.data.auditWriteDesign.requiredAuditFields.includes("user_confirmation_state")
+      && panel.data.approvalRecordWriteUx.flowStages.length === 5
+      && panel.data.approvalRecordWriteUx.recordItems.length === 10
+      && panel.data.approvalRecordWriteUx.writesApprovalRecordNow === false
+      && panel.data.approvalRecordWriteUx.requiredRecordFields.includes("rollback_reference")
       && panel.data.uxContract.defaultLocale === "ko-KR"
       && panel.data.safetyInvariants.writesApprovalRecord === false
     ));
@@ -683,6 +699,10 @@ describe("GPAO-T Local Control Center readiness", () => {
     assert.equal(surface.executionProposalConfirmation.auditPreview.status, "visible_design_only_no_write");
     assert.equal(surface.executionProposalConfirmation.auditPreview.plannedAuditItems.length, 8);
     assert.equal(surface.executionProposalConfirmation.auditPreview.writesAuditNow, false);
+    assert.equal(surface.executionProposalConfirmation.approvalRecordFlow.status, "visible_design_only_no_write");
+    assert.equal(surface.executionProposalConfirmation.approvalRecordFlow.flowStages.length, 5);
+    assert.equal(surface.executionProposalConfirmation.approvalRecordFlow.recordItems.length, 10);
+    assert.equal(surface.executionProposalConfirmation.approvalRecordFlow.writesApprovalRecordNow, false);
     assert.equal(surface.executionProposalConfirmation.uxContract.defaultLocale, "ko-KR");
     assert.equal(surface.taskState.objective.includes("GPAO-T"), true);
     assert.equal(surface.contextPreview.boundary.includes("preview only"), true);
@@ -745,6 +765,10 @@ describe("GPAO-T Local Control Center readiness", () => {
     assert.match(html, /data-audit-preview="design-only"/);
     assert.match(html, /기록될 예정인 항목/);
     assert.match(html, /data-audit-item="requested_action"/);
+    assert.match(html, /data-approval-record-write-ux="design-only"/);
+    assert.match(html, /data-approval-record-preview="no-write"/);
+    assert.match(html, /저장될 항목 미리보기/);
+    assert.match(html, /쓰기 잠금/);
     assert.match(html, /사용자 확인/);
     assert.match(html, /data-composer-state="draft-not-sent"/);
     assert.match(html, /data-authority-boundary="closed"/);
@@ -1648,6 +1672,76 @@ describe("GPAO-T Local Control Center readiness", () => {
     assert.match(qaDoc, /사용자 확인/);
     assert.match(verifyDoc, /audit-write-design-qa-2026-07-09\.json/);
     assert.match(verifyDoc, /기록 예정 항목/);
+  });
+
+  it("keeps approval record write UX visual QA evidence replayable and write-free", () => {
+    const qa = JSON.parse(readFileSync(APPROVAL_RECORD_WRITE_UX_QA_JSON, "utf8"));
+    const qaDoc = readFileSync(APPROVAL_RECORD_WRITE_UX_QA_DOC, "utf8");
+    const verifyDoc = readFileSync(VERIFY_DOC_PATH, "utf8");
+    const screenshotPaths = Object.values(qa.evidenceFiles);
+    const screenshots = screenshotPaths.map((relativePath) => readFileSync(join(ROOT, relativePath)));
+
+    assert.equal(qa.schema, "gpao_t.approval_record_write_ux_visual_qa.v0_1");
+    assert.equal(qa.status, "ready");
+    assert.equal(qa.scope, "approval_record_write_ux_design_only");
+    assert.equal(qa.fileFormat, "png");
+    assert.deepEqual(qa.requiredRecordFields, [
+      "record_id",
+      "packet_id",
+      "proposal_id",
+      "authority_level",
+      "confirmation_state",
+      "scope",
+      "expires_at",
+      "audit_reference",
+      "replay_reference",
+      "rollback_reference",
+    ]);
+    assert.equal(qa.koreanLabels.includes("승인 기록 저장 전 확인"), true);
+    assert.equal(qa.koreanLabels.includes("저장될 항목 미리보기"), true);
+    assert.equal(qa.koreanLabels.includes("쓰기 잠금"), true);
+    assert.equal(qa.invariants.approvalRecordFlowVisible, true);
+    assert.equal(qa.invariants.approvalRecordPreviewItemsVisible, true);
+    assert.equal(qa.invariants.designReferencesApplied, true);
+    assert.equal(qa.invariants.codexLevelWorkUxApplied, true);
+    assert.equal(qa.invariants.claudeCodeLevelAuthorityUxApplied, true);
+    assert.equal(qa.invariants.noActualApprovalRecordWrite, true);
+    assert.equal(qa.invariants.noApprovalDirectoryCreate, true);
+    assert.equal(qa.invariants.noApprovalStoreRead, true);
+    assert.equal(qa.invariants.noActualAuditWrite, true);
+    assert.equal(qa.invariants.noDryRunInvocation, true);
+    assert.equal(qa.invariants.noActualToolCliMcpExecution, true);
+    assert.equal(qa.invariants.noConnectorActivation, true);
+    assert.equal(qa.invariants.noExternalNetworkSend, true);
+    assert.equal(qa.invariants.noCredentialReadWrite, true);
+    assert.equal(qa.invariants.noPaidAction, true);
+    assert.equal(qa.invariants.noDestructiveAction, true);
+    assert.equal(qa.invariants.noDurableMemoryPromotion, true);
+    assert.equal(qa.invariants.noScript, true);
+    assert.equal(qa.invariants.noForm, true);
+    assert.equal(qa.invariants.noHorizontalOverflow, true);
+    assert.equal(qa.checks.length, 8);
+    assert.equal(qa.checks.every((check) => check.nonblankViewport), true);
+    assert.equal(qa.checks.every((check) => check.noHorizontalOverflow), true);
+    assert.equal(qa.checks.filter((check) => check.screenshotKind === "full_page")
+      .every((check) => check.approvalRecordFlowVisible && check.approvalRecordPreviewItemsVisible), true);
+    assert.equal(qa.checks.some((check) => check.id === "control-center-mobile" && check.topbarActionVisible), true);
+    assert.equal(qa.checks.some((check) => check.id === "work-surface-mobile" && check.topbarActionVisible), true);
+    assert.equal(qa.blockedActionsRemainClosed.includes("approval record write"), true);
+    assert.equal(qa.blockedActionsRemainClosed.includes("approval directory create"), true);
+    assert.equal(qa.blockedActionsRemainClosed.includes("approval store read"), true);
+    assert.equal(qa.blockedActionsRemainClosed.includes("audit write"), true);
+    assert.equal(qa.blockedActionsRemainClosed.includes("dry-run invocation"), true);
+    assert.equal(qa.blockedActionsRemainClosed.includes("credential read/write"), true);
+    assert.equal(screenshotPaths.every((relativePath) => existsSync(join(ROOT, relativePath))), true);
+    assert.equal(screenshots.every((bytes) => bytes[0] === 0x89 && bytes[1] === 0x50), true);
+    assert.match(qaDoc, /Approval Record Write UX QA/);
+    assert.match(qaDoc, /승인 기록 저장 전 확인/);
+    assert.match(qaDoc, /저장될 항목 미리보기/);
+    assert.match(qaDoc, /Codex-level work\/chat UX/);
+    assert.match(verifyDoc, /approval-record-write-ux-qa-2026-07-09\.json/);
+    assert.match(verifyDoc, /승인 기록 저장 전 확인/);
+    assert.match(verifyDoc, /쓰기 잠금/);
   });
 
   it("serves the static Control Center over loopback and verifies page content", async () => {

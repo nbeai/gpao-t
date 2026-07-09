@@ -12,7 +12,7 @@ Design reference bridge:
 ## Core Work Surface
 
 - Purpose: the first place where a user can feel "I can ask GPAO-T to work from here."
-- Must show: draft task input, preview thread, compact read-only task understanding summary, native no-script task readability details, confirmation card, first local draft preview, intent-match / needs-changes / hold confirmation flow, empty/blocked/review-needed preview states, execution proposal confirmation, approval packet validation summary, audit write design boundary, current task state, Context Mesh / Memory Wiki / T-cell preview, Skill Pack route preview, authority/approval summary, closed execution boundary, and next safe action.
+- Must show: draft task input, preview thread, compact read-only task understanding summary, native no-script task readability details, confirmation card, first local draft preview, intent-match / needs-changes / hold confirmation flow, empty/blocked/review-needed preview states, execution proposal confirmation, approval packet validation summary, audit write design boundary, approval record write UX preview, current task state, Context Mesh / Memory Wiki / T-cell preview, Skill Pack route preview, authority/approval summary, closed execution boundary, and next safe action.
 - Must not show as available: live send, external model call, tool execution, connector activation, approval-record write, dry-run invocation, durable memory promotion, self-growth apply, deployment, messenger send, or recurring automation.
 
 ## Local Control Center
@@ -38,6 +38,8 @@ Design reference bridge:
 - Must show: proposal source, tool kind, action type, authority level, expected effect, risk, rollback reference, required approval packet fields, validation rules, planned audit items, audit/replay reference, blocked actions, and next safe action.
 - Must show authority levels in Korean product language with icon, color, label, and short explanation: `읽기 전용`, `미리보기만`, `저장 전 확인`, `외부 전송 전 확인`, `되돌리기 어려움`, and `비용 발생 가능`.
 - Must show audit write design in Korean product language: `기록 예정 항목`, `제안 ID`, `출처`, `요청 행동`, `권한 단계`, `예상 효과`, `위험`, `되돌리기 기준`, and `사용자 확인`.
+- Must show approval record write UX/design in Korean product language: `승인 기록 저장 전 확인`, `저장될 항목 미리보기`, `미리보기`, `확인`, `승인 패킷`, `기록 미리보기`, `쓰기 잠금`, `저장 전 확인`, and `아직 실행 없음`.
+- Must apply GPAO-T design references: Codex-level work/chat rhythm plus Claude-Code-level permission and execution governance.
 - Must keep language calm and direct: risk is visible, but warnings should not read like a threat when the action is still only a preview.
 - Must not show as available: actual tool execution, CLI/MCP invocation, connector activation, external network/send, credential read/write, paid action, destructive action, approval record write, audit write, durable memory promotion, or execution from model output.
 

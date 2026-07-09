@@ -20,6 +20,7 @@ import {
   buildConnectorToolGovernance,
   buildCoreWorkSurface,
   buildCoreWorkSurfaceHtml,
+  buildApprovalRecordWriteUxDesign,
   buildAuditWriteDesignProof,
   buildExecutionApprovalPreview,
   buildWorkSurfaceSubmissionDecisionGate,
@@ -89,6 +90,7 @@ import {
   verifyControlCenterPreviewServing,
   verifyConnectorToolGovernance,
   verifyCoreWorkSurface,
+  verifyApprovalRecordWriteUxDesign,
   verifyAuditWriteDesignProof,
   verifyExecutionApprovalPreview,
   verifyModelRouterBoundary,
@@ -155,6 +157,8 @@ function usage() {
     "  gpao-t approval execution-proposal-check",
     "  gpao-t approval audit-write-design [text]",
     "  gpao-t approval audit-write-design-check",
+    "  gpao-t approval approval-record-write-ux [text]",
+    "  gpao-t approval approval-record-write-ux-check",
     "  gpao-t ops hardening",
     "  gpao-t ops contract",
     "  gpao-t ops data",
@@ -414,8 +418,13 @@ try {
       printJson(buildAuditWriteDesignProof(request ? { request } : undefined));
     } else if (subcommand === "audit-write-design-check") {
       printJson(verifyAuditWriteDesignProof());
+    } else if (subcommand === "approval-record-write-ux") {
+      const request = args.slice(1).join(" ");
+      printJson(buildApprovalRecordWriteUxDesign(request ? { request } : undefined));
+    } else if (subcommand === "approval-record-write-ux-check") {
+      printJson(verifyApprovalRecordWriteUxDesign());
     } else {
-      throw new Error("approval command requires execution-proposal, execution-proposal-check, audit-write-design, or audit-write-design-check");
+      throw new Error("approval command requires execution-proposal, execution-proposal-check, audit-write-design, audit-write-design-check, approval-record-write-ux, or approval-record-write-ux-check");
     }
   } else if (command === "ops") {
     const [subcommand] = args;

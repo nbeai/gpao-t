@@ -5,11 +5,13 @@ import { describe, it } from "node:test";
 import {
   buildConnectorGovernanceSummary,
   buildConnectorToolGovernance,
+  buildApprovalRecordWriteUxDesign,
   buildAuditWriteDesignProof,
   buildExecutionApprovalPreview,
   handleGatewayRequest,
   listConnectors,
   reviewConnectorPermission,
+  verifyApprovalRecordWriteUxDesign,
   verifyAuditWriteDesignProof,
   verifyConnectorToolGovernance,
   verifyExecutionApprovalPreview,
@@ -136,6 +138,50 @@ describe("GPAO-T connector governance", () => {
     assert.deepEqual(verification.findings, []);
   });
 
+  it("builds approval record write UX design without writing approval records", () => {
+    const design = buildApprovalRecordWriteUxDesign({
+      request: "승인 기록 저장 전 확인 화면을 보여줘.",
+    });
+    const verification = verifyApprovalRecordWriteUxDesign({ design });
+
+    assert.equal(design.schema, "gpao_t.approval_record_write_ux_design.v0_1");
+    assert.equal(design.mode, "ux_design_only_no_write");
+    assert.equal(design.language, "ko");
+    assert.equal(design.designReference.codexLevel.applied, true);
+    assert.equal(design.designReference.claudeCodeLevel.applied, true);
+    assert.equal(design.designReference.koreanQualityGate.applied, true);
+    assert.equal(design.flow.stages.length, 5);
+    assert.equal(design.flow.stopLine, "write_gate");
+    assert.equal(design.flow.stages.some((stage) => stage.label === "기록 미리보기"), true);
+    assert.equal(design.flow.stages.some((stage) => stage.label === "쓰기 잠금"), true);
+    assert.deepEqual(design.requiredRecordFields, [
+      "record_id",
+      "packet_id",
+      "proposal_id",
+      "authority_level",
+      "confirmation_state",
+      "scope",
+      "expires_at",
+      "audit_reference",
+      "replay_reference",
+      "rollback_reference",
+    ]);
+    assert.equal(design.recordItems.length, 10);
+    assert.equal(design.recordItems.every((item) => item.label && item.value && item.userMeaning), true);
+    assert.equal(design.writeGate.label, "저장 전 확인");
+    assert.equal(design.writeGate.writesApprovalRecordNow, false);
+    assert.equal(design.writeGate.createsApprovalDirectoryNow, false);
+    assert.equal(design.writeGate.readsApprovalStoreNow, false);
+    assert.equal(design.displayContract.stateLanguage.includes("아직 실행 없음"), true);
+    assert.equal(design.safetyInvariants.writesApprovalRecord, false);
+    assert.equal(design.safetyInvariants.invokesDryRun, false);
+    assert.equal(design.safetyInvariants.readsOrWritesCredentials, false);
+    assert.equal(design.blockedActions.includes("approval_record_write"), true);
+    assert.equal(design.blockedActions.includes("credential_read_or_write"), true);
+    assert.equal(verification.status, "ready");
+    assert.deepEqual(verification.findings, []);
+  });
+
   it("allows only local read preview and keeps execution boundaries blocked", () => {
     const review = reviewConnectorPermission({
       connectorId: "local.filesystem",
@@ -207,6 +253,14 @@ describe("GPAO-T connector governance", () => {
       cwd: ROOT,
       encoding: "utf8",
     });
+    const cliApprovalRecordUxOutput = execFileSync(process.execPath, [CLI, "approval", "approval-record-write-ux", "저장 전 확인 흐름을 보여줘"], {
+      cwd: ROOT,
+      encoding: "utf8",
+    });
+    const cliApprovalRecordUxCheckOutput = execFileSync(process.execPath, [CLI, "approval", "approval-record-write-ux-check"], {
+      cwd: ROOT,
+      encoding: "utf8",
+    });
     const cliReview = JSON.parse(cliOutput);
     const cliGovernance = JSON.parse(cliGovernanceOutput);
     const cliGovernanceCheck = JSON.parse(cliGovernanceCheckOutput);
@@ -214,6 +268,8 @@ describe("GPAO-T connector governance", () => {
     const cliApprovalCheck = JSON.parse(cliApprovalCheckOutput);
     const cliAuditDesign = JSON.parse(cliAuditDesignOutput);
     const cliAuditDesignCheck = JSON.parse(cliAuditDesignCheckOutput);
+    const cliApprovalRecordUx = JSON.parse(cliApprovalRecordUxOutput);
+    const cliApprovalRecordUxCheck = JSON.parse(cliApprovalRecordUxCheckOutput);
     const registry = handleGatewayRequest({ method: "GET", path: "/connectors" });
     const summary = handleGatewayRequest({ method: "GET", path: "/connectors/governance" });
     const toolGovernance = handleGatewayRequest({ method: "GET", path: "/connectors/tool-governance" });
@@ -222,6 +278,8 @@ describe("GPAO-T connector governance", () => {
     const approvalCheck = handleGatewayRequest({ method: "GET", path: "/approval/execution-proposal/verify" });
     const auditDesign = handleGatewayRequest({ method: "GET", path: "/approval/audit-write-design" });
     const auditDesignCheck = handleGatewayRequest({ method: "GET", path: "/approval/audit-write-design/verify" });
+    const approvalRecordUx = handleGatewayRequest({ method: "GET", path: "/approval/approval-record-write-ux" });
+    const approvalRecordUxCheck = handleGatewayRequest({ method: "GET", path: "/approval/approval-record-write-ux/verify" });
     const review = handleGatewayRequest({
       method: "POST",
       path: "/connectors/review",
@@ -238,6 +296,10 @@ describe("GPAO-T connector governance", () => {
     assert.equal(cliAuditDesign.schema, "gpao_t.audit_write_design_proof.v0_1");
     assert.equal(cliAuditDesign.plannedAuditItems.length, 8);
     assert.equal(cliAuditDesignCheck.status, "ready");
+    assert.equal(cliApprovalRecordUx.schema, "gpao_t.approval_record_write_ux_design.v0_1");
+    assert.equal(cliApprovalRecordUx.writeGate.writesApprovalRecordNow, false);
+    assert.equal(cliApprovalRecordUx.recordItems.length, 10);
+    assert.equal(cliApprovalRecordUxCheck.status, "ready");
     assert.equal(registry.status, 200);
     assert.equal(summary.status, 200);
     assert.equal(toolGovernance.status, 200);
@@ -252,6 +314,11 @@ describe("GPAO-T connector governance", () => {
     assert.equal(auditDesign.body.futureEvent.writePathStatus, "reference_only_not_written");
     assert.equal(auditDesignCheck.status, 200);
     assert.equal(auditDesignCheck.body.status, "ready");
+    assert.equal(approvalRecordUx.status, 200);
+    assert.equal(approvalRecordUx.body.writeGate.writesApprovalRecordNow, false);
+    assert.equal(approvalRecordUx.body.designReference.codexLevel.applied, true);
+    assert.equal(approvalRecordUxCheck.status, 200);
+    assert.equal(approvalRecordUxCheck.body.status, "ready");
     assert.equal(review.status, 200);
     assert.equal(review.body.status, "blocked");
   });

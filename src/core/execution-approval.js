@@ -136,6 +136,57 @@ const AUDIT_TARGET_FIELD_ORDER = [
   "user_confirmation_state",
 ];
 
+const APPROVAL_RECORD_FIELD_ORDER = [
+  "record_id",
+  "packet_id",
+  "proposal_id",
+  "authority_level",
+  "confirmation_state",
+  "scope",
+  "expires_at",
+  "audit_reference",
+  "replay_reference",
+  "rollback_reference",
+];
+
+const APPROVAL_RECORD_FLOW_STAGES = [
+  {
+    id: "preview",
+    step: 1,
+    label: "미리보기",
+    status: "visible",
+    userMeaning: "무엇을 하려는지 먼저 봅니다.",
+  },
+  {
+    id: "confirmation",
+    step: 2,
+    label: "확인",
+    status: "not_confirmed",
+    userMeaning: "의도와 맞는지 사용자가 확인합니다.",
+  },
+  {
+    id: "approval_packet",
+    step: 3,
+    label: "승인 패킷",
+    status: "검토 필요",
+    userMeaning: "저장 전에 필요한 항목이 모두 있는지 봅니다.",
+  },
+  {
+    id: "record_preview",
+    step: 4,
+    label: "기록 미리보기",
+    status: "저장 전 확인",
+    userMeaning: "저장될 기록의 모양만 보여줍니다.",
+  },
+  {
+    id: "write_gate",
+    step: 5,
+    label: "쓰기 잠금",
+    status: "차단됨",
+    userMeaning: "이번 단계에서는 실제 저장하지 않습니다.",
+  },
+];
+
 function buildAuditTarget({ proposal, authorityDisplay }) {
   return {
     proposal_id: proposal.id,
@@ -207,6 +258,86 @@ function buildPlannedAuditItems({ auditTarget }) {
       value: auditTarget.user_confirmation_state,
       userMeaning: "사용자가 아직 확인하지 않았는지, 수정/보류인지 구분합니다.",
       required: true,
+    },
+  ];
+}
+
+function buildApprovalRecordPreview({ preview, auditProof }) {
+  return {
+    record_id: "approval_record.preview_only",
+    packet_id: preview.approvalPacket.packetId,
+    proposal_id: preview.proposal.id,
+    authority_level: `${preview.authorityDisplay.label} · ${preview.proposal.authorityLevel}`,
+    confirmation_state: preview.proposal.confirmationState,
+    scope: "local_preview_only",
+    expires_at: "preview_only_not_scheduled",
+    audit_reference: auditProof.futureEvent.writePath,
+    replay_reference: "replay.reference.required_before_write",
+    rollback_reference: preview.proposal.rollbackReference,
+  };
+}
+
+function buildApprovalRecordPreviewItems({ approvalRecordPreview }) {
+  return [
+    {
+      id: "record_id",
+      label: "기록 ID",
+      value: approvalRecordPreview.record_id,
+      userMeaning: "어떤 승인 기록인지 구분합니다.",
+    },
+    {
+      id: "packet_id",
+      label: "승인 패킷",
+      value: approvalRecordPreview.packet_id,
+      userMeaning: "어떤 승인 패킷에서 나온 기록인지 연결합니다.",
+    },
+    {
+      id: "proposal_id",
+      label: "실행 제안",
+      value: approvalRecordPreview.proposal_id,
+      userMeaning: "무엇을 실행하려던 제안인지 연결합니다.",
+    },
+    {
+      id: "authority_level",
+      label: "권한 단계",
+      value: approvalRecordPreview.authority_level,
+      userMeaning: "저장 전 확인인지, 전송 전 확인인지 같은 경계를 남깁니다.",
+    },
+    {
+      id: "confirmation_state",
+      label: "확인 상태",
+      value: approvalRecordPreview.confirmation_state,
+      userMeaning: "아직 확인 전인지, 수정/보류인지 보여줍니다.",
+    },
+    {
+      id: "scope",
+      label: "범위",
+      value: approvalRecordPreview.scope,
+      userMeaning: "이 기록이 어디까지 허용되는지 좁게 남깁니다.",
+    },
+    {
+      id: "expires_at",
+      label: "만료",
+      value: approvalRecordPreview.expires_at,
+      userMeaning: "오래된 승인이 재사용되지 않도록 기준을 둡니다.",
+    },
+    {
+      id: "audit_reference",
+      label: "감사 기준",
+      value: approvalRecordPreview.audit_reference,
+      userMeaning: "나중에 감사 기록과 연결될 위치입니다. 지금은 쓰지 않습니다.",
+    },
+    {
+      id: "replay_reference",
+      label: "리플레이 기준",
+      value: approvalRecordPreview.replay_reference,
+      userMeaning: "나중에 같은 판단을 재검토할 기준입니다.",
+    },
+    {
+      id: "rollback_reference",
+      label: "되돌리기 기준",
+      value: approvalRecordPreview.rollback_reference,
+      userMeaning: "문제가 생겼을 때 멈추거나 되돌릴 기준입니다.",
     },
   ];
 }
@@ -316,6 +447,144 @@ export function buildAuditWriteDesignProof({
   };
 }
 
+export function buildApprovalRecordWriteUxDesign({
+  proposal = DEFAULT_PROPOSAL,
+  request = "GPAO-T 승인 기록 저장 전 화면 흐름을 확인한다.",
+} = {}) {
+  const preview = buildExecutionApprovalPreview({ proposal, request });
+  const auditProof = buildAuditWriteDesignProof({ proposal, request });
+  const approvalRecordPreview = buildApprovalRecordPreview({ preview, auditProof });
+  const recordItems = buildApprovalRecordPreviewItems({ approvalRecordPreview });
+
+  return {
+    schema: "gpao_t.approval_record_write_ux_design.v0_1",
+    status: "review",
+    mode: "ux_design_only_no_write",
+    language: "ko",
+    title: "승인 기록 저장 전 확인",
+    userMessage: "승인 기록이 무엇이고 무엇이 저장될 예정인지 먼저 보여줍니다. 아직 저장하지 않습니다.",
+    designReference: {
+      sourceDocuments: [
+        "docs/LOCAL-CONTROL-CENTER-DESIGN-RECIPE.md",
+        "docs/02-design/CODEX-LEVEL-DESIGN-REFERENCE.md",
+        "docs/02-design/CLAUDE-CODE-LEVEL-OPERATING-UX-REFERENCE.md",
+      ],
+      codexLevel: {
+        applied: true,
+        principles: [
+          "work surface first",
+          "small visible state",
+          "inline preview before deep inspection",
+          "reviewable result",
+          "safe next action",
+        ],
+      },
+      claudeCodeLevel: {
+        applied: true,
+        principles: [
+          "permission and execution governance",
+          "preview -> confirmation -> approval -> audit -> replay -> rollback",
+          "model/tool/CLI/MCP/connector cannot look active before authority gates",
+          "hooks/skills/MCP/automation must appear as reviewable proposals first",
+        ],
+      },
+      koreanQualityGate: {
+        applied: true,
+        checks: [
+          "짧은 한국어 상태 라벨",
+          "긴 문장 카드 줄바꿈",
+          "저장 전 확인과 아직 실행 없음 구분",
+          "경고는 보이되 과장하지 않기",
+        ],
+      },
+    },
+    flow: {
+      schema: "gpao_t.approval_record_write_flow.v0_1",
+      status: "visible_prewrite_only",
+      stages: APPROVAL_RECORD_FLOW_STAGES,
+      currentStage: "record_preview",
+      stopLine: "write_gate",
+      userCanUnderstand: [
+        "승인 기록이 무엇인지",
+        "무엇이 저장될 예정인지",
+        "아직 무엇이 실행되지 않았는지",
+        "어떤 권한 단계인지",
+        "다음에 무엇을 확인해야 하는지",
+      ],
+    },
+    approvalRecordPreview,
+    recordItems,
+    requiredRecordFields: APPROVAL_RECORD_FIELD_ORDER,
+    writeGate: {
+      schema: "gpao_t.approval_record_write_gate.preview.v0_1",
+      status: "blocked_until_future_explicit_gate",
+      label: "저장 전 확인",
+      shortStatus: "저장 설계만 · 실제 저장 없음",
+      writesApprovalRecordNow: false,
+      createsApprovalDirectoryNow: false,
+      readsApprovalStoreNow: false,
+      duplicateCheck: "future_required_before_write",
+      expiryCheck: "future_required_before_write",
+      scopeCheck: "future_required_before_write",
+      recoveryStateOnFailure: "승인 기록을 저장하지 않고, 수정 필요 상태로 남깁니다.",
+    },
+    displayContract: {
+      controlCenter: {
+        panelId: "execution-approval",
+        sectionLabel: "승인 기록 저장 전 확인",
+        visibleItemCount: recordItems.length,
+      },
+      workSurface: {
+        sectionId: "approval-record-preview",
+        sectionLabel: "저장 전 확인",
+        visibleItemCount: recordItems.length,
+      },
+      stateLanguage: [
+        "미리보기",
+        "확인",
+        "승인 패킷",
+        "기록 미리보기",
+        "쓰기 잠금",
+        "저장 전 확인",
+        "아직 실행 없음",
+      ],
+    },
+    blockedActions: [
+      "approval_record_write",
+      "approval_directory_create",
+      "approval_store_read",
+      "audit_write",
+      "dry_run_invocation",
+      "actual_tool_execution",
+      "cli_command_execution",
+      "mcp_invocation",
+      "connector_activation",
+      "external_network_or_send",
+      "credential_read_or_write",
+      "paid_action",
+      "destructive_action",
+      "durable_memory_promotion",
+    ],
+    safetyInvariants: {
+      writesApprovalRecord: false,
+      createsApprovalDirectory: false,
+      readsApprovalStore: false,
+      writesAudit: false,
+      invokesDryRun: false,
+      executesTool: false,
+      runsCli: false,
+      invokesMcp: false,
+      activatesConnector: false,
+      sendsExternalNetworkRequest: false,
+      readsOrWritesCredentials: false,
+      spendsMoney: false,
+      performsDestructiveAction: false,
+      promotesDurableMemory: false,
+    },
+    nextSafeAction: "승인 기록 저장 전 화면을 검토한다. 실제 approval record write는 별도 구현/검증 gate 전까지 열지 않는다.",
+  };
+}
+
 export function buildExecutionApprovalPreview({
   proposal = DEFAULT_PROPOSAL,
   request = "GPAO-T 실행 후보를 승인 전 preview로 확인한다.",
@@ -329,6 +598,20 @@ export function buildExecutionApprovalPreview({
     || AUTHORITY_DISPLAY[1];
   const auditTarget = buildAuditTarget({ proposal, authorityDisplay });
   const plannedAuditItems = buildPlannedAuditItems({ auditTarget });
+  const approvalRecordPreview = buildApprovalRecordPreview({
+    preview: {
+      proposal: {
+        ...proposal,
+        confirmationState: "not_confirmed",
+      },
+      approvalPacket: { packetId: "preview_packet_not_written" },
+      authorityDisplay,
+    },
+    auditProof: {
+      futureEvent: { writePath: ".gpao-t/events/audit.jsonl" },
+    },
+  });
+  const approvalRecordItems = buildApprovalRecordPreviewItems({ approvalRecordPreview });
 
   return {
     schema: "gpao_t.execution_approval_preview.v0_1",
@@ -392,6 +675,16 @@ export function buildExecutionApprovalPreview({
       rollbackReferenceRequired: true,
       userVisibleSummary: "기록 설계만 · 실제 기록 없음",
     },
+    approvalRecordWriteUx: {
+      schema: "gpao_t.approval_record_write_ux_design.inline.v0_1",
+      status: "design_only",
+      flowStages: APPROVAL_RECORD_FLOW_STAGES,
+      approvalRecordPreview,
+      recordItems: approvalRecordItems,
+      requiredRecordFields: APPROVAL_RECORD_FIELD_ORDER,
+      writesApprovalRecordNow: false,
+      userVisibleSummary: "저장 설계만 · 실제 저장 없음",
+    },
     uxContract: {
       schema: "gpao_t.execution_approval_ux_contract.v0_1",
       status: "ready",
@@ -422,6 +715,7 @@ export function buildExecutionApprovalPreview({
         "approvalPacket.requiredFields",
         "validation.rules",
         "auditWriteDesign",
+        "approvalRecordWriteUx",
         "blockedActions",
       ],
     },
@@ -510,6 +804,13 @@ export function verifyExecutionApprovalPreview({
   if ((preview.auditWriteDesign?.plannedAuditItems || []).length !== AUDIT_TARGET_FIELD_ORDER.length) {
     findings.push("planned_audit_items_incomplete");
   }
+  if (preview.approvalRecordWriteUx?.writesApprovalRecordNow !== false) findings.push("approval_record_write_opened");
+  if ((preview.approvalRecordWriteUx?.flowStages || []).length !== APPROVAL_RECORD_FLOW_STAGES.length) {
+    findings.push("approval_record_flow_incomplete");
+  }
+  if ((preview.approvalRecordWriteUx?.recordItems || []).length !== APPROVAL_RECORD_FIELD_ORDER.length) {
+    findings.push("approval_record_items_incomplete");
+  }
   if (preview.uxContract?.defaultLocale !== "ko-KR") findings.push("ux_default_locale_not_ko_kr");
   if (!preview.uxContract?.mobileRules?.some((rule) => rule.includes("overflow"))) findings.push("mobile_overflow_rule_missing");
   if (preview.uxContract?.visualQa?.screenshotsRequiredBeforeLiveInvocation !== true) findings.push("visual_qa_before_live_missing");
@@ -525,6 +826,7 @@ export function verifyExecutionApprovalPreview({
       "proposal_required_fields",
       "approval_packet_validation_rules",
       "audit_write_design_only",
+      "approval_record_write_ux_design_only",
       "korean_status_language",
       "authority_icon_label_description_color",
       "control_center_visibility",
@@ -535,6 +837,56 @@ export function verifyExecutionApprovalPreview({
     nextSafeAction: findings.length
       ? "Fix execution approval preview findings before UI integration."
       : preview.nextSafeAction,
+  };
+}
+
+export function verifyApprovalRecordWriteUxDesign({
+  design = buildApprovalRecordWriteUxDesign(),
+} = {}) {
+  const findings = [];
+
+  if (design.schema !== "gpao_t.approval_record_write_ux_design.v0_1") findings.push("schema_mismatch");
+  if (design.mode !== "ux_design_only_no_write") findings.push("mode_not_ux_design_only");
+  if (design.language !== "ko") findings.push("korean_default_missing");
+  if (design.designReference?.codexLevel?.applied !== true) findings.push("codex_design_reference_missing");
+  if (design.designReference?.claudeCodeLevel?.applied !== true) findings.push("claude_operating_reference_missing");
+  if (design.designReference?.koreanQualityGate?.applied !== true) findings.push("korean_quality_gate_missing");
+  if ((design.flow?.stages || []).length !== APPROVAL_RECORD_FLOW_STAGES.length) findings.push("flow_stages_incomplete");
+  if (design.flow?.stopLine !== "write_gate") findings.push("write_gate_stop_line_missing");
+  for (const field of APPROVAL_RECORD_FIELD_ORDER) {
+    if (!design.requiredRecordFields?.includes(field)) findings.push(`missing_required_record_field:${field}`);
+    if (!Object.hasOwn(design.approvalRecordPreview || {}, field)) findings.push(`missing_record_preview_field:${field}`);
+  }
+  if ((design.recordItems || []).length !== APPROVAL_RECORD_FIELD_ORDER.length) findings.push("record_items_incomplete");
+  if (!design.recordItems?.every((item) => item.label && item.value && item.userMeaning)) {
+    findings.push("record_item_missing_korean_display");
+  }
+  if (design.writeGate?.writesApprovalRecordNow !== false) findings.push("approval_record_write_opened");
+  if (design.writeGate?.createsApprovalDirectoryNow !== false) findings.push("approval_directory_create_opened");
+  if (design.writeGate?.readsApprovalStoreNow !== false) findings.push("approval_store_read_opened");
+  if (!design.displayContract?.stateLanguage?.includes("저장 전 확인")) findings.push("korean_write_before_approval_missing");
+  if (!design.displayContract?.stateLanguage?.includes("아직 실행 없음")) findings.push("korean_no_execution_missing");
+  if (!design.blockedActions?.includes("approval_record_write")) findings.push("approval_record_write_not_blocked");
+  if (!design.blockedActions?.includes("dry_run_invocation")) findings.push("dry_run_invocation_not_blocked");
+  if (!design.blockedActions?.includes("credential_read_or_write")) findings.push("credential_boundary_not_blocked");
+  if (Object.values(design.safetyInvariants || {}).some(Boolean)) findings.push("safety_invariant_opened_action");
+
+  return {
+    schema: "gpao_t.approval_record_write_ux_design_verification.v0_1",
+    status: findings.length ? "blocked" : "ready",
+    findings,
+    checked: [
+      "codex_level_design_reference",
+      "claude_code_level_operating_ux_reference",
+      "korean_quality_gate",
+      "approval_record_prewrite_flow",
+      "required_record_fields",
+      "control_center_and_work_surface_contract",
+      "no_actual_approval_record_write_or_invocation",
+    ],
+    nextSafeAction: findings.length
+      ? "Fix approval record write UX/design findings before UI integration."
+      : design.nextSafeAction,
   };
 }
 

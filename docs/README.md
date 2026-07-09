@@ -28,7 +28,11 @@ Execution proposal confirmation is now exposed as the next pre-execution authori
 
 Audit write design is currently proof-only. It defines what would be audit targets when an execution proposal exists: proposal id, source, requested action, authority level, expected effect, risk, rollback reference, and user confirmation state. These are visible as `기록 예정 항목` in Control Center and `기록될 예정인 항목` in the work surface. No audit event is written, no approval record is written, and no dry-run or tool invocation is opened.
 
+Approval record write UX/design is currently proof-only. It shows the pre-write flow as `미리보기 -> 확인 -> 승인 패킷 -> 기록 미리보기 -> 쓰기 잠금`, then displays the fields that would be saved later: record id, packet id, proposal id, authority level, confirmation state, scope, expiry, audit reference, replay reference, and rollback reference. These are visible as `승인 기록 저장 전 확인`, `저장될 항목 미리보기`, and `저장 전 확인`. This surface applies the GPAO-T Codex-level design reference and Claude-Code-level operating UX reference. No approval directory is created, no approval store is read, no approval record is written, and no execution or dry-run is opened.
+
 Execution approval UX evidence is maintained in `docs/03-verification/evidence/execution-approval-ux-qa-2026-07-09.json` and `docs/03-verification/evidence/EXECUTION-APPROVAL-UX-QA-2026-07-09.md`. This evidence keeps the design.md-based Korean status language, authority labels, icon/color/description pairing, mobile wrapping, no-overflow behavior, and no-write/no-invocation/no-external-activation boundary explicit before any future approval record write or execution invocation is considered.
+
+Approval record write UX evidence is maintained in `docs/03-verification/evidence/approval-record-write-ux-qa-2026-07-09.json` and `docs/03-verification/evidence/APPROVAL-RECORD-WRITE-UX-QA-2026-07-09.md`. It includes Control Center and Work Surface desktop/mobile viewport screenshots plus full-page screenshots so the pre-write flow, record preview fields, Korean product language, mobile topbar action line, and no-write/no-invocation boundaries are replayable.
 
 Skill ecosystem guidance is maintained in `docs/04-skill-ecosystem/GPAO-T-SKILL-ECOSYSTEM-MASTER-PLAN-ko.md`. GPAO-T skills must be research-grounded, practical, T-cell-shaped operating units, not prompt decorations or copied marketplace catalogs.
 
@@ -135,6 +139,8 @@ node bin/gpao-t.js approval execution-proposal "로컬 미리보기 실행 후�
 node bin/gpao-t.js approval execution-proposal-check
 node bin/gpao-t.js approval audit-write-design "기록 예정 항목을 보여줘"
 node bin/gpao-t.js approval audit-write-design-check
+node bin/gpao-t.js approval approval-record-write-ux "저장 전 확인 흐름을 보여줘"
+node bin/gpao-t.js approval approval-record-write-ux-check
 node bin/gpao-t.js ops hardening
 node bin/gpao-t.js ops hardening-record
 node bin/gpao-t.js ops hardening-history

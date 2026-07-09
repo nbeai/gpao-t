@@ -359,6 +359,15 @@ export function buildCoreWorkSurface({
         plannedAuditItems: executionApprovalPreview.auditWriteDesign.plannedAuditItems,
         writesAuditNow: false,
       },
+      approvalRecordFlow: {
+        schema: "gpao_t.work_surface_approval_record_write_ux.v0_1",
+        status: "visible_design_only_no_write",
+        title: "저장 전 확인",
+        userMessage: executionApprovalPreview.approvalRecordWriteUx.userVisibleSummary,
+        flowStages: executionApprovalPreview.approvalRecordWriteUx.flowStages,
+        recordItems: executionApprovalPreview.approvalRecordWriteUx.recordItems,
+        writesApprovalRecordNow: false,
+      },
       confirmationChoices: executionApprovalPreview.workSurfaceView.confirmationChoices,
       uxContract: executionApprovalPreview.uxContract,
       blockedActions: executionApprovalPreview.blockedActions,
@@ -496,6 +505,18 @@ export function verifyCoreWorkSurface({ surface = buildCoreWorkSurface(), html }
     findings.push("execution_audit_preview_items_incomplete");
   }
   if (surface.executionProposalConfirmation?.auditPreview?.writesAuditNow !== false) findings.push("execution_audit_preview_write_open");
+  if (surface.executionProposalConfirmation?.approvalRecordFlow?.status !== "visible_design_only_no_write") {
+    findings.push("approval_record_flow_missing");
+  }
+  if ((surface.executionProposalConfirmation?.approvalRecordFlow?.flowStages || []).length !== 5) {
+    findings.push("approval_record_flow_stages_incomplete");
+  }
+  if ((surface.executionProposalConfirmation?.approvalRecordFlow?.recordItems || []).length !== 10) {
+    findings.push("approval_record_items_incomplete");
+  }
+  if (surface.executionProposalConfirmation?.approvalRecordFlow?.writesApprovalRecordNow !== false) {
+    findings.push("approval_record_write_open");
+  }
   if (surface.localDraftPreview?.opensLiveSubmission !== false) findings.push("local_draft_submission_open");
   if (surface.localDraftPreview?.invokesModel !== false) findings.push("local_draft_model_open");
   if (surface.localDraftPreview?.executesTools !== false) findings.push("local_draft_tools_open");
@@ -533,6 +554,9 @@ export function verifyCoreWorkSurface({ surface = buildCoreWorkSurface(), html }
     if (!html.includes("data-audit-write-design=\"no-write\"")) findings.push("html_missing_audit_write_design");
     if (!html.includes("data-audit-preview=\"design-only\"")) findings.push("html_missing_audit_preview");
     if (!html.includes("기록될 예정인 항목")) findings.push("html_missing_planned_audit_items");
+    if (!html.includes("data-approval-record-write-ux=\"design-only\"")) findings.push("html_missing_approval_record_write_ux");
+    if (!html.includes("저장 전 확인")) findings.push("html_missing_write_before_approval_copy");
+    if (!html.includes("data-approval-record-preview=\"no-write\"")) findings.push("html_missing_approval_record_preview");
     if (!html.includes("data-preview-decision=\"intent-match\"")) findings.push("html_missing_intent_match_decision");
     if (!html.includes("data-preview-decision=\"needs-changes\"")) findings.push("html_missing_needs_changes_decision");
     if (!html.includes("data-preview-decision=\"hold\"")) findings.push("html_missing_hold_decision");
@@ -573,6 +597,9 @@ export function buildCoreWorkSurfaceHtml({ surface } = {}) {
   const validationRules = executionConfirmation.validationRules || [];
   const auditPreview = executionConfirmation.auditPreview || {};
   const plannedAuditItems = auditPreview.plannedAuditItems || [];
+  const approvalRecordFlow = executionConfirmation.approvalRecordFlow || {};
+  const approvalRecordStages = approvalRecordFlow.flowStages || [];
+  const approvalRecordItems = approvalRecordFlow.recordItems || [];
 
   return `<!doctype html>
 <html lang="ko">
@@ -1312,6 +1339,24 @@ export function buildCoreWorkSurfaceHtml({ surface } = {}) {
           </div>`).join("")}
         </div>
         <p class="confirmation-note">기록될 예정인 항목: ${escapeHtml(auditPreview.userMessage || "기록 설계만 · 실제 기록 없음")}</p>
+        <div class="audit-preview-grid" data-approval-record-write-ux="design-only" aria-label="Approval record write UX flow">
+          ${approvalRecordStages.map((stage) => `
+          <div class="audit-item" data-approval-record-stage="${escapeHtml(stage.id)}">
+            <strong>${escapeHtml(stage.step)} · ${escapeHtml(stage.label)}</strong>
+            <span>${escapeHtml(stage.status)}</span>
+            <small>${escapeHtml(stage.userMeaning)}</small>
+          </div>`).join("")}
+        </div>
+        <p class="confirmation-note">저장될 항목 미리보기</p>
+        <div class="audit-preview-grid" data-approval-record-preview="no-write" aria-label="Approval record preview items">
+          ${approvalRecordItems.map((item) => `
+          <div class="audit-item" data-approval-record-item="${escapeHtml(item.id)}">
+            <strong>${escapeHtml(item.label)}</strong>
+            <span>${escapeHtml(item.value)}</span>
+            <small>${escapeHtml(item.userMeaning)}</small>
+          </div>`).join("")}
+        </div>
+        <p class="confirmation-note">저장 전 확인: ${escapeHtml(approvalRecordFlow.userMessage || "저장 설계만 · 실제 저장 없음")}</p>
       </section>
       <p class="next">${escapeHtml(workSurface.nextSafeAction)}</p>
     </section>
