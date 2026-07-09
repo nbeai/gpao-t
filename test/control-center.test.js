@@ -19,6 +19,7 @@ import {
   buildControlCenterUiSnapshot,
   buildCoreWorkSurface,
   buildCoreWorkSurfaceHtml,
+  buildWorkSurfaceSubmissionDecisionGate,
   buildPackagedDesktopPlanningReview,
   buildTauriPackagedDesktopGate,
   buildTauriReadOnlyShellHtml,
@@ -34,6 +35,7 @@ import {
   verifyBrowserLocalAppShell,
   verifyControlCenterPreviewServing,
   verifyCoreWorkSurface,
+  verifyWorkSurfaceSubmissionDecisionGate,
   verifyPackagedDesktopPlanningReview,
   verifyTauriPackagedDesktopGate,
   verifyTauriReadOnlyShellSlice,
@@ -448,6 +450,26 @@ describe("GPAO-T Local Control Center readiness", () => {
     });
     const gatewaySurface = handleGatewayRequest({ method: "GET", path: "/work-surface/state", root: ROOT });
     const gatewayCheck = handleGatewayRequest({ method: "GET", path: "/work-surface/verify", root: ROOT });
+    const submissionGate = buildWorkSurfaceSubmissionDecisionGate({ root: tempRoot() });
+    const submissionGateCheck = verifyWorkSurfaceSubmissionDecisionGate({ gate: submissionGate });
+    const cliSubmissionGate = JSON.parse(execFileSync(process.execPath, [CLI, "control", "work-surface-submission-gate"], {
+      cwd: ROOT,
+      encoding: "utf8",
+    }));
+    const cliSubmissionGateCheck = JSON.parse(execFileSync(process.execPath, [CLI, "control", "work-surface-submission-gate-check"], {
+      cwd: ROOT,
+      encoding: "utf8",
+    }));
+    const gatewaySubmissionGate = handleGatewayRequest({
+      method: "GET",
+      path: "/work-surface/submission-gate",
+      root: ROOT,
+    });
+    const gatewaySubmissionGateCheck = handleGatewayRequest({
+      method: "GET",
+      path: "/work-surface/submission-gate/verify",
+      root: ROOT,
+    });
 
     assert.equal(surface.schema, "gpao_t.core_work_surface.v0_1");
     assert.equal(surface.status, "ready");
@@ -500,6 +522,29 @@ describe("GPAO-T Local Control Center readiness", () => {
     assert.equal(gatewaySurface.body.schema, surface.schema);
     assert.equal(gatewayCheck.status, 200);
     assert.equal(gatewayCheck.body.status, "ready");
+    assert.equal(submissionGate.schema, "gpao_t.work_surface_submission_decision_gate.v0_1");
+    assert.equal(submissionGate.gateMode, "design_only_no_live_submission");
+    assert.equal(submissionGate.inputPacketSchema.requiredFields.includes("draftText"), true);
+    assert.equal(submissionGate.exampleInputPacket.submissionMode, "preview_only_not_submitted");
+    assert.equal(submissionGate.immediatePreviewState.writesState, false);
+    assert.equal(submissionGate.immediatePreviewState.invokesModel, false);
+    assert.equal(submissionGate.immediatePreviewState.executesTools, false);
+    assert.equal(submissionGate.immediatePreviewState.activatesConnectors, false);
+    assert.equal(submissionGate.contextMeshAttachment.mode, "preview_only");
+    assert.equal(submissionGate.skillRouteAttachment.liveSkillExecution, false);
+    assert.equal(submissionGate.authorityBoundary.userCanSubmitLiveNow, false);
+    assert.equal(submissionGate.authorityBoundary.blockedActions.includes("live model call"), true);
+    assert.equal(submissionGate.authorityBoundary.blockedActions.includes("tool/CLI/MCP execution"), true);
+    assert.equal(submissionGate.authorityBoundary.blockedActions.includes("durable memory promotion"), true);
+    assert.equal(submissionGate.reviewAndBlockedConditions.some((condition) => condition.outcome === "blocked"), true);
+    assert.equal(submissionGate.stopLine.liveSubmissionImplemented, false);
+    assert.equal(submissionGateCheck.status, "ready");
+    assert.equal(cliSubmissionGate.schema, submissionGate.schema);
+    assert.equal(cliSubmissionGateCheck.status, "ready");
+    assert.equal(gatewaySubmissionGate.status, 200);
+    assert.equal(gatewaySubmissionGate.body.schema, submissionGate.schema);
+    assert.equal(gatewaySubmissionGateCheck.status, 200);
+    assert.equal(gatewaySubmissionGateCheck.body.status, "ready");
   });
 
   it("keeps responsive visual hardening rules in the static Control Center reader", () => {
@@ -555,6 +600,8 @@ describe("GPAO-T Local Control Center readiness", () => {
     assert.equal(contract.routes.some((route) => route.path === "/work-surface"), true);
     assert.equal(contract.routes.some((route) => route.path === "/work-surface/state"), true);
     assert.equal(contract.routes.some((route) => route.path === "/work-surface/verify"), true);
+    assert.equal(contract.routes.some((route) => route.path === "/work-surface/submission-gate"), true);
+    assert.equal(contract.routes.some((route) => route.path === "/work-surface/submission-gate/verify"), true);
     assert.equal(contract.previewLifecycle.serveCheck, "ephemeral_start_verify_stop");
     assert.equal(contract.previewLifecycle.serve, "explicit_manual_preview_until_signal");
     assert.equal(contract.previewLifecycle.persistentDaemon, false);
@@ -585,6 +632,8 @@ describe("GPAO-T Local Control Center readiness", () => {
     assert.equal(contract.allowedGetRoutes.includes("/work-surface"), true);
     assert.equal(contract.allowedGetRoutes.includes("/work-surface/state"), true);
     assert.equal(contract.allowedGetRoutes.includes("/work-surface/verify"), true);
+    assert.equal(contract.allowedGetRoutes.includes("/work-surface/submission-gate"), true);
+    assert.equal(contract.allowedGetRoutes.includes("/work-surface/submission-gate/verify"), true);
     assert.equal(contract.allowedGetRoutes.includes("/control-center/ui-validate"), true);
     assert.equal(contract.blockedPostRoutes.includes("/turn"), true);
     assert.equal(contract.blockedActions.includes("connector activation"), true);
@@ -1057,6 +1106,8 @@ describe("GPAO-T Local Control Center readiness", () => {
       const workSurface = await fetchText(`http://127.0.0.1:${preview.port}/work-surface`);
       const workSurfaceState = await fetchJson(`http://127.0.0.1:${preview.port}/work-surface/state`);
       const workSurfaceVerify = await fetchJson(`http://127.0.0.1:${preview.port}/work-surface/verify`);
+      const workSurfaceSubmissionGate = await fetchJson(`http://127.0.0.1:${preview.port}/work-surface/submission-gate`);
+      const workSurfaceSubmissionGateVerify = await fetchJson(`http://127.0.0.1:${preview.port}/work-surface/submission-gate/verify`);
       const appShell = await fetchText(`http://127.0.0.1:${preview.port}/app-shell`);
       const appShellContract = await fetchJson(`http://127.0.0.1:${preview.port}/app-shell/contract`);
       const appShellState = await fetchJson(`http://127.0.0.1:${preview.port}/app-shell/state`);
@@ -1108,6 +1159,10 @@ describe("GPAO-T Local Control Center readiness", () => {
       assert.doesNotMatch(workSurface.body, /<form/i);
       assert.equal(workSurfaceState.body.schema, "gpao_t.core_work_surface.v0_1");
       assert.equal(workSurfaceVerify.body.status, "ready");
+      assert.equal(workSurfaceSubmissionGate.body.schema, "gpao_t.work_surface_submission_decision_gate.v0_1");
+      assert.equal(workSurfaceSubmissionGate.body.gateMode, "design_only_no_live_submission");
+      assert.equal(workSurfaceSubmissionGate.body.authorityBoundary.userCanSubmitLiveNow, false);
+      assert.equal(workSurfaceSubmissionGateVerify.body.status, "ready");
       assert.equal(appShell.status, 200);
       assert.match(appShell.body, /GPAO-T Browser-Local App Shell/);
       assert.doesNotMatch(appShell.body, /<script/i);

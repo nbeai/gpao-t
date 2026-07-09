@@ -36,6 +36,15 @@ Core work surface first slice:
 - Checked visual invariant: desktop/mobile evidence confirms nonblank viewport, draft input visibility, task state visibility, context/skill route readability, authority boundary visibility, next safe action visibility, no overflow, mobile topbar/action visibility, no script, no form, and no external activation.
 - Next gate: refresh desktop/mobile visual QA for the richer read-only readability interaction, then add only the next smallest user-visible read-only refinement. Live submission and all model/tool/connector execution remain blocked.
 
+Work surface submission decision gate:
+
+- Gate document: `docs/03-engineering/WORK-SURFACE-SUBMISSION-DECISION-GATE.md`
+- Contract check: `node bin/gpao-t.js control work-surface-submission-gate-check`
+- Loopback routes: `GET /work-surface/submission-gate` and `GET /work-surface/submission-gate/verify`
+- Required invariant: the gate defines input packet schema, immediate preview state, Context Mesh attachment, Skill Pack route attachment, authority boundary, pre-submit user confirmation, review/block conditions, and stop line.
+- Required blocked boundary: live model call, tool/CLI/MCP execution, connector activation, external network/send, approval write, install/update/rollback, durable memory promotion, self-growth apply, deployment, messenger, and automation remain blocked.
+- Next gate: submission validation and confirmation design. Do not implement live submission until that separate gate is explicit and verified.
+
 Packaged desktop / Tauri gate:
 
 - Gate document: `docs/03-engineering/TAURI-PACKAGED-DESKTOP-GATE.md`

@@ -8,6 +8,10 @@ import {
   buildCoreWorkSurface,
   verifyCoreWorkSurface,
 } from "./core-work-surface.js";
+import {
+  buildWorkSurfaceSubmissionDecisionGate,
+  verifyWorkSurfaceSubmissionDecisionGate,
+} from "./work-surface-submission-gate.js";
 import { buildControlCenterSnapshot, buildControlCenterSummary } from "./control-center.js";
 import {
   buildControlCenterUiContract,
@@ -169,6 +173,24 @@ export function handleGatewayRequest({ method = "GET", path = "/", body = {}, ro
       schema: "gpao_t.gateway_response.v0_1",
       status: 200,
       body: verifyCoreWorkSurface({ surface }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/work-surface/submission-gate") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: buildWorkSurfaceSubmissionDecisionGate({ root }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/work-surface/submission-gate/verify") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: verifyWorkSurfaceSubmissionDecisionGate({
+        gate: buildWorkSurfaceSubmissionDecisionGate({ root }),
+      }),
     };
   }
 

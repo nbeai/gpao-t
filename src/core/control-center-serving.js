@@ -11,6 +11,10 @@ import {
   buildCoreWorkSurfaceHtml,
   verifyCoreWorkSurface,
 } from "./core-work-surface.js";
+import {
+  buildWorkSurfaceSubmissionDecisionGate,
+  verifyWorkSurfaceSubmissionDecisionGate,
+} from "./work-surface-submission-gate.js";
 import { renderControlCenterHtml } from "./control-center-renderer.js";
 import { buildControlCenterSnapshot, buildControlCenterSummary } from "./control-center.js";
 import {
@@ -77,6 +81,8 @@ export function buildControlCenterServingContract({
       { path: "/work-surface.html", content: "core_work_surface_html" },
       { path: "/work-surface/state", content: "core_work_surface_state" },
       { path: "/work-surface/verify", content: "core_work_surface_verification" },
+      { path: "/work-surface/submission-gate", content: "work_surface_submission_decision_gate" },
+      { path: "/work-surface/submission-gate/verify", content: "work_surface_submission_decision_gate_verification" },
       { path: "/app-shell", content: "browser_local_app_shell_html" },
       { path: "/app-shell.html", content: "browser_local_app_shell_html" },
       { path: "/app-shell/contract", content: "browser_local_app_shell_contract" },
@@ -268,6 +274,17 @@ export async function startControlCenterPreviewServer({
         surface,
         html: buildCoreWorkSurfaceHtml({ surface }),
       }));
+      return;
+    }
+
+    if (url.pathname === "/work-surface/submission-gate") {
+      respondJson(response, 200, buildWorkSurfaceSubmissionDecisionGate({ root, now }));
+      return;
+    }
+
+    if (url.pathname === "/work-surface/submission-gate/verify") {
+      const gate = buildWorkSurfaceSubmissionDecisionGate({ root, now });
+      respondJson(response, 200, verifyWorkSurfaceSubmissionDecisionGate({ gate }));
       return;
     }
 
@@ -489,6 +506,8 @@ export async function verifyControlCenterPreviewServing({
     const workSurface = await fetchText(`http://${host}:${preview.port}/work-surface`);
     const workSurfaceState = await fetchJson(`http://${host}:${preview.port}/work-surface/state`);
     const workSurfaceVerify = await fetchJson(`http://${host}:${preview.port}/work-surface/verify`);
+    const workSurfaceSubmissionGate = await fetchJson(`http://${host}:${preview.port}/work-surface/submission-gate`);
+    const workSurfaceSubmissionGateVerify = await fetchJson(`http://${host}:${preview.port}/work-surface/submission-gate/verify`);
     const appShell = await fetchText(`http://${host}:${preview.port}/app-shell`);
     const appShellState = await fetchJson(`http://${host}:${preview.port}/app-shell/state`);
     const tauriGate = await fetchJson(`http://${host}:${preview.port}/app-shell/tauri-gate`);
@@ -542,6 +561,13 @@ export async function verifyControlCenterPreviewServing({
     }
     if (workSurfaceVerify.status !== 200 || workSurfaceVerify.body.status !== "ready") {
       findings.push("work_surface_verify_not_ready");
+    }
+    if (workSurfaceSubmissionGate.status !== 200
+      || workSurfaceSubmissionGate.body.schema !== "gpao_t.work_surface_submission_decision_gate.v0_1") {
+      findings.push("work_surface_submission_gate_not_ready");
+    }
+    if (workSurfaceSubmissionGateVerify.status !== 200 || workSurfaceSubmissionGateVerify.body.status !== "ready") {
+      findings.push("work_surface_submission_gate_verify_not_ready");
     }
     if (page.status !== 200) {
       findings.push("control_center_route_not_200");
@@ -686,6 +712,7 @@ export async function verifyControlCenterPreviewServing({
       status: findings.length ? "blocked" : "ready",
       url: preview.url,
       workSurfaceUrl: `http://${host}:${preview.port}/work-surface`,
+      workSurfaceSubmissionGateUrl: `http://${host}:${preview.port}/work-surface/submission-gate`,
       appShellUrl: `http://${host}:${preview.port}/app-shell`,
       tauriGateUrl: `http://${host}:${preview.port}/app-shell/tauri-gate`,
       packagedDesktopReviewUrl: `http://${host}:${preview.port}/app-shell/packaged-desktop-review`,
@@ -703,6 +730,8 @@ export async function verifyControlCenterPreviewServing({
       healthStatus: health.status,
       workSurfaceStatus: workSurface.status,
       workSurfaceStateStatus: workSurfaceState.status,
+      workSurfaceSubmissionGateStatus: workSurfaceSubmissionGate.status,
+      workSurfaceSubmissionGateVerifyStatus: workSurfaceSubmissionGateVerify.status,
       pageStatus: page.status,
       appShellStatus: appShell.status,
       tauriGateStatus: tauriGate.status,

@@ -20,6 +20,8 @@ Control Center approval/preview UX evidence is maintained in `docs/03-verificati
 
 The first GPAO-T core work surface is now exposed as a read-only user-facing slice. It gives the user a draft work input area, a preview thread, a compact read-only task understanding summary, native no-script readability details for task brief / context route / authority boundary, current task state, Context Mesh / Memory Wiki / T-cell candidate summary, Skill Pack route preview, model/tool route preview, authority/approval summary, closed action list, and next safe action. It is intentionally not a live chat executor yet: input submission, external model calls, tool execution, connector activation, approval-record writes, dry-run invocation, durable memory promotion, self-growth apply, deployment, messenger send, and recurring automation remain blocked.
 
+The work-surface submission decision gate is documented in `docs/03-engineering/WORK-SURFACE-SUBMISSION-DECISION-GATE.md`. It defines the future input packet schema, immediate preview state, Context Mesh / Skill route / Authority attachment, pre-submit confirmation, review/block conditions, and stop line before execution. It is design-only; live submission remains blocked.
+
 Work surface visual QA evidence is maintained in `docs/03-verification/evidence/work-surface-visual-qa-baseline-2026-07-09.json` and `docs/03-verification/evidence/WORK-SURFACE-VISUAL-QA-BASELINE-2026-07-09.md`. The `/work-surface` baseline must preserve nonblank desktop/mobile viewports, visible draft input, read-only task understanding summary, native readability details, visible task state, Context Mesh / Memory Wiki preview, Skill Pack route preview, authority boundary, closed action text, next safe action, mobile topbar action line, no horizontal overflow, no script/form, and no external activation as read-only task interaction improves.
 
 Skill ecosystem guidance is maintained in `docs/04-skill-ecosystem/GPAO-T-SKILL-ECOSYSTEM-MASTER-PLAN-ko.md`. GPAO-T skills must be research-grounded, practical, T-cell-shaped operating units, not prompt decorations or copied marketplace catalogs.
@@ -132,6 +134,8 @@ node bin/gpao-t.js control summary
 node bin/gpao-t.js control work-surface
 node bin/gpao-t.js control work-surface-html
 node bin/gpao-t.js control work-surface-check
+node bin/gpao-t.js control work-surface-submission-gate
+node bin/gpao-t.js control work-surface-submission-gate-check
 node bin/gpao-t.js control design
 node bin/gpao-t.js control ui-contract
 node bin/gpao-t.js control ui-snapshot
@@ -259,6 +263,7 @@ Local Control Center readiness is exposed as data and a static UI reader, not as
 - `control work-surface` returns the first user-facing GPAO-T work surface state as read-only JSON
 - `control work-surface-html` renders the standalone no-script work surface HTML
 - `control work-surface-check` verifies the work surface preserves draft-only input, read-only task understanding summary, native no-script readability details, preview-only context/skill/model routing, closed authority actions, no script, no form, and no external URL
+- `control work-surface-submission-gate` and `control work-surface-submission-gate-check` define and verify the future work-surface input submission decision gate without enabling live submission, model calls, tool/CLI/MCP execution, connector activation, external send, approval writes, install/update/rollback, or durable memory promotion
 - `control design` returns the Local Control Center design contract adapted from BEAI Harness `design.md`
 - `control ui-contract` returns the UI schema and section contract that maps snapshot fields into visual sections
 - `control ui-snapshot` returns the renderer-ready UI snapshot
@@ -287,7 +292,7 @@ Local Control Center readiness is exposed as data and a static UI reader, not as
 - The Local Control Center includes an `Approval / Preview` panel that integrates dry-run plan, user preview, invocation approval, approval storage, and write-gate statuses as a preview-only user flow. The packaged desktop planning review now acts as the stop-line: do not add another meta-gate unless a concrete mutating action is explicitly approved; return to the user-facing GPAO-T core work surface next.
 - `control tauri-shell-slice`, `control tauri-shell-html`, and `control tauri-shell-check` define and verify the first read-mostly Tauri source scaffold
 - `GET /control-center`, `GET /control-center/summary`, `GET /control-center/design`, `GET /control-center/ui-contract`, `GET /control-center/ui-snapshot`, and `GET /control-center/ui-validate` expose the same contracts through the local gateway handler
-- `GET /work-surface`, `GET /work-surface.html`, `GET /work-surface/state`, and `GET /work-surface/verify` expose the standalone read-only core work surface through the loopback preview server. Gateway JSON also exposes `GET /work-surface/state` and `GET /work-surface/verify`.
+- `GET /work-surface`, `GET /work-surface.html`, `GET /work-surface/state`, `GET /work-surface/verify`, `GET /work-surface/submission-gate`, and `GET /work-surface/submission-gate/verify` expose the standalone read-only core work surface and submission decision gate through the loopback preview server. Gateway JSON also exposes the state, verify, submission-gate, and submission-gate verify routes.
 - `GET /app-shell`, `GET /app-shell/contract`, `GET /app-shell/state`, `GET /app-shell/verify`, `GET /app-shell/tauri-gate`, `GET /app-shell/tauri-gate/verify`, `GET /app-shell/packaged-desktop-review`, `GET /app-shell/packaged-desktop-review/verify`, `GET /app-shell/tauri-install-gate`, `GET /app-shell/tauri-install-gate/verify`, `GET /app-shell/tauri-prerequisite-doctor`, `GET /app-shell/tauri-prerequisite-doctor/verify`, `GET /app-shell/tauri-dry-run-contract`, `GET /app-shell/tauri-dry-run-contract/verify`, `GET /app-shell/tauri-dry-run-design`, `GET /app-shell/tauri-dry-run-design/verify`, `GET /app-shell/tauri-dry-run-plan`, `GET /app-shell/tauri-dry-run-plan/verify`, `GET /app-shell/tauri-dry-run-preview`, `GET /app-shell/tauri-dry-run-preview/verify`, `GET /app-shell/tauri-dry-run-invocation-approval`, `GET /app-shell/tauri-dry-run-invocation-approval/verify`, `GET /app-shell/tauri-dry-run-approval-storage`, `GET /app-shell/tauri-dry-run-approval-storage/verify`, `GET /app-shell/tauri-dry-run-approval-write-gate`, `GET /app-shell/tauri-dry-run-approval-write-gate/verify`, `GET /app-shell/tauri-shell`, `GET /app-shell/tauri-shell/slice`, and `GET /app-shell/tauri-shell/verify` expose the browser-local app-shell and packaged-shell boundary through the loopback preview server
 
 This keeps the future Codex-like desktop surface light: the first visual layer reads the existing snapshot/design contracts before adding interactivity, daemon behavior, or external activation.

@@ -22,6 +22,10 @@ import {
   buildCoreWorkSurfaceHtml,
   verifyCoreWorkSurface,
 } from "./core/core-work-surface.js";
+import {
+  buildWorkSurfaceSubmissionDecisionGate,
+  verifyWorkSurfaceSubmissionDecisionGate,
+} from "./core/work-surface-submission-gate.js";
 import { buildControlCenterSnapshot, buildControlCenterSummary } from "./core/control-center.js";
 import {
   buildControlCenterHtml,
@@ -157,6 +161,7 @@ export {
   buildConnectorGovernanceSummary,
   buildCoreWorkSurface,
   buildCoreWorkSurfaceHtml,
+  buildWorkSurfaceSubmissionDecisionGate,
   buildControlCenterSnapshot,
   buildControlCenterSummary,
   buildControlCenterHtml,
@@ -230,6 +235,7 @@ export {
   startControlCenterPreviewServer,
   validateControlCenterUiSnapshot,
   verifyCoreWorkSurface,
+  verifyWorkSurfaceSubmissionDecisionGate,
   verifyBrowserLocalAppShell,
   verifyControlCenterPreviewServing,
   verifyPackagedDesktopPlanningReview,
