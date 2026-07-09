@@ -76,6 +76,10 @@ import {
 } from "./install-hardening.js";
 import { captureMemoryEntry, readMemoryWiki, readTCellCandidates, resolveContextMesh } from "./memory-wiki.js";
 import {
+  buildModelRouterBoundary,
+  verifyModelRouterBoundary,
+} from "./model-router.js";
+import {
   appendReplayRecoveryRecord,
   buildRecoveryHistorySummary,
   readReplayRecoveryHistory,
@@ -496,6 +500,22 @@ export function handleGatewayRequest({ method = "GET", path = "/", body = {}, ro
       schema: "gpao_t.gateway_response.v0_1",
       status: 200,
       body: listToolAdapters(),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/adapters/model-router-boundary") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: buildModelRouterBoundary(),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/adapters/model-router-boundary/verify") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: verifyModelRouterBoundary(),
     };
   }
 

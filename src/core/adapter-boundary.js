@@ -7,6 +7,9 @@ const MODEL_ADAPTERS = [
     status: "available",
     executionMode: "local_preview",
     authority: "local_only",
+    latencyTier: "low",
+    costTier: "zero_or_local",
+    fallbackRank: 1,
   },
   {
     id: "local.reasoning.stub",
@@ -16,6 +19,9 @@ const MODEL_ADAPTERS = [
     status: "available",
     executionMode: "local_preview",
     authority: "local_only",
+    latencyTier: "medium",
+    costTier: "zero_or_local",
+    fallbackRank: 2,
   },
   {
     id: "external.fast.api.preview",
@@ -25,6 +31,9 @@ const MODEL_ADAPTERS = [
     status: "blocked_until_configured",
     executionMode: "plan_only",
     authority: "external_model_call_requires_setup",
+    latencyTier: "low",
+    costTier: "metered",
+    fallbackRank: 3,
   },
   {
     id: "external.reasoning.api.preview",
@@ -34,6 +43,9 @@ const MODEL_ADAPTERS = [
     status: "blocked_until_configured",
     executionMode: "plan_only",
     authority: "external_model_call_requires_setup",
+    latencyTier: "medium_to_high",
+    costTier: "metered",
+    fallbackRank: 4,
   },
 ];
 
@@ -80,6 +92,21 @@ export function listModelAdapters() {
     schema: "gpao_t.model_adapter_registry.v0_1",
     status: "ready",
     adapters: MODEL_ADAPTERS,
+    providerBoundary: {
+      localProviders: "preview_selectable_without_external_call",
+      externalProviders: "blocked_until_provider_setup_and_task_approval",
+      secrets: "not_stored",
+      liveExecution: false,
+    },
+    routingDimensions: [
+      "task_kind",
+      "privacy",
+      "latency",
+      "cost",
+      "reasoning_depth",
+      "fallback",
+      "authority_risk",
+    ],
     nextSafeAction: "Select from local preview adapters until external model credentials and approval gates exist.",
   };
 }
@@ -114,10 +141,15 @@ export function selectModelAdapter({
     fallbackClass,
     privacy,
     selected,
+    selectedExecutionMode: selected?.executionMode || null,
+    selectedLatencyTier: selected?.latencyTier || null,
+    selectedCostTier: selected?.costTier || null,
     considered: privacySafe.map((adapter) => ({
       id: adapter.id,
       status: adapter.status,
       executionMode: adapter.executionMode,
+      latencyTier: adapter.latencyTier,
+      costTier: adapter.costTier,
     })),
     blocked: candidates
       .filter((adapter) => adapter.status !== "available" || (privacy === "local_or_private" && adapter.provider !== "local"))
@@ -126,7 +158,17 @@ export function selectModelAdapter({
         reason: adapter.status === "available"
           ? "privacy boundary requires local/private model"
           : adapter.status,
+    })),
+    fallbackChain: MODEL_ADAPTERS
+      .filter((adapter) => adapter.classes.includes(fallbackClass))
+      .sort((left, right) => left.fallbackRank - right.fallbackRank)
+      .map((adapter) => ({
+        id: adapter.id,
+        provider: adapter.provider,
+        status: adapter.status,
+        executionMode: adapter.executionMode,
       })),
+    liveExecution: false,
     nextSafeAction: selected
       ? "Use selected adapter only as local preview until provider execution is explicitly connected."
       : "Configure a local adapter or request approval for an external model provider.",

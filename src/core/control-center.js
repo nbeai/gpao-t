@@ -5,6 +5,7 @@ import { runDoctor } from "./doctor.js";
 import { buildGrowthApplicationGateSummary } from "./growth-application-gates.js";
 import { readSelfGrowthProposals } from "./growth-proposals.js";
 import { buildInstallHardeningSummary } from "./install-hardening.js";
+import { buildModelRouterBoundary } from "./model-router.js";
 import { readMemoryWiki, readTCellCandidates } from "./memory-wiki.js";
 import { buildOperationsContractSummary } from "./operations-contract.js";
 import { buildRecoveryHistorySummary, readReplayRecoveryHistory } from "./replay-history.js";
@@ -29,6 +30,7 @@ export function buildControlCenterSnapshot({ root } = {}) {
   const growthProposals = readSelfGrowthProposals({ root });
   const growthApplicationGates = buildGrowthApplicationGateSummary({ root });
   const modelAdapters = listModelAdapters();
+  const modelRouterBoundary = buildModelRouterBoundary();
   const toolAdapters = listToolAdapters();
   const connectorGovernance = buildConnectorGovernanceSummary();
   const installHardening = buildInstallHardeningSummary({ root });
@@ -58,7 +60,7 @@ export function buildControlCenterSnapshot({ root } = {}) {
     buildMemoryPanel({ memoryWiki, tcellCandidates }),
     buildRecoveryPanel({ recoveryHistory, recoverySummary }),
     buildGrowthPanel({ growthProposals, growthApplicationGates }),
-    buildAdapterPanel({ modelAdapters, toolAdapters }),
+    buildAdapterPanel({ modelAdapters, modelRouterBoundary, toolAdapters }),
     buildConnectorPanel({ connectorGovernance }),
     buildAuthorityPanel({ runtimeState }),
   ];
@@ -99,12 +101,15 @@ export function buildControlCenterSnapshot({ root } = {}) {
       growthApplicationGates: growthApplicationGates.totalGates,
       blockedGrowthApplications: growthApplicationGates.blockedLiveMutations,
       modelAdapters: modelAdapters.adapters.length,
+      modelRouterProfiles: modelRouterBoundary.profiles.length,
+      modelRouterBlockedActions: modelRouterBoundary.blockedActions.length,
       toolAdapters: toolAdapters.adapters.length,
       connectors: connectorGovernance.totalConnectors,
       blockedConnectors: connectorGovernance.blockedConnectors.length,
     },
     authorityBoundary: {
       externalModelCall: "blocked_until_configured_and_approved",
+      modelRouterBoundary: modelRouterBoundary.providerBoundary.externalProviderCall,
       externalToolAction: "blocked_until_explicit_approval",
       installExecution: installHardening.authorityBoundary.installExecution,
       updateExecution: installHardening.authorityBoundary.updateExecution,
@@ -437,7 +442,7 @@ function buildGrowthPanel({ growthProposals, growthApplicationGates }) {
   };
 }
 
-function buildAdapterPanel({ modelAdapters, toolAdapters }) {
+function buildAdapterPanel({ modelAdapters, modelRouterBoundary, toolAdapters }) {
   const blockedExternalModels = modelAdapters.adapters.filter((adapter) =>
     adapter.provider === "external_api" && adapter.status !== "available"
   );
@@ -450,11 +455,12 @@ function buildAdapterPanel({ modelAdapters, toolAdapters }) {
     headline: "Local preview adapters are visible and external adapters are blocked.",
     data: {
       modelAdapters: modelAdapters.adapters.length,
+      modelRouterBoundary,
       toolAdapters: toolAdapters.adapters.length,
       blockedExternalModels: blockedExternalModels.map((adapter) => adapter.id),
       blockedTools: blockedTools.map((adapter) => adapter.id),
     },
-    nextSafeAction: "Keep external providers and external tools blocked until setup, approval, replay, audit, and rollback gates exist.",
+    nextSafeAction: modelRouterBoundary.nextSafeAction,
   };
 }
 

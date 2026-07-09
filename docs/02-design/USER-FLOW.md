@@ -23,4 +23,6 @@ The first slice is read-only and no-script. It now includes a compact task under
 
 ## Next Action
 
-The core work surface substrate is closed for the current read-only preview phase. The user can see the understood task, expected output, context to use, skill route, locked execution state, and whether the preview is `의도와 맞음`, `수정 필요`, or `보류`. Live execution remains blocked. The next product move should choose the next major GPAO-T axis instead of adding another work-surface meta-gate.
+The core work surface substrate is closed for the current read-only preview phase. The user can see the understood task, expected output, context to use, skill route, locked execution state, and whether the preview is `의도와 맞음`, `수정 필요`, or `보류`.
+
+The next major axis is Model Router boundary. The user should be able to inspect which model path GPAO-T would choose, why that path is latency/cost/privacy appropriate, what fallback exists, and which provider actions are still blocked. Live submission, provider calls, tool execution, connector activation, approval writes, install/update/rollback, and durable memory promotion remain blocked.

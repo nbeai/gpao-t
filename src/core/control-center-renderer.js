@@ -977,6 +977,7 @@ function panelHtml(panel) {
                 ${inspectorRow("Next State", states.next)}
                 ${approvalInspectorRows(panel)}
                 ${coreWorkSurfaceInspectorRows(panel)}
+                ${adapterInspectorRows(panel)}
                 ${inspectorRow("Authority", authorityLens(group))}
                 ${inspectorRow("Evidence", evidenceLens(panel))}
                 ${inspectorLinks(panel)}
@@ -1042,6 +1043,19 @@ function coreWorkSurfaceInspectorRows(panel) {
     inspectorRow("Context Preview", `${surface.contextPreview.status} · ${surface.contextPreview.retrievedCandidates.length} candidates`),
     inspectorRow("Skill Route", (surface.skillRoutePreview.selectedPacks || []).map((pack) => pack.id).join(" · ") || "none"),
     inspectorRow("Authority Summary", (surface.authoritySummary.closedActions || []).join(" · ")),
+  ].join("");
+}
+
+function adapterInspectorRows(panel) {
+  if (panel.id !== "adapters" || !panel.data) return "";
+  const boundary = panel.data.modelRouterBoundary;
+  if (!boundary) return "";
+  return [
+    inspectorRow("Model Router", `${boundary.route.route} · ${boundary.route.adapterSelection.selected?.id || "none"}`),
+    inspectorRow("Provider Boundary", boundary.providerBoundary.externalProviderCall),
+    inspectorRow("Latency / Cost", `${boundary.latencyCostFallback.latencyBudget} · ${boundary.latencyCostFallback.costPolicy}`),
+    inspectorRow("Fallback", (boundary.latencyCostFallback.fallbackChain || []).map((item) => item.id).join(" · ") || "none"),
+    inspectorRow("Blocked Model Actions", (boundary.blockedActions || []).join(" · ")),
   ].join("");
 }
 

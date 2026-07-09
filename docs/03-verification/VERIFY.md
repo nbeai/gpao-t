@@ -44,7 +44,17 @@ Core work surface first slice:
 - Required local draft preview: the surface may show the local preview structure for understood task, expected output, context to use, skill route, and locked execution state. It must include intent-match, needs-changes, hold, empty, blocked, and review-needed product-language states. It must not submit, generate live draft content, call a model, execute tools, activate connectors, send externally, install/update/rollback, promote durable memory, or write approval records in this slice.
 - Required blocked boundary: the surface must not submit input, call external models, execute tools, activate connectors, write approval records, invoke dry-run, promote durable memory, apply self-growth, deploy, send through messenger, start recurring automation, include script, include form submission, or link to external URLs.
 - Checked visual invariant: desktop/mobile evidence confirms nonblank viewport, draft input visibility, task state visibility, context/skill route readability, authority boundary visibility, next safe action visibility, no overflow, mobile topbar/action visibility, no script, no form, and no external activation.
-- Next gate: close this core work surface substrate and choose the next major GPAO-T product axis. Live submission and all model/tool/connector execution remain blocked.
+- Next gate: the core work surface substrate is closed for the current read-only preview phase. The next major axis is Model Router boundary, not another work-surface/submission meta-gate. Live submission and all model/tool/connector execution remain blocked.
+
+Model Router boundary:
+
+- CLI surface: `node bin/gpao-t.js adapters model-router-boundary [text]`
+- CLI check: `node bin/gpao-t.js adapters model-router-boundary-check`
+- Gateway routes: `GET /adapters/model-router-boundary` and `GET /adapters/model-router-boundary/verify`
+- Control Center integration: `control snapshot`, `control summary`, and `control html` must expose the router boundary through the `Model / Tool Adapters` panel.
+- Required invariant: the boundary may show route profile, selected preview adapter, provider boundary, latency budget, cost policy, fallback chain, audit/replay/rollback references, and blocked model actions.
+- Required blocked boundary: it must not call providers, read or write secrets, send network requests, spend tokens, store model output, activate tools, promote durable memory, invoke replay, write audit records, or mutate provider configuration in this slice.
+- Cleanup note: duplicate workspace note files ending in ` 2.md` are cleanup candidates only and should not be deleted during feature work.
 
 Work surface submission decision gate:
 

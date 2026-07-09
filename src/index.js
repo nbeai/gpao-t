@@ -73,7 +73,11 @@ import {
   readTCellCandidates,
   resolveContextMesh,
 } from "./core/memory-wiki.js";
-import { routeModel } from "./core/model-router.js";
+import {
+  buildModelRouterBoundary,
+  routeModel,
+  verifyModelRouterBoundary,
+} from "./core/model-router.js";
 import {
   buildOperationsContractSummary,
   buildOperationsReliabilityContract,
@@ -178,6 +182,7 @@ export {
   buildInstallHardeningReport,
   buildInstallHardeningSummary,
   buildLocalControlCenterDesignContract,
+  buildModelRouterBoundary,
   buildOperationsContractSummary,
   buildOperationsReliabilityContract,
   buildPackagedDesktopPlanningReview,
@@ -235,6 +240,7 @@ export {
   reviewConnectorPermission,
   routeSkillPacks,
   routeModel,
+  verifyModelRouterBoundary,
   renderControlCenterHtml,
   renderTauriInstallDryRunPreview,
   startControlCenterPreviewServer,

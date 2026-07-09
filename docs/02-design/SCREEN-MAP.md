@@ -11,7 +11,13 @@ List screens or command surfaces and what each one must make obvious.
 ## Local Control Center
 
 - Purpose: inspect GPAO-T runtime, context, recovery, growth, authority, approval/preview, and work-surface readiness.
-- Must show: panel navigation, inspector evidence, mobile action visibility, authority boundary, and next safe action without script or external activation.
+- Must show: panel navigation, inspector evidence, Model Router boundary, mobile action visibility, authority boundary, and next safe action without script or external activation.
+
+## Model Router Boundary
+
+- Purpose: show how GPAO-T would choose a model path before any provider call exists.
+- Must show: route profile, selected preview adapter, provider boundary, latency budget, cost policy, fallback chain, blocked model actions, and audit/replay/rollback references.
+- Must not show as available: live provider call, credential access, network send, token spend, model output persistence, tool activation from model output, or durable memory promotion.
 
 ## Browser-Local App Shell
 

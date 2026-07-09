@@ -4,46 +4,44 @@ GPAO-T is building a local, channel-agnostic personal AI operating system with a
 
 ## Current Phase
 
-- Phase: local draft preview confirmation-flow refinement
-- Surface: `/work-surface`
-- Status: core work surface substrate closed for the current read-only preview phase
+- Phase: model/router boundary read-only proof
+- Surface: CLI, Gateway, Local Control Center adapter panel
+- Status: first Model Router boundary contract implemented and verified without live provider execution
 
 ## Current User-Facing Goal
 
-The user should quickly decide whether GPAO-T's preview matches their intent before anything executes.
+After the work surface understands and previews a task, the user should see which model path GPAO-T would choose, why that route fits the task, and which provider actions are still blocked.
 
-The work surface now shows:
+The Model Router boundary now shows:
 
-- understood task
-- expected output shape
-- context to use
-- skill route
-- locked execution state
-- empty state
-- blocked state
-- review-needed state
-- intent-match
-- needs-changes
-- hold
-- preview confirmation checklist
+- route profile
+- selected preview adapter
+- provider boundary
+- latency budget
+- cost policy
+- fallback chain
+- blocked model actions
+- audit/replay/rollback references
 
 ## Current Contract
 
-- Core work surface schema: `gpao_t.core_work_surface.v0_1`
-- Local draft preview schema: `gpao_t.local_draft_preview.v0_1`
-- Preview confirmation flow schema: `gpao_t.local_draft_preview_confirmation_flow.v0_1`
-- Preview mode: `structure_only_no_model_no_submit`
-- Confirmation mode: `read_only_decision_strip`
-- Draft content generated now: `false`
-- Live submission/model/tool/connector/external/approval/install/durable-memory boundaries: blocked
+- Model route schema: `gpao_t.model_route.v0_1`
+- Model router boundary schema: `gpao_t.model_router_boundary.v0_1`
+- Verification schema: `gpao_t.model_router_boundary_verification.v0_1`
+- Surface: `read_only_router_contract`
+- Live provider calls: `false`
+- Credential access, network access, paid token spend, model output persistence, tool activation, and durable memory promotion: blocked
 
 ## Evidence
 
-- Desktop visual QA: `docs/03-verification/evidence/work-surface-local-draft-preview-2026-07-09-desktop-viewport-1440x960.jpg`
-- Mobile visual QA: `docs/03-verification/evidence/work-surface-local-draft-preview-2026-07-09-mobile-viewport-390x844.jpg`
-- QA contract JSON: `docs/03-verification/evidence/work-surface-local-draft-preview-qa-2026-07-09.json`
-- QA report: `docs/03-verification/evidence/WORK-SURFACE-LOCAL-DRAFT-PREVIEW-QA-2026-07-09.md`
+- `node bin/gpao-t.js adapters model-router-boundary "GPAO-T 작업 표면 preview를 라우팅해줘"`: returns read-only router contract.
+- `node bin/gpao-t.js adapters model-router-boundary-check`: ready, no findings.
+- `GET /adapters/model-router-boundary`: exposed through Gateway.
+- `GET /adapters/model-router-boundary/verify`: exposed through Gateway.
+- `control summary`: exposes `modelRouterProfiles`, `modelRouterBlockedActions`, and `modelRouterBoundary`.
+- `npm run verify`: pass, 104 tests.
+- `beai verify --cwd '/Users/jyp/Documents/Playground 2/gpao-t' --run --scenario --meaning`: ready/pass.
 
 ## User Authority
 
-AI does local reversible implementation and verification. The user keeps authority over real execution, external effects, durable memory promotion, connector/model/tool activation, installation, update, rollback, deployment, messenger, recurring automation, and product direction.
+AI does local reversible implementation and verification. The user keeps authority over real provider setup, secrets, external model calls, token spend, connector/model/tool activation, installation, update, rollback, deployment, messenger, recurring automation, and product direction.

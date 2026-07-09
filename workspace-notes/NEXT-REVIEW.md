@@ -2,41 +2,43 @@
 
 ## Next Safe Action
 
-Choose the next major GPAO-T product axis instead of adding another work-surface or submission meta-gate.
+Review whether the first Model Router boundary is sufficient before moving into connector/tool governance or deeper router policy.
 
-The core work surface substrate is closed for the current read-only preview phase. The next move should return to a larger product track such as Memory Wiki / Context Mesh working depth, Skill Pack production, safe local execution substrate, Control Center operational state, or packaged desktop preparation.
+The next useful router step should stay read-only unless explicitly approved. Good candidates are:
+
+- router replay fixtures for fast path / deep path / privacy path
+- provider configuration design without secret storage
+- cost/latency budget UI in Control Center
+- fallback disable/rollback policy
+- connector/tool governance after the model route is clear
 
 ## Preserve Invariants
 
-- no script execution in the local inspection reader
-- no external activation
-- no live submission
-- no model connector call
-- no tool/CLI/MCP execution
+- no live model call
+- no provider credential read or write
+- no external network request
+- no paid token spend
+- no model output persistence
+- no tool activation from model output
 - no connector activation
 - no approval record write
 - no install/update/rollback execution
 - no durable memory promotion
-- visible authority boundary
-- visible next safe action
-- no overflow on desktop or mobile
-- mobile topbar action line remains visible
+- provider setup remains a future approval boundary
 
-## Review Before Continuing
+## Cleanup Candidate
 
-- Keep the confirmation card connected to the local draft preview.
-- Keep intent-match, needs-changes, and hold states visible if the work surface is touched again.
-- Keep expected output, context to use, skill route, and locked execution state visible in the preview.
-- Keep empty, blocked, and review-needed states in plain product language.
-- Do not split another submission/work-surface meta-gate unless a real authority boundary appears.
+The following duplicate handoff files are cleanup candidates only and were intentionally not deleted in feature work:
+
+- `workspace-notes/NEXT-REVIEW 2.md`
+- `workspace-notes/WHAT-IS-NOT-DONE 2.md`
+- `workspace-notes/WHAT-WE-ARE-BUILDING 2.md`
 
 ## Recent Evidence
 
-- `node bin/gpao-t.js control work-surface-check`: ready.
-- Desktop/mobile browser QA for local draft preview confirmation flow: pass.
-- `docs/03-verification/evidence/work-surface-local-draft-preview-qa-2026-07-09.json`: ready.
-- `node --test test/control-center.test.js`: pass, 25 tests.
-- `npm run verify`: pass, 102 tests.
+- `node bin/gpao-t.js adapters model-router-boundary "GPAO-T 작업 표면 preview를 라우팅해줘"`: ready read-only contract.
+- `node bin/gpao-t.js adapters model-router-boundary-check`: ready, no findings.
+- `node --test test/adapter-boundary.test.js test/control-center.test.js`: pass, 31 tests.
+- `npm run verify`: pass, 104 tests.
 - `beai verify --cwd '/Users/jyp/Documents/Playground 2/gpao-t' --run --scenario --meaning`: ready/pass.
-- `node bin/gpao-t.js control serve-check`: ready, `/work-surface` status `200`, blocked `POST` status `405`.
-- `beai closeout --cwd '/Users/jyp/Documents/Playground 2/gpao-t' --apply`: review only for conservative TODO/blocker wording; completion language allowed.
+- `beai closeout --cwd '/Users/jyp/Documents/Playground 2/gpao-t' --apply`: completion language allowed; review items remain human lived acceptance and intentional blocked-boundary wording.

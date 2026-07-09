@@ -26,6 +26,7 @@ import {
   buildInstallHardeningReport,
   buildInstallHardeningSummary,
   buildLocalControlCenterDesignContract,
+  buildModelRouterBoundary,
   buildOperationsContractSummary,
   buildOperationsReliabilityContract,
   buildPackagedDesktopPlanningReview,
@@ -83,6 +84,7 @@ import {
   verifyBrowserLocalAppShell,
   verifyControlCenterPreviewServing,
   verifyCoreWorkSurface,
+  verifyModelRouterBoundary,
   verifyWorkSurfaceSubmissionDecisionGate,
   verifyWorkSurfaceSubmissionValidationGate,
   verifyPackagedDesktopPlanningReview,
@@ -148,6 +150,8 @@ function usage() {
     "  gpao-t ops hardening-summary",
     "  gpao-t adapters models",
     "  gpao-t adapters tools",
+    "  gpao-t adapters model-router-boundary [text]",
+    "  gpao-t adapters model-router-boundary-check",
     "  gpao-t adapters plan <text>",
     "  gpao-t control snapshot",
     "  gpao-t control summary",
@@ -403,6 +407,11 @@ try {
       printJson(listModelAdapters());
     } else if (subcommand === "tools") {
       printJson(listToolAdapters());
+    } else if (subcommand === "model-router-boundary") {
+      const request = textParts.join(" ").trim();
+      printJson(buildModelRouterBoundary(request ? { request } : undefined));
+    } else if (subcommand === "model-router-boundary-check") {
+      printJson(verifyModelRouterBoundary());
     } else if (subcommand === "plan") {
       const text = textParts.join(" ").trim();
       if (!text) {
@@ -410,7 +419,7 @@ try {
       }
       printJson(runRuntimeTurn({ input: { text } }).adapterPlan);
     } else {
-      throw new Error("adapters command requires models, tools, or plan");
+      throw new Error("adapters command requires models, tools, model-router-boundary, model-router-boundary-check, or plan");
     }
   } else if (command === "control") {
     const [subcommand] = args;

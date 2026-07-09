@@ -128,6 +128,8 @@ node bin/gpao-t.js ops hardening-history
 node bin/gpao-t.js ops hardening-summary
 node bin/gpao-t.js adapters models
 node bin/gpao-t.js adapters tools
+node bin/gpao-t.js adapters model-router-boundary "GPAO-T 작업 표면 preview를 라우팅해줘"
+node bin/gpao-t.js adapters model-router-boundary-check
 node bin/gpao-t.js adapters plan "그럼 배포파일은?"
 node bin/gpao-t.js control snapshot
 node bin/gpao-t.js control summary
@@ -233,10 +235,12 @@ Adapter Boundary keeps model freedom and tool safety separate:
 
 - local model stubs can be selected for preview routing
 - external model APIs are listed but blocked until provider setup and approval gates exist
+- `adapters model-router-boundary [text]` shows the read-only Model Router boundary: route profile, selected preview adapter, provider boundary, latency budget, cost policy, fallback chain, audit/replay/rollback references, and blocked model actions
+- `adapters model-router-boundary-check` verifies that the router boundary does not call providers, read secrets, send network requests, spend tokens, store model output, activate tools, or promote durable memory
 - local preview tools can be admitted for draft/replay work
 - external send, public release, deletion, secret write, and recurring automation remain blocked until explicit authority gates exist
 
-This boundary is intentionally visible in `modelRoute`, `toolPlan`, and `adapterPlan` so a future Local Control Center can show which model/tool path was selected, which options were blocked, and why.
+This boundary is intentionally visible in `modelRoute`, `toolPlan`, `adapterPlan`, `modelRouterBoundary`, CLI, Gateway, and the Local Control Center adapter panel so a future live provider path can be judged before it is opened.
 
 Connector Governance keeps account visibility separate from account execution:
 
@@ -304,7 +308,9 @@ Browser-safe serving is local preview only. It binds to `127.0.0.1`, does not co
 
 Browser-local app-shell first slice is also local preview only. It reads `GET /health` and `GET /control-center/*`, supports panel navigation and evidence inspection, exposes failure/recovery states, and keeps screenshot QA visible. It now includes read-only state lanes for workflow, recovery, authority, and next action, plus per-panel state drilldowns. It blocks `POST` routes, connector/model/tool activation, install/update/rollback execution, durable memory promotion, self-growth application, deployment, messenger surfaces, and recurring automation.
 
-Submission validation and confirmation is the final pre-submit meta-gate. The current work surface now includes the first user-facing confirmation UX, first local draft preview structure, and preview confirmation flow for `의도와 맞음`, `수정 필요`, and `보류`. This closes the core work surface substrate for the current read-only preview phase. The next product direction should move to the next major GPAO-T axis, not another submission/work-surface meta-gate. README freshness warnings are tracked as documentation alignment evidence only; they do not open live submission, model calls, tools, connectors, approval writes, install/update/rollback, durable memory promotion, or external send.
+Submission validation and confirmation is the final pre-submit meta-gate. The current work surface now includes the first user-facing confirmation UX, first local draft preview structure, and preview confirmation flow for `의도와 맞음`, `수정 필요`, and `보류`. This closes the core work surface substrate for the current read-only preview phase. The product direction has moved to the Model Router boundary axis: provider routing, latency/cost/fallback, privacy, and authority are visible as read-only contracts before any live model call. README freshness warnings are tracked as documentation alignment evidence only; they do not open live submission, model calls, tools, connectors, approval writes, install/update/rollback, durable memory promotion, or external send.
+
+Workspace note duplicate files `workspace-notes/NEXT-REVIEW 2.md`, `workspace-notes/WHAT-IS-NOT-DONE 2.md`, and `workspace-notes/WHAT-WE-ARE-BUILDING 2.md` are cleanup candidates only. They should not be deleted inside feature work without an explicit cleanup/closeout step.
 
 First Tauri shell slice is source-only and read-mostly. It adds `src-tauri/tauri.conf.json`, `src-tauri/Cargo.toml`, `src-tauri/build.rs`, `src-tauri/src/main.rs`, `src-tauri/capabilities/default.json`, and `tauri-shell/index.html` as a scaffold that mirrors app-shell state. It now has packaged-shell desktop/mobile visual QA baseline evidence under `docs/03-verification/evidence/tauri-shell-visual-qa-baseline-2026-07-09.json`. It does not install dependencies, run Tauri build, bundle, sign, create an installer, activate local IPC commands, mutate runtime state, or connect external services.
 
