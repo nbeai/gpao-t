@@ -2,23 +2,39 @@
 
 ## Next Safe Action
 
-Move to user-facing work-surface confirmation UX or first local draft preview.
+Move to `first_local_draft_preview` from the existing work-surface confirmation UX.
 
-Do not add another submission meta-gate. The submission decision gate and final pre-submit validation/confirmation gate are enough for this layer. The next improvement should make the preview easier for a user to read and trust.
+This should show the user what GPAO-T would draft locally after confirmation, while still avoiding live submission, model calls, tool execution, connector activation, external network/send, approval writes, install/update/rollback, and durable memory promotion.
+
+## Stop-Line
+
+Do not split submission into more meta-gates for now. The submission decision gate and submission validation/confirmation gate are closed enough for this phase.
+
+## Preserve Invariants
+
+- no script execution in the local inspection reader
+- no external activation
+- no live submission
+- no model connector call
+- no tool/CLI/MCP execution
+- no connector activation
+- no approval record write
+- no install/update/rollback execution
+- no durable memory promotion
+- visible authority boundary
+- visible next safe action
+- no overflow on desktop or mobile
 
 ## Review Before Continuing
 
-- Keep `/work-surface/submission-validation-gate` preview-only.
-- Confirm the user can see what GPAO-T understood, which context is attached, which skill route is proposed, and which permissions remain locked.
-- Preserve no live submission, no model call, no tool/CLI/MCP execution, no connector activation, no external send, no approval write, no install/update/rollback, and no durable memory promotion.
-- Treat README freshness warnings as documentation alignment work, not permission to open execution.
+- Keep the confirmation card visible as the user's bridge from typed input to future draft preview.
+- Keep Context Mesh evidence, Skill route, and Authority boundary on the same work surface.
+- Keep mobile top action line and authority spacing stable when adding the local draft preview.
 
 ## Recent Evidence
 
-- `node bin/gpao-t.js control work-surface-submission-validation-gate-check`: ready.
-- `node --test test/control-center.test.js`: passed, 23 tests.
-- `npm run verify`: passed, 100 tests.
-- `node bin/gpao-t.js control serve-check`: passed with loopback route evidence after sandbox escalation for local listen.
-- `beai verify --run --scenario --meaning`: passed, product meaning pass.
-- `beai closeout --apply`: completion language allowed; status stayed review only because generic blocker wording scan found one intentional boundary signal.
-- `git diff --check`: passed.
+- `npm run verify`: pass, 101 tests.
+- `beai verify --cwd '/Users/jyp/Documents/Playground 2/gpao-t' --run --scenario --meaning`: ready/pass.
+- `node bin/gpao-t.js control serve-check`: ready, `/work-surface` status `200`, blocked `POST` status `405`.
+- `git diff --check`: pass.
+- `rg -n "TODO|FIXME|XXX|HACK" ...`: no unresolved markers.

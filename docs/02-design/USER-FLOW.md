@@ -23,4 +23,4 @@ The first slice is read-only and no-script. It now includes a compact task under
 
 ## Next Action
 
-Run desktop/mobile visual QA for the richer `/work-surface` readability interaction, then decide the next user-visible read-only refinement. Live execution remains blocked.
+Run desktop/mobile visual QA for the `/work-surface` confirmation UX, then move to first local draft preview. Live execution remains blocked.

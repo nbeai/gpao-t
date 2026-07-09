@@ -26,15 +26,21 @@ Core work surface first slice:
 - Contract check: `GET /work-surface/verify` and `node bin/gpao-t.js control work-surface-check`
 - Control Center integration: `control snapshot`, `control html`, `/control-center`, and `/app-shell` must include the `Work Surface` panel or allowed read-only routes.
 - Visual baseline: `docs/03-verification/evidence/work-surface-visual-qa-baseline-2026-07-09.json` and `docs/03-verification/evidence/WORK-SURFACE-VISUAL-QA-BASELINE-2026-07-09.md`
+- Confirmation UX baseline: `docs/03-verification/evidence/work-surface-confirmation-ux-qa-2026-07-09.json` and `docs/03-verification/evidence/WORK-SURFACE-CONFIRMATION-UX-QA-2026-07-09.md`
 - Visual screenshots:
   - Desktop viewport: `docs/03-verification/evidence/work-surface-visual-qa-2026-07-09-desktop-viewport-1440x960.jpg`
   - Mobile viewport: `docs/03-verification/evidence/work-surface-visual-qa-2026-07-09-mobile-viewport-390x844.jpg`
-- Required invariant: the surface may show a draft task input, preview thread, compact read-only task understanding summary, current task state, Context Mesh / Memory Wiki / T-cell candidate summary, Skill Pack route preview, model/tool route preview, authority/approval summary, and next safe action.
+- Confirmation UX screenshots:
+  - Desktop viewport: `docs/03-verification/evidence/work-surface-confirmation-ux-2026-07-09-desktop-viewport-1440x960.jpg`
+  - Mobile viewport: `docs/03-verification/evidence/work-surface-confirmation-ux-2026-07-09-mobile-viewport-390x844.jpg`
+- Required invariant: the surface may show a draft task input, preview thread, compact read-only task understanding summary, current task state, Context Mesh / Memory Wiki / T-cell candidate summary, Skill Pack route preview, model/tool route preview, authority/approval summary, confirmation card, local draft preview shape, and next safe action.
 - Required understanding summary: the surface may include a read-only summary strip for understood task, context source, skill route, and execution boundary. The execution boundary card must remain locked and must not become an action control.
 - Required readability interaction: the surface may include native HTML `details` / `summary` task readability sections for task brief, context/skill route, authority boundary, and a read-only checklist. This is no-script local inspection only and must not become a submit, model, tool, connector, approval-write, or dry-run action.
+- Required confirmation UX: the surface may include a no-script confirmation card for understood input, Context Mesh evidence, Skill route, and Authority boundary. The card must state that nothing has executed yet and must not become a submit, approval-write, model, tool, connector, or external-send action.
+- Required local draft preview shape: the surface may prepare the shape of a future local draft preview, but it must not generate the draft, call a model, execute tools, send externally, or write approval records in this slice.
 - Required blocked boundary: the surface must not submit input, call external models, execute tools, activate connectors, write approval records, invoke dry-run, promote durable memory, apply self-growth, deploy, send through messenger, start recurring automation, include script, include form submission, or link to external URLs.
 - Checked visual invariant: desktop/mobile evidence confirms nonblank viewport, draft input visibility, task state visibility, context/skill route readability, authority boundary visibility, next safe action visibility, no overflow, mobile topbar/action visibility, no script, no form, and no external activation.
-- Next gate: refresh desktop/mobile visual QA for the richer read-only readability interaction, then add only the next smallest user-visible read-only refinement. Live submission and all model/tool/connector execution remain blocked.
+- Next gate: refresh desktop/mobile visual QA for the work-surface confirmation UX, then move to first local draft preview. Live submission and all model/tool/connector execution remain blocked.
 
 Work surface submission decision gate:
 

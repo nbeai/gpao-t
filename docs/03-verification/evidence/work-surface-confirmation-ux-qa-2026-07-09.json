@@ -1,0 +1,91 @@
+{
+  "schema": "gpao_t.work_surface_confirmation_ux_qa.v0_1",
+  "status": "ready",
+  "target": "/work-surface",
+  "capturedAt": "2026-07-09",
+  "fileFormat": "jpg",
+  "invariants": {
+    "previewOnly": true,
+    "confirmationCardVisible": true,
+    "localDraftPreviewShapeVisible": true,
+    "noExecutionNoticeVisible": true,
+    "authorityBoundaryVisible": true,
+    "nextSafeActionVisible": true,
+    "noLiveSubmission": true,
+    "noModelCall": true,
+    "noToolCliMcpExecution": true,
+    "noConnectorActivation": true,
+    "noExternalNetworkSend": true,
+    "noApprovalWrite": true,
+    "noInstallUpdateRollback": true,
+    "noDurableMemoryPromotion": true,
+    "noScript": true,
+    "noForm": true,
+    "noExternalLinks": true,
+    "noHorizontalOverflow": true,
+    "mobileTopbarActionVisible": true
+  },
+  "checks": [
+    {
+      "id": "desktop-viewport",
+      "target": "/work-surface",
+      "viewport": { "width": 1440, "height": 960 },
+      "nonblankViewport": true,
+      "confirmationCardVisible": true,
+      "confirmationCards": [
+        "understood-input",
+        "context-evidence",
+        "skill-route",
+        "authority-boundary"
+      ],
+      "localDraftPreviewVisible": true,
+      "noExecutionVisible": true,
+      "authorityBoundaryVisible": true,
+      "nextSafeActionVisible": true,
+      "topbarActionVisible": true,
+      "noHorizontalOverflow": true,
+      "hasScript": false,
+      "hasForm": false,
+      "externalLinks": [],
+      "screenshot": "docs/03-verification/evidence/work-surface-confirmation-ux-2026-07-09-desktop-viewport-1440x960.jpg"
+    },
+    {
+      "id": "mobile-viewport",
+      "target": "/work-surface",
+      "viewport": { "width": 390, "height": 844 },
+      "nonblankViewport": true,
+      "confirmationCardVisible": true,
+      "confirmationCards": [
+        "understood-input",
+        "context-evidence",
+        "skill-route",
+        "authority-boundary"
+      ],
+      "localDraftPreviewVisible": true,
+      "noExecutionVisible": true,
+      "authorityBoundaryVisible": true,
+      "nextSafeActionVisible": true,
+      "topbarActionVisible": true,
+      "noHorizontalOverflow": true,
+      "hasScript": false,
+      "hasForm": false,
+      "externalLinks": [],
+      "screenshot": "docs/03-verification/evidence/work-surface-confirmation-ux-2026-07-09-mobile-viewport-390x844.jpg"
+    }
+  ],
+  "evidenceFiles": {
+    "desktopScreenshot": "docs/03-verification/evidence/work-surface-confirmation-ux-2026-07-09-desktop-viewport-1440x960.jpg",
+    "mobileScreenshot": "docs/03-verification/evidence/work-surface-confirmation-ux-2026-07-09-mobile-viewport-390x844.jpg"
+  },
+  "blockedActionsRemainClosed": [
+    "live submission",
+    "model call",
+    "tool/CLI/MCP execution",
+    "connector activation",
+    "external network/send",
+    "approval write",
+    "install/update/rollback",
+    "durable memory promotion"
+  ],
+  "nextSafeAction": "Move to first local draft preview after preserving confirmation UX visual QA."
+}

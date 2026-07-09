@@ -84,6 +84,14 @@ const WORK_SURFACE_VISUAL_QA_DOC = fileURLToPath(new URL(
   "../docs/03-verification/evidence/WORK-SURFACE-VISUAL-QA-BASELINE-2026-07-09.md",
   import.meta.url,
 ));
+const WORK_SURFACE_CONFIRMATION_QA_JSON = fileURLToPath(new URL(
+  "../docs/03-verification/evidence/work-surface-confirmation-ux-qa-2026-07-09.json",
+  import.meta.url,
+));
+const WORK_SURFACE_CONFIRMATION_QA_DOC = fileURLToPath(new URL(
+  "../docs/03-verification/evidence/WORK-SURFACE-CONFIRMATION-UX-QA-2026-07-09.md",
+  import.meta.url,
+));
 const PACKAGED_DESKTOP_REVIEW_DOC = fileURLToPath(new URL(
   "../docs/03-engineering/PACKAGED-DESKTOP-PLANNING-REVIEW.md",
   import.meta.url,
@@ -518,6 +526,24 @@ describe("GPAO-T Local Control Center readiness", () => {
     assert.equal(surface.readabilityView.sections.some((section) => section.id === "route-brief"), true);
     assert.equal(surface.readabilityView.sections.some((section) => section.id === "authority-brief"), true);
     assert.equal(surface.readabilityView.checklist.length, 3);
+    assert.equal(surface.confirmationUx.schema, "gpao_t.work_surface_confirmation_ux.v0_1");
+    assert.equal(surface.confirmationUx.interactionMode, "no_script_confirmation_card");
+    assert.equal(surface.confirmationUx.cards.length, 4);
+    assert.equal(surface.confirmationUx.cards.some((card) => card.id === "understood-input"), true);
+    assert.equal(surface.confirmationUx.cards.some((card) => card.id === "context-evidence"), true);
+    assert.equal(surface.confirmationUx.cards.some((card) => card.id === "skill-route"), true);
+    assert.equal(surface.confirmationUx.cards.some((card) => card.id === "authority-boundary" && card.state === "locked"), true);
+    assert.equal(surface.confirmationUx.noExecutionNotice, "아직 실행된 것은 없음");
+    assert.equal(surface.confirmationUx.nextProductDirection, "first_local_draft_preview");
+    assert.equal(surface.confirmationUx.opensLiveSubmission, false);
+    assert.equal(surface.confirmationUx.writesApprovalRecord, false);
+    assert.equal(surface.localDraftPreview.schema, "gpao_t.local_draft_preview_shape.v0_1");
+    assert.equal(surface.localDraftPreview.status, "prepared_not_generated");
+    assert.equal(surface.localDraftPreview.wouldContain.includes("초안 결과의 local-only preview 영역"), true);
+    assert.equal(surface.localDraftPreview.generatedNow, false);
+    assert.equal(surface.localDraftPreview.invokesModel, false);
+    assert.equal(surface.localDraftPreview.executesTools, false);
+    assert.equal(surface.localDraftPreview.sendsExternally, false);
     assert.equal(surface.taskState.objective.includes("GPAO-T"), true);
     assert.equal(surface.contextPreview.boundary.includes("preview only"), true);
     assert.equal(surface.skillRoutePreview.selectedPacks.length >= 1, true);
@@ -540,6 +566,16 @@ describe("GPAO-T Local Control Center readiness", () => {
     assert.match(html, /data-readability-interaction="native-details"/);
     assert.match(html, /data-readability-section="task-brief"/);
     assert.match(html, /읽기 체크리스트/);
+    assert.match(html, /data-confirmation-ux="preview-only"/);
+    assert.match(html, /data-confirmation-card="understood-input"/);
+    assert.match(html, /data-confirmation-card="context-evidence"/);
+    assert.match(html, /data-confirmation-card="skill-route"/);
+    assert.match(html, /data-confirmation-card="authority-boundary"/);
+    assert.match(html, /아직 실행된 것은 없습니다/);
+    assert.match(html, /미리보기 확인만 의미/);
+    assert.match(html, /data-local-draft-preview="prepared"/);
+    assert.match(html, /Local Draft Preview 준비/);
+    assert.match(html, /generated now: false/);
     assert.match(html, /data-composer-state="draft-not-sent"/);
     assert.match(html, /data-authority-boundary="closed"/);
     assert.doesNotMatch(html, /<script/i);
@@ -1143,6 +1179,53 @@ describe("GPAO-T Local Control Center readiness", () => {
     assert.match(qaDoc, /work-surface-visual-qa-2026-07-09-mobile-viewport-390x844\.jpg/);
     assert.match(verifyDoc, /work-surface-visual-qa-baseline-2026-07-09\.json/);
     assert.match(verifyDoc, /Mobile viewport/);
+  });
+
+  it("keeps work-surface confirmation UX visual QA evidence replayable and preview-only", () => {
+    const qa = JSON.parse(readFileSync(WORK_SURFACE_CONFIRMATION_QA_JSON, "utf8"));
+    const qaDoc = readFileSync(WORK_SURFACE_CONFIRMATION_QA_DOC, "utf8");
+    const screenshots = Object.values(qa.evidenceFiles).map((relativePath) =>
+      readFileSync(fileURLToPath(new URL(`../${relativePath}`, import.meta.url)))
+    );
+
+    assert.equal(qa.schema, "gpao_t.work_surface_confirmation_ux_qa.v0_1");
+    assert.equal(qa.status, "ready");
+    assert.equal(qa.target, "/work-surface");
+    assert.equal(qa.fileFormat, "jpg");
+    assert.equal(qa.invariants.previewOnly, true);
+    assert.equal(qa.invariants.confirmationCardVisible, true);
+    assert.equal(qa.invariants.localDraftPreviewShapeVisible, true);
+    assert.equal(qa.invariants.noExecutionNoticeVisible, true);
+    assert.equal(qa.invariants.authorityBoundaryVisible, true);
+    assert.equal(qa.invariants.nextSafeActionVisible, true);
+    assert.equal(qa.invariants.noLiveSubmission, true);
+    assert.equal(qa.invariants.noModelCall, true);
+    assert.equal(qa.invariants.noToolCliMcpExecution, true);
+    assert.equal(qa.invariants.noConnectorActivation, true);
+    assert.equal(qa.invariants.noExternalNetworkSend, true);
+    assert.equal(qa.invariants.noApprovalWrite, true);
+    assert.equal(qa.invariants.noInstallUpdateRollback, true);
+    assert.equal(qa.invariants.noDurableMemoryPromotion, true);
+    assert.equal(qa.invariants.noScript, true);
+    assert.equal(qa.invariants.noForm, true);
+    assert.equal(qa.invariants.noExternalLinks, true);
+    assert.equal(qa.invariants.noHorizontalOverflow, true);
+    assert.equal(qa.checks.length, 2);
+    assert.equal(qa.checks.every((check) => check.confirmationCardVisible), true);
+    assert.equal(qa.checks.every((check) => check.confirmationCards.includes("understood-input")), true);
+    assert.equal(qa.checks.every((check) => check.confirmationCards.includes("context-evidence")), true);
+    assert.equal(qa.checks.every((check) => check.confirmationCards.includes("skill-route")), true);
+    assert.equal(qa.checks.every((check) => check.confirmationCards.includes("authority-boundary")), true);
+    assert.equal(qa.checks.every((check) => check.localDraftPreviewVisible), true);
+    assert.equal(qa.checks.every((check) => check.noExecutionVisible), true);
+    assert.equal(qa.checks.every((check) => check.noHorizontalOverflow), true);
+    assert.equal(qa.checks.every((check) => !check.hasScript && !check.hasForm), true);
+    assert.equal(qa.blockedActionsRemainClosed.includes("live submission"), true);
+    assert.equal(qa.blockedActionsRemainClosed.includes("durable memory promotion"), true);
+    assert.equal(screenshots.every((bytes) => bytes[0] === 0xff && bytes[1] === 0xd8), true);
+    assert.match(qaDoc, /Work Surface Confirmation UX QA/);
+    assert.match(qaDoc, /work-surface-confirmation-ux-2026-07-09-desktop-viewport-1440x960\.jpg/);
+    assert.match(qaDoc, /work-surface-confirmation-ux-2026-07-09-mobile-viewport-390x844\.jpg/);
   });
 
   it("keeps approval preview UX visual QA evidence replayable and preview-only", () => {

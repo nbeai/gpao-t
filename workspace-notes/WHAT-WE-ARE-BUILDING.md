@@ -1,43 +1,41 @@
 # What We Are Building
 
-GPAO-T is a local-first Growth Personal AI Operating System. The current product surface is the first core work surface where a user can give GPAO-T work, inspect how GPAO-T understands it, and stop before any live execution authority opens.
+GPAO-T is building a local, channel-agnostic personal AI operating system with a Codex-like work rhythm, OpenClaw-grade local runtime stability, and GPAO-owned Context Mesh / T-cell / Memory Wiki / authority / self-growth semantics.
 
 ## Current Phase
 
-- Phase: work-surface submission validation and confirmation gate
-- Status: implemented and verified as final pre-submit / preview-only
-- Product surface: `/work-surface`
-- Decision gate: `/work-surface/submission-gate`
-- Final pre-submit gate: `/work-surface/submission-validation-gate`
-- Verification surface: `/work-surface/submission-validation-gate/verify`
+- Phase: work-surface confirmation UX
+- Surface: `/work-surface`
+- Status: preview-only confirmation surface implemented and locally verified
 
-## What This Slice Adds
+## Current User-Facing Goal
 
-- Required field validation for the preview submission packet.
-- Empty input blocking before the turn kernel or execution path can receive it.
-- Input length review for oversized draft requests.
-- Risk signal detection for external send, tool/CLI/MCP execution, connector activation, durable memory, self-growth, and authority-sensitive operations.
-- Checks that Context Mesh preview, Skill route preview, and Authority preview are attached.
-- A confirmation card contract that tells the user nothing has executed yet.
-- Product-language blocked/review states.
-- README freshness warning tracked as documentation alignment, not execution permission.
-- Stop rule: do not split submission meta-gates further after this gate.
+The user should see how GPAO-T understood the typed work before anything executes.
 
-## Runtime Boundary
+The work surface now exposes a no-script confirmation card that shows:
 
-This slice does not submit work. It validates and explains the state GPAO-T must show before live submission is ever allowed.
+- understood input
+- Context Mesh evidence
+- Skill route
+- Authority boundary
 
-Blocked remains blocked:
-- live submission
-- live model call
-- tool/CLI/MCP execution
-- connector activation
-- external network/send
-- approval record write
-- install/update/rollback execution
-- durable memory promotion
-- self-growth apply
+It also prepares the shape of a future local draft preview without generating that draft now.
 
-## Companion Principle
+## Current Contract
 
-AI does the work. User keeps authority. GPAO-T should feel like a clear local work companion, not a hidden automation engine.
+- Confirmation UX schema: `gpao_t.work_surface_confirmation_ux.v0_1`
+- Local draft preview schema: `gpao_t.local_draft_preview_shape.v0_1`
+- Interaction mode: `no_script_confirmation_card`
+- Status: `visible_preview_only`
+- Next product direction: `first_local_draft_preview`
+
+## Evidence
+
+- `/work-surface` desktop visual QA: `docs/03-verification/evidence/work-surface-confirmation-ux-2026-07-09-desktop-viewport-1440x960.jpg`
+- `/work-surface` mobile visual QA: `docs/03-verification/evidence/work-surface-confirmation-ux-2026-07-09-mobile-viewport-390x844.jpg`
+- QA contract JSON: `docs/03-verification/evidence/work-surface-confirmation-ux-qa-2026-07-09.json`
+- QA report: `docs/03-verification/evidence/WORK-SURFACE-CONFIRMATION-UX-QA-2026-07-09.md`
+
+## User Authority
+
+AI does local reversible implementation and verification. The user keeps authority over real execution, external effects, durable memory promotion, connector/model/tool activation, installation, update, rollback, deployment, and product direction.

@@ -144,6 +144,64 @@ export function buildCoreWorkSurface({
         "실행 전 권한 경계가 닫혀 있는지 확인한다.",
       ],
     },
+    confirmationUx: {
+      schema: "gpao_t.work_surface_confirmation_ux.v0_1",
+      status: "visible_preview_only",
+      interactionMode: "no_script_confirmation_card",
+      title: "제출 전 확인",
+      userMessage:
+        "아직 실행된 것은 없습니다. GPAO-T가 이해한 작업, 사용할 맥락, 제안된 스킬 경로, 닫힌 권한을 확인하는 단계입니다.",
+      cards: [
+        {
+          id: "understood-input",
+          label: "GPAO-T가 이해한 일",
+          value: turnPreview.taskPacket.objective,
+          state: "confirm_before_draft",
+        },
+        {
+          id: "context-evidence",
+          label: "맥락 근거",
+          value: primaryContext?.anchor || "아직 강한 Context Mesh 후보 없음",
+          state: primaryContext ? "attached_preview" : "review",
+        },
+        {
+          id: "skill-route",
+          label: "스킬 경로",
+          value: primarySkillPack?.title || "Core thinking route",
+          state: skillExecutionPlan.executionMode,
+        },
+        {
+          id: "authority-boundary",
+          label: "권한 경계",
+          value: "실제 제출, 모델 호출, 도구 실행, 외부 전송은 잠겨 있음",
+          state: "locked",
+        },
+      ],
+      confirmMeaning: "미리보기 확인만 의미하며 live submission을 열지 않는다.",
+      noExecutionNotice: "아직 실행된 것은 없음",
+      preparesLocalDraftPreview: true,
+      nextProductDirection: "first_local_draft_preview",
+      opensLiveSubmission: false,
+      writesApprovalRecord: false,
+    },
+    localDraftPreview: {
+      schema: "gpao_t.local_draft_preview_shape.v0_1",
+      status: "prepared_not_generated",
+      purpose: "사용자 확인 후 만들 local draft preview의 형태를 미리 보여준다.",
+      wouldContain: [
+        "확인된 작업 의도",
+        "선택된 Context Mesh 근거",
+        "제안된 Skill Pack route",
+        "닫힌 권한 경계",
+        "초안 결과의 local-only preview 영역",
+      ],
+      generationMode: "future_local_preview_only",
+      generatedNow: false,
+      invokesModel: false,
+      executesTools: false,
+      sendsExternally: false,
+      writesApprovalRecord: false,
+    },
     taskState: {
       id: turnPreview.taskPacket.id,
       status: turnPreview.status,
@@ -215,7 +273,7 @@ export function buildCoreWorkSurface({
       usesForm: false,
     },
     nextSafeAction:
-      "작업 표면의 입력, 상태, 맥락, 스킬 라우팅, 권한 요약을 읽고 다음에는 가장 작은 read-only 작업 이해 개선을 더한다. 실제 전송/모델/도구/커넥터 실행은 열지 않는다.",
+      "confirmation card를 기준으로 사용자가 이해한 일, 맥락 근거, 스킬 경로, 권한 경계를 확인한다. 다음에는 first local draft preview를 열되 실제 전송/모델/도구/커넥터 실행은 열지 않는다.",
   };
 }
 
@@ -233,6 +291,16 @@ export function verifyCoreWorkSurface({ surface = buildCoreWorkSurface(), html }
   if (surface.readabilityView?.interaction !== "native_details_no_script") findings.push("missing_readability_interaction");
   if ((surface.readabilityView?.sections || []).length < 3) findings.push("missing_readability_sections");
   if (!(surface.readabilityView?.checklist || []).length) findings.push("missing_readability_checklist");
+  if (surface.confirmationUx?.interactionMode !== "no_script_confirmation_card") findings.push("missing_confirmation_ux");
+  if (!surface.confirmationUx?.cards?.some((card) => card.id === "understood-input")) findings.push("missing_confirmation_understood_input");
+  if (!surface.confirmationUx?.cards?.some((card) => card.id === "context-evidence")) findings.push("missing_confirmation_context_evidence");
+  if (!surface.confirmationUx?.cards?.some((card) => card.id === "skill-route")) findings.push("missing_confirmation_skill_route");
+  if (!surface.confirmationUx?.cards?.some((card) => card.id === "authority-boundary" && card.state === "locked")) findings.push("missing_confirmation_authority_boundary");
+  if (surface.confirmationUx?.opensLiveSubmission !== false) findings.push("confirmation_opens_live_submission");
+  if (surface.confirmationUx?.nextProductDirection !== "first_local_draft_preview") findings.push("confirmation_next_direction_not_local_draft_preview");
+  if (surface.localDraftPreview?.status !== "prepared_not_generated") findings.push("missing_local_draft_preview_shape");
+  if (surface.localDraftPreview?.generatedNow !== false) findings.push("local_draft_generated_too_early");
+  if (surface.localDraftPreview?.invokesModel !== false) findings.push("local_draft_model_open");
   if (!surface.taskState.objective) findings.push("missing_task_objective");
   if (!surface.contextPreview.boundary.includes("preview only")) findings.push("context_boundary_not_preview_only");
   if (!surface.skillRoutePreview.executionMode) findings.push("missing_skill_route_preview");
@@ -251,6 +319,9 @@ export function verifyCoreWorkSurface({ surface = buildCoreWorkSurface(), html }
     if (!html.includes("data-core-work-surface=\"read-only\"")) findings.push("html_missing_surface_marker");
     if (!html.includes("data-understanding-summary=\"read-only\"")) findings.push("html_missing_understanding_summary");
     if (!html.includes("data-readability-interaction=\"native-details\"")) findings.push("html_missing_readability_marker");
+    if (!html.includes("data-confirmation-ux=\"preview-only\"")) findings.push("html_missing_confirmation_ux");
+    if (!html.includes("data-local-draft-preview=\"prepared\"")) findings.push("html_missing_local_draft_preview");
+    if (!html.includes("아직 실행된 것은 없습니다")) findings.push("html_missing_no_execution_notice");
     if (!html.includes("data-composer-state=\"draft-not-sent\"")) findings.push("html_missing_composer_marker");
     if (!html.includes("data-authority-boundary=\"closed\"")) findings.push("html_missing_authority_marker");
     if (/<script/i.test(html)) findings.push("script_tag_present");
@@ -276,6 +347,7 @@ export function buildCoreWorkSurfaceHtml({ surface } = {}) {
   const contextCandidates = workSurface.contextPreview.retrievedCandidates;
   const readabilitySections = workSurface.readabilityView.sections || [];
   const understandingCards = workSurface.understandingSummary.cards || [];
+  const confirmationCards = workSurface.confirmationUx.cards || [];
 
   return `<!doctype html>
 <html lang="ko">
@@ -460,6 +532,76 @@ export function buildCoreWorkSurfaceHtml({ surface } = {}) {
       border-radius: 8px;
       background: #f5fbf7;
     }
+    .confirmation-card {
+      margin-top: 12px;
+      padding: 12px;
+      border: 1px solid #b9c9df;
+      border-radius: 8px;
+      background: #f8fbff;
+    }
+    .confirmation-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: flex-start;
+      flex-wrap: wrap;
+    }
+    .confirmation-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .confirmation-item {
+      min-width: 0;
+      min-height: 90px;
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--surface);
+    }
+    .confirmation-item[data-state="locked"] {
+      border-color: #efd2a8;
+      background: #fffaf0;
+    }
+    .confirmation-item strong,
+    .confirmation-item span {
+      display: block;
+      overflow-wrap: anywhere;
+    }
+    .confirmation-item strong {
+      color: var(--muted);
+      font-size: 11px;
+      text-transform: uppercase;
+    }
+    .confirmation-item span {
+      margin-top: 6px;
+      font-size: 12px;
+      font-weight: 800;
+    }
+    .confirmation-note {
+      margin-top: 10px;
+      color: var(--review);
+      font-size: 12px;
+      font-weight: 800;
+      overflow-wrap: anywhere;
+    }
+    .draft-preview {
+      margin-top: 12px;
+      padding: 12px;
+      border: 1px dashed #b9c9df;
+      border-radius: 8px;
+      background: #fbfcfd;
+    }
+    .draft-preview ul {
+      margin: 8px 0 0;
+      padding-left: 18px;
+    }
+    .draft-preview li {
+      color: var(--muted);
+      font-size: 12px;
+      overflow-wrap: anywhere;
+    }
     .checklist strong {
       display: block;
       color: var(--ready);
@@ -547,6 +689,7 @@ export function buildCoreWorkSurfaceHtml({ surface } = {}) {
       .layout { grid-template-columns: 1fr; padding: 12px; }
       .topbar { flex-direction: column; gap: 8px; }
       .understanding-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .confirmation-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       h1 { font-size: 17px; }
     }
     @media (max-width: 520px) {
@@ -556,7 +699,7 @@ export function buildCoreWorkSurfaceHtml({ surface } = {}) {
         padding: 12px 14px;
       }
       .layout { padding-top: 146px; }
-      .state-grid, .authority-strip, .understanding-strip { grid-template-columns: 1fr; }
+      .state-grid, .authority-strip, .understanding-strip, .confirmation-grid { grid-template-columns: 1fr; }
       .thread, .panel { padding: 12px; }
     }
   </style>
@@ -566,7 +709,7 @@ export function buildCoreWorkSurfaceHtml({ surface } = {}) {
     <div class="topbar-main">
       <h1>GPAO-T Work Surface</h1>
       <p class="subtitle">작업 초안 · 맥락 프리뷰 · 권한 경계</p>
-      <p class="topbar-action">다음 안전 행동: read-only 작업 이해 개선 · 실제 전송/모델/도구 실행 없음</p>
+      <p class="topbar-action">다음 안전 행동: confirmation 확인 후 first local draft preview · 실제 전송/모델/도구 실행 없음</p>
     </div>
     <span class="status">${escapeHtml(workSurface.status)}</span>
   </header>
@@ -612,6 +755,31 @@ export function buildCoreWorkSurfaceHtml({ surface } = {}) {
           </ul>
         </div>
       </div>
+      <section class="confirmation-card" data-confirmation-ux="preview-only" aria-label="Work surface confirmation card">
+        <div class="confirmation-head">
+          <div>
+            <h2>${escapeHtml(workSurface.confirmationUx.title)}</h2>
+            <p class="muted">${escapeHtml(workSurface.confirmationUx.userMessage)}</p>
+          </div>
+          <span class="status">${escapeHtml(workSurface.confirmationUx.status)}</span>
+        </div>
+        <div class="confirmation-grid">
+          ${confirmationCards.map((card) => `
+          <div class="confirmation-item" data-confirmation-card="${escapeHtml(card.id)}" data-state="${escapeHtml(card.state)}">
+            <strong>${escapeHtml(card.label)}</strong>
+            <span>${escapeHtml(card.value)}</span>
+          </div>`).join("")}
+        </div>
+        <p class="confirmation-note">${escapeHtml(workSurface.confirmationUx.noExecutionNotice)} · ${escapeHtml(workSurface.confirmationUx.confirmMeaning)}</p>
+      </section>
+      <section class="draft-preview" data-local-draft-preview="prepared" aria-label="Local draft preview shape">
+        <h2>Local Draft Preview 준비</h2>
+        <p class="muted">${escapeHtml(workSurface.localDraftPreview.purpose)}</p>
+        <ul>
+          ${workSurface.localDraftPreview.wouldContain.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}
+        </ul>
+        <p class="confirmation-note">generated now: ${escapeHtml(workSurface.localDraftPreview.generatedNow)} · model: ${escapeHtml(workSurface.localDraftPreview.invokesModel)} · tools: ${escapeHtml(workSurface.localDraftPreview.executesTools)}</p>
+      </section>
       <div class="state-grid" aria-label="Current task state">
         ${stateCard("Task", workSurface.taskState.status)}
         ${stateCard("Signal", workSurface.taskState.inputSignal)}
