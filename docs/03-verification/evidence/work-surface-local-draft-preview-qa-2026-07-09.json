@@ -1,0 +1,112 @@
+{
+  "schema": "gpao_t.work_surface_local_draft_preview_qa.v0_1",
+  "status": "ready",
+  "target": "/work-surface",
+  "capturedAt": "2026-07-09T02:31:43Z",
+  "fileFormat": "jpg",
+  "evidenceFiles": {
+    "desktop": "docs/03-verification/evidence/work-surface-local-draft-preview-2026-07-09-desktop-viewport-1440x960.jpg",
+    "mobile": "docs/03-verification/evidence/work-surface-local-draft-preview-2026-07-09-mobile-viewport-390x844.jpg"
+  },
+  "invariants": {
+    "localDraftPreviewVisible": true,
+    "expectedOutputVisible": true,
+    "contextToUseVisible": true,
+    "skillRouteVisible": true,
+    "lockedExecutionVisible": true,
+    "emptyStateVisible": true,
+    "blockedStateVisible": true,
+    "reviewNeededStateVisible": true,
+    "noLiveSubmission": true,
+    "noModelCall": true,
+    "noToolCliMcpExecution": true,
+    "noConnectorActivation": true,
+    "noExternalNetworkSend": true,
+    "noApprovalWrite": true,
+    "noInstallUpdateRollback": true,
+    "noDurableMemoryPromotion": true,
+    "noScript": true,
+    "noForm": true,
+    "noExternalLinks": true,
+    "noHorizontalOverflow": true
+  },
+  "checks": [
+    {
+      "id": "desktop-viewport",
+      "viewport": {
+        "width": 1440,
+        "height": 960
+      },
+      "nonblankViewport": true,
+      "localDraftPreviewVisible": true,
+      "localDraftSections": [
+        "understood-task",
+        "expected-output",
+        "context-to-use",
+        "skill-route",
+        "locked-state"
+      ],
+      "productStates": [
+        "empty",
+        "blocked",
+        "review-needed"
+      ],
+      "expectedOutputVisible": true,
+      "contextToUseVisible": true,
+      "skillRouteVisible": true,
+      "lockedExecutionVisible": true,
+      "noExecutionVisible": true,
+      "authorityBoundaryVisible": true,
+      "nextSafeActionVisible": true,
+      "topbarActionVisible": true,
+      "hasScript": false,
+      "hasForm": false,
+      "externalLinks": [],
+      "noHorizontalOverflow": true
+    },
+    {
+      "id": "mobile-viewport",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "nonblankViewport": true,
+      "localDraftPreviewVisible": true,
+      "localDraftSections": [
+        "understood-task",
+        "expected-output",
+        "context-to-use",
+        "skill-route",
+        "locked-state"
+      ],
+      "productStates": [
+        "empty",
+        "blocked",
+        "review-needed"
+      ],
+      "expectedOutputVisible": true,
+      "contextToUseVisible": true,
+      "skillRouteVisible": true,
+      "lockedExecutionVisible": true,
+      "noExecutionVisible": true,
+      "authorityBoundaryVisible": true,
+      "nextSafeActionVisible": true,
+      "topbarActionVisible": true,
+      "hasScript": false,
+      "hasForm": false,
+      "externalLinks": [],
+      "noHorizontalOverflow": true
+    }
+  ],
+  "blockedActionsRemainClosed": [
+    "live submission",
+    "model call",
+    "tool/CLI/MCP execution",
+    "connector activation",
+    "external network/send",
+    "approval write",
+    "install/update/rollback",
+    "durable memory promotion"
+  ],
+  "nextSafeAction": "Use the local draft preview structure as the next user-facing bridge before any future explicit live submission gate."
+}

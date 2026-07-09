@@ -4,37 +4,39 @@ GPAO-T is building a local, channel-agnostic personal AI operating system with a
 
 ## Current Phase
 
-- Phase: work-surface confirmation UX
+- Phase: first local draft preview
 - Surface: `/work-surface`
-- Status: preview-only confirmation surface implemented and locally verified
+- Status: local preview structure implemented and visually verified
 
 ## Current User-Facing Goal
 
-The user should see how GPAO-T understood the typed work before anything executes.
+The user should see "this is how GPAO-T plans to handle the work" before anything executes.
 
-The work surface now exposes a no-script confirmation card that shows:
+The work surface now shows:
 
-- understood input
-- Context Mesh evidence
-- Skill route
-- Authority boundary
-
-It also prepares the shape of a future local draft preview without generating that draft now.
+- understood task
+- expected output shape
+- context to use
+- skill route
+- locked execution state
+- empty state
+- blocked state
+- review-needed state
 
 ## Current Contract
 
-- Confirmation UX schema: `gpao_t.work_surface_confirmation_ux.v0_1`
-- Local draft preview schema: `gpao_t.local_draft_preview_shape.v0_1`
-- Interaction mode: `no_script_confirmation_card`
-- Status: `visible_preview_only`
-- Next product direction: `first_local_draft_preview`
+- Local draft preview schema: `gpao_t.local_draft_preview.v0_1`
+- Preview mode: `structure_only_no_model_no_submit`
+- Status: `visible_local_preview_structure`
+- Draft content generated now: `false`
+- Live submission/model/tool/connector/external/approval/install/durable-memory boundaries: blocked
 
 ## Evidence
 
-- `/work-surface` desktop visual QA: `docs/03-verification/evidence/work-surface-confirmation-ux-2026-07-09-desktop-viewport-1440x960.jpg`
-- `/work-surface` mobile visual QA: `docs/03-verification/evidence/work-surface-confirmation-ux-2026-07-09-mobile-viewport-390x844.jpg`
-- QA contract JSON: `docs/03-verification/evidence/work-surface-confirmation-ux-qa-2026-07-09.json`
-- QA report: `docs/03-verification/evidence/WORK-SURFACE-CONFIRMATION-UX-QA-2026-07-09.md`
+- Desktop visual QA: `docs/03-verification/evidence/work-surface-local-draft-preview-2026-07-09-desktop-viewport-1440x960.jpg`
+- Mobile visual QA: `docs/03-verification/evidence/work-surface-local-draft-preview-2026-07-09-mobile-viewport-390x844.jpg`
+- QA contract JSON: `docs/03-verification/evidence/work-surface-local-draft-preview-qa-2026-07-09.json`
+- QA report: `docs/03-verification/evidence/WORK-SURFACE-LOCAL-DRAFT-PREVIEW-QA-2026-07-09.md`
 
 ## User Authority
 

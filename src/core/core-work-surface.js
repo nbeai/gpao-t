@@ -185,22 +185,104 @@ export function buildCoreWorkSurface({
       writesApprovalRecord: false,
     },
     localDraftPreview: {
-      schema: "gpao_t.local_draft_preview_shape.v0_1",
-      status: "prepared_not_generated",
-      purpose: "사용자 확인 후 만들 local draft preview의 형태를 미리 보여준다.",
-      wouldContain: [
-        "확인된 작업 의도",
-        "선택된 Context Mesh 근거",
-        "제안된 Skill Pack route",
-        "닫힌 권한 경계",
-        "초안 결과의 local-only preview 영역",
+      schema: "gpao_t.local_draft_preview.v0_1",
+      status: "visible_local_preview_structure",
+      purpose: "확인된 이해/맥락/스킬/권한을 바탕으로 GPAO-T가 어떻게 처리할 예정인지 한눈에 보여준다.",
+      previewMode: "structure_only_no_model_no_submit",
+      headline: "이렇게 처리될 예정입니다",
+      understoodTask: turnPreview.taskPacket.objective,
+      expectedOutputShape: {
+        label: "예상 출력 형태",
+        value: "작업 요약, 선택된 맥락, 권한 경계, 다음 안전 행동을 포함한 local draft preview",
+        state: "preview_only",
+      },
+      contextToUse: {
+        label: "사용될 맥락",
+        value: primaryContext?.anchor || "강한 Context Mesh 후보가 없어서 확인 필요",
+        state: primaryContext ? "attached_preview" : "review_needed",
+      },
+      skillRoute: {
+        label: "스킬 경로",
+        value: primarySkillPack?.title || "Core thinking route",
+        state: skillExecutionPlan.executionMode || "preview_only",
+      },
+      lockedExecutionState: {
+        label: "실행 전 잠금",
+        value: "live submission, model call, tool execution, connector activation, external send는 모두 닫혀 있음",
+        state: "locked_before_execution",
+      },
+      sections: [
+        {
+          id: "understood-task",
+          label: "이해한 작업",
+          value: turnPreview.taskPacket.objective,
+          state: draftRequest.trim() ? "ready" : "empty",
+        },
+        {
+          id: "expected-output",
+          label: "예상 출력",
+          value: "local-only draft preview 구조",
+          state: "preview_only",
+        },
+        {
+          id: "context-to-use",
+          label: "사용될 맥락",
+          value: primaryContext?.anchor || "맥락 후보 확인 필요",
+          state: primaryContext ? "attached_preview" : "review_needed",
+        },
+        {
+          id: "skill-route",
+          label: "스킬 경로",
+          value: primarySkillPack?.title || "Core thinking route",
+          state: skillExecutionPlan.executionMode || "preview_only",
+        },
+        {
+          id: "locked-state",
+          label: "잠금 상태",
+          value: "아직 실행 전이며 모든 외부/모델/도구 행동은 차단됨",
+          state: "blocked_until_future_approval",
+        },
       ],
-      generationMode: "future_local_preview_only",
-      generatedNow: false,
+      productStates: [
+        {
+          id: "empty",
+          label: "입력이 비어 있으면",
+          userMessage: "작업 내용을 먼저 적어야 preview를 만들 수 있습니다.",
+          outcome: "empty",
+        },
+        {
+          id: "blocked",
+          label: "위험 행동이 포함되면",
+          userMessage: "외부 전송, 모델 호출, 도구 실행, 커넥터 활성화는 이 화면에서 실행되지 않습니다.",
+          outcome: "blocked",
+        },
+        {
+          id: "review-needed",
+          label: "맥락이 애매하면",
+          userMessage: "GPAO-T가 이해한 일과 사용할 맥락을 사용자가 먼저 확인해야 합니다.",
+          outcome: "review_needed",
+        },
+      ],
+      visualQaEvidence: {
+        contract:
+          "docs/03-verification/evidence/work-surface-local-draft-preview-qa-2026-07-09.json",
+        desktop:
+          "docs/03-verification/evidence/work-surface-local-draft-preview-2026-07-09-desktop-viewport-1440x960.jpg",
+        mobile:
+          "docs/03-verification/evidence/work-surface-local-draft-preview-2026-07-09-mobile-viewport-390x844.jpg",
+      },
+      nextAfterPreview: "사용자가 preview를 이해한 뒤에도 실제 제출/모델/도구/외부 실행은 별도 승인 경계에서 멈춘다.",
+      structureVisible: true,
+      draftContentGeneratedNow: false,
+      generationMode: "local_structure_preview_only",
+      opensLiveSubmission: false,
       invokesModel: false,
       executesTools: false,
+      activatesConnectors: false,
       sendsExternally: false,
       writesApprovalRecord: false,
+      installsUpdatesOrRollsBack: false,
+      promotesDurableMemory: false,
     },
     taskState: {
       id: turnPreview.taskPacket.id,
@@ -273,7 +355,7 @@ export function buildCoreWorkSurface({
       usesForm: false,
     },
     nextSafeAction:
-      "confirmation card를 기준으로 사용자가 이해한 일, 맥락 근거, 스킬 경로, 권한 경계를 확인한다. 다음에는 first local draft preview를 열되 실제 전송/모델/도구/커넥터 실행은 열지 않는다.",
+      "local draft preview에서 이해한 작업, 예상 출력, 사용될 맥락, 스킬 경로, 잠금 상태를 확인한다. 실제 제출/모델/도구/커넥터/외부 실행은 계속 열지 않는다.",
   };
 }
 
@@ -298,9 +380,20 @@ export function verifyCoreWorkSurface({ surface = buildCoreWorkSurface(), html }
   if (!surface.confirmationUx?.cards?.some((card) => card.id === "authority-boundary" && card.state === "locked")) findings.push("missing_confirmation_authority_boundary");
   if (surface.confirmationUx?.opensLiveSubmission !== false) findings.push("confirmation_opens_live_submission");
   if (surface.confirmationUx?.nextProductDirection !== "first_local_draft_preview") findings.push("confirmation_next_direction_not_local_draft_preview");
-  if (surface.localDraftPreview?.status !== "prepared_not_generated") findings.push("missing_local_draft_preview_shape");
-  if (surface.localDraftPreview?.generatedNow !== false) findings.push("local_draft_generated_too_early");
+  if (surface.localDraftPreview?.status !== "visible_local_preview_structure") findings.push("missing_local_draft_preview_structure");
+  if (surface.localDraftPreview?.structureVisible !== true) findings.push("local_draft_structure_not_visible");
+  if (surface.localDraftPreview?.draftContentGeneratedNow !== false) findings.push("local_draft_content_generated_too_early");
+  if (!surface.localDraftPreview?.sections?.some((section) => section.id === "expected-output")) findings.push("local_draft_missing_expected_output");
+  if (!surface.localDraftPreview?.sections?.some((section) => section.id === "locked-state")) findings.push("local_draft_missing_locked_state");
+  if (!surface.localDraftPreview?.productStates?.some((state) => state.id === "empty")) findings.push("local_draft_missing_empty_state");
+  if (!surface.localDraftPreview?.productStates?.some((state) => state.id === "blocked")) findings.push("local_draft_missing_blocked_state");
+  if (!surface.localDraftPreview?.productStates?.some((state) => state.id === "review-needed")) findings.push("local_draft_missing_review_state");
+  if (surface.localDraftPreview?.opensLiveSubmission !== false) findings.push("local_draft_submission_open");
   if (surface.localDraftPreview?.invokesModel !== false) findings.push("local_draft_model_open");
+  if (surface.localDraftPreview?.executesTools !== false) findings.push("local_draft_tools_open");
+  if (surface.localDraftPreview?.activatesConnectors !== false) findings.push("local_draft_connector_open");
+  if (surface.localDraftPreview?.sendsExternally !== false) findings.push("local_draft_external_send_open");
+  if (surface.localDraftPreview?.promotesDurableMemory !== false) findings.push("local_draft_memory_promotion_open");
   if (!surface.taskState.objective) findings.push("missing_task_objective");
   if (!surface.contextPreview.boundary.includes("preview only")) findings.push("context_boundary_not_preview_only");
   if (!surface.skillRoutePreview.executionMode) findings.push("missing_skill_route_preview");
@@ -320,7 +413,10 @@ export function verifyCoreWorkSurface({ surface = buildCoreWorkSurface(), html }
     if (!html.includes("data-understanding-summary=\"read-only\"")) findings.push("html_missing_understanding_summary");
     if (!html.includes("data-readability-interaction=\"native-details\"")) findings.push("html_missing_readability_marker");
     if (!html.includes("data-confirmation-ux=\"preview-only\"")) findings.push("html_missing_confirmation_ux");
-    if (!html.includes("data-local-draft-preview=\"prepared\"")) findings.push("html_missing_local_draft_preview");
+    if (!html.includes("data-local-draft-preview=\"visible-local-structure\"")) findings.push("html_missing_local_draft_preview");
+    if (!html.includes("이렇게 처리될 예정입니다")) findings.push("html_missing_local_draft_headline");
+    if (!html.includes("data-local-draft-state=\"blocked\"")) findings.push("html_missing_local_draft_blocked_state");
+    if (!html.includes("data-local-draft-state=\"review-needed\"")) findings.push("html_missing_local_draft_review_state");
     if (!html.includes("아직 실행된 것은 없습니다")) findings.push("html_missing_no_execution_notice");
     if (!html.includes("data-composer-state=\"draft-not-sent\"")) findings.push("html_missing_composer_marker");
     if (!html.includes("data-authority-boundary=\"closed\"")) findings.push("html_missing_authority_marker");
@@ -348,6 +444,8 @@ export function buildCoreWorkSurfaceHtml({ surface } = {}) {
   const readabilitySections = workSurface.readabilityView.sections || [];
   const understandingCards = workSurface.understandingSummary.cards || [];
   const confirmationCards = workSurface.confirmationUx.cards || [];
+  const draftPreviewSections = workSurface.localDraftPreview.sections || [];
+  const draftProductStates = workSurface.localDraftPreview.productStates || [];
 
   return `<!doctype html>
 <html lang="ko">
@@ -589,18 +687,82 @@ export function buildCoreWorkSurfaceHtml({ surface } = {}) {
     .draft-preview {
       margin-top: 12px;
       padding: 12px;
-      border: 1px dashed #b9c9df;
+      border: 1px solid #b7d7c6;
+      border-radius: 8px;
+      background: #f8fcfa;
+    }
+    .draft-preview-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: flex-start;
+      flex-wrap: wrap;
+    }
+    .draft-preview-grid {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .draft-preview-item {
+      min-width: 0;
+      min-height: 92px;
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--surface);
+    }
+    .draft-preview-item[data-state*="blocked"],
+    .draft-preview-item[data-state*="locked"] {
+      border-color: #efd2a8;
+      background: #fffaf0;
+    }
+    .draft-preview-item[data-state*="review"] {
+      border-color: #e0cc8f;
+      background: #fffdf3;
+    }
+    .draft-preview-item strong,
+    .draft-preview-item span {
+      display: block;
+      overflow-wrap: anywhere;
+    }
+    .draft-preview-item strong {
+      color: var(--muted);
+      font-size: 11px;
+      text-transform: uppercase;
+    }
+    .draft-preview-item span {
+      margin-top: 6px;
+      font-size: 12px;
+      font-weight: 800;
+    }
+    .draft-state-strip {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .draft-state {
+      min-width: 0;
+      padding: 9px;
+      border: 1px solid var(--line);
       border-radius: 8px;
       background: #fbfcfd;
     }
-    .draft-preview ul {
-      margin: 8px 0 0;
-      padding-left: 18px;
+    .draft-state[data-local-draft-state="blocked"] {
+      border-color: #efd2a8;
+      background: #fffaf0;
     }
-    .draft-preview li {
+    .draft-state strong,
+    .draft-state span {
+      display: block;
+      overflow-wrap: anywhere;
+    }
+    .draft-state strong { font-size: 12px; }
+    .draft-state span {
+      margin-top: 4px;
       color: var(--muted);
       font-size: 12px;
-      overflow-wrap: anywhere;
     }
     .checklist strong {
       display: block;
@@ -689,7 +851,8 @@ export function buildCoreWorkSurfaceHtml({ surface } = {}) {
       .layout { grid-template-columns: 1fr; padding: 12px; }
       .topbar { flex-direction: column; gap: 8px; }
       .understanding-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-      .confirmation-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .confirmation-grid, .draft-preview-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .draft-state-strip { grid-template-columns: 1fr; }
       h1 { font-size: 17px; }
     }
     @media (max-width: 520px) {
@@ -699,7 +862,7 @@ export function buildCoreWorkSurfaceHtml({ surface } = {}) {
         padding: 12px 14px;
       }
       .layout { padding-top: 146px; }
-      .state-grid, .authority-strip, .understanding-strip, .confirmation-grid { grid-template-columns: 1fr; }
+      .state-grid, .authority-strip, .understanding-strip, .confirmation-grid, .draft-preview-grid { grid-template-columns: 1fr; }
       .thread, .panel { padding: 12px; }
     }
   </style>
@@ -772,13 +935,30 @@ export function buildCoreWorkSurfaceHtml({ surface } = {}) {
         </div>
         <p class="confirmation-note">${escapeHtml(workSurface.confirmationUx.noExecutionNotice)} · ${escapeHtml(workSurface.confirmationUx.confirmMeaning)}</p>
       </section>
-      <section class="draft-preview" data-local-draft-preview="prepared" aria-label="Local draft preview shape">
-        <h2>Local Draft Preview 준비</h2>
-        <p class="muted">${escapeHtml(workSurface.localDraftPreview.purpose)}</p>
-        <ul>
-          ${workSurface.localDraftPreview.wouldContain.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}
-        </ul>
-        <p class="confirmation-note">generated now: ${escapeHtml(workSurface.localDraftPreview.generatedNow)} · model: ${escapeHtml(workSurface.localDraftPreview.invokesModel)} · tools: ${escapeHtml(workSurface.localDraftPreview.executesTools)}</p>
+      <section class="draft-preview" data-local-draft-preview="visible-local-structure" aria-label="Local draft preview">
+        <div class="draft-preview-head">
+          <div>
+            <h2>${escapeHtml(workSurface.localDraftPreview.headline)}</h2>
+            <p class="muted">${escapeHtml(workSurface.localDraftPreview.purpose)}</p>
+          </div>
+          <span class="status">${escapeHtml(workSurface.localDraftPreview.status)}</span>
+        </div>
+        <div class="draft-preview-grid">
+          ${draftPreviewSections.map((section) => `
+          <div class="draft-preview-item" data-local-draft-section="${escapeHtml(section.id)}" data-state="${escapeHtml(section.state)}">
+            <strong>${escapeHtml(section.label)}</strong>
+            <span>${escapeHtml(section.value)}</span>
+          </div>`).join("")}
+        </div>
+        <div class="draft-state-strip" aria-label="Local draft preview product states">
+          ${draftProductStates.map((state) => `
+          <div class="draft-state" data-local-draft-state="${escapeHtml(state.id)}" data-outcome="${escapeHtml(state.outcome)}">
+            <strong>${escapeHtml(state.label)}</strong>
+            <span>${escapeHtml(state.userMessage)}</span>
+          </div>`).join("")}
+        </div>
+        <p class="confirmation-note">${escapeHtml(workSurface.localDraftPreview.nextAfterPreview)}</p>
+        <p class="confirmation-note">draft content generated now: ${escapeHtml(workSurface.localDraftPreview.draftContentGeneratedNow)} · model: ${escapeHtml(workSurface.localDraftPreview.invokesModel)} · tools: ${escapeHtml(workSurface.localDraftPreview.executesTools)} · connectors: ${escapeHtml(workSurface.localDraftPreview.activatesConnectors)}</p>
       </section>
       <div class="state-grid" aria-label="Current task state">
         ${stateCard("Task", workSurface.taskState.status)}

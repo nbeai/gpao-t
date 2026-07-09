@@ -2,13 +2,9 @@
 
 ## Next Safe Action
 
-Move to `first_local_draft_preview` from the existing work-surface confirmation UX.
+Refine the first local draft preview toward a user confirmation flow while preserving preview-only boundaries.
 
-This should show the user what GPAO-T would draft locally after confirmation, while still avoiding live submission, model calls, tool execution, connector activation, external network/send, approval writes, install/update/rollback, and durable memory promotion.
-
-## Stop-Line
-
-Do not split submission into more meta-gates for now. The submission decision gate and submission validation/confirmation gate are closed enough for this phase.
+The next improvement should make it easier for the user to understand the future output and decide whether the preview matches their intent. It should not open live submission, model calls, tools, connectors, approval writes, install/update/rollback, or durable memory promotion.
 
 ## Preserve Invariants
 
@@ -27,14 +23,16 @@ Do not split submission into more meta-gates for now. The submission decision ga
 
 ## Review Before Continuing
 
-- Keep the confirmation card visible as the user's bridge from typed input to future draft preview.
-- Keep Context Mesh evidence, Skill route, and Authority boundary on the same work surface.
-- Keep mobile top action line and authority spacing stable when adding the local draft preview.
+- Keep the confirmation card visible as the bridge into local draft preview.
+- Keep expected output, context to use, skill route, and locked execution state visible in the preview.
+- Keep empty, blocked, and review-needed states in plain product language.
+- Keep mobile top action line and authority spacing stable.
 
 ## Recent Evidence
 
-- `npm run verify`: pass, 101 tests.
+- `node bin/gpao-t.js control work-surface-check`: ready.
+- Desktop/mobile browser QA for first local draft preview: pass.
+- `docs/03-verification/evidence/work-surface-local-draft-preview-qa-2026-07-09.json`: ready.
+- `npm run verify`: pass, 102 tests.
 - `beai verify --cwd '/Users/jyp/Documents/Playground 2/gpao-t' --run --scenario --meaning`: ready/pass.
 - `node bin/gpao-t.js control serve-check`: ready, `/work-surface` status `200`, blocked `POST` status `405`.
-- `git diff --check`: pass.
-- `rg -n "TODO|FIXME|XXX|HACK" ...`: no unresolved markers.

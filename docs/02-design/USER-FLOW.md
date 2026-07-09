@@ -23,4 +23,4 @@ The first slice is read-only and no-script. It now includes a compact task under
 
 ## Next Action
 
-Run desktop/mobile visual QA for the `/work-surface` confirmation UX, then move to first local draft preview. Live execution remains blocked.
+Use the first local draft preview as the next user-facing bridge: the user can see the understood task, expected output, context to use, skill route, and locked execution state before any future live submission gate. Live execution remains blocked.

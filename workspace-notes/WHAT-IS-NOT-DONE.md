@@ -17,10 +17,10 @@
 
 ## Current Completion Boundary
 
-The work-surface confirmation UX is implemented and verified as a preview-only local inspection surface. It is not a live execution surface.
+The first local draft preview is implemented and verified as a preview-only local inspection surface. It is not a live execution surface and it does not generate draft content through a model.
 
-BEAI closeout reports a conservative review item because intentional blocked-boundary language remains visible. That is expected for this stage and should be treated as a stop-line, not an unresolved implementation blocker.
+BEAI closeout reports conservative review items for human-scenario acceptance and intentional blocked-boundary language. Completion language is still allowed by BEAI verify/closeout; those review items remain next-stage product validation and stop-line notes, not implementation blockers for this local preview slice.
 
 ## Next Product Gap
 
-The next product-facing gap is `first_local_draft_preview`: a local preview of the draft GPAO-T would prepare after confirmation, still without live model/tool/connector/external execution.
+The next product-facing gap is a clearer confirmation flow around the local draft preview, still without live model/tool/connector/external execution.
