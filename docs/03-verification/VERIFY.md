@@ -19,6 +19,23 @@ Any deeper read-only Control Center/app-shell behavior must preserve GET-only, r
 
 Current deeper read-only app-shell behavior adds workflow, recovery, authority, and next-action state lanes plus per-panel state drilldowns. These are read-only UI/state contracts only; they do not add POST routes, connectors, models, tools, installation, rollback, durable memory promotion, self-growth apply, deployment, messenger, or automation.
 
+Stage 4 local app / desktop production hardening:
+
+- Engineering document: `docs/03-engineering/STAGE-4-LOCAL-APP-PRODUCTION-HARDENING.md`
+- Core module: `src/core/stage-4-production-hardening.js`
+- CLI surfaces: `node bin/gpao-t.js control stage-4-production-hardening`, `node bin/gpao-t.js control stage-4-production-hardening-html`, and `node bin/gpao-t.js control stage-4-production-hardening-check`
+- Gateway routes: `GET /app-shell/production-hardening` and `GET /app-shell/production-hardening/verify`
+- Browser-local routes: `GET /app-shell/production-hardening`, `GET /app-shell/production-hardening/state`, and `GET /app-shell/production-hardening/verify`
+- Required invariant: Stage 4 must present browser-local serving readiness, app-shell readiness, Tauri scaffold presence, read-only Tauri shell status, local approval/audit records, replay/rollback reference, screenshot baseline, and source-control rollback posture in one product-readiness surface.
+- Required blocked boundary: Tauri build, dependency install, bundle/signing/installer creation, install/update/rollback execution, local IPC commands, live model call, tool/CLI/MCP execution from model output, connector activation, OAuth/token/credential access, external send, paid/destructive action, public release/deployment, durable memory promotion, and self-growth apply remain blocked.
+- Visual evidence:
+  - Desktop viewport: `docs/03-verification/evidence/stage-4-production-hardening-desktop-1440x960.png`
+  - Mobile viewport: `docs/03-verification/evidence/stage-4-production-hardening-mobile-390x844.png`
+  - QA JSON: `docs/03-verification/evidence/stage-4-production-hardening-qa-2026-07-09.json`
+  - QA report: `docs/03-verification/evidence/STAGE-4-PRODUCTION-HARDENING-QA-2026-07-09.md`
+- Required visual invariant: nonblank desktop/mobile viewport, visible 4단계/product-readiness title, visible readiness checks, visible authority boundary, visible next safe action, no horizontal overflow, no script, no form, no external activation, and mobile decision strip readability.
+- Required completion language: Stage 4 may be called a local production-hardening readiness surface. It must not be called a built, installed, signed, distributed, public, or live-executing desktop app until the later explicit authority gates are approved and verified.
+
 Core work surface first slice:
 
 - Standalone surface: `GET /work-surface` and `node bin/gpao-t.js control work-surface-html`

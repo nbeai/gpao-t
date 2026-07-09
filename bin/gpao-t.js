@@ -46,6 +46,8 @@ import {
   buildPackagedDesktopPlanningReview,
   buildRuntimeDataContract,
   buildSelfGrowthProposal,
+  buildStage4ProductionHardening,
+  buildStage4ProductionHardeningHtml,
   buildSkillBuildQueue,
   buildSkillCandidateAtlas,
   buildSkillEcosystemPlan,
@@ -107,6 +109,7 @@ import {
   verifyAuditWriteDesignProof,
   verifyExecutionApprovalPreview,
   verifyFirstLocalWorkLoop,
+  verifyStage4ProductionHardening,
   verifyModelRouterBoundary,
   verifyModelRouterPolicy,
   verifyWorkSurfaceSubmissionDecisionGate,
@@ -255,6 +258,9 @@ function usage() {
     "  gpao-t control tauri-shell-slice",
     "  gpao-t control tauri-shell-html",
     "  gpao-t control tauri-shell-check",
+    "  gpao-t control stage-4-production-hardening",
+    "  gpao-t control stage-4-production-hardening-html",
+    "  gpao-t control stage-4-production-hardening-check",
     "  gpao-t state",
     "  gpao-t events",
     "  gpao-t memory capture <title> <body>",
@@ -686,8 +692,18 @@ try {
       process.stdout.write(buildTauriReadOnlyShellHtml());
     } else if (subcommand === "tauri-shell-check") {
       printJson(verifyTauriReadOnlyShellSlice());
+    } else if (subcommand === "stage-4-production-hardening") {
+      printJson(buildStage4ProductionHardening());
+    } else if (subcommand === "stage-4-production-hardening-html") {
+      process.stdout.write(buildStage4ProductionHardeningHtml());
+    } else if (subcommand === "stage-4-production-hardening-check") {
+      const state = buildStage4ProductionHardening();
+      printJson(verifyStage4ProductionHardening({
+        state,
+        html: buildStage4ProductionHardeningHtml({ state }),
+      }));
     } else {
-      throw new Error("control command requires snapshot, summary, design, design-reference-gate, design-reference-gate-check, ui-contract, ui-snapshot, ui-validate, html, render, serve-contract, serve-check, serve, work-surface, work-surface-html, work-surface-check, sessions, sessions-action, sessions-check, work-surface-local-loop, work-surface-local-loop-check, work-surface-submission-gate, work-surface-submission-gate-check, work-surface-submission-validation-gate, work-surface-submission-validation-gate-check, work-surface-execution-flow, work-surface-execution-confirmation, work-surface-execution-flow-check, work-surface-execution-record, app-shell-contract, app-shell-state, app-shell-html, app-shell-check, tauri-gate, tauri-gate-check, packaged-desktop-review, packaged-desktop-review-check, tauri-install-gate, tauri-install-gate-check, tauri-prerequisite-doctor, tauri-prerequisite-doctor-check, tauri-dry-run-contract, tauri-dry-run-contract-check, tauri-dry-run-design, tauri-dry-run-design-check, tauri-dry-run-plan, tauri-dry-run-plan-check, tauri-dry-run-preview, tauri-dry-run-preview-check, tauri-dry-run-invocation-approval, tauri-dry-run-invocation-approval-check, tauri-dry-run-approval-storage, tauri-dry-run-approval-storage-check, tauri-dry-run-approval-write-gate, tauri-shell-slice, tauri-shell-html, or tauri-shell-check");
+      throw new Error("control command requires snapshot, summary, design, design-reference-gate, design-reference-gate-check, ui-contract, ui-snapshot, ui-validate, html, render, serve-contract, serve-check, serve, work-surface, work-surface-html, work-surface-check, sessions, sessions-action, sessions-check, work-surface-local-loop, work-surface-local-loop-check, work-surface-submission-gate, work-surface-submission-gate-check, work-surface-submission-validation-gate, work-surface-submission-validation-gate-check, work-surface-execution-flow, work-surface-execution-confirmation, work-surface-execution-flow-check, work-surface-execution-record, app-shell-contract, app-shell-state, app-shell-html, app-shell-check, tauri-gate, tauri-gate-check, packaged-desktop-review, packaged-desktop-review-check, tauri-install-gate, tauri-install-gate-check, tauri-prerequisite-doctor, tauri-prerequisite-doctor-check, tauri-dry-run-contract, tauri-dry-run-contract-check, tauri-dry-run-design, tauri-dry-run-design-check, tauri-dry-run-plan, tauri-dry-run-plan-check, tauri-dry-run-preview, tauri-dry-run-preview-check, tauri-dry-run-invocation-approval, tauri-dry-run-invocation-approval-check, tauri-dry-run-approval-storage, tauri-dry-run-approval-storage-check, tauri-dry-run-approval-write-gate, tauri-shell-slice, tauri-shell-html, tauri-shell-check, stage-4-production-hardening, stage-4-production-hardening-html, or stage-4-production-hardening-check");
     }
   } else if (command === "gateway") {
     const [method, requestPath, rawBody] = args;

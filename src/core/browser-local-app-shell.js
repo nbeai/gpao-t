@@ -27,6 +27,9 @@ export const BROWSER_LOCAL_ALLOWED_GET_ROUTES = [
   "/control-center/ui-contract",
   "/control-center/ui-snapshot",
   "/control-center/ui-validate",
+  "/app-shell/production-hardening",
+  "/app-shell/production-hardening/state",
+  "/app-shell/production-hardening/verify",
 ];
 
 export const BROWSER_LOCAL_BLOCKED_POST_ROUTES = [

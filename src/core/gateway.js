@@ -124,6 +124,10 @@ import {
   readReplayRecoveryHistory,
 } from "./replay-history.js";
 import { buildReplayRecoveryView } from "./replay-recovery.js";
+import {
+  buildStage4ProductionHardening,
+  verifyStage4ProductionHardening,
+} from "./stage-4-production-hardening.js";
 import { runRuntimeTurn } from "./runtime.js";
 import {
   appendSkillExecutionRun,
@@ -423,6 +427,23 @@ export function handleGatewayRequest({ method = "GET", path = "/", body = {}, ro
       schema: "gpao_t.gateway_response.v0_1",
       status: 200,
       body: buildTauriPackagedDesktopGate(),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/app-shell/production-hardening") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: buildStage4ProductionHardening({ root }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/app-shell/production-hardening/verify") {
+    const state = buildStage4ProductionHardening({ root });
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: verifyStage4ProductionHardening({ state }),
     };
   }
 

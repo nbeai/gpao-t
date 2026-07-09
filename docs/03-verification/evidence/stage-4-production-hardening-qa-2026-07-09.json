@@ -1,0 +1,86 @@
+{
+  "schema": "gpao_t.stage_4_production_hardening_visual_qa.v1",
+  "generatedAt": "2026-07-09T12:18:04.987Z",
+  "target": "http://127.0.0.1:63346/app-shell/production-hardening",
+  "screenshots": {
+    "desktop": "/Users/jyp/Documents/Playground 2/gpao-t/docs/03-verification/evidence/stage-4-production-hardening-desktop-1440x960.png",
+    "mobile": "/Users/jyp/Documents/Playground 2/gpao-t/docs/03-verification/evidence/stage-4-production-hardening-mobile-390x844.png"
+  },
+  "results": [
+    {
+      "label": "desktop",
+      "width": 1440,
+      "height": 960,
+      "file": "/Users/jyp/Documents/Playground 2/gpao-t/docs/03-verification/evidence/stage-4-production-hardening-desktop-1440x960.png",
+      "metrics": {
+        "title": "GPAO-T 4단계 제품화 준비",
+        "bodyLength": 1923,
+        "hasStage4": true,
+        "hasReadiness": true,
+        "hasAuthorityBoundary": true,
+        "hasNextSafeAction": true,
+        "hasNoBuild": true,
+        "hasBlockedExternal": true,
+        "decisionStripText": "다음 안전 행동: 빌드/설치 없이 준비 상태만 확인",
+        "scriptCount": 0,
+        "formCount": 0,
+        "maxScrollWidth": 1440,
+        "innerWidth": 1440,
+        "noHorizontalOverflow": true,
+        "bodyHeight": 2003,
+        "background": "rgb(244, 246, 242)"
+      }
+    },
+    {
+      "label": "mobile",
+      "width": 390,
+      "height": 844,
+      "file": "/Users/jyp/Documents/Playground 2/gpao-t/docs/03-verification/evidence/stage-4-production-hardening-mobile-390x844.png",
+      "metrics": {
+        "title": "GPAO-T 4단계 제품화 준비",
+        "bodyLength": 1923,
+        "hasStage4": true,
+        "hasReadiness": true,
+        "hasAuthorityBoundary": true,
+        "hasNextSafeAction": true,
+        "hasNoBuild": true,
+        "hasBlockedExternal": true,
+        "decisionStripText": "다음 안전 행동: 빌드/설치 없이 준비 상태만 확인",
+        "scriptCount": 0,
+        "formCount": 0,
+        "maxScrollWidth": 390,
+        "innerWidth": 390,
+        "noHorizontalOverflow": true,
+        "bodyHeight": 4465,
+        "background": "rgb(244, 246, 242)"
+      }
+    }
+  ],
+  "scores": {
+    "visualPolish": 4.5,
+    "colorQuality": 4.5,
+    "layoutRhythm": 4.5,
+    "koreanTypography": 4.5,
+    "toneAndManner": 4.6,
+    "authorityClarity": 4.7,
+    "overallProductFeel": 4.5
+  },
+  "invariants": {
+    "nonblankViewport": true,
+    "readinessVisible": true,
+    "authorityBoundaryVisible": true,
+    "nextSafeActionVisible": true,
+    "noHorizontalOverflow": true,
+    "noScript": true,
+    "noForm": true,
+    "noExternalActivation": true
+  },
+  "openDesign": {
+    "project": "gpao-t-stage-4-production-hardening-surface",
+    "artifact": "stage-4-production-hardening-direction.html"
+  },
+  "remainingDesignRisk": [
+    "This Stage 4 surface is product-readable and calmer than raw reports, but final packaged desktop polish should later share a tighter component system with the main Work Surface.",
+    "The right rail lists many locked actions; later interactive grouping can reduce perceived density without hiding authority boundaries."
+  ]
+}

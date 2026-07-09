@@ -75,6 +75,11 @@ import {
   buildTauriReadOnlyShellSlice,
   verifyTauriReadOnlyShellSlice,
 } from "./tauri-readonly-shell.js";
+import {
+  buildStage4ProductionHardening,
+  buildStage4ProductionHardeningHtml,
+  verifyStage4ProductionHardening,
+} from "./stage-4-production-hardening.js";
 
 const DEFAULT_HOST = "127.0.0.1";
 const DEFAULT_PORT = 0;
@@ -139,6 +144,9 @@ export function buildControlCenterServingContract({
       { path: "/app-shell/tauri-shell.html", content: "tauri_readonly_shell_html" },
       { path: "/app-shell/tauri-shell/slice", content: "tauri_readonly_shell_slice" },
       { path: "/app-shell/tauri-shell/verify", content: "tauri_readonly_shell_slice_verification" },
+      { path: "/app-shell/production-hardening", content: "stage_4_production_hardening_html" },
+      { path: "/app-shell/production-hardening/state", content: "stage_4_production_hardening_state" },
+      { path: "/app-shell/production-hardening/verify", content: "stage_4_production_hardening_verification" },
       { path: "/control-center/summary", content: "local_json_control_center_summary" },
       { path: "/control-center/design", content: "local_json_control_center_design" },
       { path: "/control-center/design-reference-gate", content: "local_json_gpao_t_design_reference_gate" },
@@ -528,6 +536,31 @@ export async function startControlCenterPreviewServer({
       return;
     }
 
+    if (url.pathname === "/app-shell/production-hardening/state") {
+      respondJson(response, 200, buildStage4ProductionHardening({ root, now }));
+      return;
+    }
+
+    if (url.pathname === "/app-shell/production-hardening/verify") {
+      const state = buildStage4ProductionHardening({ root, now });
+      respondJson(response, 200, verifyStage4ProductionHardening({
+        state,
+        html: buildStage4ProductionHardeningHtml({ state }),
+      }));
+      return;
+    }
+
+    if (url.pathname === "/app-shell/production-hardening") {
+      const state = buildStage4ProductionHardening({ root, now });
+      response.writeHead(200, {
+        "content-type": "text/html; charset=utf-8",
+        "cache-control": "no-store",
+        "x-gpao-t-surface": "stage-4-production-hardening",
+      });
+      response.end(buildStage4ProductionHardeningHtml({ state }));
+      return;
+    }
+
     if (["/app-shell/tauri-shell", "/app-shell/tauri-shell.html"].includes(url.pathname)) {
       response.writeHead(200, {
         "content-type": "text/html; charset=utf-8",
@@ -651,6 +684,9 @@ export async function verifyControlCenterPreviewServing({
     const tauriShell = await fetchText(`http://${host}:${preview.port}/app-shell/tauri-shell`);
     const tauriShellSlice = await fetchJson(`http://${host}:${preview.port}/app-shell/tauri-shell/slice`);
     const tauriShellVerify = await fetchJson(`http://${host}:${preview.port}/app-shell/tauri-shell/verify`);
+    const stage4ProductionHardening = await fetchText(`http://${host}:${preview.port}/app-shell/production-hardening`);
+    const stage4ProductionHardeningState = await fetchJson(`http://${host}:${preview.port}/app-shell/production-hardening/state`);
+    const stage4ProductionHardeningVerify = await fetchJson(`http://${host}:${preview.port}/app-shell/production-hardening/verify`);
     const blockedPost = await fetchJson(`http://${host}:${preview.port}/app-shell`, { method: "POST" });
     const findings = [];
 
@@ -860,6 +896,25 @@ export async function verifyControlCenterPreviewServing({
     if (tauriShellVerify.status !== 200 || tauriShellVerify.body.status !== "ready") {
       findings.push("tauri_shell_verify_not_ready");
     }
+    if (stage4ProductionHardening.status !== 200) {
+      findings.push("stage_4_production_hardening_route_not_200");
+    }
+    if (!stage4ProductionHardening.body.includes("GPAO-T Local App Hardening")) {
+      findings.push("stage_4_production_hardening_missing_title");
+    }
+    if (/<script/i.test(stage4ProductionHardening.body)) {
+      findings.push("stage_4_production_hardening_script_tag_present");
+    }
+    if (/<form/i.test(stage4ProductionHardening.body)) {
+      findings.push("stage_4_production_hardening_form_present");
+    }
+    if (stage4ProductionHardeningState.status !== 200
+      || stage4ProductionHardeningState.body.schema !== "gpao_t.stage_4_production_hardening.v1") {
+      findings.push("stage_4_production_hardening_state_not_ready");
+    }
+    if (stage4ProductionHardeningVerify.status !== 200 || stage4ProductionHardeningVerify.body.status !== "ready") {
+      findings.push("stage_4_production_hardening_verify_not_ready");
+    }
     if (blockedPost.status !== 405 || blockedPost.body.status !== "blocked") {
       findings.push("app_shell_post_not_blocked");
     }
@@ -885,6 +940,7 @@ export async function verifyControlCenterPreviewServing({
       tauriDryRunApprovalWriteGateUrl: `http://${host}:${preview.port}/app-shell/tauri-dry-run-approval-write-gate`,
       tauriShellUrl: `http://${host}:${preview.port}/app-shell/tauri-shell`,
       tauriShellSliceUrl: `http://${host}:${preview.port}/app-shell/tauri-shell/slice`,
+      stage4ProductionHardeningUrl: `http://${host}:${preview.port}/app-shell/production-hardening`,
       healthStatus: health.status,
       workSurfaceStatus: workSurface.status,
       workSurfaceStateStatus: workSurfaceState.status,
@@ -911,6 +967,9 @@ export async function verifyControlCenterPreviewServing({
       tauriDryRunApprovalWriteGateStatus: tauriDryRunApprovalWriteGate.status,
       tauriShellStatus: tauriShell.status,
       tauriShellSliceStatus: tauriShellSlice.status,
+      stage4ProductionHardeningStatus: stage4ProductionHardening.status,
+      stage4ProductionHardeningStateStatus: stage4ProductionHardeningState.status,
+      stage4ProductionHardeningVerifyStatus: stage4ProductionHardeningVerify.status,
       blockedPostStatus: blockedPost.status,
       contentLength: page.body.length,
       requiredVisibleText: preview.contract.screenshotVerification.requiredVisibleText,

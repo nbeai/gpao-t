@@ -2,23 +2,26 @@
 
 ## Current Position
 
-Stage 3 is complete: browser-local execution confirmation now writes local approval/audit records, returns a local result page, and exposes replay / rollback reference without live execution.
+Stage 4 is complete as a local app / desktop production-hardening readiness surface:
+
+- `/app-shell/production-hardening`
+- `gpao-t control stage-4-production-hardening`
+- `gpao-t control stage-4-production-hardening-check`
+- Gateway `GET /app-shell/production-hardening`
+- desktop/mobile screenshot QA evidence
 
 ## Next Big Stage
 
-Stage 4: Local app / desktop production hardening.
+The next large stage should be explicit approval-gated packaged desktop execution readiness:
 
-Recommended focus:
-
-- packaged desktop readiness from the existing browser-local proof
-- Tauri source scaffold review without opening build/install yet unless explicitly approved
-- local serving robustness
-- state/replay/rollback inspection polish
-- visual product polish for Work Surface density and mobile record-id display
+- decide whether to allow Tauri dependency install/build
+- if approved, implement build/install verification in a separate safe branch
+- keep installer/update/rollback execution separate from mere build verification
+- preserve local records, replay, rollback, source-control, screenshot, and authority boundaries
 
 ## Review Before Continuing
 
 - Keep model/tool/connector/external execution blocked unless explicitly approved.
 - Keep credential access, paid/destructive action, deployment, and durable memory promotion blocked.
-- Treat local approval/audit records as local governance substrate, not execution permission.
+- Treat Stage 4 as production-readiness evidence, not a packaged desktop release.
 - Continue using desktop/mobile screenshot evidence for UI-facing work.

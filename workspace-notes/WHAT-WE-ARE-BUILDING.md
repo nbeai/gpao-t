@@ -13,22 +13,26 @@ left session rail -> center active work session -> right context / authority / e
 - Stage 1: Session workspace repair / product face - completed.
 - Stage 2: First local work loop and session behavior - completed.
 - Stage 3: Execution approval / audit / replay / rollback governance loop - completed in local-only form.
-- Stage 4: Local app / desktop production hardening - next.
+- Stage 4: Local app / desktop production hardening - completed as a local read-mostly production-readiness surface.
 
-## Stage 3 Completion Meaning
+## Stage 4 Completion Meaning
 
-The Work Surface now lets the user review an execution proposal, confirm `의도와 맞음`, write only local approval/audit JSONL records, read replay status, and see rollback reference through a browser-local result page.
+The app-shell now exposes `/app-shell/production-hardening` as the local production-readiness surface. It brings browser-local serving, app-shell state, Tauri source scaffold inspection, local approval/audit records, replay/rollback reference, visual QA evidence, and local git rollback posture into one read-mostly product view.
+
+This is not a built or installed desktop app. It is the verified readiness surface before explicit user approval for Tauri build, dependency install, package signing, installer creation, install/update/rollback execution, public release, or live external execution.
 
 The following remain blocked:
 
 - live model call
-- tool/CLI/MCP execution
+- tool/CLI/MCP execution from model output
 - connector activation
 - credential access
 - external send
 - paid/destructive action
-- public release
+- public release/deployment
 - durable memory promotion
+- Tauri build / dependency install / installer creation
+- install / update / rollback execution
 
 ## Product Principle
 

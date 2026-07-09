@@ -165,6 +165,11 @@ import {
 } from "./core/storage.js";
 import { buildToolPlan } from "./core/tool-runtime.js";
 import {
+  buildStage4ProductionHardening,
+  buildStage4ProductionHardeningHtml,
+  verifyStage4ProductionHardening,
+} from "./core/stage-4-production-hardening.js";
+import {
   buildPackagedDesktopPlanningReview,
   buildTauriPackagedDesktopGate,
   verifyPackagedDesktopPlanningReview,
@@ -261,6 +266,8 @@ export {
   buildSkillProductionRoadmap,
   buildSkillProductionStatus,
   buildSkillReadinessReport,
+  buildStage4ProductionHardening,
+  buildStage4ProductionHardeningHtml,
   buildToolPlan,
   buildTauriInstallDryRunPlan,
   buildTauriInstallDryRunApprovalRecordStorageDesign,
@@ -301,6 +308,7 @@ export {
   routeSkillPacks,
   routeModel,
   verifySessionWorkspaceBehavior,
+  verifyStage4ProductionHardening,
   verifyModelRouterBoundary,
   verifyModelRouterPolicy,
   verifyConnectorToolGovernance,
