@@ -13,7 +13,7 @@ export function buildContextRuntime({ input, sessionOverlay, inputSignal = { kin
       id: "tcell.active-target.release-file",
       pi: "When the user uses a short follow-up phrase, recover the active target before answering.",
       x: ["그럼 배포파일은?", "그건 어디 있어?", "아까 말한 거"],
-      anchor: rememberedTarget,
+      anchor: "release-file",
       validFor: ["follow_up", "artifact_request"],
       sourceRef: "GPAO-T-RUNTIME-SKELETON-CONTRACT-v0.1-ko.md#18.1",
       confidence: 0.84,

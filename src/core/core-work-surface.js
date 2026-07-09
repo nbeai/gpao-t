@@ -79,6 +79,14 @@ const UI_LABELS = {
   "Recover the release-file active target and answer or draft only within local authority.":
     "현재 릴리스 파일 흐름을 복구하고, 로컬 권한 안에서만 답변하거나 초안을 만듭니다.",
   "release-file": "릴리스 파일",
+  "general-runtime": "일반 작업 흐름",
+  work_surface_general_request: "작업 표면 일반 요청",
+  general_work_request: "일반 작업 요청",
+  release_file_follow_up: "릴리스 파일 후속 요청",
+  release_file_request: "릴리스 파일 요청",
+  answer_anchor: "주 맥락",
+  supporting_context: "보조 맥락",
+  stale_supporting: "이전 흐름 보조 맥락",
   "목표: Recover the release-file active target and answer or draft only within local authority.":
     "목표: 현재 릴리스 파일 흐름을 복구하고 로컬 권한 안에서만 답변하거나 초안을 만듭니다.",
   "입력 신호: general_request": "입력 신호: 일반 요청",
@@ -131,10 +139,15 @@ export function buildCoreWorkSurface({
   const runtimeState = readRuntimeState({ root });
   const memoryWiki = readMemoryWiki({ root });
   const tcellCandidates = readTCellCandidates({ root });
-  const contextPreview = resolveContextMesh({ root, request: draftRequest });
+  const turnPreview = runTurn({ root, input: { text: draftRequest }, priorFlow: runtimeState.activeFlow });
+  const contextPreview = resolveContextMesh({
+    root,
+    request: draftRequest,
+    inputSignal: turnPreview.inputSignal,
+    priorFlow: runtimeState.activeFlow,
+  });
   const skillRoute = routeSkillPacks({ request: draftRequest });
   const skillExecutionPlan = buildSkillExecutionPlan({ skillRoute });
-  const turnPreview = runTurn({ root, input: { text: draftRequest }, priorFlow: runtimeState.activeFlow });
   const modelRoute = routeModel({
     inputSignal: turnPreview.inputSignal,
     authorityDecision: turnPreview.authorityDecision,
@@ -148,7 +161,8 @@ export function buildCoreWorkSurface({
     writeLocalRecords: false,
     now,
   });
-  const primaryContext = contextPreview.retrievedCandidates[0];
+  const primaryContext = contextPreview.retrievedCandidates.find((candidate) => candidate.answerAnchorEligible)
+    || contextPreview.retrievedCandidates.find((candidate) => candidate.admissionRole !== "stale_supporting");
   const primarySkillPack = skillRoute.selectedPacks[0];
 
   return {
@@ -518,6 +532,9 @@ export function buildCoreWorkSurface({
         anchor: candidate.anchor,
         score: candidate.meshScore,
         lifecycle: candidate.lifecycle,
+        admissionRole: candidate.admissionRole,
+        answerAnchorEligible: candidate.answerAnchorEligible,
+        downgradeReason: candidate.downgradeReason || null,
       })),
       latestMemoryEntry: memoryWiki.entries.at(-1) || null,
       boundary: "Context Mesh preview only; candidates are not durable promotion or live action authority.",
@@ -1671,7 +1688,7 @@ export function buildCoreWorkSurfaceHtml({ surface } = {}) {
           ${(contextCandidates.length ? contextCandidates : [{ id: "empty", anchor: "no candidate admitted", score: 0, lifecycle: "preview" }]).map((candidate) => `
           <div class="item" data-context-candidate="${escapeHtml(candidate.id)}">
             <strong>${escapeHtml(uiLabel(candidate.anchor))}</strong>
-            <span>${escapeHtml(uiLabel(candidate.lifecycle))} · 적합도 ${escapeHtml(candidate.score)}</span>
+            <span>${escapeHtml(uiLabel(candidate.admissionRole || candidate.lifecycle))} · 적합도 ${escapeHtml(candidate.score)}</span>
           </div>`).join("")}
         </div>
       </article>

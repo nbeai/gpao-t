@@ -1,5 +1,6 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
+import { classifyContextCandidateUse, classifyRequestTarget } from "./context-admission-policy.js";
 import { runtimePaths } from "./storage.js";
 
 const WIKI_FILE = "memory/wiki.json";
@@ -116,14 +117,38 @@ export function resolveContextMesh({
   request = "",
   inputSignal = { kind: "general_request" },
   activeTargetId,
+  priorFlow,
   root,
 } = {}) {
   const candidates = readTCellCandidates({ root });
+  const requestPolicy = classifyRequestTarget({
+    text: request,
+    inputSignal,
+    priorFlow: priorFlow || (activeTargetId ? { activeTargetId } : null),
+  });
+  const effectiveTargetId = requestPolicy.activeTargetId || activeTargetId;
   const scored = candidates
-    .map((candidate) => ({
-      ...candidate,
-      meshScore: scoreCandidate({ candidate, request, inputSignal, activeTargetId }),
-    }))
+    .map((candidate) => {
+      const candidateUse = classifyContextCandidateUse({
+        candidate,
+        requestPolicy: { ...requestPolicy, activeTargetId: effectiveTargetId },
+        inputSignal,
+      });
+      return {
+        ...candidate,
+        targetMatch: candidateUse.targetMatch,
+        admissionRole: candidateUse.admissionRole,
+        answerAnchorEligible: candidateUse.answerAnchorEligible,
+        downgradeReason: candidateUse.downgradeReason,
+        meshScore: scoreCandidate({
+          candidate,
+          request,
+          inputSignal,
+          activeTargetId: effectiveTargetId,
+          candidateUse,
+        }),
+      };
+    })
     .filter((candidate) => candidate.meshScore > 0)
     .sort((a, b) => b.meshScore - a.meshScore);
 
@@ -132,9 +157,10 @@ export function resolveContextMesh({
     status: scored.length ? "ready" : "empty",
     request,
     inputSignal,
-    activeTargetId,
+    activeTargetId: effectiveTargetId,
+    requestPolicy,
     retrievedCandidates: scored,
-    boundary: "retrieved candidates are not admitted context until AdmissionPacket marks them admitted",
+    boundary: "retrieved candidates are not admitted context until AdmissionPacket marks them admitted; stale/supporting candidates cannot become answer anchors",
   };
 }
 
@@ -200,7 +226,7 @@ function inferAnchor(entry) {
   return slug(entry.title);
 }
 
-function scoreCandidate({ candidate, request, inputSignal, activeTargetId }) {
+function scoreCandidate({ candidate, request, inputSignal, activeTargetId, candidateUse }) {
   const haystack = [candidate.pi, candidate.anchor, ...(candidate.x || [])].join(" ");
   let score = 0;
   for (const token of tokens(request)) {
@@ -208,8 +234,11 @@ function scoreCandidate({ candidate, request, inputSignal, activeTargetId }) {
       score += 2;
     }
   }
-  if (candidate.anchor === activeTargetId) {
+  if (candidate.anchor === activeTargetId && candidateUse?.answerAnchorEligible !== false) {
     score += 4;
+  }
+  if (candidateUse?.admissionRole === "stale_supporting") {
+    score -= 1;
   }
   if (candidate.radius?.validFor?.includes(inputSignal.kind)) {
     score += 1;

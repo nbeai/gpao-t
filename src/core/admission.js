@@ -58,6 +58,10 @@ export function scoreAdmission({ cell, inputSignal, sessionOverlay }) {
     breakdown.push({ signal: "active_target_anchor", value: 40, detail: `anchor matches ${sessionOverlay.activeTargetId}` });
     total += 40;
   }
+  if (cell.admissionRole === "stale_supporting") {
+    breakdown.push({ signal: "stale_supporting_downgrade", value: -10, detail: cell.downgradeReason || "stale supporting context" });
+    total -= 10;
+  }
   if (cell.radius?.validFor?.includes(inputSignal.kind)) {
     breakdown.push({ signal: "input_signal_fit", value: 15, detail: `valid for ${inputSignal.kind}` });
     total += 15;
@@ -95,6 +99,12 @@ function classifyCellRole({ cell, inputSignal, sessionOverlay, scoring }) {
   if ((cell.weights || DEFAULT_WEIGHTS).risk > 0.8 || scoring.total < 5) {
     return "rejected";
   }
+  if (cell.admissionRole === "stale_supporting") {
+    return "support";
+  }
+  if (cell.answerAnchorEligible === false) {
+    return "support";
+  }
   if (cell.anchor === sessionOverlay.activeTargetId) {
     return "anchor";
   }
@@ -122,6 +132,9 @@ function buildRecoveryHint({ cell, role, inputSignal, sessionOverlay, scoring })
     return `Use this as the current-turn anchor because it matches ${sessionOverlay.activeTargetId} with score ${scoring.total}.`;
   }
   if (role === "support") {
+    if (cell.admissionRole === "stale_supporting") {
+      return `cell ${cell.id} is stale/supporting only for ${inputSignal.kind}`;
+    }
     return `Use as supporting context only; it fits ${inputSignal.kind} but is not the active target anchor.`;
   }
   if (role === "conflict") {

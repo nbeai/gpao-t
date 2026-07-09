@@ -159,6 +159,14 @@ const UI_LABELS = {
   "Recover the release-file active target and answer or draft only within local authority.":
     "현재 릴리스 파일 흐름을 복구하고, 로컬 권한 안에서만 답변하거나 초안을 만듭니다.",
   "release-file": "릴리스 파일",
+  "general-runtime": "일반 작업 흐름",
+  work_surface_general_request: "작업 표면 일반 요청",
+  general_work_request: "일반 작업 요청",
+  release_file_follow_up: "릴리스 파일 후속 요청",
+  release_file_request: "릴리스 파일 요청",
+  answer_anchor: "주 맥락",
+  supporting_context: "보조 맥락",
+  stale_supporting: "이전 흐름 보조 맥락",
   candidate: "후보",
   candidates: "후보",
   intent_recovery: "의도 복구",
@@ -1376,7 +1384,7 @@ function coreWorkSurfaceHtml(panel) {
                 ${closedActions.slice(0, 6).map((action) => `<span class="blocked-action"><span class="blocked-action-label">잠김</span>${escapeHtml(uiLabel(action))}<span class="blocked-action-detail">미리보기만</span></span>`).join("")}
               </div>
               <div class="work-surface-grid" aria-label="Context and skill route anchors">
-                ${workSignal("맥락 근거", contextCandidates[0]?.anchor || "none")}
+                ${workSignal("맥락 근거", formatContextSignal(contextCandidates[0]))}
                 ${workSignal("스킬 경로", selectedPacks[0]?.title || selectedPacks[0]?.id || "none")}
                 ${workSignal("모델 후보", surface.modelToolRoutePreview.selectedModelAdapter || "none")}
                 ${workSignal("도구 후보", `${surface.modelToolRoutePreview.toolAdapters.length}`)}
@@ -1392,6 +1400,11 @@ function coreWorkSurfaceHtml(panel) {
 
 function workSignal(label, value) {
   return `<div class="work-signal"><strong>${escapeHtml(label)}</strong>${escapeHtml(uiLabel(value || "none"))}</div>`;
+}
+
+function formatContextSignal(candidate) {
+  if (!candidate) return "none";
+  return `${uiLabel(candidate.anchor)} · ${uiLabel(candidate.admissionRole || candidate.lifecycle)}`;
 }
 
 function coreWorkSurfaceInspectorRows(panel) {

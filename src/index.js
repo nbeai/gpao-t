@@ -112,6 +112,10 @@ import {
   buildRuntimeDataContract,
 } from "./core/operations-contract.js";
 import {
+  classifyContextCandidateUse,
+  classifyRequestTarget,
+} from "./core/context-admission-policy.js";
+import {
   appendReplayRecoveryRecord,
   buildRecoveryHistorySummary,
   readReplayRecoveryHistory,
@@ -223,6 +227,8 @@ export {
   buildRuntimeDataContract,
   buildAuthorityDecision,
   buildContextRuntime,
+  classifyContextCandidateUse,
+  classifyRequestTarget,
   buildApprovalRecordWriteUxDesign,
   buildAuditWriteDesignProof,
   buildExecutionApprovalPreview,

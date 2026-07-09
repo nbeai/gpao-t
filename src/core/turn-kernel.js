@@ -13,7 +13,7 @@ export function runTurn({ input, priorFlow, root } = {}) {
   }
 
   const inputSignal = classifyInputSignal(input.text);
-  const sessionOverlay = buildSessionOverlay({ input, priorFlow });
+  const sessionOverlay = buildSessionOverlay({ input, priorFlow, inputSignal });
   const contextRuntime = buildContextRuntime({ input, sessionOverlay, inputSignal, root });
   const admissionPacket = buildAdmissionPacket({ inputSignal, sessionOverlay, contextRuntime });
   const authorityDecision = buildAuthorityDecision({ input, admissionPacket });
@@ -83,6 +83,10 @@ function buildTaskPacket({
     id: `task.${sessionOverlay.flowKey}.${inputSignal.kind}`,
     objective: inferObjective({ input, sessionOverlay }),
     activeTargetId: sessionOverlay.activeTargetId,
+    requestType: sessionOverlay.requestType,
+    targetSource: sessionOverlay.targetSource,
+    stalePriorTarget: sessionOverlay.stalePriorTarget,
+    staleReason: sessionOverlay.staleReason,
     admittedTCells: admissionPacket.admittedCells.map((item) => ({
       id: item.id,
       role: item.role,

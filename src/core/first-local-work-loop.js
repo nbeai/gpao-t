@@ -49,7 +49,12 @@ export function buildFirstLocalWorkLoop({
 
   const runtimeState = readRuntimeState({ root });
   const turnPreview = runTurn({ root, input: { text: packet.userInput.text }, priorFlow: runtimeState.activeFlow });
-  const contextMesh = resolveContextMesh({ root, request: packet.userInput.text });
+  const contextMesh = resolveContextMesh({
+    root,
+    request: packet.userInput.text,
+    inputSignal: turnPreview.inputSignal,
+    priorFlow: runtimeState.activeFlow,
+  });
   const skillRoute = routeSkillPacks({ request: packet.userInput.text });
   const skillExecutionPlan = buildSkillExecutionPlan({ skillRoute });
   const modelRoute = routeModel({
@@ -85,6 +90,9 @@ export function buildFirstLocalWorkLoop({
       activeTargetId: turnPreview.taskPacket.activeTargetId,
       objective: turnPreview.taskPacket.objective,
       inputSignal: turnPreview.inputSignal.kind,
+      requestType: turnPreview.taskPacket.requestType,
+      targetSource: turnPreview.taskPacket.targetSource,
+      stalePriorTarget: turnPreview.taskPacket.stalePriorTarget,
       selectedModelAdapter: turnPreview.taskPacket.selectedModelAdapter,
       admittedToolAdapters: turnPreview.taskPacket.admittedToolAdapters,
       authorityStatus: turnPreview.authorityDecision.status,
@@ -96,6 +104,9 @@ export function buildFirstLocalWorkLoop({
         anchor: candidate.anchor,
         score: candidate.meshScore,
         lifecycle: candidate.lifecycle,
+        admissionRole: candidate.admissionRole,
+        answerAnchorEligible: candidate.answerAnchorEligible,
+        downgradeReason: candidate.downgradeReason || null,
       })),
       boundary: "Context Mesh는 근거 후보만 제공합니다. 기억 승격이나 실행 권한이 아닙니다.",
     },
@@ -231,7 +242,8 @@ function buildLocalPreviewProposal({ packet, turnPreview }) {
 }
 
 function buildLocalDraftPreview({ packet, turnPreview, contextMesh, skillRoute }) {
-  const primaryContext = contextMesh.retrievedCandidates[0];
+  const primaryContext = contextMesh.retrievedCandidates.find((candidate) => candidate.answerAnchorEligible)
+    || contextMesh.retrievedCandidates.find((candidate) => candidate.admissionRole !== "stale_supporting");
   const primarySkill = skillRoute.selectedPacks[0];
   return {
     schema: "gpao_t.first_local_work_loop_draft_preview.v1",

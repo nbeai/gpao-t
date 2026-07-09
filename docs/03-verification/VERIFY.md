@@ -69,6 +69,18 @@ First Local Work Loop v1:
   - `docs/03-verification/evidence/first-local-work-loop-v1-mobile-cdp-metrics-2026-07-09.json`
 - Required visual invariant: desktop/mobile CDP metrics must show nonblank viewport, no horizontal overflow, no script, no form, visible local loop, visible authority boundary, and visible next safe action.
 
+Context Mesh admission target separation:
+
+- Engineering document: `docs/03-engineering/CONTEXT-MESH-ADMISSION-TARGET-SEPARATION.md`
+- Core policy: `src/core/context-admission-policy.js`
+- Required invariant: generic Work Surface requests must use `general-runtime` even when the prior runtime active target is `release-file`.
+- Required recovery invariant: explicit release-file follow-ups such as `그럼 배포파일은?` must still recover `release-file`.
+- Required downgrade invariant: stale `release-file` Memory Wiki candidates may remain visible as `stale_supporting`, but `answerAnchorEligible` must be `false` and admission role must not be `anchor`.
+- Required surface invariant: Work Surface / Control Center may show `주 맥락`, `보조 맥락`, or `이전 흐름 보조 맥락`; stale prior context must not be presented as the current main task.
+- Required blocked boundary: this pass does not open model calls, tool/CLI/MCP execution, connector activation, external send, approval write beyond the already allowed local record substrate, paid/destructive action, public release, or durable memory promotion.
+- Design track note: GPAO-T Design Reference based UI polish remains a separate product-quality track and must not be treated as completed by this admission fix.
+- Regression checks: `node --test test/memory-wiki.test.js test/turn-kernel.test.js test/first-local-work-loop.test.js`.
+
 Model Router boundary:
 
 - CLI surface: `node bin/gpao-t.js adapters model-router-boundary [text]`

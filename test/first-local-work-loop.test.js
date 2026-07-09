@@ -16,6 +16,7 @@ import {
   readAuditRecords,
   verifyCoreWorkSurface,
   verifyFirstLocalWorkLoop,
+  writeRuntimeState,
 } from "../src/index.js";
 
 const CLI = fileURLToPath(new URL("../bin/gpao-t.js", import.meta.url));
@@ -38,6 +39,8 @@ describe("First Local Work Loop v1", () => {
     assert.equal(loop.packet.sourceSurface, "/work-surface");
     assert.equal(loop.packet.userInput.language, undefined);
     assert.equal(loop.taskPacket.inputSignal, "general_request");
+    assert.equal(loop.taskPacket.activeTargetId, "general-runtime");
+    assert.equal(loop.taskPacket.requestType, "work_surface_general_request");
     assert.equal(loop.modelRoute.liveModelCall, false);
     assert.equal(loop.boundaryState.localJsonlRecordWrite, true);
     assert.equal(loop.boundaryState.modelCall, false);
@@ -54,6 +57,41 @@ describe("First Local Work Loop v1", () => {
     assert.equal(readApprovalRecords({ root }).length, 1);
     assert.equal(readAuditRecords({ root }).length, 1);
     assert.equal(verifyFirstLocalWorkLoop({ loop }).ok, true);
+  });
+
+  it("does not inherit a stale release-file active target for general Work Surface loops", () => {
+    const root = tempRoot();
+    writeRuntimeState({
+      schema: "gpao_t.runtime_state.v0_1",
+      runtimeId: "gpao-t-local",
+      version: "0.1.0",
+      installRoot: root,
+      startedAt: "2026-07-09T15:00:00.000Z",
+      updatedAt: "2026-07-09T15:00:00.000Z",
+      activeFlow: {
+        flowKey: "gpao-t-dev-flow",
+        activeTargetId: "release-file",
+        activeTargetLabel: "배포 파일",
+      },
+      counters: { turns: 0, approvalsNeeded: 0, events: 0 },
+      boundaries: {
+        externalActivation: "blocked",
+        durableMemoryPromotion: "blocked",
+        publicRelease: "blocked",
+        localPreview: "allowed",
+      },
+    }, { root });
+    const loop = buildFirstLocalWorkLoop({
+      root,
+      request: "GPAO-T 첫 로컬 작업 루프를 검증하고 다음 안전 행동을 정리해줘.",
+      now: "2026-07-09T15:05:00.000Z",
+    });
+
+    assert.equal(loop.status, "ready");
+    assert.equal(loop.taskPacket.activeTargetId, "general-runtime");
+    assert.equal(loop.taskPacket.requestType, "work_surface_general_request");
+    assert.equal(loop.taskPacket.stalePriorTarget, true);
+    assert.notEqual(loop.localDraftPreview.contextAnchor, "release-file");
   });
 
   it("blocks risky live-action language before creating local records", () => {

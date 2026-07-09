@@ -17,6 +17,24 @@ describe("GPAO-T turn kernel", () => {
     assert.match(result.userVisibleState.summary, /맥락/);
   });
 
+  it("downgrades stale release-file continuity for a general Work Surface request", () => {
+    const result = runTurn({
+      input: { text: "GPAO-T 첫 로컬 작업 루프를 검증하고 다음 안전 행동을 정리해줘." },
+      priorFlow: releaseFixture.priorFlow,
+    });
+
+    assert.equal(result.inputSignal.kind, "general_request");
+    assert.equal(result.sessionOverlay.activeTargetId, "general-runtime");
+    assert.equal(result.sessionOverlay.requestType, "work_surface_general_request");
+    assert.equal(result.sessionOverlay.stalePriorTarget, true);
+    assert.equal(result.taskPacket.activeTargetId, "general-runtime");
+    assert.equal(result.taskPacket.stalePriorTarget, true);
+    assert.equal(
+      result.admissionPacket.admittedCells.some((cell) => cell.role === "anchor" && cell.cell.anchor === "release-file"),
+      false,
+    );
+  });
+
   it("gates distribution-like action while allowing local preview", () => {
     const result = runTurn({
       input: { text: "이 배포파일을 바로 publish 해줘" },
