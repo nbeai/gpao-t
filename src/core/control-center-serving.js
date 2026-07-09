@@ -15,6 +15,10 @@ import {
   buildWorkSurfaceSubmissionDecisionGate,
   verifyWorkSurfaceSubmissionDecisionGate,
 } from "./work-surface-submission-gate.js";
+import {
+  buildWorkSurfaceSubmissionValidationGate,
+  verifyWorkSurfaceSubmissionValidationGate,
+} from "./work-surface-submission-validation-gate.js";
 import { renderControlCenterHtml } from "./control-center-renderer.js";
 import { buildControlCenterSnapshot, buildControlCenterSummary } from "./control-center.js";
 import {
@@ -83,6 +87,8 @@ export function buildControlCenterServingContract({
       { path: "/work-surface/verify", content: "core_work_surface_verification" },
       { path: "/work-surface/submission-gate", content: "work_surface_submission_decision_gate" },
       { path: "/work-surface/submission-gate/verify", content: "work_surface_submission_decision_gate_verification" },
+      { path: "/work-surface/submission-validation-gate", content: "work_surface_submission_validation_gate" },
+      { path: "/work-surface/submission-validation-gate/verify", content: "work_surface_submission_validation_gate_verification" },
       { path: "/app-shell", content: "browser_local_app_shell_html" },
       { path: "/app-shell.html", content: "browser_local_app_shell_html" },
       { path: "/app-shell/contract", content: "browser_local_app_shell_contract" },
@@ -285,6 +291,17 @@ export async function startControlCenterPreviewServer({
     if (url.pathname === "/work-surface/submission-gate/verify") {
       const gate = buildWorkSurfaceSubmissionDecisionGate({ root, now });
       respondJson(response, 200, verifyWorkSurfaceSubmissionDecisionGate({ gate }));
+      return;
+    }
+
+    if (url.pathname === "/work-surface/submission-validation-gate") {
+      respondJson(response, 200, buildWorkSurfaceSubmissionValidationGate({ root, now }));
+      return;
+    }
+
+    if (url.pathname === "/work-surface/submission-validation-gate/verify") {
+      const gate = buildWorkSurfaceSubmissionValidationGate({ root, now });
+      respondJson(response, 200, verifyWorkSurfaceSubmissionValidationGate({ gate }));
       return;
     }
 
@@ -508,6 +525,8 @@ export async function verifyControlCenterPreviewServing({
     const workSurfaceVerify = await fetchJson(`http://${host}:${preview.port}/work-surface/verify`);
     const workSurfaceSubmissionGate = await fetchJson(`http://${host}:${preview.port}/work-surface/submission-gate`);
     const workSurfaceSubmissionGateVerify = await fetchJson(`http://${host}:${preview.port}/work-surface/submission-gate/verify`);
+    const workSurfaceSubmissionValidationGate = await fetchJson(`http://${host}:${preview.port}/work-surface/submission-validation-gate`);
+    const workSurfaceSubmissionValidationGateVerify = await fetchJson(`http://${host}:${preview.port}/work-surface/submission-validation-gate/verify`);
     const appShell = await fetchText(`http://${host}:${preview.port}/app-shell`);
     const appShellState = await fetchJson(`http://${host}:${preview.port}/app-shell/state`);
     const tauriGate = await fetchJson(`http://${host}:${preview.port}/app-shell/tauri-gate`);
@@ -568,6 +587,16 @@ export async function verifyControlCenterPreviewServing({
     }
     if (workSurfaceSubmissionGateVerify.status !== 200 || workSurfaceSubmissionGateVerify.body.status !== "ready") {
       findings.push("work_surface_submission_gate_verify_not_ready");
+    }
+    if (workSurfaceSubmissionValidationGate.status !== 200
+      || workSurfaceSubmissionValidationGate.body.schema !== "gpao_t.work_surface_submission_validation_confirmation_gate.v0_1") {
+      findings.push("work_surface_submission_validation_gate_not_ready");
+    }
+    if (
+      workSurfaceSubmissionValidationGateVerify.status !== 200
+      || workSurfaceSubmissionValidationGateVerify.body.status !== "ready"
+    ) {
+      findings.push("work_surface_submission_validation_gate_verify_not_ready");
     }
     if (page.status !== 200) {
       findings.push("control_center_route_not_200");
@@ -713,6 +742,7 @@ export async function verifyControlCenterPreviewServing({
       url: preview.url,
       workSurfaceUrl: `http://${host}:${preview.port}/work-surface`,
       workSurfaceSubmissionGateUrl: `http://${host}:${preview.port}/work-surface/submission-gate`,
+      workSurfaceSubmissionValidationGateUrl: `http://${host}:${preview.port}/work-surface/submission-validation-gate`,
       appShellUrl: `http://${host}:${preview.port}/app-shell`,
       tauriGateUrl: `http://${host}:${preview.port}/app-shell/tauri-gate`,
       packagedDesktopReviewUrl: `http://${host}:${preview.port}/app-shell/packaged-desktop-review`,
@@ -732,6 +762,8 @@ export async function verifyControlCenterPreviewServing({
       workSurfaceStateStatus: workSurfaceState.status,
       workSurfaceSubmissionGateStatus: workSurfaceSubmissionGate.status,
       workSurfaceSubmissionGateVerifyStatus: workSurfaceSubmissionGateVerify.status,
+      workSurfaceSubmissionValidationGateStatus: workSurfaceSubmissionValidationGate.status,
+      workSurfaceSubmissionValidationGateVerifyStatus: workSurfaceSubmissionValidationGateVerify.status,
       pageStatus: page.status,
       appShellStatus: appShell.status,
       tauriGateStatus: tauriGate.status,

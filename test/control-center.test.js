@@ -20,6 +20,7 @@ import {
   buildCoreWorkSurface,
   buildCoreWorkSurfaceHtml,
   buildWorkSurfaceSubmissionDecisionGate,
+  buildWorkSurfaceSubmissionValidationGate,
   buildPackagedDesktopPlanningReview,
   buildTauriPackagedDesktopGate,
   buildTauriReadOnlyShellHtml,
@@ -36,6 +37,7 @@ import {
   verifyControlCenterPreviewServing,
   verifyCoreWorkSurface,
   verifyWorkSurfaceSubmissionDecisionGate,
+  verifyWorkSurfaceSubmissionValidationGate,
   verifyPackagedDesktopPlanningReview,
   verifyTauriPackagedDesktopGate,
   verifyTauriReadOnlyShellSlice,
@@ -470,6 +472,34 @@ describe("GPAO-T Local Control Center readiness", () => {
       path: "/work-surface/submission-gate/verify",
       root: ROOT,
     });
+    const validationGate = buildWorkSurfaceSubmissionValidationGate({ root: tempRoot() });
+    const validationGateCheck = verifyWorkSurfaceSubmissionValidationGate({ gate: validationGate });
+    const cliValidationGate = JSON.parse(execFileSync(process.execPath, [
+      CLI,
+      "control",
+      "work-surface-submission-validation-gate",
+    ], {
+      cwd: ROOT,
+      encoding: "utf8",
+    }));
+    const cliValidationGateCheck = JSON.parse(execFileSync(process.execPath, [
+      CLI,
+      "control",
+      "work-surface-submission-validation-gate-check",
+    ], {
+      cwd: ROOT,
+      encoding: "utf8",
+    }));
+    const gatewayValidationGate = handleGatewayRequest({
+      method: "GET",
+      path: "/work-surface/submission-validation-gate",
+      root: ROOT,
+    });
+    const gatewayValidationGateCheck = handleGatewayRequest({
+      method: "GET",
+      path: "/work-surface/submission-validation-gate/verify",
+      root: ROOT,
+    });
 
     assert.equal(surface.schema, "gpao_t.core_work_surface.v0_1");
     assert.equal(surface.status, "ready");
@@ -545,6 +575,87 @@ describe("GPAO-T Local Control Center readiness", () => {
     assert.equal(gatewaySubmissionGate.body.schema, submissionGate.schema);
     assert.equal(gatewaySubmissionGateCheck.status, 200);
     assert.equal(gatewaySubmissionGateCheck.body.status, "ready");
+    assert.equal(validationGate.schema, "gpao_t.work_surface_submission_validation_confirmation_gate.v0_1");
+    assert.equal(validationGate.gateMode, "final_pre_submit_preview_only");
+    assert.equal(validationGate.previousGate.schema, "gpao_t.work_surface_submission_decision_gate.v0_1");
+    assert.equal(validationGate.candidatePacket.submissionMode, "preview_only_not_submitted");
+    assert.equal(validationGate.validationChecks.requiredFields.status, "valid");
+    assert.equal(validationGate.validationChecks.emptyInput.status, "valid");
+    assert.equal(validationGate.validationChecks.length.max, 8000);
+    assert.equal(validationGate.validationChecks.riskSignals.detected.length >= 0, true);
+    assert.equal(validationGate.previewAttachmentChecks.contextMeshPreview.status, "attached");
+    assert.equal(validationGate.previewAttachmentChecks.skillRoutePreview.status, "attached");
+    assert.equal(validationGate.previewAttachmentChecks.authorityPreview.status, "attached");
+    assert.equal(validationGate.confirmationCard.status, "visible_before_any_future_submission");
+    assert.equal(validationGate.confirmationCard.confirmAction.opensLiveSubmission, false);
+    assert.equal(validationGate.confirmationCard.confirmAction.writesApprovalRecord, false);
+    assert.equal(
+      validationGate.confirmationCard.sections.some((section) =>
+        section.id === "skill_route_preview" && /\[object Object\]/.test(section.value)
+      ),
+      false,
+    );
+    assert.equal(validationGate.productLanguageState.userCanUnderstand.includes("아직 실행된 것은 없음"), true);
+    assert.equal(validationGate.executionBoundary.liveSubmission, "blocked");
+    assert.equal(validationGate.executionBoundary.liveModelCall, "blocked");
+    assert.equal(validationGate.executionBoundary.toolCliMcpExecution, "blocked");
+    assert.equal(validationGate.executionBoundary.connectorActivation, "blocked");
+    assert.equal(validationGate.executionBoundary.externalNetworkSend, "blocked");
+    assert.equal(validationGate.executionBoundary.approvalWrite, "blocked");
+    assert.equal(validationGate.executionBoundary.installUpdateRollback, "blocked");
+    assert.equal(validationGate.executionBoundary.durableMemoryPromotion, "blocked");
+    assert.equal(validationGate.documentationAlignment.readmeFreshnessWarning, "tracked_as_document_alignment_item");
+    assert.equal(validationGate.stopLine.liveSubmissionImplemented, false);
+    assert.equal(validationGate.stopRuleAfterThisGate.rule, "do_not_split_submission_meta_gates_further");
+    assert.equal(validationGate.stopRuleAfterThisGate.nextProductDirection.includes("work_surface_confirmation_ux"), true);
+    assert.equal(validationGateCheck.status, "ready");
+    assert.equal(cliValidationGate.schema, validationGate.schema);
+    assert.equal(cliValidationGateCheck.status, "ready");
+    assert.equal(gatewayValidationGate.status, 200);
+    assert.equal(gatewayValidationGate.body.schema, validationGate.schema);
+    assert.equal(gatewayValidationGateCheck.status, 200);
+    assert.equal(gatewayValidationGateCheck.body.status, "ready");
+  });
+
+  it("validates submission packets before confirmation without opening execution", () => {
+    const emptyGate = buildWorkSurfaceSubmissionValidationGate({ root: tempRoot(), draftRequest: "   " });
+    const longGate = buildWorkSurfaceSubmissionValidationGate({
+      root: tempRoot(),
+      draftRequest: "a".repeat(8001),
+    });
+    const riskyGate = buildWorkSurfaceSubmissionValidationGate({
+      root: tempRoot(),
+      draftRequest: "GitHub OAuth connector로 외부 전송하고 CLI 도구를 실행해줘",
+    });
+
+    assert.equal(emptyGate.status, "blocked");
+    assert.equal(emptyGate.validationChecks.requiredFields.status, "blocked");
+    assert.equal(emptyGate.validationChecks.emptyInput.status, "blocked");
+    assert.equal(emptyGate.validationChecks.length.status, "blocked_empty");
+    assert.match(emptyGate.productLanguageState.headline, /아직 제출할 수 없습니다/);
+    assert.equal(emptyGate.executionBoundary.liveSubmission, "blocked");
+
+    assert.equal(longGate.status, "review");
+    assert.equal(longGate.validationChecks.length.status, "review_too_long");
+    assert.match(longGate.validationChecks.length.productLanguage, /다시 확인/);
+    assert.equal(longGate.confirmationCard.confirmAction.opensLiveSubmission, false);
+
+    assert.equal(riskyGate.status, "blocked");
+    assert.equal(riskyGate.validationChecks.riskSignals.status, "blocked");
+    assert.equal(
+      riskyGate.validationChecks.riskSignals.detected.some((signal) => signal.id === "external_send_or_network"),
+      true,
+    );
+    assert.equal(
+      riskyGate.validationChecks.riskSignals.detected.some((signal) => signal.id === "tool_cli_mcp_execution"),
+      true,
+    );
+    assert.equal(
+      riskyGate.validationChecks.riskSignals.detected.some((signal) => signal.id === "connector_or_account_activation"),
+      true,
+    );
+    assert.equal(riskyGate.confirmationCard.confirmAction.writesApprovalRecord, false);
+    assert.equal(riskyGate.stopRuleAfterThisGate.rule, "do_not_split_submission_meta_gates_further");
   });
 
   it("keeps responsive visual hardening rules in the static Control Center reader", () => {
@@ -602,6 +713,8 @@ describe("GPAO-T Local Control Center readiness", () => {
     assert.equal(contract.routes.some((route) => route.path === "/work-surface/verify"), true);
     assert.equal(contract.routes.some((route) => route.path === "/work-surface/submission-gate"), true);
     assert.equal(contract.routes.some((route) => route.path === "/work-surface/submission-gate/verify"), true);
+    assert.equal(contract.routes.some((route) => route.path === "/work-surface/submission-validation-gate"), true);
+    assert.equal(contract.routes.some((route) => route.path === "/work-surface/submission-validation-gate/verify"), true);
     assert.equal(contract.previewLifecycle.serveCheck, "ephemeral_start_verify_stop");
     assert.equal(contract.previewLifecycle.serve, "explicit_manual_preview_until_signal");
     assert.equal(contract.previewLifecycle.persistentDaemon, false);
@@ -634,6 +747,8 @@ describe("GPAO-T Local Control Center readiness", () => {
     assert.equal(contract.allowedGetRoutes.includes("/work-surface/verify"), true);
     assert.equal(contract.allowedGetRoutes.includes("/work-surface/submission-gate"), true);
     assert.equal(contract.allowedGetRoutes.includes("/work-surface/submission-gate/verify"), true);
+    assert.equal(contract.allowedGetRoutes.includes("/work-surface/submission-validation-gate"), true);
+    assert.equal(contract.allowedGetRoutes.includes("/work-surface/submission-validation-gate/verify"), true);
     assert.equal(contract.allowedGetRoutes.includes("/control-center/ui-validate"), true);
     assert.equal(contract.blockedPostRoutes.includes("/turn"), true);
     assert.equal(contract.blockedActions.includes("connector activation"), true);
@@ -1108,6 +1223,12 @@ describe("GPAO-T Local Control Center readiness", () => {
       const workSurfaceVerify = await fetchJson(`http://127.0.0.1:${preview.port}/work-surface/verify`);
       const workSurfaceSubmissionGate = await fetchJson(`http://127.0.0.1:${preview.port}/work-surface/submission-gate`);
       const workSurfaceSubmissionGateVerify = await fetchJson(`http://127.0.0.1:${preview.port}/work-surface/submission-gate/verify`);
+      const workSurfaceSubmissionValidationGate = await fetchJson(
+        `http://127.0.0.1:${preview.port}/work-surface/submission-validation-gate`,
+      );
+      const workSurfaceSubmissionValidationGateVerify = await fetchJson(
+        `http://127.0.0.1:${preview.port}/work-surface/submission-validation-gate/verify`,
+      );
       const appShell = await fetchText(`http://127.0.0.1:${preview.port}/app-shell`);
       const appShellContract = await fetchJson(`http://127.0.0.1:${preview.port}/app-shell/contract`);
       const appShellState = await fetchJson(`http://127.0.0.1:${preview.port}/app-shell/state`);
@@ -1163,6 +1284,14 @@ describe("GPAO-T Local Control Center readiness", () => {
       assert.equal(workSurfaceSubmissionGate.body.gateMode, "design_only_no_live_submission");
       assert.equal(workSurfaceSubmissionGate.body.authorityBoundary.userCanSubmitLiveNow, false);
       assert.equal(workSurfaceSubmissionGateVerify.body.status, "ready");
+      assert.equal(
+        workSurfaceSubmissionValidationGate.body.schema,
+        "gpao_t.work_surface_submission_validation_confirmation_gate.v0_1",
+      );
+      assert.equal(workSurfaceSubmissionValidationGate.body.gateMode, "final_pre_submit_preview_only");
+      assert.equal(workSurfaceSubmissionValidationGate.body.confirmationCard.confirmAction.opensLiveSubmission, false);
+      assert.equal(workSurfaceSubmissionValidationGate.body.stopRuleAfterThisGate.rule, "do_not_split_submission_meta_gates_further");
+      assert.equal(workSurfaceSubmissionValidationGateVerify.body.status, "ready");
       assert.equal(appShell.status, 200);
       assert.match(appShell.body, /GPAO-T Browser-Local App Shell/);
       assert.doesNotMatch(appShell.body, /<script/i);

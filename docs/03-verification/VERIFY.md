@@ -45,6 +45,16 @@ Work surface submission decision gate:
 - Required blocked boundary: live model call, tool/CLI/MCP execution, connector activation, external network/send, approval write, install/update/rollback, durable memory promotion, self-growth apply, deployment, messenger, and automation remain blocked.
 - Next gate: submission validation and confirmation design. Do not implement live submission until that separate gate is explicit and verified.
 
+Work surface submission validation and confirmation gate:
+
+- Gate document: `docs/03-engineering/WORK-SURFACE-SUBMISSION-VALIDATION-CONFIRMATION-GATE.md`
+- Contract check: `node bin/gpao-t.js control work-surface-submission-validation-gate-check`
+- Loopback routes: `GET /work-surface/submission-validation-gate` and `GET /work-surface/submission-validation-gate/verify`
+- Required invariant: the gate validates required fields, empty input, input length, risk signals, Context Mesh preview attachment, Skill route preview attachment, Authority preview attachment, and confirmation card state.
+- Required confirmation boundary: the confirmation card means preview review only. It must not open live submission, call a model, execute tools/CLI/MCP, activate connectors, send externally, write approval records, install/update/rollback, promote durable memory, or apply self-growth.
+- Documentation alignment: README freshness warnings are tracked as documentation alignment, not execution permission.
+- Stop rule: do not split submission meta-gates further after this gate. Move next to work-surface confirmation UX or first local draft preview.
+
 Packaged desktop / Tauri gate:
 
 - Gate document: `docs/03-engineering/TAURI-PACKAGED-DESKTOP-GATE.md`

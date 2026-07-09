@@ -73,6 +73,8 @@ Submission becomes review-only when:
 
 The stop line is `preview_ready_stop_before_execution`.
 
-The next gate is `submission_validation_and_confirmation_gate`.
+The next gate is `submission_validation_and_confirmation_gate`, implemented as the final pre-submit meta-gate.
+
+After that gate, do not split submission meta-gates further. Move to work-surface confirmation UX or first local draft preview.
 
 Live submission is not implemented in this gate.

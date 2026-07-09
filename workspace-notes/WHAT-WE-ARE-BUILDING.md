@@ -1,29 +1,34 @@
 # What We Are Building
 
-GPAO-T is a local-first Growth Personal AI Operating System. The current product surface is moving from a read-only Control Center and app-shell into the first core work surface where a user can give GPAO-T work, inspect the interpreted state, and stop before any live execution authority opens.
+GPAO-T is a local-first Growth Personal AI Operating System. The current product surface is the first core work surface where a user can give GPAO-T work, inspect how GPAO-T understands it, and stop before any live execution authority opens.
 
 ## Current Phase
 
-- Phase: work-surface submission decision gate
-- Status: implemented and verified as design-only / preview-only
+- Phase: work-surface submission validation and confirmation gate
+- Status: implemented and verified as final pre-submit / preview-only
 - Product surface: `/work-surface`
-- New contract surface: `/work-surface/submission-gate`
-- Verification surface: `/work-surface/submission-gate/verify`
+- Decision gate: `/work-surface/submission-gate`
+- Final pre-submit gate: `/work-surface/submission-validation-gate`
+- Verification surface: `/work-surface/submission-validation-gate/verify`
 
 ## What This Slice Adds
 
-- A task input packet schema for future work submission.
-- An immediate preview state created after draft input is normalized.
-- Context Mesh, Skill route, and Authority boundary attachments as preview-only state.
-- User-visible confirmation requirements before any future submission can proceed.
-- Review/block conditions for empty, ambiguous, authority-sensitive, external, tool, memory, and growth requests.
-- A hard stop line at `preview_ready_stop_before_execution`.
+- Required field validation for the preview submission packet.
+- Empty input blocking before the turn kernel or execution path can receive it.
+- Input length review for oversized draft requests.
+- Risk signal detection for external send, tool/CLI/MCP execution, connector activation, durable memory, self-growth, and authority-sensitive operations.
+- Checks that Context Mesh preview, Skill route preview, and Authority preview are attached.
+- A confirmation card contract that tells the user nothing has executed yet.
+- Product-language blocked/review states.
+- README freshness warning tracked as documentation alignment, not execution permission.
+- Stop rule: do not split submission meta-gates further after this gate.
 
 ## Runtime Boundary
 
-This slice does not submit work. It designs and exposes the state GPAO-T must show before live submission is ever allowed.
+This slice does not submit work. It validates and explains the state GPAO-T must show before live submission is ever allowed.
 
 Blocked remains blocked:
+- live submission
 - live model call
 - tool/CLI/MCP execution
 - connector activation

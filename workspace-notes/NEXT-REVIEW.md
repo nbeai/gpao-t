@@ -2,22 +2,23 @@
 
 ## Next Safe Action
 
-Design the `submission_validation_and_confirmation_gate` that checks a preview packet before live submission can ever be opened.
+Move to user-facing work-surface confirmation UX or first local draft preview.
 
-This next step should still be contract-first and non-executing. It should validate packet shape, confirmation copy, authority boundary visibility, review/block status, and replay/audit references without calling a model, running tools, writing approval records, or activating connectors.
+Do not add another submission meta-gate. The submission decision gate and final pre-submit validation/confirmation gate are enough for this layer. The next improvement should make the preview easier for a user to read and trust.
 
 ## Review Before Continuing
 
-- Confirm `/work-surface/submission-gate` keeps the user in preview-only state.
-- Confirm the next UI behavior still makes it obvious that no work was submitted.
-- Keep Context Mesh and Skill route as preview attachments until live submission gates are separately approved.
-- Preserve authority boundary visibility, next safe action visibility, no external activation, no overflow, and local read-mostly behavior.
+- Keep `/work-surface/submission-validation-gate` preview-only.
+- Confirm the user can see what GPAO-T understood, which context is attached, which skill route is proposed, and which permissions remain locked.
+- Preserve no live submission, no model call, no tool/CLI/MCP execution, no connector activation, no external send, no approval write, no install/update/rollback, and no durable memory promotion.
+- Treat README freshness warnings as documentation alignment work, not permission to open execution.
 
 ## Recent Evidence
 
-- `npm run verify`: passed, 99 tests.
+- `node bin/gpao-t.js control work-surface-submission-validation-gate-check`: ready.
+- `node --test test/control-center.test.js`: passed, 23 tests.
+- `npm run verify`: passed, 100 tests.
 - `node bin/gpao-t.js control serve-check`: passed with loopback route evidence after sandbox escalation for local listen.
-- `node bin/gpao-t.js control work-surface-submission-gate-check`: passed.
+- `beai verify --run --scenario --meaning`: passed, product meaning pass.
+- `beai closeout --apply`: completion language allowed; status stayed review only because generic blocker wording scan found one intentional boundary signal.
 - `git diff --check`: passed.
-- `beai verify --run --scenario --meaning`: checks passed; product quality stayed in review because README is newer than implementation files.
-- `beai closeout --apply`: wrote a conservative blocked/review closeout because this slice intentionally preserves execution stop-lines.

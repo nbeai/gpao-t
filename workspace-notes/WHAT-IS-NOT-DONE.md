@@ -17,14 +17,10 @@
 
 ## Current Completion Boundary
 
-The submission decision gate is a preview/design contract only. Do not describe this as live submission support.
+The submission validation and confirmation gate is the final pre-submit preview contract only. Do not describe it as live submission support.
 
-The user can inspect what GPAO-T would require before submission, but the system must stop before execution until a separate validation, confirmation, approval, audit, and rollback path is designed and explicitly opened.
+The user can inspect what GPAO-T would require before submission and see a confirmation card contract, but the system must stop before execution until a separate live submission implementation path is explicitly approved later.
 
-## Known Conservative BEAI Closeout State
+## Stop Rule
 
-BEAI closeout reports `blocked/review` because:
-- the README is newer than some implementation files, which triggers a source-to-implementation drift warning;
-- this slice intentionally leaves execution, write, and external-action boundaries blocked.
-
-This is acceptable for the current gate. It should not be treated as permission to bypass the stop-line.
+Do not continue splitting submission meta-gates. The next product move is work-surface confirmation UX or first local draft preview.
