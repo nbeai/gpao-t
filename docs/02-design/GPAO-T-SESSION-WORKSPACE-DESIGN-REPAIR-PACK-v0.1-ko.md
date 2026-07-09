@@ -4,6 +4,69 @@ Status: implementation handoff pack
 Audience: GPAO-T development team, design implementation agent, Open Design pass  
 Purpose: turn the current design correction into a fast, concrete implementation contract
 
+## 0. Mandatory OpenClaw Dashboard Reference
+
+Before implementing this pass, open and inspect the actual OpenClaw Control Dashboard.
+
+Live local dashboard URL:
+
+```text
+http://127.0.0.1:18789
+```
+
+If the live dashboard is not running, inspect the local built source files directly.
+
+OpenClaw Control UI source root:
+
+```text
+/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui
+```
+
+Required files to inspect:
+
+```text
+/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui/index.html
+/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui/manifest.webmanifest
+/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui/sw.js
+/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui/assets/index-ChrPUbLI.css
+/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui/assets/index-BEWaPr0D.js
+/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui/assets/gateway-runtime-CMyVbEq5.js
+/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui/assets/ko-DKTSwiiP.js
+```
+
+Required route/module references:
+
+```text
+/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui/assets/activity-d-8LPZXQ.js
+/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui/assets/agents-DE2ekHkI.js
+/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui/assets/sessions-C1p-CU5G.js
+/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui/assets/workboard-BCRymLbV.js
+/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui/assets/usage-hK8PD-uU.js
+/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui/assets/skills-O_Lk1Nti.js
+/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui/assets/skill-workshop-C5LZHAxC.js
+/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui/assets/logs-BS9a0UVJ.js
+```
+
+What to take from OpenClaw:
+
+- clean dashboard density
+- left navigation discipline
+- runtime status structure
+- session/activity/log/usage organization
+- compact status indicators
+- theme token discipline
+- failure fallback UI
+- PWA/app-shell seriousness
+
+What not to copy from OpenClaw:
+
+- messenger/channel-first product model
+- developer-heavy wording
+- dense dashboard as the primary user surface
+- raw runtime concepts in the main work session
+
+The OpenClaw dashboard is the visual and operational neatness reference. GPAO-T must translate that neatness into a Codex-like session workspace.
+
 ## 1. Core Decision
 
 GPAO-T is not a messenger app.
@@ -522,4 +585,3 @@ destructive deletion
 paid actions
 public release
 ```
-

@@ -822,6 +822,9 @@ function buildSessionWorkspace({
       authorityReference: "Claude Code permission clarity",
       koreanProductLanguage: true,
       rawEnumsUserFacing: false,
+      primaryWorkArea: "wide_conversation_canvas",
+      centralCardsMinimized: true,
+      composerPriority: "large_bottom_work_input",
     },
   };
 }
@@ -2171,7 +2174,7 @@ function renderSessionWorkspaceHtml({
     .workspace-shell {
       min-height: 100vh;
       display: grid;
-      grid-template-columns: 248px minmax(520px, 1fr) 316px;
+      grid-template-columns: 224px minmax(760px, 1fr) 284px;
       gap: 0;
     }
     .session-rail {
@@ -2180,7 +2183,7 @@ function renderSessionWorkspaceHtml({
       position: sticky;
       top: 0;
       overflow: auto;
-      padding: 14px 12px;
+      padding: 14px 10px;
       border-right: 1px solid var(--gpao-border);
       background: color-mix(in srgb, var(--gpao-rail) 92%, #fff 8%);
     }
@@ -2314,15 +2317,17 @@ function renderSessionWorkspaceHtml({
     .work-session {
       min-width: 0;
       height: 100vh;
-      overflow: auto;
-      padding: 18px 22px 28px;
+      overflow: hidden;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
       background: rgba(255,255,255,0.38);
     }
     .session-head {
-      position: sticky;
-      top: 0;
+      flex: 0 0 auto;
       z-index: 1;
-      padding: 2px 0 14px;
+      padding: 16px 24px 13px;
+      border-bottom: 1px solid var(--gpao-border);
       background: linear-gradient(180deg, rgba(247,249,244,0.98), rgba(247,249,244,0.74));
       backdrop-filter: blur(14px);
     }
@@ -2336,28 +2341,43 @@ function renderSessionWorkspaceHtml({
       overflow-wrap: anywhere;
     }
     .work-thread {
-      display: grid;
-      gap: 12px;
-      margin-top: 6px;
+      flex: 1 1 auto;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      margin-top: 0;
     }
-    .message-card, .understanding-card, .route-card, .draft-card, .boundary-card, .composer-card, .inspector-card, .mobile-sheet {
+    .conversation-canvas {
+      flex: 1 1 auto;
+      min-height: 0;
+      overflow: auto;
+      padding: 18px 24px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .message-card, .assistant-work-note, .draft-inline-card, .boundary-strip, .composer-card, .inspector-card, .mobile-sheet {
       min-width: 0;
       border: 1px solid var(--gpao-border);
-      border-radius: var(--gpao-radius-lg);
       background: rgba(255,255,255,0.94);
       box-shadow: var(--gpao-shadow-soft);
     }
     .message-card {
-      padding: 14px;
+      width: min(760px, 92%);
+      padding: 13px 15px;
+      border-radius: 16px;
     }
     .message-card[data-role="user"] {
+      align-self: flex-end;
       background: var(--gpao-blue-soft);
       border-color: #c8d9ea;
     }
     .message-card[data-role="gpao-t"] {
+      align-self: flex-start;
       background: var(--gpao-surface);
     }
-    .message-card strong, .section-label {
+    .message-card strong, .section-label, .note-label {
       display: block;
       color: var(--gpao-muted);
       font-size: 12px;
@@ -2370,50 +2390,58 @@ function renderSessionWorkspaceHtml({
       word-break: keep-all;
       overflow-wrap: anywhere;
     }
-    .summary-row {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
+    .assistant-work-note {
+      width: 100%;
+      padding: 15px;
+      border-radius: var(--gpao-radius-lg);
+      background: rgba(255,255,255,0.9);
     }
-    .understanding-card, .route-card, .draft-card, .boundary-card, .composer-card {
-      padding: 14px;
+    .note-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: flex-start;
     }
-    .route-grid {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 9px;
-      margin-top: 10px;
+    .note-head h2 {
+      font-size: 15px;
     }
-    .route-pill {
+    .signal-strip, .draft-strip, .boundary-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+      margin-top: 12px;
+    }
+    .signal-pill, .draft-pill {
       min-width: 0;
-      padding: 9px;
+      flex: 1 1 160px;
+      padding: 8px 10px;
       border: 1px solid var(--gpao-border);
       border-radius: var(--gpao-radius-md);
       background: var(--gpao-surface-soft);
     }
-    .route-pill strong, .route-pill span {
+    .signal-pill strong, .signal-pill span, .draft-pill strong, .draft-pill span {
       display: block;
       word-break: keep-all;
       overflow-wrap: anywhere;
     }
-    .route-pill strong {
+    .signal-pill strong, .draft-pill strong {
       color: var(--gpao-muted);
       font-size: 11px;
     }
-    .route-pill span {
+    .signal-pill span, .draft-pill span {
       margin-top: 5px;
       font-size: 12px;
       font-weight: 900;
     }
-    .boundary-card {
+    .draft-inline-card {
+      padding: 14px 15px;
+      border-radius: var(--gpao-radius-lg);
+    }
+    .boundary-strip {
+      padding: 12px 14px;
+      border-radius: var(--gpao-radius-lg);
       background: var(--gpao-warn-soft);
       border-color: #e7c98b;
-    }
-    .boundary-list {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 7px;
-      margin-top: 10px;
     }
     .boundary-list span {
       border: 1px solid #e3c78b;
@@ -2425,12 +2453,16 @@ function renderSessionWorkspaceHtml({
       font-weight: 900;
     }
     .composer-card {
+      flex: 0 0 auto;
+      margin: 0 24px 18px;
+      padding: 14px;
+      border-radius: 16px;
       background: var(--gpao-surface);
       border-color: var(--gpao-border-strong);
     }
     .composer-box {
       margin-top: 10px;
-      min-height: 86px;
+      min-height: 150px;
       border: 1px solid #c8d9ea;
       border-radius: var(--gpao-radius-md);
       background: var(--gpao-blue-soft);
@@ -2447,7 +2479,7 @@ function renderSessionWorkspaceHtml({
       position: sticky;
       top: 0;
       overflow: auto;
-      padding: 14px 12px;
+      padding: 14px 10px;
       border-left: 1px solid var(--gpao-border);
       background: rgba(249,250,246,0.92);
     }
@@ -2506,7 +2538,7 @@ function renderSessionWorkspaceHtml({
       white-space: nowrap;
     }
     @media (max-width: 1120px) {
-      .workspace-shell { grid-template-columns: 220px minmax(0, 1fr); }
+      .workspace-shell { grid-template-columns: 212px minmax(0, 1fr); }
       .session-inspector {
         position: static;
         height: auto;
@@ -2529,21 +2561,32 @@ function renderSessionWorkspaceHtml({
         height: auto;
         min-height: 0;
         overflow: visible;
-        padding: 12px;
+        padding: 0;
       }
       .session-head {
         position: static;
-        padding-top: 4px;
+        padding: 12px;
       }
-      .summary-row, .route-grid {
-        grid-template-columns: 1fr;
+      .conversation-canvas {
+        max-height: 440px;
+        overflow: auto;
+        padding: 12px;
+      }
+      .message-card {
+        width: 100%;
       }
       .mobile-sheets {
         display: grid;
       }
-      .message-card, .understanding-card, .route-card, .draft-card, .boundary-card, .composer-card {
+      .message-card, .assistant-work-note, .draft-inline-card, .boundary-strip, .composer-card {
         border-radius: var(--gpao-radius-md);
         padding: 12px;
+      }
+      .composer-card {
+        margin: 0 12px 14px;
+      }
+      .composer-box {
+        min-height: 128px;
       }
     }
     @media (max-width: 420px) {
@@ -2561,6 +2604,9 @@ function renderSessionWorkspaceHtml({
         width: fit-content;
         max-width: 100%;
         white-space: normal;
+      }
+      .signal-pill, .draft-pill {
+        flex-basis: 100%;
       }
     }
   </style>
@@ -2611,48 +2657,50 @@ function renderSessionWorkspaceHtml({
         </div>
         <span class="state-chip">${escapeHtml(activeSession.stateLabel)}</span>
       </header>
-      <div class="work-thread">
-        ${activeSession.thread.map((message) => `
-        <article class="message-card" data-role="${escapeHtml(message.role)}">
-          <strong>${escapeHtml(message.label)} · ${escapeHtml(uiLabel(message.state))}</strong>
-          <p>${escapeHtml(message.text)}</p>
-        </article>`).join("")}
-        <div class="summary-row" data-understanding-summary="read-only">
-          ${understandingCards.slice(0, 2).map((card) => `
-          <article class="understanding-card" data-understanding-card="${escapeHtml(card.id)}" data-tone="${escapeHtml(card.tone)}">
-            <strong class="section-label">${escapeHtml(card.label)}</strong>
-            <p class="card-value">${escapeHtml(uiLabel(card.value))}</p>
+      <div class="work-thread" data-workspace-layout="conversation-first">
+        <div class="conversation-canvas" data-work-conversation-canvas="wide" aria-label="작업 대화 캔버스">
+          ${activeSession.thread.map((message) => `
+          <article class="message-card" data-role="${escapeHtml(message.role)}">
+            <strong>${escapeHtml(message.label)} · ${escapeHtml(uiLabel(message.state))}</strong>
+            <p>${escapeHtml(message.text)}</p>
           </article>`).join("")}
+          <section class="assistant-work-note" data-understanding-summary="read-only">
+            <div class="note-head">
+              <div>
+                <strong class="note-label">GPAO-T가 이해한 일</strong>
+                <h2>${escapeHtml(activeSession.sections.find((section) => section.id === "understanding")?.value || activeSession.thread[1]?.text || "현재 요청을 로컬 작업으로 이해했습니다.")}</h2>
+              </div>
+              <span class="state-chip">미리보기만</span>
+            </div>
+            <p class="card-value">${escapeHtml(activeSession.thread[1]?.text || "요청을 로컬 작업으로 이해하고, 실행 전 미리보기 상태로 유지합니다.")}</p>
+            <div class="signal-strip" aria-label="맥락 스킬 모델 후보">
+              <div class="signal-pill"><strong>맥락</strong><span>${escapeHtml(uiLabel(contextCandidates[0]?.anchor || "맥락 후보 확인 필요"))}</span></div>
+              <div class="signal-pill"><strong>스킬</strong><span>${escapeHtml(uiLabel(selectedPacks[0]?.title || "핵심 사고 정리"))}</span></div>
+              <div class="signal-pill"><strong>모델</strong><span>${escapeHtml(uiLabel(workSurface.modelToolRoutePreview.selectedModelAdapter || "로컬 추론 후보"))}</span></div>
+            </div>
+          </section>
+          <section class="draft-inline-card" data-local-draft-preview="visible-local-structure">
+            <strong class="section-label">${escapeHtml(workSurface.localDraftPreview.headline)}</strong>
+            <p class="card-value">${escapeHtml(workSurface.localDraftPreview.expectedOutputShape.value)}</p>
+            <div class="draft-strip">
+              ${draftPreviewSections.slice(0, 3).map((section) => `
+              <div class="draft-pill" data-local-draft-section="${escapeHtml(section.id)}" data-state="${escapeHtml(section.state)}">
+                <strong>${escapeHtml(section.label)}</strong>
+                <span>${escapeHtml(uiLabel(section.value))}</span>
+              </div>`).join("")}
+            </div>
+          </section>
+          <section class="boundary-strip" data-authority-boundary="closed">
+            <strong class="section-label">실행 전 확인</strong>
+            <p class="card-value">아직 실행하지 않음 · 외부 전송 없음 · 모델 호출 없음 · 도구 실행 없음</p>
+            <div class="boundary-list">
+              <span>읽기 전용</span>
+              <span>미리보기만</span>
+              <span>저장 전 확인</span>
+              <span>외부 전송 전 확인</span>
+            </div>
+          </section>
         </div>
-        <section class="route-card" aria-label="Context Mesh Skill Model preview">
-          <strong class="section-label">맥락 / 스킬 / 모델 후보</strong>
-          <div class="route-grid">
-            <div class="route-pill"><strong>맥락</strong><span>${escapeHtml(uiLabel(contextCandidates[0]?.anchor || "none"))}</span></div>
-            <div class="route-pill"><strong>스킬</strong><span>${escapeHtml(uiLabel(selectedPacks[0]?.title || "Core thinking route"))}</span></div>
-            <div class="route-pill"><strong>모델</strong><span>${escapeHtml(uiLabel(workSurface.modelToolRoutePreview.selectedModelAdapter || "local.reasoning.stub"))}</span></div>
-          </div>
-        </section>
-        <section class="draft-card" data-local-draft-preview="visible-local-structure">
-          <strong class="section-label">${escapeHtml(workSurface.localDraftPreview.headline)}</strong>
-          <p class="card-value">${escapeHtml(workSurface.localDraftPreview.expectedOutputShape.value)}</p>
-          <div class="route-grid">
-            ${draftPreviewSections.slice(0, 3).map((section) => `
-            <div class="route-pill" data-local-draft-section="${escapeHtml(section.id)}" data-state="${escapeHtml(section.state)}">
-              <strong>${escapeHtml(section.label)}</strong>
-              <span>${escapeHtml(uiLabel(section.value))}</span>
-            </div>`).join("")}
-          </div>
-        </section>
-        <section class="boundary-card" data-authority-boundary="closed">
-          <strong class="section-label">실행 전 확인</strong>
-          <p class="card-value">아직 실행하지 않음 · 외부 전송 없음 · 모델 호출 없음 · 도구 실행 없음</p>
-          <div class="boundary-list">
-            <span>읽기 전용</span>
-            <span>미리보기만</span>
-            <span>저장 전 확인</span>
-            <span>외부 전송 전 확인</span>
-          </div>
-        </section>
         <section class="composer-card" aria-label="작업 입력">
           <strong class="section-label">작업 입력</strong>
           <div class="composer-box" role="textbox" aria-readonly="true" data-composer-state="draft-not-sent" tabindex="0">

@@ -282,3 +282,19 @@ Session Workspace Repair Pass 001:
 - Visual QA result: human visual QA 4.45, visual polish 4.35, color quality 4.45, layout rhythm 4.5, Korean typography 4.45, tone-and-manner 4.45, authority clarity 4.7, overall product feel 4.45.
 - Checked invariant: no messenger/channel-primary UI, no generic dashboard primary surface, no permanent delete, no raw enum in the central user-facing work session, no forced mobile three-column layout, no script/form/external activation, no model call, no tool/CLI/MCP execution, no connector activation, no external send, and no durable memory promotion.
 - Remaining risk: inspector-depth technical references, English `Work Surface` product identifier, hash-anchor mobile sheet QA, and favicon 404 cleanup should be handled in a later polish/interactive shell pass.
+
+Conversation Workspace Repair 001:
+- Trigger: actual OpenClaw chat/dashboard inspection showed GPAO-T should keep operational rail discipline but must give the center a broad working conversation surface. The previous GPAO-T Work Session was too card-heavy and made the user workspace/composer feel too small.
+- QA report: `docs/03-verification/evidence/conversation-workspace-repair-001-qa-2026-07-09.json`
+- Human-readable report: `docs/03-verification/evidence/CONVERSATION-WORKSPACE-REPAIR-001-QA-2026-07-09.md`
+- Reference evidence:
+  - OpenClaw real chat: `docs/03-verification/evidence/openclaw-control-real-chat-reference-1440x960.png`
+  - GPAO-T before correction: `docs/03-verification/evidence/gpao-t-before-card-heavy-workspace-1440x960.png`
+- Implementation change: active Work Session now uses `data-workspace-layout="conversation-first"` and `data-work-conversation-canvas="wide"`, with a large bottom composer. The left session rail and right inspector are narrower so the center has priority.
+- Visual evidence:
+  - Desktop Work Session: `docs/03-verification/evidence/conversation-workspace-repair-001-work-session-desktop-1440x960.png`
+  - Mobile Work Session: `docs/03-verification/evidence/conversation-workspace-repair-001-work-session-mobile-390x844.png`
+  - Desktop snapshot: `docs/03-verification/evidence/conversation-workspace-repair-001-desktop-snapshot.md`
+  - Mobile snapshot: `docs/03-verification/evidence/conversation-workspace-repair-001-mobile-snapshot.md`
+- Checked invariant: nonblank desktop/mobile viewport, session rail visible on desktop, center active work session dominant, large composer visible, mobile composer visible in first viewport, authority boundary visible, no horizontal overflow observed, no script/form/external activation, and no model/tool/connector execution.
+- Remaining risk: center preview blocks are still somewhat card-like and should be softened into lighter inline work notes in the next product-grade design pass. Right inspector language also needs further product polish.

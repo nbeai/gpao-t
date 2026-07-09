@@ -14,11 +14,12 @@
 
 ## Current Completion Boundary
 
-`Session Workspace Repair Pass 001` repaired the product face and IA. It did not open real interactive session mutation, live submission, model/tool execution, connector activation, or packaged desktop behavior.
+`Conversation Workspace Repair 001` repaired the Work Session's center priority after the actual OpenClaw screen review. It did not open real interactive session mutation, live submission, model/tool execution, connector activation, or packaged desktop behavior.
 
 ## Remaining Design Risks
 
+- The center still has some card-like draft/authority preview blocks. They are subordinate now, but the next design pass should soften them into lighter inline work notes.
 - Inspector-depth references such as `local_record_replay` still read technical.
 - `Work Surface` remains visible as an English product identifier.
-- Mobile sheet QA uses no-script hash anchors; future interactive shell should provide real sheet controls.
 - Favicon 404 cleanup remains a low-risk polish item.
+- BEAI closeout history still carries older product-quality blocker language even though `npm run verify` and BEAI verify checks passed.

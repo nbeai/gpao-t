@@ -695,6 +695,9 @@ describe("GPAO-T Local Control Center readiness", () => {
     assert.equal(surface.sessionWorkspace.mobile.forceThreeColumns, false);
     assert.equal(surface.sessionWorkspace.mobile.composerReachable, true);
     assert.equal(surface.sessionWorkspace.mobile.authorityVisibleBeforeExecution, true);
+    assert.equal(surface.sessionWorkspace.visualContract.primaryWorkArea, "wide_conversation_canvas");
+    assert.equal(surface.sessionWorkspace.visualContract.centralCardsMinimized, true);
+    assert.equal(surface.sessionWorkspace.visualContract.composerPriority, "large_bottom_work_input");
     assert.equal(surface.workspaceThread.composer.submission, "blocked_in_this_slice");
     assert.equal(surface.workspaceThread.threadPreview.length, 2);
     assert.equal(surface.understandingSummary.mode, "read_only_summary_strip");
@@ -809,6 +812,8 @@ describe("GPAO-T Local Control Center readiness", () => {
     assert.match(html, /data-session-rail="left"/);
     assert.match(html, /data-active-work-session="center"/);
     assert.match(html, /data-session-inspector="right"/);
+    assert.match(html, /data-workspace-layout="conversation-first"/);
+    assert.match(html, /data-work-conversation-canvas="wide"/);
     assert.match(html, /data-mobile-session-sheet="visible"/);
     assert.match(html, /data-mobile-inspector-sheet="visible"/);
     assert.match(html, /보관된 세션/);

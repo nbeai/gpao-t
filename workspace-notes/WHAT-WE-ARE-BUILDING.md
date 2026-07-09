@@ -4,9 +4,9 @@ GPAO-T is a Growth Personal AI Operating System with T-cell theory at its kernel
 
 ## Current Phase
 
-- Phase: session workspace substrate
-- Command: Session Workspace Repair Pass 001
-- Status: implemented and verified
+- Phase: session workspace substrate correction
+- Command: Conversation Workspace Repair 001
+- Status: implemented and verified by local tests/screenshots; BEAI closeout history still reports older blocker language
 
 ## User Mode
 
@@ -15,7 +15,7 @@ GPAO-T is a Growth Personal AI Operating System with T-cell theory at its kernel
 
 ## First Workflow
 
-The user enters or resumes a work session. GPAO-T shows what it understood, which Context Mesh / Skill / Model route may be used, what remains blocked before execution, and what local draft or result preview exists.
+The user enters or resumes a work session. GPAO-T shows the current work thread, what it understood, which Context Mesh / Skill / Model route may be used, what remains blocked before execution, and a large composer for continuing the task.
 
 ## Companion Principle
 
@@ -26,11 +26,12 @@ AI does the work. User keeps authority.
 - AI/developer verifies first success path for the session workspace.
 - AI/developer verifies empty, blocked, and recoverable session states before claiming a product slice is ready.
 - AI/developer inspects desktop/mobile visual evidence before calling UI work complete.
+- AI/developer must inspect the actual OpenClaw dashboard/chat reference before using OpenClaw as a product/UI reference.
 
 ## User Authority
 
-The user approves taste, brand, operating policy, external account use, deployment, public release, paid/destructive action, credential access, connector live activation, durable memory promotion, or permanent deletion.
+- The user approves taste, brand, operating policy, external account use, deployment, public release, paid/destructive action, credential access, connector live activation, durable memory promotion, or permanent deletion.
 
 ## Latest Summary
 
-`Session Workspace Repair Pass 001` moved GPAO-T from a panel-heavy dashboard shape to the intended local AI session workspace: left session rail, center active work session, right inspector, and mobile sheet-oriented layout.
+`Conversation Workspace Repair 001` corrected the previous card-heavy Work Surface by making the central area a wide conversation canvas with a large bottom composer. OpenClaw remains a reference for disciplined local runtime/navigation, not a reason to shrink GPAO-T into a dashboard.

@@ -1,0 +1,75 @@
+{
+  "schema": "gpao_t.conversation_workspace_repair_qa.v0_1",
+  "status": "verified_with_remaining_visual_polish_risk",
+  "slice": "Conversation Workspace Repair 001",
+  "date": "2026-07-09",
+  "reason": "The active Work Session had become a card-heavy dashboard and the user-facing work/composer area was too small.",
+  "referenceEvidence": {
+    "openClawRealChat": "docs/03-verification/evidence/openclaw-control-real-chat-reference-1440x960.png",
+    "gpaoTBefore": "docs/03-verification/evidence/gpao-t-before-card-heavy-workspace-1440x960.png",
+    "designContract": "docs/02-design/GPAO-T-SESSION-WORKSPACE-DESIGN-REPAIR-PACK-v0.1-ko.md"
+  },
+  "implementation": {
+    "primaryFile": "src/core/core-work-surface.js",
+    "testFile": "test/control-center.test.js",
+    "layout": "left session rail -> wide center conversation canvas -> right inspector",
+    "centralWorkArea": "wide_conversation_canvas",
+    "composerPriority": "large_bottom_work_input",
+    "centralCardsMinimized": true
+  },
+  "screenshots": {
+    "desktopWorkSession": "docs/03-verification/evidence/conversation-workspace-repair-001-work-session-desktop-1440x960.png",
+    "mobileWorkSession": "docs/03-verification/evidence/conversation-workspace-repair-001-work-session-mobile-390x844.png",
+    "desktopSnapshot": "docs/03-verification/evidence/conversation-workspace-repair-001-desktop-snapshot.md",
+    "mobileSnapshot": "docs/03-verification/evidence/conversation-workspace-repair-001-mobile-snapshot.md"
+  },
+  "visualChecks": [
+    {
+      "id": "desktop_work_surface",
+      "viewport": "1440x960",
+      "nonblank": true,
+      "leftSessionRailVisible": true,
+      "activeWorkSessionIsCenter": true,
+      "conversationCanvasVisible": true,
+      "largeComposerVisible": true,
+      "rightInspectorVisible": true,
+      "authorityBoundaryVisible": true,
+      "noHorizontalOverflowObserved": true
+    },
+    {
+      "id": "mobile_work_surface",
+      "viewport": "390x844",
+      "nonblank": true,
+      "mobileOperatingStripVisible": true,
+      "activeWorkSessionVisible": true,
+      "largeComposerVisibleInFirstViewport": true,
+      "authorityBoundaryVisibleBeforeExecution": true,
+      "noHorizontalOverflowObserved": true
+    }
+  ],
+  "scores": {
+    "humanVisualQa": 4.35,
+    "visualPolish": 4.1,
+    "colorQuality": 4.35,
+    "layoutRhythm": 4.25,
+    "koreanTypography": 4.25,
+    "toneAndManner": 4.3,
+    "authorityClarity": 4.6,
+    "workspaceUsability": 4.45
+  },
+  "preservedBoundaries": [
+    "no live model call",
+    "no tool/CLI/MCP execution",
+    "no connector activation",
+    "no credential access",
+    "no external send",
+    "no paid/destructive action",
+    "no durable memory promotion",
+    "no permanent delete"
+  ],
+  "remainingRisks": [
+    "The center still uses some card-like review panels for draft and authority preview; a later design pass should make these feel more like inline work notes.",
+    "The right inspector still contains technical references and should be softened in the next product-grade polish pass.",
+    "Open Design MCP transport was unavailable during this correction, so this pass used the existing GPAO-T design contract and actual screenshots instead."
+  ]
+}
