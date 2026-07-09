@@ -1,7 +1,9 @@
 import { buildApprovalAuditReplay, writeApprovalAuditLocalRecords } from "./approval-audit-records.js";
 import { buildExecutionApprovalPreview } from "./execution-approval.js";
 import { resolveContextMesh } from "./memory-wiki.js";
+import { invokeModelLocally } from "./model-invocation.js";
 import { routeModel } from "./model-router.js";
+import { buildExecutionRuntimePlan } from "./execution-runtime.js";
 import { buildSkillExecutionPlan, routeSkillPacks } from "./skill-ecosystem.js";
 import { readRuntimeState } from "./storage.js";
 import { runTurn } from "./turn-kernel.js";
@@ -60,6 +62,17 @@ export function buildFirstLocalWorkLoop({
   const modelRoute = routeModel({
     inputSignal: turnPreview.inputSignal,
     authorityDecision: turnPreview.authorityDecision,
+  });
+  const modelInvocation = invokeModelLocally({
+    request: packet.userInput.text,
+    providerId: "local.deterministic",
+    now,
+  });
+  const executionRuntime = buildExecutionRuntimePlan({
+    root,
+    request: packet.userInput.text,
+    requestedSurface: "cli",
+    requestedTier: "dry_run",
   });
   const executionPreview = buildExecutionApprovalPreview({
     request: packet.userInput.text,
@@ -125,8 +138,12 @@ export function buildFirstLocalWorkLoop({
       route: modelRoute.route,
       selectedAdapterId: modelRoute.adapterSelection?.selected?.id || null,
       liveModelCall: false,
-      boundary: "모델 라우터는 후보만 고릅니다. provider 호출과 token spend는 열리지 않습니다.",
+      invocationStatus: modelInvocation.status,
+      providerLane: modelInvocation.packet.provider.lane,
+      boundary: "모델 라우터는 후보를 고르고, 현재 루프는 외부 호출 없는 local deterministic invocation만 수행합니다.",
     },
+    modelInvocation,
+    executionRuntime,
     localDraftPreview: buildLocalDraftPreview({ packet, turnPreview, contextMesh, skillRoute }),
     approvalAudit: {
       proposal: executionPreview.proposal,
@@ -159,6 +176,10 @@ export function verifyFirstLocalWorkLoop({ loop = buildFirstLocalWorkLoop({ writ
   if (loop.status === "ready" && !loop.contextMesh?.boundary?.includes("권한이 아닙니다")) findings.push("context_mesh_boundary_missing");
   if (loop.status === "ready" && !loop.skillRoute?.executionMode) findings.push("missing_skill_route_execution_mode");
   if (loop.modelRoute?.liveModelCall !== false) findings.push("live_model_call_open");
+  if (loop.modelInvocation?.status !== "completed_local_invocation") findings.push("local_model_invocation_missing");
+  if (loop.modelInvocation?.packet?.provider?.lane !== "local_private") findings.push("local_model_invocation_wrong_lane");
+  if (loop.executionRuntime?.status !== "ready") findings.push("execution_runtime_plan_missing");
+  if (loop.executionRuntime?.safetyInvariants?.runsCliCommand !== false) findings.push("execution_runtime_cli_open");
   if (loop.boundaryState?.toolCliMcpExecution !== false) findings.push("tool_cli_mcp_execution_open");
   if (loop.boundaryState?.connectorActivation !== false) findings.push("connector_activation_open");
   if (loop.boundaryState?.externalSend !== false) findings.push("external_send_open");

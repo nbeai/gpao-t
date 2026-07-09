@@ -42,6 +42,12 @@ describe("First Local Work Loop v1", () => {
     assert.equal(loop.taskPacket.activeTargetId, "general-runtime");
     assert.equal(loop.taskPacket.requestType, "work_surface_general_request");
     assert.equal(loop.modelRoute.liveModelCall, false);
+    assert.equal(loop.modelRoute.invocationStatus, "completed_local_invocation");
+    assert.equal(loop.modelInvocation.status, "completed_local_invocation");
+    assert.equal(loop.modelInvocation.output.modelOutputBoundary, "draft_only_not_action_authority");
+    assert.equal(loop.executionRuntime.schema, "gpao_t.execution_runtime_plan.v1");
+    assert.equal(loop.executionRuntime.dryRunPreview.invokesNow, false);
+    assert.equal(loop.executionRuntime.safetyInvariants.runsCliCommand, false);
     assert.equal(loop.boundaryState.localJsonlRecordWrite, true);
     assert.equal(loop.boundaryState.modelCall, false);
     assert.equal(loop.boundaryState.toolCliMcpExecution, false);

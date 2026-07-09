@@ -6,10 +6,13 @@ import {
   handleGatewayRequest,
   buildModelRouterBoundary,
   buildModelRouterPolicy,
+  buildModelProviderRegistry,
+  invokeModelLocally,
   listModelAdapters,
   listToolAdapters,
   runTurn,
   selectModelAdapter,
+  verifyModelInvocation,
   verifyModelRouterBoundary,
   verifyModelRouterPolicy,
 } from "../src/index.js";
@@ -212,5 +215,63 @@ describe("GPAO-T model and tool adapter boundary", () => {
     assert.equal(policy.modelOutputBoundary.outputIsActionAuthority, false);
     assert.equal(policy.safetyInvariants.executesToolFromOutput, false);
     assert.equal(check.status, "ready");
+  });
+
+  it("supports OAuth/session and API key lanes while proving local invocation without provider calls", () => {
+    const registry = buildModelProviderRegistry({ env: {} });
+    const localResult = invokeModelLocally({
+      request: "지금 맡긴 일을 정리하고 다음 초안을 보여줘.",
+    });
+    const verification = verifyModelInvocation({ registry, localResult });
+
+    assert.equal(registry.schema, "gpao_t.model_provider_registry.v1");
+    assert.ok(registry.providers.some((provider) => provider.id === "openclaw.oauth" && provider.lane === "oauth_session"));
+    assert.ok(registry.providers.some((provider) => provider.id === "openai.api_key" && provider.lane === "api_key"));
+    assert.ok(registry.providers.some((provider) => provider.id === "local.deterministic" && provider.defaultExecutableNow));
+    assert.equal(registry.invariants.chatgptPlanIsNotApiCredit, true);
+    assert.equal(localResult.status, "completed_local_invocation");
+    assert.equal(localResult.packet.provider.id, "local.deterministic");
+    assert.equal(localResult.packet.safetyInvariants.sendsNetworkRequest, false);
+    assert.equal(localResult.packet.safetyInvariants.spendsTokens, false);
+    assert.equal(localResult.output.modelOutputBoundary, "draft_only_not_action_authority");
+    assert.equal(verification.status, "ready");
+    assert.deepEqual(verification.findings, []);
+  });
+
+  it("exposes model invocation lanes through CLI and Gateway", () => {
+    const providersOutput = execFileSync(process.execPath, [CLI, "adapters", "model-providers"], {
+      cwd: ROOT,
+      encoding: "utf8",
+    });
+    const localOutput = execFileSync(process.execPath, [
+      CLI,
+      "adapters",
+      "model-invocation-local",
+      "로컬 초안으로 정리해줘",
+    ], {
+      cwd: ROOT,
+      encoding: "utf8",
+    });
+    const checkOutput = execFileSync(process.execPath, [CLI, "adapters", "model-invocation-check"], {
+      cwd: ROOT,
+      encoding: "utf8",
+    });
+    const providers = JSON.parse(providersOutput);
+    const local = JSON.parse(localOutput);
+    const check = JSON.parse(checkOutput);
+    const gatewayProviders = handleGatewayRequest({ method: "GET", path: "/adapters/model-providers" });
+    const gatewayLocal = handleGatewayRequest({ method: "GET", path: "/adapters/model-invocation/local" });
+    const gatewayCheck = handleGatewayRequest({ method: "GET", path: "/adapters/model-invocation/verify" });
+
+    assert.equal(providers.schema, "gpao_t.model_provider_registry.v1");
+    assert.equal(local.status, "completed_local_invocation");
+    assert.equal(check.status, "ready");
+    assert.equal(gatewayProviders.status, 200);
+    assert.equal(gatewayProviders.body.providers.some((provider) => provider.lane === "oauth_session"), true);
+    assert.equal(gatewayProviders.body.providers.some((provider) => provider.lane === "api_key"), true);
+    assert.equal(gatewayLocal.status, 200);
+    assert.equal(gatewayLocal.body.output.modelOutputBoundary, "draft_only_not_action_authority");
+    assert.equal(gatewayCheck.status, 200);
+    assert.equal(gatewayCheck.body.status, "ready");
   });
 });

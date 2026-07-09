@@ -80,6 +80,15 @@ import {
   buildStage4ProductionHardeningHtml,
   verifyStage4ProductionHardening,
 } from "./stage-4-production-hardening.js";
+import {
+  buildModelProviderRegistry,
+  invokeModelLocally,
+  verifyModelInvocation,
+} from "./model-invocation.js";
+import {
+  buildExecutionRuntimePlan,
+  verifyExecutionRuntimePlan,
+} from "./execution-runtime.js";
 
 const DEFAULT_HOST = "127.0.0.1";
 const DEFAULT_PORT = 0;
@@ -154,6 +163,11 @@ export function buildControlCenterServingContract({
       { path: "/control-center/ui-contract", content: "local_json_control_center_ui_contract" },
       { path: "/control-center/ui-snapshot", content: "local_json_control_center_ui_snapshot" },
       { path: "/control-center/ui-validate", content: "local_json_control_center_ui_validation" },
+      { path: "/adapters/model-providers", content: "model_provider_registry" },
+      { path: "/adapters/model-invocation/local", content: "local_model_invocation_proof" },
+      { path: "/adapters/model-invocation/verify", content: "model_invocation_verification" },
+      { path: "/connectors/execution-runtime", content: "execution_runtime_plan" },
+      { path: "/connectors/execution-runtime/verify", content: "execution_runtime_verification" },
     ],
     defaultRoute: route,
     renderBeforeServe: true,
@@ -321,6 +335,34 @@ export async function startControlCenterPreviewServer({
         designContract: buildLocalControlCenterDesignContract(),
       });
       respondJson(response, 200, validateControlCenterUiSnapshot({ uiSnapshot }));
+      return;
+    }
+
+    if (url.pathname === "/adapters/model-providers") {
+      respondJson(response, 200, buildModelProviderRegistry());
+      return;
+    }
+
+    if (url.pathname === "/adapters/model-invocation/local") {
+      respondJson(response, 200, invokeModelLocally({
+        request: url.searchParams.get("request") || undefined,
+      }));
+      return;
+    }
+
+    if (url.pathname === "/adapters/model-invocation/verify") {
+      respondJson(response, 200, verifyModelInvocation());
+      return;
+    }
+
+    if (url.pathname === "/connectors/execution-runtime") {
+      respondJson(response, 200, buildExecutionRuntimePlan({ root }));
+      return;
+    }
+
+    if (url.pathname === "/connectors/execution-runtime/verify") {
+      const plan = buildExecutionRuntimePlan({ root });
+      respondJson(response, 200, verifyExecutionRuntimePlan({ plan }));
       return;
     }
 
@@ -687,6 +729,11 @@ export async function verifyControlCenterPreviewServing({
     const stage4ProductionHardening = await fetchText(`http://${host}:${preview.port}/app-shell/production-hardening`);
     const stage4ProductionHardeningState = await fetchJson(`http://${host}:${preview.port}/app-shell/production-hardening/state`);
     const stage4ProductionHardeningVerify = await fetchJson(`http://${host}:${preview.port}/app-shell/production-hardening/verify`);
+    const modelProviders = await fetchJson(`http://${host}:${preview.port}/adapters/model-providers`);
+    const modelInvocationLocal = await fetchJson(`http://${host}:${preview.port}/adapters/model-invocation/local`);
+    const modelInvocationVerify = await fetchJson(`http://${host}:${preview.port}/adapters/model-invocation/verify`);
+    const executionRuntime = await fetchJson(`http://${host}:${preview.port}/connectors/execution-runtime`);
+    const executionRuntimeVerify = await fetchJson(`http://${host}:${preview.port}/connectors/execution-runtime/verify`);
     const blockedPost = await fetchJson(`http://${host}:${preview.port}/app-shell`, { method: "POST" });
     const findings = [];
 
@@ -915,6 +962,27 @@ export async function verifyControlCenterPreviewServing({
     if (stage4ProductionHardeningVerify.status !== 200 || stage4ProductionHardeningVerify.body.status !== "ready") {
       findings.push("stage_4_production_hardening_verify_not_ready");
     }
+    if (modelProviders.status !== 200 || modelProviders.body.schema !== "gpao_t.model_provider_registry.v1") {
+      findings.push("model_provider_registry_not_ready");
+    }
+    if (!modelProviders.body.providers?.some((provider) => provider.lane === "oauth_session")) {
+      findings.push("model_provider_oauth_lane_missing");
+    }
+    if (!modelProviders.body.providers?.some((provider) => provider.lane === "api_key")) {
+      findings.push("model_provider_api_key_lane_missing");
+    }
+    if (modelInvocationLocal.status !== 200 || modelInvocationLocal.body.status !== "completed_local_invocation") {
+      findings.push("model_invocation_local_not_ready");
+    }
+    if (modelInvocationVerify.status !== 200 || modelInvocationVerify.body.status !== "ready") {
+      findings.push("model_invocation_verify_not_ready");
+    }
+    if (executionRuntime.status !== 200 || executionRuntime.body.schema !== "gpao_t.execution_runtime_plan.v1") {
+      findings.push("execution_runtime_not_ready");
+    }
+    if (executionRuntimeVerify.status !== 200 || executionRuntimeVerify.body.status !== "ready") {
+      findings.push("execution_runtime_verify_not_ready");
+    }
     if (blockedPost.status !== 405 || blockedPost.body.status !== "blocked") {
       findings.push("app_shell_post_not_blocked");
     }
@@ -941,6 +1009,9 @@ export async function verifyControlCenterPreviewServing({
       tauriShellUrl: `http://${host}:${preview.port}/app-shell/tauri-shell`,
       tauriShellSliceUrl: `http://${host}:${preview.port}/app-shell/tauri-shell/slice`,
       stage4ProductionHardeningUrl: `http://${host}:${preview.port}/app-shell/production-hardening`,
+      modelProvidersUrl: `http://${host}:${preview.port}/adapters/model-providers`,
+      modelInvocationLocalUrl: `http://${host}:${preview.port}/adapters/model-invocation/local`,
+      executionRuntimeUrl: `http://${host}:${preview.port}/connectors/execution-runtime`,
       healthStatus: health.status,
       workSurfaceStatus: workSurface.status,
       workSurfaceStateStatus: workSurfaceState.status,
@@ -970,6 +1041,11 @@ export async function verifyControlCenterPreviewServing({
       stage4ProductionHardeningStatus: stage4ProductionHardening.status,
       stage4ProductionHardeningStateStatus: stage4ProductionHardeningState.status,
       stage4ProductionHardeningVerifyStatus: stage4ProductionHardeningVerify.status,
+      modelProvidersStatus: modelProviders.status,
+      modelInvocationLocalStatus: modelInvocationLocal.status,
+      modelInvocationVerifyStatus: modelInvocationVerify.status,
+      executionRuntimeStatus: executionRuntime.status,
+      executionRuntimeVerifyStatus: executionRuntimeVerify.status,
       blockedPostStatus: blockedPost.status,
       contentLength: page.body.length,
       requiredVisibleText: preview.contract.screenshotVerification.requiredVisibleText,

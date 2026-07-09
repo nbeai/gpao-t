@@ -114,6 +114,16 @@ import {
   verifyModelRouterPolicy,
 } from "./model-router.js";
 import {
+  buildModelInvocationPacket,
+  buildModelProviderRegistry,
+  invokeModelLocally,
+  verifyModelInvocation,
+} from "./model-invocation.js";
+import {
+  buildExecutionRuntimePlan,
+  verifyExecutionRuntimePlan,
+} from "./execution-runtime.js";
+import {
   applySessionWorkspaceAction,
   readSessionWorkspaceState,
   verifySessionWorkspaceBehavior,
@@ -675,6 +685,23 @@ export function handleGatewayRequest({ method = "GET", path = "/", body = {}, ro
     };
   }
 
+  if (normalizedMethod === "GET" && path === "/connectors/execution-runtime") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: buildExecutionRuntimePlan({ root }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/connectors/execution-runtime/verify") {
+    const plan = buildExecutionRuntimePlan({ root });
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: verifyExecutionRuntimePlan({ plan }),
+    };
+  }
+
   if (normalizedMethod === "GET" && path === "/approval/execution-proposal") {
     return {
       schema: "gpao_t.gateway_response.v0_1",
@@ -829,6 +856,44 @@ export function handleGatewayRequest({ method = "GET", path = "/", body = {}, ro
       schema: "gpao_t.gateway_response.v0_1",
       status: 200,
       body: verifyModelRouterPolicy(),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/adapters/model-providers") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: buildModelProviderRegistry(),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/adapters/model-invocation") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: buildModelInvocationPacket({
+        request: body.request,
+        providerId: body.providerId,
+      }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/adapters/model-invocation/local") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: invokeModelLocally({
+        request: body.request,
+        providerId: body.providerId || "local.deterministic",
+      }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/adapters/model-invocation/verify") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: verifyModelInvocation(),
     };
   }
 

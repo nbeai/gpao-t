@@ -113,6 +113,16 @@ import {
   verifyModelRouterPolicy,
 } from "./core/model-router.js";
 import {
+  buildModelInvocationPacket,
+  buildModelProviderRegistry,
+  invokeModelLocally,
+  verifyModelInvocation,
+} from "./core/model-invocation.js";
+import {
+  buildExecutionRuntimePlan,
+  verifyExecutionRuntimePlan,
+} from "./core/execution-runtime.js";
+import {
   applySessionWorkspaceAction,
   readSessionWorkspaceState,
   verifySessionWorkspaceBehavior,
@@ -238,6 +248,9 @@ export {
   buildLocalControlCenterDesignContract,
   buildModelRouterBoundary,
   buildModelRouterPolicy,
+  buildModelInvocationPacket,
+  buildModelProviderRegistry,
+  buildExecutionRuntimePlan,
   buildOperationsContractSummary,
   buildOperationsReliabilityContract,
   buildPackagedDesktopPlanningReview,
@@ -307,10 +320,13 @@ export {
   reviewConnectorPermission,
   routeSkillPacks,
   routeModel,
+  invokeModelLocally,
   verifySessionWorkspaceBehavior,
   verifyStage4ProductionHardening,
   verifyModelRouterBoundary,
   verifyModelRouterPolicy,
+  verifyModelInvocation,
+  verifyExecutionRuntimePlan,
   verifyConnectorToolGovernance,
   verifyGpaoTDesignReferenceGate,
   verifyApprovalRecordWriteUxDesign,

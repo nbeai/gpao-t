@@ -302,7 +302,7 @@ export function buildStage4ProductionHardeningHtml({
           <strong>${escapeHtml(check.label)}</strong>
           <span class="chip">${statusLabel(check.status)}</span>
         </div>
-        <p>${escapeHtml(check.evidence)}</p>
+        <p class="technical-evidence">${escapeHtml(check.evidence)}</p>
       </article>`)
     .join("");
   const scaffold = state.tauriScaffold
@@ -318,7 +318,7 @@ export function buildStage4ProductionHardeningHtml({
         <p>${escapeHtml(failure.recovery)}</p>
       </article>`)
     .join("");
-  const latestRecord = state.localRecords.latest.approvalRecord?.id || "아직 로컬 기록 없음";
+  const latestRecord = state.localRecords.latest.approvalRecord?.id ? "로컬 승인/감사 기록 있음" : "아직 로컬 기록 없음";
 
   return `<!doctype html>
 <html lang="ko">
@@ -329,12 +329,12 @@ export function buildStage4ProductionHardeningHtml({
   <style>
     :root {
       color-scheme: light;
-      --bg: #f4f6f2;
+      --bg: #f7f8f6;
       --surface: #ffffff;
-      --surface-soft: #f9faf6;
-      --surface-blue: #edf5fb;
-      --surface-green: #eaf5ef;
-      --surface-amber: #fff5dd;
+      --surface-soft: #f3f5f2;
+      --surface-blue: #eef4f8;
+      --surface-green: #edf6f2;
+      --surface-amber: #fbf4e6;
       --text: #17211b;
       --muted: #5b665d;
       --line: #dbe5dc;
@@ -342,7 +342,7 @@ export function buildStage4ProductionHardeningHtml({
       --blue: #2c6f9f;
       --amber: #996d1f;
       --locked: #8f4a42;
-      --shadow: 0 1px 2px rgba(23,33,27,0.04), 0 18px 42px rgba(23,33,27,0.08);
+      --shadow: 0 1px 2px rgba(23,33,27,0.04);
       font-family: Pretendard, "Apple SD Gothic Neo", "SF Pro Display", "SF Pro Text", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
     }
     * { box-sizing: border-box; }
@@ -364,8 +364,8 @@ export function buildStage4ProductionHardeningHtml({
       align-items: center;
       padding: 14px 22px;
       border-bottom: 1px solid var(--line);
-      background: rgba(255,255,255,0.94);
-      backdrop-filter: blur(12px);
+      background: rgba(255,255,255,0.96);
+      backdrop-filter: blur(10px);
     }
     .brand { min-width: 0; }
     .brand strong { display: block; font-size: 18px; line-height: 1.2; }
@@ -373,7 +373,7 @@ export function buildStage4ProductionHardeningHtml({
     .decision-strip {
       max-width: 480px;
       border: 1px solid #cde0d5;
-      border-radius: 14px;
+      border-radius: 8px;
       background: var(--surface-green);
       color: #245f4e;
       padding: 9px 12px;
@@ -381,59 +381,74 @@ export function buildStage4ProductionHardeningHtml({
       font-weight: 800;
     }
     main {
-      width: min(1240px, calc(100vw - 32px));
+      width: min(1180px, calc(100vw - 32px));
       margin: 0 auto;
-      padding: 24px 0 42px;
+      padding: 20px 0 38px;
     }
-    .hero {
+    .overview {
       display: grid;
-      grid-template-columns: minmax(0, 1.15fr) minmax(300px, .85fr);
-      gap: 16px;
+      grid-template-columns: minmax(0, 1fr) 320px;
+      gap: 14px;
       align-items: stretch;
-      margin-bottom: 16px;
+      margin-bottom: 14px;
     }
     .panel, .hero-card {
       border: 1px solid var(--line);
-      border-radius: 18px;
+      border-radius: 10px;
       background: var(--surface);
       box-shadow: var(--shadow);
     }
-    .hero-card { padding: 24px; }
+    .hero-card { padding: 18px; }
     .eyebrow { margin: 0 0 8px; color: var(--accent); font-size: 13px; font-weight: 900; }
     h1, h2, h3, p { margin: 0; }
-    h1 { max-width: 760px; font-size: clamp(30px, 4vw, 52px); line-height: 1.05; letter-spacing: 0; }
+    h1 { max-width: 760px; font-size: clamp(24px, 3vw, 34px); line-height: 1.18; letter-spacing: 0; }
     h2 { font-size: 17px; line-height: 1.25; letter-spacing: 0; }
     h3 { font-size: 14px; line-height: 1.3; }
     .hero-card p { margin-top: 12px; max-width: 720px; font-size: 15px; }
     .summary-card {
       display: grid;
       gap: 12px;
-      padding: 18px;
-      background: linear-gradient(180deg, #ffffff, #f9fbf6);
+      padding: 14px;
+      background: var(--surface);
     }
     .score {
       display: grid;
       grid-template-columns: repeat(4, minmax(0,1fr));
-      gap: 8px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
     }
     .score div {
-      border: 1px solid var(--line);
-      border-radius: 14px;
+      border-right: 1px solid var(--line);
       background: var(--surface-soft);
-      padding: 12px;
+      padding: 10px;
       min-width: 0;
     }
+    .score div:last-child { border-right: 0; }
     .score strong { display: block; font-size: 24px; line-height: 1; }
     .score span { display: block; margin-top: 6px; color: var(--muted); font-size: 12px; }
     .grid {
       display: grid;
-      grid-template-columns: minmax(0, 1.25fr) minmax(320px, .75fr);
-      gap: 16px;
+      grid-template-columns: minmax(0, 1fr) 320px;
+      gap: 14px;
       align-items: start;
     }
-    .panel { padding: 18px; }
-    .panel + .panel { margin-top: 16px; }
+    .panel { padding: 14px; }
+    .panel + .panel { margin-top: 14px; }
     .section-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+    summary {
+      cursor: default;
+      list-style: none;
+      font-weight: 900;
+    }
+    summary::-webkit-details-marker { display: none; }
+    details.panel > summary {
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -455,16 +470,21 @@ export function buildStage4ProductionHardeningHtml({
     }
     .checks {
       display: grid;
-      grid-template-columns: repeat(2, minmax(0,1fr));
-      gap: 10px;
+      grid-template-columns: 1fr;
+      gap: 0;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
     }
     .check-card, .review-row {
       min-width: 0;
-      border: 1px solid var(--line);
-      border-radius: 14px;
-      background: var(--surface-soft);
-      padding: 12px;
+      border: 0;
+      border-bottom: 1px solid var(--line);
+      border-radius: 0;
+      background: var(--surface);
+      padding: 10px 12px;
     }
+    .check-card:last-child, .review-row:last-child { border-bottom: 0; }
     .check-card[data-status="review"] { background: var(--surface-amber); border-color: #eddcae; }
     .check-card[data-status="blocked"] { background: #fff1ef; border-color: #edc3bd; }
     .check-head {
@@ -483,6 +503,9 @@ export function buildStage4ProductionHardeningHtml({
       box-shadow: 0 0 0 3px rgba(37,107,90,0.12);
     }
     .check-card p, .review-row p { margin-top: 8px; font-size: 13px; }
+    .technical-evidence {
+      display: none;
+    }
     .rail-list, .blocked-list {
       display: grid;
       gap: 8px;
@@ -504,20 +527,21 @@ export function buildStage4ProductionHardeningHtml({
     .rail-list strong { white-space: nowrap; color: var(--accent); }
     .blocked-list { grid-template-columns: 1fr; }
     .blocked-list li {
-      border: 1px solid #e9d3cd;
-      border-radius: 12px;
-      background: #fff7f4;
+      border-bottom: 1px solid #ead8d2;
+      border-radius: 0;
+      background: transparent;
       color: #7d443c;
-      padding: 8px 10px;
+      padding: 7px 0;
       font-size: 13px;
       font-weight: 750;
       overflow-wrap: anywhere;
     }
+    .blocked-list li:last-child { border-bottom: 0; }
     .review-stack { display: grid; gap: 8px; }
     .review-row[data-active="false"] { opacity: .72; }
     .evidence {
       border: 1px solid #c8dcec;
-      border-radius: 14px;
+      border-radius: 8px;
       background: var(--surface-blue);
       padding: 12px;
     }
@@ -531,10 +555,13 @@ export function buildStage4ProductionHardeningHtml({
       .topbar { grid-template-columns: 1fr; padding: 12px 14px; }
       .decision-strip { max-width: none; }
       main { width: min(100vw - 20px, 460px); padding-top: 14px; }
-      .hero, .grid { grid-template-columns: 1fr; }
-      .hero-card, .panel, .summary-card { padding: 14px; border-radius: 16px; }
-      h1 { font-size: 28px; }
-      .score, .checks { grid-template-columns: 1fr; }
+      .overview, .grid { grid-template-columns: 1fr; }
+      .hero-card, .panel, .summary-card { padding: 14px; border-radius: 10px; }
+      h1 { font-size: 26px; }
+      .score { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .score div:nth-child(2) { border-right: 0; }
+      .score div:nth-child(-n+2) { border-bottom: 1px solid var(--line); }
+      .checks { grid-template-columns: 1fr; }
       .section-head { align-items: flex-start; flex-direction: column; }
     }
   </style>
@@ -548,10 +575,10 @@ export function buildStage4ProductionHardeningHtml({
     <div class="decision-strip" data-next-safe-action="visible">다음 안전 행동: 빌드/설치 없이 준비 상태만 확인</div>
   </header>
   <main>
-    <section class="hero">
+    <section class="overview">
       <div class="hero-card">
         <p class="eyebrow">4단계 · 제품화 준비</p>
-        <h1>로컬 앱으로 가기 전, 무엇이 준비됐고 무엇이 아직 잠겼는지 한 화면에서 봅니다.</h1>
+        <h1>로컬 앱 전환 준비 상태</h1>
         <p>브라우저 로컬 증거, Tauri 소스 스캐폴드, 승인/감사 기록, replay/rollback 기준을 묶었습니다. 이 화면은 실행기가 아니라 제품화 전 점검 표면입니다.</p>
       </div>
       <aside class="panel summary-card" aria-label="준비 요약">
@@ -587,13 +614,10 @@ export function buildStage4ProductionHardeningHtml({
           </div>
           <p>${escapeHtml(state.nextSafeAction)}</p>
         </section>
-        <section class="panel" aria-label="복구 상태">
-          <div class="section-head">
-            <h2>실패와 복구</h2>
-            <span class="chip">조용한 복구</span>
-          </div>
+        <details class="panel" aria-label="복구 상태">
+          <summary><h2>실패와 복구</h2><span class="chip">조용한 복구</span></summary>
           <div class="review-stack">${failures}</div>
-        </section>
+        </details>
       </div>
       <aside>
         <section class="panel" aria-label="Tauri 파일">
@@ -603,18 +627,12 @@ export function buildStage4ProductionHardeningHtml({
           </div>
           <ul class="rail-list">${scaffold}</ul>
         </section>
-        <section class="panel" aria-label="권한 경계" data-authority-boundary="visible">
-          <div class="section-head">
-            <h2>권한 경계</h2>
-            <span class="chip">계속 잠김</span>
-          </div>
+        <details class="panel" aria-label="권한 경계" data-authority-boundary="visible" open>
+          <summary><h2>권한 경계</h2><span class="chip">계속 잠김</span></summary>
           <ul class="blocked-list">${blocked}</ul>
-        </section>
-        <section class="panel" aria-label="화면 증거">
-          <div class="section-head">
-            <h2>화면 증거</h2>
-            <span class="chip">QA 기준선</span>
-          </div>
+        </details>
+        <details class="panel" aria-label="화면 증거">
+          <summary><h2>화면 증거</h2><span class="chip">QA 기준선</span></summary>
           <div class="evidence">
             <strong>Desktop</strong>
             <span>${escapeHtml(state.visualEvidence.desktop)}</span>
@@ -623,7 +641,7 @@ export function buildStage4ProductionHardeningHtml({
             <strong>Mobile</strong>
             <span>${escapeHtml(state.visualEvidence.mobile)}</span>
           </div>
-        </section>
+        </details>
       </aside>
     </section>
   </main>

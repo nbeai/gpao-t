@@ -2158,10 +2158,10 @@ function renderSessionWorkspaceHtml({
   <style>
     :root {
       color-scheme: light;
-      --gpao-bg: #f6f7f4;
-      --gpao-rail: #eef1ec;
+      --gpao-bg: #f7f8f6;
+      --gpao-rail: #f0f2ef;
       --gpao-surface: #ffffff;
-      --gpao-surface-soft: #f9faf6;
+      --gpao-surface-soft: #f5f6f3;
       --gpao-border: #dfe6dc;
       --gpao-border-strong: #c7d2c4;
       --gpao-text: #17211b;
@@ -2172,22 +2172,22 @@ function renderSessionWorkspaceHtml({
       --gpao-warn: #a86f1d;
       --gpao-danger: #a9473f;
       --gpao-purple: #6e5aa8;
-      --gpao-blue-soft: #eaf2fb;
-      --gpao-green-soft: #e8f4ee;
-      --gpao-warn-soft: #fff4dd;
-      --gpao-red-soft: #fbe9e7;
-      --gpao-violet-soft: #f0edfa;
+      --gpao-blue-soft: #eef4f8;
+      --gpao-green-soft: #edf6f2;
+      --gpao-warn-soft: #fbf4e6;
+      --gpao-red-soft: #fbefed;
+      --gpao-violet-soft: #f3f1f8;
       --gpao-radius-sm: 6px;
-      --gpao-radius-md: 10px;
-      --gpao-radius-lg: 14px;
-      --gpao-shadow-soft: 0 1px 2px rgba(23, 33, 27, 0.06);
-      --gpao-shadow-panel: 0 8px 24px rgba(23, 33, 27, 0.08);
+      --gpao-radius-md: 8px;
+      --gpao-radius-lg: 10px;
+      --gpao-shadow-soft: 0 1px 2px rgba(23, 33, 27, 0.04);
+      --gpao-shadow-panel: 0 1px 2px rgba(23, 33, 27, 0.04);
     }
     * { box-sizing: border-box; }
     html, body { margin: 0; max-width: 100%; overflow-x: hidden; }
     body {
       min-height: 100vh;
-      background: linear-gradient(135deg, #f9faf7 0%, var(--gpao-bg) 45%, #eef3ec 100%);
+      background: var(--gpao-bg);
       color: var(--gpao-text);
       font-family: Pretendard, "Apple SD Gothic Neo", "SF Pro Text", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
       font-size: 14px;
@@ -2212,7 +2212,7 @@ function renderSessionWorkspaceHtml({
       overflow: auto;
       padding: 14px 10px;
       border-right: 1px solid var(--gpao-border);
-      background: color-mix(in srgb, var(--gpao-rail) 92%, #fff 8%);
+      background: var(--gpao-rail);
     }
     .rail-head, .inspector-head, .session-head, .mobile-strip {
       display: flex;
@@ -2251,7 +2251,7 @@ function renderSessionWorkspaceHtml({
     .search-box {
       border: 1px solid var(--gpao-border);
       border-radius: var(--gpao-radius-md);
-      background: rgba(255,255,255,0.76);
+      background: rgba(255,255,255,0.82);
       padding: 9px 10px;
       color: var(--gpao-muted);
       font-size: 12px;
@@ -2277,13 +2277,14 @@ function renderSessionWorkspaceHtml({
       grid-template-columns: 1fr auto;
       gap: 8px;
       padding: 10px;
-      border: 1px solid var(--gpao-border);
-      border-radius: var(--gpao-radius-md);
-      background: rgba(255,255,255,0.72);
+      border: 0;
+      border-bottom: 1px solid var(--gpao-border);
+      border-radius: 0;
+      background: transparent;
     }
     .session-item[data-state="active"] {
       border-color: #9fcdbd;
-      background: var(--gpao-green-soft);
+      background: rgba(237,246,242,0.85);
       box-shadow: inset 3px 0 0 var(--gpao-accent);
     }
     .session-item[data-state="waiting_approval"],
@@ -2348,15 +2349,15 @@ function renderSessionWorkspaceHtml({
       padding: 0;
       display: flex;
       flex-direction: column;
-      background: rgba(255,255,255,0.38);
+      background: #ffffff;
     }
     .session-head {
       flex: 0 0 auto;
       z-index: 1;
       padding: 16px 24px 13px;
       border-bottom: 1px solid var(--gpao-border);
-      background: linear-gradient(180deg, rgba(247,249,244,0.98), rgba(247,249,244,0.74));
-      backdrop-filter: blur(14px);
+      background: rgba(255,255,255,0.96);
+      backdrop-filter: blur(10px);
     }
     .session-title-block {
       min-width: 0;
@@ -2384,7 +2385,7 @@ function renderSessionWorkspaceHtml({
       flex-direction: column;
       gap: 14px;
     }
-    .message-card, .assistant-work-note, .draft-inline-card, .boundary-strip, .composer-card, .inspector-card, .mobile-sheet {
+    .message-card, .assistant-work-note, .draft-inline-card, .boundary-strip, .composer-card, .inspector-card, .mobile-sheet, .operation-details {
       min-width: 0;
       border: 1px solid var(--gpao-border);
       background: rgba(255,255,255,0.94);
@@ -2393,7 +2394,7 @@ function renderSessionWorkspaceHtml({
     .message-card {
       width: min(760px, 92%);
       padding: 13px 15px;
-      border-radius: 16px;
+      border-radius: 12px;
     }
     .message-card[data-role="user"] {
       align-self: flex-end;
@@ -2419,9 +2420,11 @@ function renderSessionWorkspaceHtml({
     }
     .assistant-work-note {
       width: 100%;
-      padding: 15px;
-      border-radius: var(--gpao-radius-lg);
-      background: linear-gradient(180deg, rgba(255,255,255,0.94), rgba(249,250,246,0.9));
+      padding: 15px 0 4px;
+      border: 0;
+      border-top: 1px solid var(--gpao-border);
+      border-radius: 0;
+      background: transparent;
       box-shadow: none;
     }
     .note-head {
@@ -2442,10 +2445,11 @@ function renderSessionWorkspaceHtml({
     .signal-pill, .draft-pill {
       min-width: 0;
       flex: 1 1 160px;
-      padding: 8px 10px;
-      border: 1px solid var(--gpao-border);
-      border-radius: var(--gpao-radius-md);
-      background: var(--gpao-surface-soft);
+      padding: 7px 0;
+      border: 0;
+      border-top: 1px solid var(--gpao-border);
+      border-radius: 0;
+      background: transparent;
     }
     .signal-pill strong, .signal-pill span, .draft-pill strong, .draft-pill span {
       display: block;
@@ -2463,27 +2467,33 @@ function renderSessionWorkspaceHtml({
     }
     .draft-inline-card {
       padding: 14px 15px;
-      border-radius: var(--gpao-radius-lg);
-      border-left: 4px solid #9fbfd7;
+      border-radius: var(--gpao-radius-md);
+      border-left: 3px solid #9fbfd7;
       background: rgba(255,255,255,0.86);
       box-shadow: none;
     }
     .boundary-strip {
       padding: 12px 14px;
-      border-radius: var(--gpao-radius-lg);
+      border-radius: var(--gpao-radius-md);
       background: var(--gpao-warn-soft);
       border-color: #e7c98b;
-      border-left: 4px solid #c9943b;
+      border-left: 3px solid #c9943b;
       box-shadow: none;
     }
-    .execution-flow {
-      padding: 14px 15px;
-      border-radius: var(--gpao-radius-lg);
+    .execution-flow, .operation-details {
+      padding: 12px 14px;
+      border-radius: var(--gpao-radius-md);
       border: 1px solid #d7e1d3;
-      border-left: 4px solid var(--gpao-accent);
+      border-left: 3px solid var(--gpao-accent);
       background: rgba(255,255,255,0.88);
       box-shadow: none;
     }
+    summary {
+      cursor: default;
+      list-style: none;
+      font-weight: 900;
+    }
+    summary::-webkit-details-marker { display: none; }
     .execution-flow-inline {
       margin-top: 12px;
       padding-top: 10px;
@@ -2495,7 +2505,7 @@ function renderSessionWorkspaceHtml({
     }
     .execution-flow-inline .execution-flow-step {
       padding: 7px 8px;
-      background: rgba(249,250,246,0.92);
+      background: transparent;
     }
     .execution-flow-grid {
       display: grid;
@@ -2505,10 +2515,11 @@ function renderSessionWorkspaceHtml({
     }
     .execution-flow-step {
       min-width: 0;
-      padding: 9px 10px;
-      border: 1px solid var(--gpao-border);
-      border-radius: var(--gpao-radius-md);
-      background: var(--gpao-surface-soft);
+      padding: 8px 0;
+      border: 0;
+      border-top: 1px solid var(--gpao-border);
+      border-radius: 0;
+      background: transparent;
     }
     .execution-flow-step strong,
     .execution-flow-step span {
@@ -2527,27 +2538,35 @@ function renderSessionWorkspaceHtml({
     }
     .execution-confirmation-control {
       margin-top: 12px;
-      padding: 12px;
-      border: 1px solid #d7e1d3;
-      border-radius: var(--gpao-radius-lg);
-      background: linear-gradient(180deg, rgba(255,255,255,0.94), rgba(245,248,243,0.9));
+      padding: 12px 0 0;
+      border: 0;
+      border-top: 1px solid var(--gpao-border);
+      border-radius: 0;
+      background: transparent;
     }
     .confirmation-choice-strip {
       display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 8px;
+      gap: 0;
       margin-top: 10px;
+      border: 1px solid var(--gpao-border);
+      border-radius: var(--gpao-radius-md);
+      overflow: hidden;
+      background: #ffffff;
     }
     .confirmation-choice {
       min-width: 0;
       padding: 9px 10px;
-      border: 1px solid var(--gpao-border);
-      border-radius: var(--gpao-radius-md);
-      background: var(--gpao-surface-soft);
+      border: 0;
+      border-right: 1px solid var(--gpao-border);
+      border-radius: 0;
+      background: transparent;
+    }
+    .confirmation-choice:last-child {
+      border-right: 0;
     }
     .confirmation-choice[data-choice="matches_intent"] {
-      border-color: #a8c9bd;
-      background: #eef8f2;
+      background: #f2f7f3;
     }
     .confirmation-choice strong,
     .confirmation-choice span {
@@ -2582,10 +2601,11 @@ function renderSessionWorkspaceHtml({
     }
     .local-record-form {
       margin-top: 10px;
-      padding: 10px;
-      border: 1px solid #b9d5c3;
-      border-radius: var(--gpao-radius-md);
-      background: #eef8f2;
+      padding: 10px 0 0;
+      border: 0;
+      border-top: 1px solid var(--gpao-border);
+      border-radius: 0;
+      background: transparent;
     }
     .local-record-form button {
       width: 100%;
@@ -2630,7 +2650,7 @@ function renderSessionWorkspaceHtml({
       min-height: 150px;
       border: 1px solid #c8d9ea;
       border-radius: var(--gpao-radius-md);
-      background: var(--gpao-blue-soft);
+      background: #f7fbff;
       padding: 12px;
       color: var(--gpao-text);
       font-size: 14px;
@@ -2646,24 +2666,56 @@ function renderSessionWorkspaceHtml({
       overflow: auto;
       padding: 14px 10px;
       border-left: 1px solid var(--gpao-border);
-      background: rgba(249,250,246,0.92);
+      background: #f6f7f4;
     }
     .inspector-tabs {
       display: grid;
-      gap: 9px;
+      gap: 0;
       margin-top: 12px;
+      border: 1px solid var(--gpao-border);
+      border-radius: var(--gpao-radius-md);
+      overflow: hidden;
+      background: #ffffff;
     }
     .inspector-card {
-      padding: 12px;
+      padding: 0;
+      border: 0;
+      border-bottom: 1px solid var(--gpao-border);
+      border-radius: 0;
+      box-shadow: none;
     }
-    .inspector-card header {
+    .inspector-card:last-child {
+      border-bottom: 0;
+    }
+    .inspector-card summary {
       display: flex;
       justify-content: space-between;
       gap: 8px;
       align-items: flex-start;
+      padding: 10px;
+    }
+    .inspector-card summary > span:first-child {
+      min-width: 0;
+    }
+    .inspector-card h3,
+    .inspector-card small {
+      display: block;
+      word-break: keep-all;
+      overflow-wrap: anywhere;
+    }
+    .inspector-card h3 {
+      margin: 0;
+      font-size: 13px;
+    }
+    .inspector-card small {
+      margin-top: 3px;
+      color: var(--gpao-muted);
+      font-size: 11px;
+      line-height: 1.35;
     }
     .inspector-card p {
-      margin-top: 7px;
+      margin: 0;
+      padding: 0 10px 10px;
       color: var(--gpao-muted);
       font-size: 12px;
       line-height: 1.5;
@@ -2743,10 +2795,11 @@ function renderSessionWorkspaceHtml({
       .mobile-sheets {
         display: grid;
       }
-      .message-card, .assistant-work-note, .draft-inline-card, .boundary-strip, .execution-flow, .composer-card {
+      .message-card, .assistant-work-note, .draft-inline-card, .boundary-strip, .execution-flow, .composer-card, .operation-details {
         border-radius: var(--gpao-radius-md);
         padding: 12px;
       }
+      .assistant-work-note { padding: 12px 0 4px; border-left: 0; border-right: 0; border-radius: 0; }
       .execution-flow-grid {
         grid-template-columns: 1fr;
       }
@@ -2758,6 +2811,13 @@ function renderSessionWorkspaceHtml({
       }
       .confirmation-choice-strip {
         grid-template-columns: 1fr;
+      }
+      .confirmation-choice {
+        border-right: 0;
+        border-bottom: 1px solid var(--gpao-border);
+      }
+      .confirmation-choice:last-child {
+        border-bottom: 0;
       }
       .composer-card {
         margin: 0 12px 10px;
@@ -2873,8 +2933,8 @@ function renderSessionWorkspaceHtml({
                 <p>이 버튼은 127.0.0.1 안에서 승인/감사 JSONL 기록만 저장합니다. 모델 호출, 도구 실행, 커넥터 활성화, 외부 전송은 열지 않습니다.</p>
               </form>
             </div>
-            <div class="execution-flow-inline" data-execution-governance-flow="local-record-review">
-              <strong class="section-label">${escapeHtml(executionGovernanceFlow.headline)}</strong>
+            <details class="execution-flow-inline" data-execution-governance-flow="local-record-review">
+              <summary class="section-label">${escapeHtml(executionGovernanceFlow.headline)}</summary>
               <div class="execution-flow-grid" aria-label="실행 확인 흐름">
                 ${executionGovernanceFlow.flowStages.map((stage) => `
                 <div class="execution-flow-step" data-execution-flow-stage="${escapeHtml(stage.id)}">
@@ -2883,7 +2943,7 @@ function renderSessionWorkspaceHtml({
                 </div>`).join("")}
               </div>
               <p class="muted">로컬 기록 후 리플레이 · 실제 실행 없음</p>
-            </div>
+            </details>
             <div class="signal-strip" aria-label="맥락 스킬 모델 후보">
               <div class="signal-pill"><strong>맥락</strong><span>${escapeHtml(uiLabel(contextCandidates[0]?.anchor || "맥락 후보 확인 필요"))}</span></div>
               <div class="signal-pill"><strong>스킬</strong><span>${escapeHtml(uiLabel(selectedPacks[0]?.title || "핵심 사고 정리"))}</span></div>
@@ -2911,8 +2971,8 @@ function renderSessionWorkspaceHtml({
               <span>외부 전송 전 확인</span>
             </div>
           </section>
-          <section class="execution-flow" data-execution-governance-flow="local-record-review-detail">
-            <strong class="section-label">${escapeHtml(executionGovernanceFlow.headline)}</strong>
+          <details class="operation-details execution-flow" data-execution-governance-flow="local-record-review-detail">
+            <summary class="section-label">${escapeHtml(executionGovernanceFlow.headline)}</summary>
             <p class="card-value">${escapeHtml(executionGovernanceFlow.userMessage)}</p>
             <div class="execution-flow-grid" aria-label="실행 확인 흐름">
               ${executionGovernanceFlow.flowStages.map((stage) => `
@@ -2922,7 +2982,7 @@ function renderSessionWorkspaceHtml({
               </div>`).join("")}
             </div>
             <p class="muted">로컬 기록 후 리플레이 · ${escapeHtml(executionGovernanceFlow.replay.rollbackReference)}</p>
-          </section>
+          </details>
         </div>
         <section class="composer-card" aria-label="작업 입력">
           <strong class="section-label">작업 입력</strong>
@@ -2944,14 +3004,17 @@ function renderSessionWorkspaceHtml({
       </div>
       <div class="inspector-tabs">
         ${inspectorTabs.map((tab) => `
-        <article class="inspector-card" data-inspector-tab="${escapeHtml(tab.id)}">
-          <header>
-            <h3>${escapeHtml(tab.label)}</h3>
+        <details class="inspector-card" data-inspector-tab="${escapeHtml(tab.id)}">
+          <summary>
+            <span>
+              <h3>${escapeHtml(tab.label)}</h3>
+              <small>${escapeHtml(uiLabel(tab.evidence || "검토 근거 있음"))}</small>
+            </span>
             <span class="state-chip">${escapeHtml(uiLabel(tab.state))}</span>
-          </header>
+          </summary>
           <p><strong>근거</strong> ${escapeHtml(uiLabel(tab.evidence || "none"))}</p>
           <p><strong>다음 행동</strong> ${escapeHtml(tab.nextSafeAction)}</p>
-        </article>`).join("")}
+        </details>`).join("")}
       </div>
     </aside>
   </main>

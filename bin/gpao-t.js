@@ -41,6 +41,8 @@ import {
   buildLocalControlCenterDesignContract,
   buildModelRouterBoundary,
   buildModelRouterPolicy,
+  buildModelInvocationPacket,
+  buildModelProviderRegistry,
   buildOperationsContractSummary,
   buildOperationsReliabilityContract,
   buildPackagedDesktopPlanningReview,
@@ -71,6 +73,7 @@ import {
   buildTauriPackagedDesktopGate,
   buildTauriReadOnlyShellHtml,
   buildTauriReadOnlyShellSlice,
+  buildExecutionRuntimePlan,
   captureMemoryEntry,
   buildReplayRecoveryView,
   appendReplayRecoveryRecord,
@@ -112,6 +115,8 @@ import {
   verifyStage4ProductionHardening,
   verifyModelRouterBoundary,
   verifyModelRouterPolicy,
+  verifyModelInvocation,
+  verifyExecutionRuntimePlan,
   verifyWorkSurfaceSubmissionDecisionGate,
   verifyWorkSurfaceSubmissionValidationGate,
   verifyWorkSurfaceExecutionFlow,
@@ -130,6 +135,7 @@ import {
   appendSkillExecutionRun,
   writeApprovalAuditLocalRecords,
   recordWorkSurfaceExecutionFlow,
+  invokeModelLocally,
 } from "../src/index.js";
 
 function usage() {
@@ -172,6 +178,8 @@ function usage() {
     "  gpao-t connectors governance",
     "  gpao-t connectors tool-governance",
     "  gpao-t connectors tool-governance-check",
+    "  gpao-t connectors execution-runtime",
+    "  gpao-t connectors execution-runtime-check",
     "  gpao-t connectors review <connector-id> [action]",
     "  gpao-t approval execution-proposal [text]",
     "  gpao-t approval execution-proposal-check",
@@ -199,6 +207,10 @@ function usage() {
     "  gpao-t adapters model-router-boundary-check",
     "  gpao-t adapters model-router-policy [text]",
     "  gpao-t adapters model-router-policy-check",
+    "  gpao-t adapters model-providers",
+    "  gpao-t adapters model-invocation [provider-id] [text]",
+    "  gpao-t adapters model-invocation-local [text]",
+    "  gpao-t adapters model-invocation-check",
     "  gpao-t adapters plan <text>",
     "  gpao-t control snapshot",
     "  gpao-t control summary",
@@ -439,13 +451,19 @@ try {
       printJson(buildConnectorToolGovernance());
     } else if (subcommand === "tool-governance-check") {
       printJson(verifyConnectorToolGovernance());
+    } else if (subcommand === "execution-runtime") {
+      printJson(buildExecutionRuntimePlan({ root: process.cwd() }));
+    } else if (subcommand === "execution-runtime-check") {
+      printJson(verifyExecutionRuntimePlan({
+        plan: buildExecutionRuntimePlan({ root: process.cwd() }),
+      }));
     } else if (subcommand === "review") {
       if (!connectorId) {
         throw new Error("connectors review requires connector id");
       }
       printJson(reviewConnectorPermission({ connectorId, action }));
     } else {
-      throw new Error("connectors command requires list, governance, tool-governance, tool-governance-check, or review");
+      throw new Error("connectors command requires list, governance, tool-governance, tool-governance-check, execution-runtime, execution-runtime-check, or review");
     }
   } else if (command === "approval") {
     const [subcommand, ...textParts] = args;
@@ -515,6 +533,22 @@ try {
       printJson(buildModelRouterPolicy(request ? { request } : undefined));
     } else if (subcommand === "model-router-policy-check") {
       printJson(verifyModelRouterPolicy());
+    } else if (subcommand === "model-providers") {
+      printJson(buildModelProviderRegistry());
+    } else if (subcommand === "model-invocation") {
+      const [providerId, ...requestParts] = textParts;
+      const request = requestParts.join(" ").trim();
+      printJson(buildModelInvocationPacket({
+        providerId: providerId || "local.deterministic",
+        request: request || undefined,
+      }));
+    } else if (subcommand === "model-invocation-local") {
+      const request = textParts.join(" ").trim();
+      printJson(invokeModelLocally({
+        request: request || undefined,
+      }));
+    } else if (subcommand === "model-invocation-check") {
+      printJson(verifyModelInvocation());
     } else if (subcommand === "plan") {
       const text = textParts.join(" ").trim();
       if (!text) {
@@ -522,7 +556,7 @@ try {
       }
       printJson(runRuntimeTurn({ input: { text } }).adapterPlan);
     } else {
-      throw new Error("adapters command requires models, tools, model-router-boundary, model-router-boundary-check, model-router-policy, model-router-policy-check, or plan");
+      throw new Error("adapters command requires models, tools, model-router-boundary, model-router-boundary-check, model-router-policy, model-router-policy-check, model-providers, model-invocation, model-invocation-local, model-invocation-check, or plan");
     }
   } else if (command === "control") {
     const [subcommand] = args;
