@@ -127,12 +127,16 @@ describe("GPAO-T Local Control Center readiness", () => {
     assert.equal(snapshot.counts.modelRouterFailureStates, 5);
     assert.equal(snapshot.counts.modelRouterReplayCriteria, 6);
     assert.equal(snapshot.counts.connectors, 6);
+    assert.equal(snapshot.counts.connectorToolCandidateClasses, 7);
+    assert.equal(snapshot.counts.connectorToolAuthorityTiers, 6);
+    assert.equal(snapshot.counts.connectorToolBlockedActions, 9);
     assert.equal(snapshot.counts.growthApplicationGates, 0);
     assert.equal(snapshot.counts.approvalPreviewStages, 5);
     assert.equal(snapshot.counts.approvalPreviewBlockedActions, 10);
     assert.equal(snapshot.counts.coreWorkSurfaceThreadMessages, 2);
     assert.equal(snapshot.counts.coreWorkSurfaceSelectedSkillPacks >= 1, true);
     assert.equal(snapshot.authorityBoundary.connectorActivation, "blocked_until_explicit_approval");
+    assert.equal(snapshot.authorityBoundary.toolCliMcpExecution, "preview_confirmation_approval_replay_audit_and_rollback_references_exist");
     assert.equal(snapshot.authorityBoundary.modelRouterBoundary, "blocked_until_provider_setup_task_approval_and_audit");
     assert.equal(snapshot.authorityBoundary.growthApplication, "blocked_in_this_slice");
     assert.equal(snapshot.authorityBoundary.installExecution, "blocked_until_user_approval");
@@ -166,6 +170,16 @@ describe("GPAO-T Local Control Center readiness", () => {
       && panel.data.safetyInvariants.invokesDryRunExecutor === false
     ));
     assert.ok(snapshot.panels.some((panel) => panel.id === "connectors" && panel.status === "review"));
+    assert.ok(snapshot.panels.some((panel) =>
+      panel.id === "connectors"
+      && panel.data.toolGovernance.schema === "gpao_t.connector_tool_governance.v0_1"
+      && panel.data.toolGovernance.modelOutputToExecutionProposal.outputIsExecutionAuthority === false
+      && panel.data.toolGovernance.candidateClasses.some((candidate) => candidate.surface === "mcp")
+      && panel.data.toolGovernance.authorityTiers.some((tier) => tier.id === "external_send" && tier.status === "blocked")
+      && panel.data.toolGovernance.auditReplayRollback.writesAuditNow === false
+      && panel.data.toolGovernance.safetyInvariants.invokesMcp === false
+      && panel.data.toolGovernance.blockedActions.includes("durable_memory_promotion")
+    ));
     assert.ok(snapshot.panels.some((panel) =>
       panel.id === "adapters"
       && panel.data.modelRouterBoundary.schema === "gpao_t.model_router_boundary.v0_1"

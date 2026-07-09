@@ -89,6 +89,135 @@ const ACTION_GATES = {
   },
 };
 
+const EXECUTION_CANDIDATE_CLASSES = [
+  {
+    id: "tool.local_read",
+    label: "Local read tool",
+    surface: "tool",
+    examples: ["local file inspection", "local replay evidence read"],
+    defaultAuthorityTier: "read_only",
+    proposalCondition: "model_output_names_a_local_read_intent_and_task_packet_has_admitted_evidence",
+    allowedPreviewState: "candidate_only",
+  },
+  {
+    id: "cli.local_dry_run",
+    label: "Local CLI dry-run",
+    surface: "cli",
+    examples: ["verify plan", "render preview", "doctor check"],
+    defaultAuthorityTier: "dry_run",
+    proposalCondition: "model_output_requests_a_non_mutating_command_and_confirmation_card_exists",
+    allowedPreviewState: "approval_packet_preview_only",
+  },
+  {
+    id: "mcp.read_only",
+    label: "Read-only MCP query",
+    surface: "mcp",
+    examples: ["read docs", "inspect schema", "fetch local MCP resource"],
+    defaultAuthorityTier: "read_only",
+    proposalCondition: "model_output_identifies_read_scope_without_external_send_or_mutation",
+    allowedPreviewState: "candidate_only",
+  },
+  {
+    id: "connector.read",
+    label: "Connector read",
+    surface: "connector",
+    examples: ["GitHub issue read", "calendar read", "Notion page read"],
+    defaultAuthorityTier: "read_only",
+    proposalCondition: "connector_is_configured_for_read_and_task_approval_is_present",
+    allowedPreviewState: "blocked_until_connector_setup",
+  },
+  {
+    id: "connector.write",
+    label: "Connector write",
+    surface: "connector",
+    examples: ["create issue draft", "update page", "calendar edit"],
+    defaultAuthorityTier: "write",
+    proposalCondition: "write_scope_is_minimal_replayable_and_user_approved",
+    allowedPreviewState: "blocked_until_write_approval",
+  },
+  {
+    id: "external.send",
+    label: "External send",
+    surface: "connector",
+    examples: ["send message", "post comment", "publish release"],
+    defaultAuthorityTier: "external_send",
+    proposalCondition: "recipient_payload_scope_and_rollback_or_compensation_are_visible",
+    allowedPreviewState: "blocked_until_explicit_send_approval",
+  },
+  {
+    id: "destructive.action",
+    label: "Destructive action",
+    surface: "tool_or_connector",
+    examples: ["delete", "overwrite", "rollback that removes state"],
+    defaultAuthorityTier: "destructive",
+    proposalCondition: "destructive_intent_is_explicit_and_recovery_snapshot_exists",
+    allowedPreviewState: "blocked_until_destructive_approval",
+  },
+];
+
+const AUTHORITY_TIERS = [
+  {
+    id: "read_only",
+    status: "preview_candidate_allowed",
+    approvalBoundary: "task_scope_visible",
+    auditRequirement: "candidate_trace",
+    rollbackReference: "not_required_for_read_only_preview",
+  },
+  {
+    id: "dry_run",
+    status: "preview_candidate_allowed",
+    approvalBoundary: "confirmation_card_before_invocation",
+    auditRequirement: "dry_run_plan_and_expected_no_write_effects",
+    rollbackReference: "not_required_until_invocation_opens",
+  },
+  {
+    id: "write",
+    status: "blocked",
+    approvalBoundary: "explicit_write_approval",
+    auditRequirement: "before_after_diff_and_replay_case",
+    rollbackReference: "rollback_or_compensation_required_before_apply",
+  },
+  {
+    id: "external_send",
+    status: "blocked",
+    approvalBoundary: "explicit_external_send_approval",
+    auditRequirement: "recipient_payload_scope_and_delivery_receipt",
+    rollbackReference: "compensation_or_retraction_plan_required",
+  },
+  {
+    id: "destructive",
+    status: "blocked",
+    approvalBoundary: "explicit_destructive_approval",
+    auditRequirement: "snapshot_replay_and_recovery_plan",
+    rollbackReference: "verified_restore_path_required_before_apply",
+  },
+  {
+    id: "paid_action",
+    status: "blocked",
+    approvalBoundary: "explicit_cost_approval",
+    auditRequirement: "cost_ceiling_and_provider_receipt",
+    rollbackReference: "not_reversible_cost_must_be_preapproved",
+  },
+];
+
+const MODEL_OUTPUT_PROPOSAL_CONDITIONS = [
+  "model_output_must_be_structured_as_execution_candidate_not_action",
+  "candidate_must_name_surface_tool_cli_mcp_or_connector",
+  "candidate_must_map_to_authority_tier",
+  "task_packet_context_and_skill_route_must_be_attached",
+  "risk_classification_must_be_visible_to_user",
+  "approval_boundary_must_be_resolved_before_invocation",
+  "audit_replay_rollback_reference_must_exist_for_mutating_or_external_tiers",
+];
+
+const OPENCLAW_INSPIRED_SUBSTRATE = [
+  "gateway_routes_expose_tool_and_connector_state",
+  "adapter_registry_keeps_capability_metadata_separate_from_execution",
+  "doctor_health_style_checks_can_verify_readiness_without_activation",
+  "event_log_can_record_review_or_future_execution_evidence",
+  "GPAO_T_authority_layer_overrides_connector_convenience",
+];
+
 export function listConnectors() {
   return {
     schema: "gpao_t.connector_registry.v0_1",
@@ -158,8 +287,152 @@ export function reviewConnectorPermission({
   };
 }
 
+export function buildConnectorToolGovernance({
+  modelOutput = "unspecified model output",
+  requestedSurface = "tool",
+  requestedTier = "read_only",
+} = {}) {
+  const candidateClass = EXECUTION_CANDIDATE_CLASSES.find((candidate) =>
+    candidate.surface === requestedSurface || candidate.id === requestedSurface
+  ) || EXECUTION_CANDIDATE_CLASSES[0];
+  const authorityTier = AUTHORITY_TIERS.find((tier) =>
+    tier.id === (requestedTier || candidateClass.defaultAuthorityTier)
+  ) || AUTHORITY_TIERS[0];
+
+  return {
+    schema: "gpao_t.connector_tool_governance.v0_1",
+    status: "review",
+    surface: "read_only_governance_contract",
+    modelOutput,
+    selectedCandidateClass: candidateClass,
+    selectedAuthorityTier: authorityTier,
+    candidateClasses: EXECUTION_CANDIDATE_CLASSES,
+    authorityTiers: AUTHORITY_TIERS,
+    modelOutputToExecutionProposal: {
+      outputIsExecutionAuthority: false,
+      outputMayBecomeProposalWhen: MODEL_OUTPUT_PROPOSAL_CONDITIONS,
+      proposalForm: "local_execution_candidate_preview",
+      requiredPreviewFields: [
+        "candidate_id",
+        "surface",
+        "authority_tier",
+        "task_packet_reference",
+        "risk_classification",
+        "approval_boundary",
+        "audit_reference",
+        "replay_reference",
+        "rollback_reference",
+      ],
+      blockedUntil: "preview_confirmation_approval_replay_audit_and_rollback_references_exist",
+    },
+    approvalBoundary: {
+      readOnly: "task_scope_visible_no_external_activation",
+      dryRun: "confirmation_required_before_invocation",
+      write: "blocked_until_explicit_write_approval",
+      externalSend: "blocked_until_explicit_external_send_approval",
+      destructive: "blocked_until_snapshot_replay_rollback_and_explicit_destructive_approval",
+      paidAction: "blocked_until_cost_ceiling_and_explicit_cost_approval",
+    },
+    auditReplayRollback: {
+      auditReference: "future_event_log_entry_required_before_invocation",
+      replayReference: "replay_case_required_for_write_external_or_destructive_tiers",
+      rollbackReference: "rollback_or_compensation_plan_required_before_mutation",
+      writesAuditNow: false,
+      invokesReplayNow: false,
+      executesRollbackNow: false,
+    },
+    openClawInspiredSubstrate: OPENCLAW_INSPIRED_SUBSTRATE,
+    blockedActions: [
+      "actual_tool_execution",
+      "cli_command_execution",
+      "mcp_invocation",
+      "connector_activation",
+      "external_network_or_send",
+      "credential_read_or_write",
+      "paid_action",
+      "destructive_action",
+      "durable_memory_promotion",
+    ],
+    safetyInvariants: {
+      executesTool: false,
+      runsCli: false,
+      invokesMcp: false,
+      activatesConnector: false,
+      sendsExternalNetworkRequest: false,
+      readsOrWritesCredentials: false,
+      spendsMoney: false,
+      performsDestructiveAction: false,
+      promotesDurableMemory: false,
+    },
+    nextSafeAction: "Use this governance contract as the execution-candidate boundary before designing any live tool, CLI, MCP, or connector invocation.",
+  };
+}
+
+export function verifyConnectorToolGovernance({
+  governance = buildConnectorToolGovernance(),
+} = {}) {
+  const findings = [];
+
+  if (governance.schema !== "gpao_t.connector_tool_governance.v0_1") {
+    findings.push("schema_mismatch");
+  }
+  if (governance.candidateClasses.length < 6) {
+    findings.push("candidate_classes_too_small");
+  }
+  if (!governance.candidateClasses.some((candidate) => candidate.surface === "cli")) {
+    findings.push("missing_cli_candidate_class");
+  }
+  if (!governance.candidateClasses.some((candidate) => candidate.surface === "mcp")) {
+    findings.push("missing_mcp_candidate_class");
+  }
+  if (!governance.authorityTiers.some((tier) => tier.id === "destructive" && tier.status === "blocked")) {
+    findings.push("missing_blocked_destructive_tier");
+  }
+  if (governance.modelOutputToExecutionProposal.outputIsExecutionAuthority !== false) {
+    findings.push("model_output_can_execute");
+  }
+  if (governance.modelOutputToExecutionProposal.outputMayBecomeProposalWhen.length < 6) {
+    findings.push("proposal_conditions_incomplete");
+  }
+  if (governance.auditReplayRollback.writesAuditNow !== false) {
+    findings.push("audit_write_opened");
+  }
+  if (governance.auditReplayRollback.invokesReplayNow !== false) {
+    findings.push("replay_invocation_opened");
+  }
+  if (governance.auditReplayRollback.executesRollbackNow !== false) {
+    findings.push("rollback_execution_opened");
+  }
+  if (!governance.openClawInspiredSubstrate.includes("GPAO_T_authority_layer_overrides_connector_convenience")) {
+    findings.push("missing_gpao_t_authority_precedence");
+  }
+  const invariantValues = Object.values(governance.safetyInvariants);
+  if (invariantValues.some(Boolean)) {
+    findings.push("safety_invariant_opened_execution");
+  }
+
+  return {
+    schema: "gpao_t.connector_tool_governance_verification.v0_1",
+    status: findings.length ? "blocked" : "ready",
+    findings,
+    checked: [
+      "candidate_classification",
+      "authority_tiers",
+      "model_output_proposal_boundary",
+      "approval_boundary",
+      "audit_replay_rollback_references",
+      "openclaw_substrate_with_gpao_t_authority_precedence",
+      "no_live_execution_or_activation",
+    ],
+    nextSafeAction: findings.length
+      ? "Repair governance findings before opening connector/tool design."
+      : "Expose this read-only governance proof in Control Center before live execution design.",
+  };
+}
+
 export function buildConnectorGovernanceSummary() {
   const registry = listConnectors();
+  const toolGovernance = buildConnectorToolGovernance();
   const byStatus = registry.connectors.reduce((acc, connector) => {
     acc[connector.status] = (acc[connector.status] || 0) + 1;
     return acc;
@@ -174,13 +447,15 @@ export function buildConnectorGovernanceSummary() {
     totalConnectors: registry.connectors.length,
     byStatus,
     blockedConnectors: blocked.map((connector) => connector.id),
+    toolGovernance,
     authorityBoundary: {
       oauthSetup: "blocked_until_explicit_approval",
       tokenStorage: "not_configured",
       writeAccess: "blocked_until_task_approval",
       externalSend: "blocked_until_explicit_approval",
       recurringAutomation: "blocked_until_replay_audit_rollback_approval",
+      toolCliMcpExecution: toolGovernance.modelOutputToExecutionProposal.blockedUntil,
     },
-    nextSafeAction: "Use connector reviews as local planning evidence before any real account, token, send, write, or automation step.",
+    nextSafeAction: toolGovernance.nextSafeAction,
   };
 }

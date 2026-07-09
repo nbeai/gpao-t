@@ -1,47 +1,58 @@
 # What We Are Building
 
-GPAO-T is building a local, channel-agnostic personal AI operating system with a Codex-like work rhythm, OpenClaw-grade local runtime stability, and GPAO-owned Context Mesh / T-cell / Memory Wiki / authority / self-growth semantics.
+The first real user can route a vague request, see the plan, run checks, and understand the result without reading the whole codebase so that a user can move from vague request to safer implementation with visible gates and evidence.
 
 ## Current Phase
 
-- Phase: Model Router replay/policy read-only proof
-- Surface: CLI, Gateway, Local Control Center adapter panel
-- Status: deeper Model Router policy contract implemented and verified without live provider execution
+- Phase: closeout
+- Command: closeout
+- Status: review
 
-## Current User-Facing Goal
+## User Mode
 
-After the work surface understands and previews a task, the user should see not only which model path GPAO-T would choose, but why that route fits the request type, speed, quality, cost, risk, Context Mesh task-packet state, and fallback/failure condition.
+- Mode: beginner
+- Task type: plugin
 
-The Model Router policy now shows:
+## First Workflow
 
-- request-type route profiles
-- speed / quality / cost / risk decision matrix
-- Context Mesh task-packet model input candidate conditions
-- fallback chain
-- failure states
-- model-output-to-tool boundary
-- replay/audit criteria
+Guided First Workflow
 
-## Current Contract
+## Companion Principle
 
-- Model router policy schema: `gpao_t.model_router_policy.v0_1`
-- Verification schema: `gpao_t.model_router_policy_verification.v0_1`
-- Surface: `read_only_replay_policy_contract`
-- Model output is not action authority.
-- Tool/CLI/MCP execution from model output is blocked.
-- Replay/audit criteria are design-only and not invoked/written in this slice.
-- Live provider calls, credentials, external network, paid token spend, output persistence, connector activation, and durable memory promotion: blocked
+AI does the work. User keeps authority.
 
-## Evidence
+## AI First
 
-- `node bin/gpao-t.js adapters model-router-policy "후속 질문의 route policy를 보여줘"`: returns read-only router policy.
-- `node bin/gpao-t.js adapters model-router-policy-check`: ready, no findings.
-- `GET /adapters/model-router-policy`: exposed through Gateway.
-- `GET /adapters/model-router-policy/verify`: exposed through Gateway.
-- `control summary`: exposes `modelRouterProfiles`, `modelRouterFailureStates`, and `modelRouterReplayCriteria`.
-- `npm run verify`: pass, 106 tests.
-- `beai verify --cwd '/Users/jyp/Documents/Playground 2/gpao-t' --run --scenario --meaning`: ready/pass.
+- AI/developer verifies first success path for Guided First Workflow.
+- AI/developer verifies empty or first-time state before asking the user to test.
+- AI/developer verifies likely failure or recovery state before claiming completion.
+- AI/developer inspects the main visual flow when a UI exists.
 
 ## User Authority
 
-AI does local reversible implementation and verification. The user keeps authority over real provider setup, secrets, external model calls, token spend, connector/model/tool activation, installation, update, rollback, deployment, messenger, recurring automation, and product direction.
+- Confirm whether "Guided First Workflow" feels like the intended product direction.
+- Approve any taste, brand, operating policy, or business decision that AI cannot know.
+
+## Latest Summary
+
+Closeout decision: review.
+
+## Product Surface Summary
+
+Implemented and verified the first Connector / Tool Governance read-only proof. GPAO-T now classifies tool, CLI, MCP, and connector execution candidates, maps them to read-only / dry-run / write / external-send / destructive / paid authority tiers, defines when model output may become a proposal, and keeps actual execution, connector activation, credential access, network/send, paid action, destructive action, approval writes, and durable memory promotion blocked.
+
+Current evidence surfaces:
+
+- `node bin/gpao-t.js connectors tool-governance`
+- `node bin/gpao-t.js connectors tool-governance-check`
+- `GET /connectors/tool-governance`
+- `GET /connectors/tool-governance/verify`
+- Local Control Center `Connectors` panel data and inspector rows
+
+Verification evidence:
+
+- `node --test test/connector-governance.test.js test/control-center.test.js`: pass, 31 tests
+- `npm run verify`: pass, 107 tests
+- `beai verify --cwd '/Users/jyp/Documents/Playground 2/gpao-t' --run --scenario --meaning`: pass
+- `beai closeout --cwd '/Users/jyp/Documents/Playground 2/gpao-t' --apply`: review only for human scenario acceptance recommendation and intentional blocked-boundary signals
+- `git diff --check`: pass

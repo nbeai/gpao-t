@@ -59,6 +59,15 @@ Model Router boundary:
 - Required policy invariant: the policy may show request-type route profiles, speed/quality/cost/risk criteria, Context Mesh task-packet model-input candidate conditions, fallback failure states, model-output-to-tool boundary, and replay/audit criteria. It must not let model output become tool/CLI/MCP execution authority.
 - Cleanup note: duplicate workspace note files ending in ` 2.md` are cleanup candidates only and should not be deleted during feature work.
 
+Connector / Tool Governance:
+
+- CLI surface: `node bin/gpao-t.js connectors tool-governance`
+- CLI check: `node bin/gpao-t.js connectors tool-governance-check`
+- Gateway routes: `GET /connectors/tool-governance` and `GET /connectors/tool-governance/verify`
+- Control Center integration: `control snapshot`, `control summary`, and `control html` must expose execution-candidate classes, authority tiers, model-output proposal boundary, approval boundary, audit/replay/rollback references, and blocked actions through the `Connectors` panel.
+- Required invariant: the governance proof may classify tool, CLI, MCP, and connector candidates, map them to `read_only`, `dry_run`, `write`, `external_send`, `destructive`, and `paid_action` tiers, and describe OpenClaw-inspired gateway/adapter/tool substrate under GPAO-T authority precedence.
+- Required blocked boundary: it must not execute tools, run CLI commands, invoke MCP, activate connectors, send external network requests, read or write credentials, spend money, perform destructive actions, write approval records, invoke replay/rollback, or promote durable memory.
+
 Work surface submission decision gate:
 
 - Gate document: `docs/03-engineering/WORK-SURFACE-SUBMISSION-DECISION-GATE.md`

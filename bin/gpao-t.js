@@ -17,6 +17,7 @@ import {
   buildControlCenterUiContract,
   buildControlCenterUiSnapshot,
   buildConnectorGovernanceSummary,
+  buildConnectorToolGovernance,
   buildCoreWorkSurface,
   buildCoreWorkSurfaceHtml,
   buildWorkSurfaceSubmissionDecisionGate,
@@ -84,6 +85,7 @@ import {
   validateControlCenterUiSnapshot,
   verifyBrowserLocalAppShell,
   verifyControlCenterPreviewServing,
+  verifyConnectorToolGovernance,
   verifyCoreWorkSurface,
   verifyModelRouterBoundary,
   verifyModelRouterPolicy,
@@ -142,6 +144,8 @@ function usage() {
     "  gpao-t skill readiness",
     "  gpao-t connectors list",
     "  gpao-t connectors governance",
+    "  gpao-t connectors tool-governance",
+    "  gpao-t connectors tool-governance-check",
     "  gpao-t connectors review <connector-id> [action]",
     "  gpao-t ops hardening",
     "  gpao-t ops contract",
@@ -378,13 +382,17 @@ try {
       printJson(listConnectors());
     } else if (subcommand === "governance") {
       printJson(buildConnectorGovernanceSummary());
+    } else if (subcommand === "tool-governance") {
+      printJson(buildConnectorToolGovernance());
+    } else if (subcommand === "tool-governance-check") {
+      printJson(verifyConnectorToolGovernance());
     } else if (subcommand === "review") {
       if (!connectorId) {
         throw new Error("connectors review requires connector id");
       }
       printJson(reviewConnectorPermission({ connectorId, action }));
     } else {
-      throw new Error("connectors command requires list, governance, or review");
+      throw new Error("connectors command requires list, governance, tool-governance, tool-governance-check, or review");
     }
   } else if (command === "ops") {
     const [subcommand] = args;

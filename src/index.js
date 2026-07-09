@@ -14,8 +14,10 @@ import {
 } from "./core/browser-local-app-shell.js";
 import {
   buildConnectorGovernanceSummary,
+  buildConnectorToolGovernance,
   listConnectors,
   reviewConnectorPermission,
+  verifyConnectorToolGovernance,
 } from "./core/connector-governance.js";
 import {
   buildCoreWorkSurface,
@@ -169,6 +171,7 @@ export {
   buildBrowserLocalAppShellHtml,
   buildBrowserLocalAppShellState,
   buildConnectorGovernanceSummary,
+  buildConnectorToolGovernance,
   buildCoreWorkSurface,
   buildCoreWorkSurfaceHtml,
   buildWorkSurfaceSubmissionDecisionGate,
@@ -245,6 +248,7 @@ export {
   routeModel,
   verifyModelRouterBoundary,
   verifyModelRouterPolicy,
+  verifyConnectorToolGovernance,
   renderControlCenterHtml,
   renderTauriInstallDryRunPreview,
   startControlCenterPreviewServer,

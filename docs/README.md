@@ -38,7 +38,7 @@ The first slice implements a local, dependency-free runtime skeleton:
 - `GpaoModelRouter`: fast recovery vs balanced reasoning route
 - `GpaoToolRuntime`: local-preview tool admission
 - `Adapter Boundary`: local model/tool adapter registry and execution boundary
-- `Connector Governance`: local connector registry and permission boundary
+- `Connector / Tool Governance`: local connector registry plus tool / CLI / MCP / connector execution-candidate boundary
 - `Install / Update / Rollback Hardening`: local operational readiness and recovery contract
 - `Local Control Center Contract`: one snapshot for runtime, ops, memory, recovery, growth, adapters, connectors, and authority
 - `Local Control Center Design Recipe`: BEAI design doctrine adapted to GPAO-T UI implementation
@@ -121,6 +121,8 @@ node bin/gpao-t.js skill execution-summary
 node bin/gpao-t.js skill readiness
 node bin/gpao-t.js connectors list
 node bin/gpao-t.js connectors governance
+node bin/gpao-t.js connectors tool-governance
+node bin/gpao-t.js connectors tool-governance-check
 node bin/gpao-t.js connectors review github.oauth read
 node bin/gpao-t.js ops hardening
 node bin/gpao-t.js ops hardening-record
@@ -246,15 +248,19 @@ Adapter Boundary keeps model freedom and tool safety separate:
 
 This boundary is intentionally visible in `modelRoute`, `toolPlan`, `adapterPlan`, `modelRouterBoundary`, `modelRouterPolicy`, CLI, Gateway, and the Local Control Center adapter panel so a future live provider or tool path can be judged before it is opened.
 
-Connector Governance keeps account visibility separate from account execution:
+Connector / Tool Governance keeps account and execution-candidate visibility separate from account or tool execution:
 
 - local file inspection can be reviewed as preview evidence
 - OAuth connectors such as GitHub, Google Workspace, Notion, and Slack are listed but blocked until explicit setup and task approval exist
 - connected does not mean executable
 - readable does not mean writable
 - write, send, recurring automation, secret storage, and connector activation remain blocked until replay, audit, rollback, and approval gates exist
+- tool, CLI, MCP, and connector execution candidates are classified before invocation
+- authority tiers are `read_only`, `dry_run`, `write`, `external_send`, `destructive`, and `paid_action`
+- model output is proposal material only; it is not execution authority
+- OpenClaw-style gateway/adapter/tool convenience is treated as substrate while GPAO-T authority takes precedence
 
-This boundary is visible through `connectors list`, `connectors governance`, `connectors review <connector-id> [action]`, `GET /connectors`, `GET /connectors/governance`, and `POST /connectors/review`.
+This boundary is visible through `connectors list`, `connectors governance`, `connectors tool-governance`, `connectors tool-governance-check`, `connectors review <connector-id> [action]`, `GET /connectors`, `GET /connectors/governance`, `GET /connectors/tool-governance`, `GET /connectors/tool-governance/verify`, and `POST /connectors/review`.
 
 Install / Update / Rollback Hardening keeps operational confidence separate from real operations:
 

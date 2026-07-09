@@ -109,6 +109,9 @@ export function buildControlCenterSnapshot({ root } = {}) {
       toolAdapters: toolAdapters.adapters.length,
       connectors: connectorGovernance.totalConnectors,
       blockedConnectors: connectorGovernance.blockedConnectors.length,
+      connectorToolCandidateClasses: connectorGovernance.toolGovernance.candidateClasses.length,
+      connectorToolAuthorityTiers: connectorGovernance.toolGovernance.authorityTiers.length,
+      connectorToolBlockedActions: connectorGovernance.toolGovernance.blockedActions.length,
     },
     authorityBoundary: {
       externalModelCall: "blocked_until_configured_and_approved",
@@ -125,6 +128,7 @@ export function buildControlCenterSnapshot({ root } = {}) {
       connectorActivation: connectorGovernance.authorityBoundary.oauthSetup,
       connectorWriteAccess: connectorGovernance.authorityBoundary.writeAccess,
       connectorExternalSend: connectorGovernance.authorityBoundary.externalSend,
+      toolCliMcpExecution: connectorGovernance.authorityBoundary.toolCliMcpExecution,
       growthApplication: growthApplicationGates.authorityBoundary.liveRuntimeMutation,
       durableMemoryPromotion: runtimeState.boundaries?.durableMemoryPromotion || "blocked",
       publicRelease: runtimeState.boundaries?.publicRelease || "blocked",
@@ -473,7 +477,7 @@ function buildConnectorPanel({ connectorGovernance }) {
     id: "connectors",
     label: "Connectors",
     status: "review",
-    headline: "Connector registry is visible, but account setup and execution stay blocked.",
+    headline: "Tool, CLI, MCP, and connector candidates are visible, but execution stays blocked.",
     data: connectorGovernance,
     nextSafeAction: connectorGovernance.nextSafeAction,
   };

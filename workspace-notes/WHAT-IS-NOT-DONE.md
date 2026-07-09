@@ -2,29 +2,31 @@
 
 ## Still Excluded
 
-- live model call
-- provider credential read or write
-- external network request
-- paid token spend
-- model output persistence
-- tool, CLI, or MCP execution from model output
+- large rewrite
+- unapproved deployment
+- unrelated refactor
+- technical deep-dive before the first workflow is approved
+- actual tool execution
+- CLI command execution
+- MCP invocation
 - connector activation
-- approval record actual write
-- install, update, or rollback execution
+- external network/send
+- credential read/write
+- paid action
+- destructive action
+- approval record write
 - durable memory promotion
-- self-growth apply
-- Tauri build, bundle, signing, or dependency install
-- local IPC command activation
-- deployment, messenger, recurring automation, or public release
 
 ## Current Completion Boundary
 
-The Model Router replay/policy slice is implemented and verified as a read-only routing policy contract. It explains request-type route profiles, speed/quality/cost/risk criteria, Context Mesh task-packet candidate conditions, fallback/failure states, model-output-to-tool boundary, and replay/audit criteria.
+- Do not call this complete unless verification evidence and completion language guard pass.
+- Do not ask the user to test before AI/developer scenario verification covers success, empty, and failure states when applicable.
+- Current status: Connector / Tool Governance read-only proof verified; live invocation remains blocked.
 
-It does not configure providers, store secrets, call external APIs, spend tokens, persist model output, activate tools, invoke replay, write audit records, activate connectors, or promote durable memory.
+## Blockers
 
-BEAI closeout reports conservative review items for human lived acceptance and blocked-boundary wording. Completion language is allowed by BEAI verify/closeout; those review items remain stop-line reminders, not implementation blockers for this local preview slice.
+- No unresolved session blocker is recorded.
 
 ## Next Product Gap
 
-The next product gap is connector/tool governance. The handoff should start from the rule that model output is a candidate/preview artifact, not execution authority.
+- Future live invocation design still needs approval packet validation, audit write, replay invocation, rollback/compensation proof, and user-visible confirmation before any execution-capable surface opens.

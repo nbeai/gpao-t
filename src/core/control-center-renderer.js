@@ -978,6 +978,7 @@ function panelHtml(panel) {
                 ${approvalInspectorRows(panel)}
                 ${coreWorkSurfaceInspectorRows(panel)}
                 ${adapterInspectorRows(panel)}
+                ${connectorInspectorRows(panel)}
                 ${inspectorRow("Authority", authorityLens(group))}
                 ${inspectorRow("Evidence", evidenceLens(panel))}
                 ${inspectorLinks(panel)}
@@ -1062,6 +1063,19 @@ function adapterInspectorRows(panel) {
     inspectorRow("Output Boundary", policy?.modelOutputBoundary?.toolCliMcpExecution || "none"),
     inspectorRow("Replay Criteria", `${policy?.replayAudit?.requiredCriteria?.length || 0}`),
     inspectorRow("Blocked Model Actions", (boundary.blockedActions || []).join(" · ")),
+  ].join("");
+}
+
+function connectorInspectorRows(panel) {
+  if (panel.id !== "connectors" || !panel.data?.toolGovernance) return "";
+  const governance = panel.data.toolGovernance;
+  return [
+    inspectorRow("Candidate Classes", (governance.candidateClasses || []).map((candidate) => candidate.id).join(" · ") || "none"),
+    inspectorRow("Authority Tiers", (governance.authorityTiers || []).map((tier) => `${tier.id}:${tier.status}`).join(" · ") || "none"),
+    inspectorRow("Model Output Boundary", governance.modelOutputToExecutionProposal.outputIsExecutionAuthority === false ? "proposal only" : "execution authority"),
+    inspectorRow("Approval Boundary", governance.modelOutputToExecutionProposal.blockedUntil),
+    inspectorRow("Audit / Replay / Rollback", `${governance.auditReplayRollback.auditReference} · ${governance.auditReplayRollback.replayReference} · ${governance.auditReplayRollback.rollbackReference}`),
+    inspectorRow("Blocked Execution", (governance.blockedActions || []).join(" · ")),
   ].join("");
 }
 
