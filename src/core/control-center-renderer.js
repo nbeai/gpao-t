@@ -1361,7 +1361,7 @@ function coreWorkSurfaceHtml(panel) {
   const localLoop = surface.firstLocalWorkLoop;
 
   return `
-            <div class="work-thread-preview" data-core-work-surface="read-only">
+            <div class="work-thread-preview" data-core-work-surface="interactive-local">
               <div class="work-surface-grid" aria-label="Session workspace IA" data-session-workspace="session-based-local-ai-os">
                 ${workSignal("세션 레일", `${railGroups.length}개 그룹 · ${sessionActions.length}개 안전 액션`)}
                 ${workSignal("활성 세션", activeSession ? `${activeSession.title} · ${uiLabel(activeSession.state)}` : "없음")}
@@ -1374,7 +1374,7 @@ function coreWorkSurfaceHtml(panel) {
                 <span class="blocked-action"><span class="blocked-action-label">보관</span>보관된 세션은 복구 가능<span class="blocked-action-detail">영구 삭제 없음</span></span>
                 <span class="blocked-action"><span class="blocked-action-label">삭제 대기</span>삭제 대기 취소 가능<span class="blocked-action-detail">recoverable 상태</span></span>
               </div>
-              <div class="work-composer" role="textbox" aria-readonly="true" data-composer-state="draft-not-sent" tabindex="0">
+              <div class="work-composer" role="textbox" aria-readonly="false" data-composer-state="local-submission-enabled" tabindex="0">
                 <strong>${escapeHtml(surface.workspaceThread.composer.label)}</strong>
                 ${escapeHtml(surface.workspaceThread.composer.draftRequest)}
               </div>

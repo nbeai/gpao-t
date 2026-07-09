@@ -212,9 +212,9 @@ describe("GPAO-T Local Control Center readiness", () => {
     assert.ok(snapshot.panels.some((panel) =>
       panel.id === "core-work-surface"
       && panel.status === "ready"
-      && panel.data.interactionMode === "no_script_read_only_preview"
-      && panel.data.workspaceThread.composer.submission === "blocked_in_this_slice"
-      && panel.data.safetyInvariants.submitsInput === false
+      && panel.data.interactionMode === "interactive_local_submission"
+      && panel.data.workspaceThread.composer.submission === "local_submission_enabled"
+      && panel.data.safetyInvariants.submitsInput === true
       && panel.data.safetyInvariants.callsExternalModel === false
       && panel.data.safetyInvariants.executesTools === false
       && panel.data.authoritySummary.closedActions.includes("connector activation")
@@ -432,20 +432,21 @@ describe("GPAO-T Local Control Center readiness", () => {
 
   it("renders a static Local Control Center UI reader without external activation", () => {
     const root = tempRoot();
-    const snapshot = buildControlCenterSnapshot({ root });
+    const now = "2026-07-08T00:03:00.000Z";
+    const snapshot = buildControlCenterSnapshot({ root, now });
     const html = buildControlCenterHtml({ snapshot });
     const render = renderControlCenterHtml({
       root,
       outputPath: "control-center.html",
-      now: "2026-07-08T00:03:00.000Z",
+      now,
     });
     const renderedHtml = readFileSync(render.outputPath, "utf8");
 
     assert.match(html, /GPAO-T Local Control Center/);
     assert.match(html, /정적 UI reader/);
     assert.match(html, /data-panel="core-work-surface"/);
-    assert.match(html, /data-core-work-surface="read-only"/);
-    assert.match(html, /data-composer-state="draft-not-sent"/);
+    assert.match(html, /data-core-work-surface="interactive-local"/);
+    assert.match(html, /data-composer-state="local-submission-enabled"/);
     assert.match(html, /작업 입력/);
     assert.match(html, /닫힌 실행 경계/);
     assert.match(html, /외부 행동 없음/);
@@ -528,7 +529,7 @@ describe("GPAO-T Local Control Center readiness", () => {
     const render = JSON.parse(renderOutput);
 
     assert.match(htmlOutput, /<html lang="ko">/);
-    assert.match(htmlOutput, /data-core-work-surface="read-only"/);
+    assert.match(htmlOutput, /data-core-work-surface="interactive-local"/);
     assert.match(htmlOutput, /운영 영역/);
     assert.match(htmlOutput, /패널/);
     assert.match(htmlOutput, /운영 드릴다운/);
@@ -661,7 +662,7 @@ describe("GPAO-T Local Control Center readiness", () => {
 
     assert.equal(surface.schema, "gpao_t.core_work_surface.v0_1");
     assert.equal(surface.status, "ready");
-    assert.equal(surface.interactionMode, "no_script_read_only_preview");
+    assert.equal(surface.interactionMode, "interactive_local_submission");
     assert.equal(surface.sessionWorkspace.schema, "gpao_t.session_workspace.v0_1");
     assert.equal(surface.sessionWorkspace.layout, "session_rail_active_work_session_inspector");
     assert.equal(surface.sessionWorkspace.productSurface, "session_based_local_ai_operating_workspace");
@@ -698,7 +699,7 @@ describe("GPAO-T Local Control Center readiness", () => {
     assert.equal(surface.sessionWorkspace.visualContract.primaryWorkArea, "wide_conversation_canvas");
     assert.equal(surface.sessionWorkspace.visualContract.centralCardsMinimized, true);
     assert.equal(surface.sessionWorkspace.visualContract.composerPriority, "large_bottom_work_input");
-    assert.equal(surface.workspaceThread.composer.submission, "blocked_in_this_slice");
+    assert.equal(surface.workspaceThread.composer.submission, "local_submission_enabled");
     assert.equal(surface.workspaceThread.threadPreview.length, 2);
     assert.equal(surface.understandingSummary.mode, "read_only_summary_strip");
     assert.equal(surface.understandingSummary.cards.length, 4);
@@ -806,7 +807,7 @@ describe("GPAO-T Local Control Center readiness", () => {
     assert.equal(surface.authoritySummary.closedActions.includes("external action"), true);
     assert.equal(surface.authoritySummary.closedActions.includes("tool activation"), true);
     assert.equal(surface.authoritySummary.closedActions.includes("model connector live execution"), true);
-    assert.equal(surface.safetyInvariants.submitsInput, false);
+    assert.equal(surface.safetyInvariants.submitsInput, true);
     assert.equal(surface.safetyInvariants.callsExternalModel, false);
     assert.equal(surface.safetyInvariants.executesTools, false);
     assert.equal(surface.safetyInvariants.activatesConnectors, false);
@@ -814,7 +815,7 @@ describe("GPAO-T Local Control Center readiness", () => {
     assert.equal(surface.safetyInvariants.usesForm, true);
     assert.equal(surface.safetyInvariants.usesOnlyLocalConfirmationForm, true);
     assert.match(html, /GPAO-T Work Surface/);
-    assert.match(html, /data-core-work-surface="read-only"/);
+    assert.match(html, /data-core-work-surface="interactive-local"/);
     assert.match(html, /data-session-workspace="session-based-local-ai-os"/);
     assert.match(html, /data-session-rail="left"/);
     assert.match(html, /data-active-work-session="center"/);
@@ -882,7 +883,7 @@ describe("GPAO-T Local Control Center readiness", () => {
     assert.match(html, /data-execution-governance-flow="local-record-review"/);
     assert.match(html, /실행 확인 흐름/);
     assert.match(html, /로컬 기록 후 리플레이/);
-    assert.match(html, /data-composer-state="draft-not-sent"/);
+    assert.match(html, /data-composer-state="local-submission-enabled"/);
     assert.match(html, /data-authority-boundary="closed"/);
     assert.doesNotMatch(html, /<script/i);
     assert.match(html, /data-local-confirmation-form="approval-audit-record"/);
@@ -2098,12 +2099,12 @@ describe("GPAO-T Local Control Center readiness", () => {
       assert.equal(health.body.status, "ready");
       assert.equal(page.status, 200);
       assert.match(page.body, /GPAO-T Local Control Center/);
-      assert.match(page.body, /data-core-work-surface="read-only"/);
+      assert.match(page.body, /data-core-work-surface="interactive-local"/);
       assert.match(page.body, /다음 안전 행동/);
       assert.doesNotMatch(page.body, /<script/i);
       assert.equal(workSurface.status, 200);
       assert.match(workSurface.body, /GPAO-T Work Surface/);
-      assert.match(workSurface.body, /data-composer-state="draft-not-sent"/);
+      assert.match(workSurface.body, /data-composer-state="local-submission-enabled"/);
       assert.doesNotMatch(workSurface.body, /<script/i);
       assert.match(workSurface.body, /data-local-confirmation-form="approval-audit-record"/);
       assert.match(workSurface.body, /method="post" action="\/work-surface\/execution-flow\/record"/);

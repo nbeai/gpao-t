@@ -185,18 +185,18 @@ export function buildCoreWorkSurface({
     schema: "gpao_t.core_work_surface.v0_1",
     status: "ready",
     surfaceKind: "user_facing_core_work_surface_first_slice",
-    interactionMode: "no_script_read_only_preview",
+    interactionMode: "interactive_local_submission",
     generatedAt: now,
     workspaceThread: {
       title: "GPAO-T Work Surface",
       language: "ko",
-      mode: "draft_input_visible_no_submit",
+      mode: "interactive_local_submission",
       composer: {
         label: "작업 입력",
-        placeholder: "GPAO-T에게 맡길 일을 적는 자리",
+        placeholder: "GPAO-T에게 맡길 일을 적어주세요.",
         draftRequest,
-        submission: "blocked_in_this_slice",
-        submissionLabel: "미전송",
+        submission: "local_submission_enabled",
+        submissionLabel: "로컬 제출 가능",
       },
       threadPreview: [
         {
@@ -604,7 +604,7 @@ export function buildCoreWorkSurface({
     safetyInvariants: {
       rendersOnly: true,
       acceptsDraftInputVisually: true,
-      submitsInput: false,
+      submitsInput: true,
       callsExternalModel: false,
       executesTools: false,
       activatesConnectors: false,
@@ -890,7 +890,7 @@ export function verifyCoreWorkSurface({ surface = buildCoreWorkSurface(), html }
   const findings = [];
 
   if (surface.schema !== "gpao_t.core_work_surface.v0_1") findings.push("invalid_surface_schema");
-  if (surface.interactionMode !== "no_script_read_only_preview") findings.push("interaction_mode_not_read_only");
+  if (surface.interactionMode !== "interactive_local_submission") findings.push("interaction_mode_not_interactive_local");
   if (surface.sessionWorkspace?.layout !== "session_rail_active_work_session_inspector") {
     findings.push("missing_session_workspace_layout");
   }
@@ -935,7 +935,7 @@ export function verifyCoreWorkSurface({ surface = buildCoreWorkSurface(), html }
   if (surface.sessionWorkspace?.mobile?.layout !== "top_strip_active_session_sheets") {
     findings.push("mobile_session_workspace_contract_missing");
   }
-  if (surface.workspaceThread.composer.submission !== "blocked_in_this_slice") findings.push("composer_submission_open");
+  if (surface.workspaceThread.composer.submission !== "local_submission_enabled") findings.push("composer_submission_not_enabled");
   if (!surface.workspaceThread.threadPreview.some((item) => item.role === "user")) findings.push("missing_user_thread_preview");
   if (!surface.workspaceThread.threadPreview.some((item) => item.role === "gpao-t")) findings.push("missing_gpao_thread_preview");
   if (surface.understandingSummary?.mode !== "read_only_summary_strip") findings.push("missing_understanding_summary");
@@ -1046,7 +1046,7 @@ export function verifyCoreWorkSurface({ surface = buildCoreWorkSurface(), html }
   if (surface.modelToolRoutePreview.liveModelExecution !== false) findings.push("live_model_execution_open");
   if (surface.modelToolRoutePreview.liveToolExecution !== false) findings.push("live_tool_execution_open");
   if (!surface.authoritySummary.closedActions.includes("connector activation")) findings.push("connector_activation_not_closed");
-  if (surface.safetyInvariants.submitsInput !== false) findings.push("input_submission_open");
+  if (surface.safetyInvariants.submitsInput !== true) findings.push("input_submission_not_open");
   if (surface.safetyInvariants.callsExternalModel !== false) findings.push("external_model_open");
   if (surface.safetyInvariants.executesTools !== false) findings.push("tool_execution_open");
   if (surface.safetyInvariants.activatesConnectors !== false) findings.push("connector_activation_open");
@@ -1056,7 +1056,7 @@ export function verifyCoreWorkSurface({ surface = buildCoreWorkSurface(), html }
 
   if (html) {
     if (!html.includes("GPAO-T Work Surface")) findings.push("html_missing_title");
-    if (!html.includes("data-core-work-surface=\"read-only\"")) findings.push("html_missing_surface_marker");
+    if (!html.includes("data-core-work-surface=\"interactive-local\"")) findings.push("html_missing_surface_marker");
     if (!html.includes("data-session-workspace=\"session-based-local-ai-os\"")) findings.push("html_missing_session_workspace_marker");
     if (!html.includes("data-session-rail=\"left\"")) findings.push("html_missing_session_rail");
     if (!html.includes("data-active-work-session=\"center\"")) findings.push("html_missing_active_work_session");
@@ -1096,17 +1096,20 @@ export function verifyCoreWorkSurface({ surface = buildCoreWorkSurface(), html }
     if (!html.includes("data-preview-decision=\"hold\"")) findings.push("html_missing_hold_decision");
     if (!html.includes("미리보기 확인 체크리스트")) findings.push("html_missing_preview_checklist");
     if (!html.includes("아직 실행된 것은 없습니다")) findings.push("html_missing_no_execution_notice");
-    if (!html.includes("data-composer-state=\"draft-not-sent\"")) findings.push("html_missing_composer_marker");
+    if (!html.includes("data-composer-state=\"local-submission-enabled\"")) findings.push("html_missing_composer_marker");
     if (!html.includes("data-authority-boundary=\"closed\"")) findings.push("html_missing_authority_marker");
     if (/<script/i.test(html)) findings.push("script_tag_present");
     if (!html.includes("data-local-confirmation-form=\"approval-audit-record\"")) {
       findings.push("html_missing_local_confirmation_form");
     }
+    if (!html.includes("method=\"post\" action=\"/work-surface/submit\"")) {
+      findings.push("html_missing_interactive_submission_form");
+    }
     if (!html.includes("method=\"post\" action=\"/work-surface/execution-flow/record\"")) {
       findings.push("html_local_confirmation_form_not_scoped");
     }
     const formCount = (html.match(/<form/gi) || []).length;
-    if (formCount !== 1) findings.push("html_unexpected_form_count");
+    if (formCount < 2) findings.push("html_unexpected_form_count");
     if (/<form/i.test(html) && !html.includes("data-local-confirmation-form=\"approval-audit-record\"")) {
       findings.push("unapproved_form_present");
     }
@@ -2229,7 +2232,7 @@ function renderSessionWorkspaceHtml({
     }
     .rail-actions {
       display: grid;
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: 1fr;
       gap: 8px;
       margin: 12px 0;
     }
@@ -2249,6 +2252,9 @@ function renderSessionWorkspaceHtml({
       word-break: keep-all;
     }
     .search-box {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 6px;
       border: 1px solid var(--gpao-border);
       border-radius: var(--gpao-radius-md);
       background: rgba(255,255,255,0.82);
@@ -2256,6 +2262,25 @@ function renderSessionWorkspaceHtml({
       color: var(--gpao-muted);
       font-size: 12px;
       font-weight: 700;
+    }
+    .search-box input,
+    .search-box button {
+      min-width: 0;
+      border: 0;
+      background: transparent;
+      color: var(--gpao-text);
+      font: inherit;
+      font-size: 12px;
+      font-weight: 800;
+    }
+    .search-box input:focus,
+    .composer-box:focus {
+      outline: 2px solid rgba(31, 122, 100, 0.26);
+      outline-offset: 2px;
+    }
+    .search-box button {
+      cursor: pointer;
+      color: var(--gpao-accent);
     }
     .session-group { margin-top: 16px; }
     .session-group-title {
@@ -2646,6 +2671,9 @@ function renderSessionWorkspaceHtml({
       box-shadow: 0 -10px 22px rgba(23, 33, 27, 0.05);
     }
     .composer-box {
+      display: block;
+      width: 100%;
+      resize: vertical;
       margin-top: 10px;
       min-height: 150px;
       border: 1px solid #c8d9ea;
@@ -2657,6 +2685,29 @@ function renderSessionWorkspaceHtml({
       line-height: 1.58;
       word-break: keep-all;
       overflow-wrap: anywhere;
+    }
+    .work-submit-form {
+      display: grid;
+      gap: 10px;
+    }
+    .submit-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .submit-row button {
+      min-height: 40px;
+      border: 1px solid #91b9a7;
+      border-radius: 12px;
+      background: #1f7a64;
+      color: white;
+      padding: 0 16px;
+      font: inherit;
+      font-size: 13px;
+      font-weight: 950;
+      cursor: pointer;
     }
     .session-inspector {
       min-width: 0;
@@ -2848,7 +2899,7 @@ function renderSessionWorkspaceHtml({
     }
   </style>
 </head>
-<body data-core-work-surface="read-only" data-session-workspace="session-based-local-ai-os" data-external-activation="blocked">
+<body data-core-work-surface="interactive-local" data-session-workspace="session-based-local-ai-os" data-external-activation="blocked">
   <div class="mobile-strip" data-mobile-operating-strip="visible">
     <div>
       <strong>${escapeHtml(activeSession.title)}</strong>
@@ -2865,10 +2916,16 @@ function renderSessionWorkspaceHtml({
         </div>
         <span class="state-chip">${escapeHtml(uiLabel(workSurface.status))}</span>
       </div>
-      <div class="rail-actions">
-        ${workspace.sessionRail.actions.map((action) => `<button class="icon-button" type="button" aria-disabled="true">${escapeHtml(action.label)}</button>`).join("")}
-      </div>
-      <div class="search-box" aria-label="세션 검색">세션 검색 · 읽기 전용</div>
+      <form class="rail-actions" method="post" action="/sessions/action" data-session-action-form="new-session">
+        <input type="hidden" name="action" value="new_session">
+        <input type="hidden" name="title" value="새 작업 세션">
+        <input type="hidden" name="request" value="">
+        <button class="icon-button" type="submit">새 세션</button>
+      </form>
+      <form class="search-box" method="get" action="/work-surface" aria-label="세션 검색" data-session-search-form="local-filter">
+        <input name="q" placeholder="세션 검색" aria-label="세션 검색">
+        <button type="submit">검색</button>
+      </form>
       ${activeGroups.map((group) => `
       <section class="session-group" data-session-group="${escapeHtml(group.id)}">
         <div class="session-group-title"><span>${escapeHtml(group.label)}</span><span>${escapeHtml(String(group.sessions.length))}</span></div>
@@ -2986,10 +3043,14 @@ function renderSessionWorkspaceHtml({
         </div>
         <section class="composer-card" aria-label="작업 입력">
           <strong class="section-label">작업 입력</strong>
-          <div class="composer-box" role="textbox" aria-readonly="true" data-composer-state="draft-not-sent" tabindex="0">
-            ${escapeHtml(workspace.activeWorkSession.composer.placeholder)}
-          </div>
-          <p class="muted">현재 입력은 초안입니다. 전송, 모델 호출, 커넥터 실행은 열리지 않습니다.</p>
+          <form class="work-submit-form" method="post" action="/work-surface/submit" data-work-submit-form="interactive-local">
+            <textarea class="composer-box" name="request" data-composer-state="local-submission-enabled" rows="5" placeholder="${escapeHtml(workspace.activeWorkSession.composer.placeholder)}">${escapeHtml(activeSession.thread[0]?.text || "")}</textarea>
+            <div class="submit-row">
+              <button type="submit">작업 맡기기</button>
+              <span class="muted">로컬 task packet, 모델 초안, 승인/감사 기록을 생성합니다.</span>
+            </div>
+          </form>
+          <p class="muted">외부 provider 호출은 인증/승인 전에는 열지 않고, 현재는 로컬 모델 초안으로 응답합니다.</p>
         </section>
       </div>
     </section>

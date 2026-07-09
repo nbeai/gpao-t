@@ -26,6 +26,7 @@ import {
   verifyWorkSurfaceExecutionFlow,
 } from "./work-surface-execution-flow.js";
 import {
+  applySessionWorkspaceAction,
   readSessionWorkspaceState,
   verifySessionWorkspaceBehavior,
 } from "./session-workspace.js";
@@ -85,6 +86,9 @@ import {
   invokeModelLocally,
   verifyModelInvocation,
 } from "./model-invocation.js";
+import {
+  buildFirstLocalWorkLoop,
+} from "./first-local-work-loop.js";
 import {
   buildExecutionRuntimePlan,
   inspectReadOnlyConnector,
@@ -253,6 +257,75 @@ export async function startControlCenterPreviewServer({
 
   const server = createServer(async (request, response) => {
     const url = new URL(request.url || "/", `http://${host}`);
+    if (request.method === "POST" && url.pathname === "/sessions/action") {
+      const body = await readRequestBody(request);
+      const parsedBody = parseGenericRequestBody(body, request.headers["content-type"]);
+      const result = applySessionWorkspaceAction({
+        root,
+        action: parsedBody.action,
+        sessionId: parsedBody.sessionId,
+        title: parsedBody.title,
+        request: parsedBody.request,
+        now,
+      });
+      const wantsJson = String(request.headers.accept || "").includes("application/json");
+      if (wantsJson) {
+        respondJson(response, result.status === "blocked" ? 409 : 200, result);
+        return;
+      }
+      response.writeHead(result.status === "blocked" ? 303 : 303, {
+        location: "/work-surface",
+        "cache-control": "no-store",
+      });
+      response.end();
+      return;
+    }
+
+    if (request.method === "POST" && url.pathname === "/work-surface/submit") {
+      const body = await readRequestBody(request);
+      const parsedBody = parseGenericRequestBody(body, request.headers["content-type"]);
+      const requestText = String(parsedBody.request || "").trim();
+      const loop = buildFirstLocalWorkLoop({
+        root,
+        request: requestText,
+        sourceSurface: "/work-surface",
+        confirmationState: "confirmed_for_local_record_only",
+        writeLocalRecords: true,
+        now,
+      });
+      const modelResult = invokeModelLocally({ request: requestText, now });
+      const sessionResult = applySessionWorkspaceAction({
+        root,
+        action: "new_session",
+        title: requestText ? requestText.slice(0, 42) : "새 작업 세션",
+        request: requestText,
+        now,
+      });
+      const result = {
+        schema: "gpao_t.work_surface_submit_result.v1",
+        status: requestText ? "completed_local_work" : "blocked",
+        request: requestText,
+        sessionResult,
+        loop,
+        modelResult,
+        externalModelCall: false,
+        toolExecution: false,
+        connectorActivation: false,
+      };
+      const wantsJson = String(request.headers.accept || "").includes("application/json");
+      if (wantsJson) {
+        respondJson(response, result.status === "blocked" ? 409 : 200, result);
+        return;
+      }
+      respondHtml(response, result.status === "blocked" ? 409 : 200, renderWorkSurfaceSubmitResultHtml({
+        result,
+        requestText,
+      }), {
+        "x-gpao-t-surface": "work-surface-submit-result",
+      });
+      return;
+    }
+
     if (request.method === "POST" && url.pathname === "/work-surface/execution-flow/record") {
       const body = await readRequestBody(request);
       const parsedBody = parseRecordRequestBody(body, request.headers["content-type"]);
@@ -783,13 +856,20 @@ export async function verifyControlCenterPreviewServing({
     if (/<script/i.test(workSurface.body)) {
       findings.push("work_surface_script_tag_present");
     }
-    if (/<form/i.test(workSurface.body) && !workSurface.body.includes("data-local-confirmation-form=\"approval-audit-record\"")) {
+    if (
+      /<form/i.test(workSurface.body)
+      && !workSurface.body.includes("data-local-confirmation-form=\"approval-audit-record\"")
+      && !workSurface.body.includes("data-work-submit-form=\"interactive-local\"")
+    ) {
       findings.push("work_surface_unapproved_form_present");
+    }
+    if (!workSurface.body.includes("action=\"/work-surface/submit\"")) {
+      findings.push("work_surface_submit_form_missing");
     }
     if (!workSurface.body.includes("action=\"/work-surface/execution-flow/record\"")) {
       findings.push("work_surface_local_record_form_missing");
     }
-    if (!workSurface.body.includes("data-core-work-surface=\"read-only\"")) {
+    if (!workSurface.body.includes("data-core-work-surface=\"interactive-local\"")) {
       findings.push("work_surface_missing_marker");
     }
     if (
@@ -1137,6 +1217,10 @@ function readRequestBody(request) {
 }
 
 function parseRecordRequestBody(body, contentType = "") {
+  return parseGenericRequestBody(body, contentType);
+}
+
+function parseGenericRequestBody(body, contentType = "") {
   if (String(contentType).includes("application/json")) {
     try {
       return JSON.parse(body || "{}");
@@ -1147,9 +1231,143 @@ function parseRecordRequestBody(body, contentType = "") {
   const params = new URLSearchParams(body || "");
   return {
     request: params.get("request") || undefined,
+    action: params.get("action") || undefined,
+    sessionId: params.get("sessionId") || undefined,
+    title: params.get("title") || undefined,
     confirmationChoice: params.get("confirmationChoice") || undefined,
     confirmationState: params.get("confirmationState") || undefined,
   };
+}
+
+function renderWorkSurfaceSubmitResultHtml({ result, requestText }) {
+  const completed = result.status === "completed_local_work";
+  const loop = result.loop || {};
+  const model = result.modelResult || {};
+  const approvalId = loop.approvalAudit?.recordWrite?.approvalRecordId
+    || loop.approvalAudit?.writeResult?.approvalRecord?.id
+    || "기록 확인 필요";
+  const auditId = loop.approvalAudit?.recordWrite?.auditRecordId
+    || loop.approvalAudit?.writeResult?.auditRecord?.id
+    || "기록 확인 필요";
+  const modelText = model.output?.text || "로컬 모델 초안을 만들지 못했습니다.";
+  return `<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>GPAO-T 작업 결과</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f6f7f4;
+      --surface: #ffffff;
+      --soft: #f8faf6;
+      --line: #dfe6de;
+      --text: #17211b;
+      --muted: #59675e;
+      --accent: #1f7a64;
+      --blue: #e8f1fa;
+      --warn: #fff4d8;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: Pretendard, "Apple SD Gothic Neo", "SF Pro Text", system-ui, sans-serif;
+      line-height: 1.58;
+    }
+    main {
+      width: min(1080px, calc(100vw - 28px));
+      margin: 0 auto;
+      padding: 24px 0;
+    }
+    header, section {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: var(--surface);
+      padding: 18px;
+      margin-bottom: 12px;
+    }
+    header {
+      background: ${completed ? "#edf7f2" : "var(--warn)"};
+      border-color: ${completed ? "#b7d8ca" : "#e5cc87"};
+    }
+    h1, h2, p { margin: 0; letter-spacing: 0; }
+    h1 { font-size: 22px; line-height: 1.25; }
+    h2 { font-size: 15px; margin-bottom: 8px; }
+    p, li { color: var(--muted); word-break: keep-all; overflow-wrap: anywhere; }
+    .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+    .item {
+      min-width: 0;
+      border-top: 1px solid var(--line);
+      padding-top: 10px;
+    }
+    .item strong, .item span { display: block; overflow-wrap: anywhere; word-break: keep-all; }
+    .item strong { color: var(--muted); font-size: 12px; }
+    .item span { margin-top: 5px; font-weight: 850; }
+    .draft {
+      background: var(--blue);
+      border-color: #c7d9ec;
+    }
+    .boundary {
+      background: var(--warn);
+      border-color: #e8ce89;
+    }
+    .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    a {
+      color: #255f99;
+      font-weight: 850;
+      text-decoration: none;
+      border: 1px solid #bfd2e5;
+      border-radius: 999px;
+      background: var(--blue);
+      padding: 8px 11px;
+    }
+    @media (max-width: 680px) {
+      main { width: min(100vw - 20px, 430px); padding: 12px 0; }
+      header, section { padding: 14px; border-radius: 12px; }
+      .grid { grid-template-columns: 1fr; }
+      h1 { font-size: 18px; }
+    }
+  </style>
+</head>
+<body data-work-surface-submit-result="${completed ? "completed-local-work" : "blocked"}" data-external-activation="blocked">
+  <main>
+    <header>
+      <p>${completed ? "로컬 작업 완료" : "작업 보류"}</p>
+      <h1>${completed ? "작업을 로컬로 처리했습니다" : "입력이 필요합니다"}</h1>
+      <p>${completed ? "사용자 입력을 task packet으로 만들고, 로컬 모델 초안과 승인/감사 기록을 연결했습니다." : "비어 있는 입력은 처리하지 않았습니다."}</p>
+    </header>
+    <section>
+      <h2>사용자 입력</h2>
+      <p>${escapeHtml(requestText || "입력 없음")}</p>
+    </section>
+    <section class="draft">
+      <h2>GPAO-T 로컬 응답 초안</h2>
+      <p>${escapeHtml(modelText)}</p>
+    </section>
+    <section>
+      <h2>작업 패킷 / 기록</h2>
+      <div class="grid">
+        <div class="item"><strong>Task Packet</strong><span>${escapeHtml(loop.packet?.id || "생성 안 됨")}</span></div>
+        <div class="item"><strong>Model Route</strong><span>${escapeHtml(loop.modelRoute?.selectedProvider || loop.modelRoute?.route || "local.deterministic")}</span></div>
+        <div class="item"><strong>Approval Record</strong><span>${escapeHtml(approvalId)}</span></div>
+        <div class="item"><strong>Audit Record</strong><span>${escapeHtml(auditId)}</span></div>
+      </div>
+    </section>
+    <section class="boundary">
+      <h2>아직 잠긴 것</h2>
+      <p>외부 provider 호출, 도구/CLI/MCP 실행, 커넥터 활성화, 외부 전송, 비용/파괴 행동, 지속 기억 승격은 아직 실행하지 않았습니다.</p>
+    </section>
+    <section class="actions">
+      <a href="/work-surface">작업 표면으로 돌아가기</a>
+      <a href="/sessions">세션 상태 JSON 보기</a>
+      <a href="/adapters/model-providers">모델 연결 상태 보기</a>
+    </section>
+  </main>
+</body>
+</html>`;
 }
 
 function renderWorkSurfaceExecutionRecordResultHtml({ result, requestText }) {
