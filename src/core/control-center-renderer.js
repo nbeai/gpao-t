@@ -1350,6 +1350,11 @@ function panelHtml(panel) {
 function coreWorkSurfaceHtml(panel) {
   if (panel.id !== "core-work-surface" || !panel.data) return "";
   const surface = panel.data;
+  const workspace = surface.sessionWorkspace;
+  const railGroups = workspace?.sessionRail?.groups || [];
+  const sessionActions = workspace?.sessionRail?.sessionActions || [];
+  const activeSession = workspace?.activeWorkSession;
+  const inspectorTabs = workspace?.inspector?.tabs || [];
   const selectedPacks = surface.skillRoutePreview?.selectedPacks || [];
   const contextCandidates = surface.contextPreview?.retrievedCandidates || [];
   const closedActions = surface.authoritySummary?.closedActions || [];
@@ -1357,6 +1362,18 @@ function coreWorkSurfaceHtml(panel) {
 
   return `
             <div class="work-thread-preview" data-core-work-surface="read-only">
+              <div class="work-surface-grid" aria-label="Session workspace IA" data-session-workspace="session-based-local-ai-os">
+                ${workSignal("세션 레일", `${railGroups.length}개 그룹 · ${sessionActions.length}개 안전 액션`)}
+                ${workSignal("활성 세션", activeSession ? `${activeSession.title} · ${uiLabel(activeSession.state)}` : "없음")}
+                ${workSignal("인스펙터", `${inspectorTabs.length}개 검토 영역`)}
+                ${workSignal("모바일", workspace?.mobile?.forceThreeColumns === false ? "시트 방식 · 3컬럼 강제 없음" : "확인 필요")}
+              </div>
+              <div class="blocked-actions" aria-label="Session workspace recoverable actions">
+                <strong>세션 작업공간</strong>
+                <span class="blocked-action"><span class="blocked-action-label">구조</span>좌측 세션 레일 · 중앙 활성 작업 세션 · 우측 인스펙터<span class="blocked-action-detail">Control Center는 보조 검토 표면</span></span>
+                <span class="blocked-action"><span class="blocked-action-label">보관</span>보관된 세션은 복구 가능<span class="blocked-action-detail">영구 삭제 없음</span></span>
+                <span class="blocked-action"><span class="blocked-action-label">삭제 대기</span>삭제 대기 취소 가능<span class="blocked-action-detail">recoverable 상태</span></span>
+              </div>
               <div class="work-composer" role="textbox" aria-readonly="true" data-composer-state="draft-not-sent" tabindex="0">
                 <strong>${escapeHtml(surface.workspaceThread.composer.label)}</strong>
                 ${escapeHtml(surface.workspaceThread.composer.draftRequest)}

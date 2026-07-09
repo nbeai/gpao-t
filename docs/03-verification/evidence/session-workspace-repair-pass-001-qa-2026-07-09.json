@@ -1,0 +1,93 @@
+{
+  "schema": "gpao_t.visual_qa.session_workspace_repair_pass_001.v0_1",
+  "stage": "Session Workspace Repair Pass 001",
+  "date": "2026-07-09",
+  "status": "ready",
+  "implementationContract": "docs/02-design/GPAO-T-SESSION-WORKSPACE-DESIGN-REPAIR-PACK-v0.1-ko.md",
+  "surfaceDecision": {
+    "primary": "session_based_local_ai_operating_workspace",
+    "ia": "left_session_rail_center_active_work_session_right_inspector",
+    "notMessenger": true,
+    "notGenericDashboard": true,
+    "controlCenterRole": "secondary_inspector"
+  },
+  "sessionStates": {
+    "active": "진행 중",
+    "draft": "초안",
+    "waiting_approval": "확인 필요",
+    "blocked": "멈춤",
+    "archived": "보관됨",
+    "delete_pending": "삭제 대기"
+  },
+  "recoverableSessionActions": [
+    "새 세션",
+    "세션 검색",
+    "이름 변경",
+    "보관",
+    "복구",
+    "삭제 대기",
+    "삭제 대기 취소"
+  ],
+  "blockedActions": [
+    "permanent_delete",
+    "messenger_channel_primary_ui",
+    "external_send",
+    "model_call",
+    "tool_cli_mcp_execution",
+    "connector_activation",
+    "credential_access",
+    "paid_or_destructive_action",
+    "durable_memory_promotion"
+  ],
+  "screenshots": {
+    "desktopWorkSession": "docs/03-verification/evidence/session-workspace-repair-pass-001-work-session-desktop-1440x960.png",
+    "desktopControlCenter": "docs/03-verification/evidence/session-workspace-repair-pass-001-control-center-desktop-1440x960.png",
+    "mobileWorkSession": "docs/03-verification/evidence/session-workspace-repair-pass-001-work-session-mobile-390x844.png",
+    "mobileSessionListSheet": "docs/03-verification/evidence/session-workspace-repair-pass-001-mobile-session-list-sheet-390x844.png",
+    "mobileInspectorSheet": "docs/03-verification/evidence/session-workspace-repair-pass-001-mobile-inspector-sheet-390x844.png",
+    "mobileInspectorSheetElement": "docs/03-verification/evidence/session-workspace-repair-pass-001-mobile-inspector-sheet-element.png"
+  },
+  "visualQa": {
+    "humanVisualQa": 4.45,
+    "visualPolish": 4.35,
+    "colorQuality": 4.45,
+    "layoutRhythm": 4.5,
+    "koreanTypography": 4.45,
+    "toneAndManner": 4.45,
+    "authorityClarity": 4.7,
+    "overallProductFeel": 4.45
+  },
+  "verifiedSignals": [
+    "desktop_session_rail_visible",
+    "desktop_active_work_session_centered",
+    "desktop_right_inspector_visible",
+    "control_center_secondary_inspector_role_visible",
+    "archived_session_visible",
+    "delete_pending_and_cancel_visible",
+    "authority_boundary_visible",
+    "mobile_top_operating_strip_visible",
+    "mobile_three_column_layout_not_forced",
+    "mobile_session_sheet_visible",
+    "mobile_inspector_sheet_visible",
+    "korean_labels_not_clipped",
+    "no_horizontal_overflow_observed",
+    "no_script_form_or_external_activation_opened"
+  ],
+  "humanReview": {
+    "desktopWorkSession": "The product face now reads as a session workspace: left session rail, centered active session, and right review inspector are visible in one 1440x960 viewport.",
+    "desktopControlCenter": "Control Center now reads as a secondary inspector with session workspace summaries instead of the primary product dashboard.",
+    "mobileWorkSession": "The mobile first viewport shows a top operating strip, active session, Korean labels, and no forced three-column layout.",
+    "mobileSheets": "Session list and inspector sheet areas are visible and readable. The viewport screenshots intentionally show their scrolled sheet context; an additional element capture isolates the inspector sheet."
+  },
+  "remainingDesignRisks": [
+    "Some inspector-depth references such as local_record_replay remain technical and should be translated in a later polish pass.",
+    "The visible product title still uses 'Work Surface' as a product identifier; future Korean naming may make this more native.",
+    "Mobile sheet routing is represented by hash anchors in the no-script reader; the future interactive shell should provide real sheet controls.",
+    "The browser reports a favicon.ico 404 during one Work Surface capture; it is non-blocking but can be cleaned up."
+  ],
+  "openDesignMcp": {
+    "attempted": true,
+    "result": "unavailable_transport_closed",
+    "fallback": "implementation followed the mandatory repair pack and local visual evidence"
+  }
+}

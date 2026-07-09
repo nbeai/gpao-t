@@ -261,3 +261,24 @@ GPAO-T Design Realization Pass 002:
 - QA result: human visual QA 4.2, visual polish 4.1, color quality 4.4, layout rhythm 4.1, Korean typography 4.2, tone-and-manner 4.2.
 - Remaining risk: Control Center technical sidebar language, English pack descriptions in Work Surface right rail, fallback icon system, and one fallback desktop capture dimension should be improved in the next visual readiness pass.
 - Required blocked boundary: actual approval record write, audit write, dry-run invocation, tool/CLI/MCP execution, connector activation, credential access, external send, paid/destructive action, and durable memory promotion remain blocked.
+
+Session Workspace Repair Pass 001:
+- Implementation contract: `docs/02-design/GPAO-T-SESSION-WORKSPACE-DESIGN-REPAIR-PACK-v0.1-ko.md`
+- QA report: `docs/03-verification/evidence/session-workspace-repair-pass-001-qa-2026-07-09.json`
+- Human-readable report: `docs/03-verification/evidence/SESSION-WORKSPACE-REPAIR-PASS-001-QA-2026-07-09.md`
+- Implemented IA: left session rail -> center active work session -> right context / authority / execution inspector.
+- Session states: `active` = 진행 중, `draft` = 초안, `waiting_approval` = 확인 필요, `blocked` = 멈춤, `archived` = 보관됨, `delete_pending` = 삭제 대기.
+- Session actions: 새 세션, 세션 검색, 이름 변경, 보관, 복구, 삭제 대기, 삭제 대기 취소. Permanent delete remains closed.
+- Work Session change: central screen now presents session title/state, user request thread, GPAO-T understanding, Context Mesh / Skill / Model preview, local draft preview, execution boundary, and composer.
+- Control Center change: Control Center is kept as a secondary inspector and now summarizes the session workspace IA instead of becoming the primary product face.
+- Inspector change: right inspector exposes 맥락, 권한, 모델, 도구, 기록, 되돌리기 as reviewable depth areas.
+- Visual evidence:
+  - Desktop Work Session: `docs/03-verification/evidence/session-workspace-repair-pass-001-work-session-desktop-1440x960.png`
+  - Desktop Control Center: `docs/03-verification/evidence/session-workspace-repair-pass-001-control-center-desktop-1440x960.png`
+  - Mobile Work Session: `docs/03-verification/evidence/session-workspace-repair-pass-001-work-session-mobile-390x844.png`
+  - Mobile session list sheet: `docs/03-verification/evidence/session-workspace-repair-pass-001-mobile-session-list-sheet-390x844.png`
+  - Mobile inspector sheet: `docs/03-verification/evidence/session-workspace-repair-pass-001-mobile-inspector-sheet-390x844.png`
+  - Mobile inspector sheet element: `docs/03-verification/evidence/session-workspace-repair-pass-001-mobile-inspector-sheet-element.png`
+- Visual QA result: human visual QA 4.45, visual polish 4.35, color quality 4.45, layout rhythm 4.5, Korean typography 4.45, tone-and-manner 4.45, authority clarity 4.7, overall product feel 4.45.
+- Checked invariant: no messenger/channel-primary UI, no generic dashboard primary surface, no permanent delete, no raw enum in the central user-facing work session, no forced mobile three-column layout, no script/form/external activation, no model call, no tool/CLI/MCP execution, no connector activation, no external send, and no durable memory promotion.
+- Remaining risk: inspector-depth technical references, English `Work Surface` product identifier, hash-anchor mobile sheet QA, and favicon 404 cleanup should be handled in a later polish/interactive shell pass.

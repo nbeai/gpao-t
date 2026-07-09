@@ -1,21 +1,21 @@
 # What We Are Building
 
-GPAO-T is a local personal AI operating system whose core work surface lets a user hand off work, inspect how the system understood the request, see Context Mesh / Memory Wiki / skill / model / authority routes, and review execution proposals before anything mutates.
+GPAO-T is a Growth Personal AI Operating System with T-cell theory at its kernel. The product face is a session-based local AI operating workspace where a user creates, continues, archives, restores, and safely reviews work sessions.
 
 ## Current Phase
 
-- Phase: product loop substrate
-- Command: Visual Product Polish Pass 002 + Approval/Audit Local Record Substrate v1
-- Status: implemented but needs review because BEAI closeout still has product-quality/session blockers
+- Phase: session workspace substrate
+- Command: Session Workspace Repair Pass 001
+- Status: implemented and verified
 
 ## User Mode
 
-- Mode: Korean-first general user and developer-friendly work surface
-- Task type: GPAO-T local runtime product slice
+- Mode: Korean-first general user plus developer-friendly local AI work surface
+- Task type: local AI operating workspace
 
 ## First Workflow
 
-Current first workflow: user enters work in the Work Surface, GPAO-T previews understanding, route, authority, execution proposal, and can now write/read/replay local approval/audit records without opening external execution.
+The user enters or resumes a work session. GPAO-T shows what it understood, which Context Mesh / Skill / Model route may be used, what remains blocked before execution, and what local draft or result preview exists.
 
 ## Companion Principle
 
@@ -23,16 +23,14 @@ AI does the work. User keeps authority.
 
 ## AI First
 
-- AI/developer verifies first success path for the current user-facing surface.
-- AI/developer verifies empty or first-time state before asking the user to test.
-- AI/developer verifies likely failure or recovery state before claiming completion.
-- AI/developer inspects the main visual flow when a UI exists.
+- AI/developer verifies first success path for the session workspace.
+- AI/developer verifies empty, blocked, and recoverable session states before claiming a product slice is ready.
+- AI/developer inspects desktop/mobile visual evidence before calling UI work complete.
 
 ## User Authority
 
-- Confirm whether the visible work rhythm and Korean product language match the intended GPAO-T direction.
-- Approve any taste, brand, operating policy, external account, deployment, public release, paid/destructive action, credential access, connector live activation, or durable memory promotion.
+The user approves taste, brand, operating policy, external account use, deployment, public release, paid/destructive action, credential access, connector live activation, durable memory promotion, or permanent deletion.
 
 ## Latest Summary
 
-Visual Product Polish Pass 002 cleaned remaining approval/right-rail language and preserved desktop/mobile screenshot evidence. Approval/Audit Local Record Substrate v1 added local JSONL approval/audit write, read, replay, rollback reference, CLI/Gateway routes, UI confirmation, and regression tests. Automated checks pass; closeout language remains blocked by BEAI product-quality/session blockers.
+`Session Workspace Repair Pass 001` moved GPAO-T from a panel-heavy dashboard shape to the intended local AI session workspace: left session rail, center active work session, right inspector, and mobile sheet-oriented layout.

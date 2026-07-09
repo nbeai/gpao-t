@@ -24,10 +24,29 @@ const CLOSED_ACTIONS = [
   "recurring automation",
 ];
 
+const SESSION_STATE_LABELS = {
+  active: "진행 중",
+  draft: "초안",
+  waiting_approval: "확인 필요",
+  blocked: "멈춤",
+  archived: "보관됨",
+  delete_pending: "삭제 대기",
+};
+
 const UI_LABELS = {
   ready: "준비됨",
   review: "검토 필요",
   blocked: "잠김",
+  active: "진행 중",
+  draft: "초안",
+  waiting_approval: "확인 필요",
+  archived: "보관됨",
+  delete_pending: "삭제 대기",
+  rename: "이름 변경",
+  archive: "보관",
+  restore: "복구",
+  mark_delete_pending: "삭제 대기",
+  cancel_delete_pending: "삭제 대기 취소",
   allowed: "허용됨",
   draft_not_sent: "초안 · 미전송",
   preview_only: "미리보기만",
@@ -205,13 +224,13 @@ export function buildCoreWorkSurface({
         {
           id: "understood-task",
           label: "이해한 일",
-          value: turnPreview.taskPacket.objective,
+          value: userFacingObjective(turnPreview.taskPacket.objective),
           tone: "ready",
         },
         {
           id: "context-source",
           label: "맥락 근거",
-          value: primaryContext?.anchor || "admitted context 없음",
+          value: primaryContext?.anchor || "채택된 맥락 없음",
           tone: primaryContext ? "ready" : "review",
         },
         {
@@ -237,7 +256,7 @@ export function buildCoreWorkSurface({
           title: "작업 브리프",
           summary: "현재 초안을 실행하지 않고 목표와 상태를 먼저 읽는다.",
           items: [
-            `목표: ${turnPreview.taskPacket.objective}`,
+            `목표: ${userFacingObjective(turnPreview.taskPacket.objective)}`,
             `입력 신호: ${turnPreview.inputSignal.kind}`,
             `현재 대상: ${turnPreview.taskPacket.activeTargetId}`,
           ],
@@ -280,7 +299,7 @@ export function buildCoreWorkSurface({
         {
           id: "understood-input",
           label: "GPAO-T가 이해한 일",
-          value: turnPreview.taskPacket.objective,
+          value: userFacingObjective(turnPreview.taskPacket.objective),
           state: "confirm_before_draft",
         },
         {
@@ -317,7 +336,7 @@ export function buildCoreWorkSurface({
       headline: "이렇게 처리될 예정입니다",
       bridgeFromConfirmation:
         "위 확인 카드가 맞다면 아래 preview가 다음 작업 흐름입니다. 다르면 수정 필요나 보류로 판단합니다.",
-      understoodTask: turnPreview.taskPacket.objective,
+      understoodTask: userFacingObjective(turnPreview.taskPacket.objective),
       expectedOutputShape: {
         label: "예상 출력 형태",
         value: "작업 요약, 선택된 맥락, 권한 경계, 다음 안전 행동을 포함한 로컬 초안 미리보기",
@@ -342,7 +361,7 @@ export function buildCoreWorkSurface({
         {
           id: "understood-task",
           label: "이해한 작업",
-          value: turnPreview.taskPacket.objective,
+          value: userFacingObjective(turnPreview.taskPacket.objective),
           state: draftRequest.trim() ? "ready" : "empty",
         },
         {
@@ -473,6 +492,17 @@ export function buildCoreWorkSurface({
       blockedActions: firstLocalWorkLoopPreview.blockedActions,
       nextSafeAction: firstLocalWorkLoopPreview.nextSafeAction,
     },
+    sessionWorkspace: buildSessionWorkspace({
+      draftRequest,
+      now,
+      turnPreview,
+      primaryContext,
+      primarySkillPack,
+      contextPreview,
+      skillExecutionPlan,
+      modelRoute,
+      firstLocalWorkLoopPreview,
+    }),
     executionProposalConfirmation: {
       schema: "gpao_t.work_surface_execution_proposal_confirmation.v0_1",
       status: "visible_preview_only",
@@ -591,11 +621,339 @@ export function buildCoreWorkSurface({
   };
 }
 
+function buildSessionWorkspace({
+  draftRequest,
+  now,
+  turnPreview,
+  primaryContext,
+  primarySkillPack,
+  contextPreview,
+  skillExecutionPlan,
+  modelRoute,
+  firstLocalWorkLoopPreview,
+}) {
+  const sessions = buildSessionList({ draftRequest, now, turnPreview });
+  const activeSession = sessions.find((session) => session.state === "active") || sessions[0];
+  const sessionStates = Object.entries(SESSION_STATE_LABELS).map(([id, label]) => ({ id, label }));
+  const sessionActions = [
+    { id: "rename", label: "이름 변경", opensMutationNow: false },
+    { id: "archive", label: "보관", opensMutationNow: false },
+    { id: "restore", label: "복구", opensMutationNow: false },
+    { id: "mark_delete_pending", label: "삭제 대기", opensPermanentDelete: false },
+    { id: "cancel_delete_pending", label: "삭제 대기 취소", opensPermanentDelete: false },
+  ];
+
+  return {
+    schema: "gpao_t.session_workspace.v0_1",
+    status: "ready",
+    designSource: "docs/02-design/GPAO-T-SESSION-WORKSPACE-DESIGN-REPAIR-PACK-v0.1-ko.md",
+    repairPass: {
+      id: "session_workspace_repair_pass_001",
+      evidence: "docs/03-verification/evidence/session-workspace-repair-pass-001-qa-2026-07-09.json",
+      humanReport: "docs/03-verification/evidence/SESSION-WORKSPACE-REPAIR-PASS-001-QA-2026-07-09.md",
+    },
+    layout: "session_rail_active_work_session_inspector",
+    productSurface: "session_based_local_ai_operating_workspace",
+    notMessenger: true,
+    notGenericDashboard: true,
+    sessionStates,
+    sessionRail: {
+      label: "세션",
+      actions: [
+        { id: "new_session", label: "새 세션", enabled: false, reason: "read_only_preview" },
+        { id: "search_sessions", label: "세션 검색", enabled: false, reason: "read_only_preview" },
+      ],
+      groups: [
+        {
+          id: "recent-active",
+          label: "최근 / 활성 세션",
+          sessions: sessions.filter((session) => ["active", "draft", "waiting_approval", "blocked"].includes(session.state)),
+        },
+        {
+          id: "project",
+          label: "GPAO-T 작업공간",
+          sessions: sessions.filter((session) => session.project === "GPAO-T"),
+        },
+        {
+          id: "archived",
+          label: "보관된 세션",
+          sessions: sessions.filter((session) => ["archived", "delete_pending"].includes(session.state)),
+        },
+      ],
+      sessionActions,
+      permanentDelete: {
+        enabled: false,
+        replacement: "delete_pending",
+        recoveryAction: "cancel_delete_pending",
+      },
+    },
+    activeWorkSession: {
+      id: activeSession.id,
+      title: activeSession.title,
+      state: activeSession.state,
+      stateLabel: SESSION_STATE_LABELS[activeSession.state],
+      thread: [
+        { role: "user", label: "사용자 요청", text: draftRequest, state: "draft" },
+        {
+          role: "gpao-t",
+          label: "GPAO-T 이해",
+          text: turnPreview.userVisibleState.summary,
+          state: "preview_only",
+        },
+      ],
+      sections: [
+        {
+          id: "session-header",
+          label: "세션 제목/상태",
+          value: `${activeSession.title} · ${SESSION_STATE_LABELS[activeSession.state]}`,
+        },
+        {
+          id: "understanding",
+          label: "GPAO-T가 이해한 내용",
+          value: userFacingObjective(turnPreview.taskPacket.objective),
+        },
+        {
+          id: "route-preview",
+          label: "맥락 / 스킬 / 모델",
+          value: `${primaryContext?.anchor || "맥락 후보 없음"} · ${primarySkillPack?.title || "핵심 사고 정리"} · ${modelRoute.route}`,
+        },
+        {
+          id: "local-draft",
+          label: "로컬 미리보기",
+          value: firstLocalWorkLoopPreview.localDraftPreview?.headline || "이렇게 처리될 예정입니다",
+        },
+        {
+          id: "authority-boundary",
+          label: "실행 경계",
+          value: "아직 실행하지 않음 · 외부 전송 없음 · 도구 실행 없음",
+        },
+        {
+          id: "composer",
+          label: "작업 입력",
+          value: "이 작업에서 GPAO-T에게 맡길 내용을 입력하세요.",
+        },
+      ],
+      composer: {
+        placeholder: "이 작업에서 GPAO-T에게 맡길 내용을 입력하세요.",
+        state: "draft_not_sent",
+        noExternalSendAmbiguity: true,
+      },
+    },
+    inspector: {
+      label: "인스펙터",
+      defaultCollapsedBelowWidth: 1100,
+      tabs: [
+        {
+          id: "context",
+          label: "맥락",
+          state: contextPreview.status,
+          evidence: primaryContext?.anchor || "강한 후보 없음",
+          nextSafeAction: "현재 요청에 맞는 맥락만 주 맥락으로 둡니다.",
+        },
+        {
+          id: "authority",
+          label: "권한",
+          state: "locked",
+          authorityLevel: "미리보기만",
+          evidence: "아직 실행하지 않음",
+          nextSafeAction: "실행성 행동 전 승인 경계를 유지합니다.",
+        },
+        {
+          id: "model",
+          label: "모델",
+          state: "preview_only",
+          evidence: modelRoute.adapterSelection?.selected?.id || "로컬 후보",
+          nextSafeAction: "provider 호출은 열지 않습니다.",
+        },
+        {
+          id: "tools",
+          label: "도구",
+          state: "blocked",
+          authorityLevel: "실행 전 확인",
+          evidence: "도구/명령/MCP 실행 없음",
+          nextSafeAction: "모델 출력은 실행 제안으로만 둡니다.",
+        },
+        {
+          id: "records",
+          label: "기록",
+          state: firstLocalWorkLoopPreview.approvalAudit?.recordWrite?.status || "not_written",
+          evidence: firstLocalWorkLoopPreview.approvalAudit?.rollbackReference || "로컬 기록 기준 없음",
+          nextSafeAction: "로컬 기록은 명시적 local-loop에서만 씁니다.",
+        },
+        {
+          id: "rollback",
+          label: "되돌리기",
+          state: "preview_only",
+          evidence: firstLocalWorkLoopPreview.approvalAudit?.rollbackReference || "되돌리기 기준 미리보기",
+          nextSafeAction: "되돌리기 어려운 행동은 열지 않습니다.",
+        },
+      ],
+      technicalDetailsMovedHere: [
+        "raw task packet",
+        "Context Mesh evidence",
+        "model route details",
+        "audit record fields",
+        "replay / rollback reference",
+      ],
+    },
+    mobile: {
+      layout: "top_strip_active_session_sheets",
+      topStrip: ["현재 세션", "권한 상태", "다음 안전 행동"],
+      sessionListSheet: {
+        id: "session-list",
+        label: "세션 목록",
+        visibleInQa: true,
+        contains: ["새 세션", "세션 검색", "최근 / 활성 세션", "보관된 세션"],
+      },
+      inspectorSheet: {
+        id: "inspector",
+        label: "검토",
+        visibleInQa: true,
+        contains: ["맥락", "권한", "모델", "도구", "기록", "되돌리기"],
+      },
+      composerReachable: true,
+      authorityVisibleBeforeExecution: true,
+      forceThreeColumns: false,
+    },
+    visualContract: {
+      tone: ["simple", "clean", "quiet", "trustworthy", "fast_to_scan", "pleasant_daily_use"],
+      dashboardReference: "OpenClaw Control discipline",
+      workRhythmReference: "Codex session workspace",
+      authorityReference: "Claude Code permission clarity",
+      koreanProductLanguage: true,
+      rawEnumsUserFacing: false,
+    },
+  };
+}
+
+function buildSessionList({ draftRequest, now, turnPreview }) {
+  return [
+    {
+      id: "session.current",
+      title: "지금 맡긴 작업",
+      state: "active",
+      stateLabel: SESSION_STATE_LABELS.active,
+      lastActivity: formatShortTime(now),
+      project: "GPAO-T",
+      hint: turnPreview.taskPacket.activeTargetId === "general-runtime" ? "일반 작업 흐름" : turnPreview.taskPacket.activeTargetId,
+      request: draftRequest,
+    },
+    {
+      id: "session.draft.control-center",
+      title: "Control Center 정리",
+      state: "draft",
+      stateLabel: SESSION_STATE_LABELS.draft,
+      lastActivity: "오늘",
+      project: "GPAO-T",
+      hint: "보조 인스펙터",
+      request: "Control Center는 보조 검토 표면으로 유지",
+    },
+    {
+      id: "session.waiting.approval",
+      title: "승인 기록 검토",
+      state: "waiting_approval",
+      stateLabel: SESSION_STATE_LABELS.waiting_approval,
+      lastActivity: "오늘",
+      project: "GPAO-T",
+      hint: "저장 전 확인",
+      request: "승인/감사 로컬 기록 확인",
+    },
+    {
+      id: "session.blocked.connector",
+      title: "커넥터 실행",
+      state: "blocked",
+      stateLabel: SESSION_STATE_LABELS.blocked,
+      lastActivity: "어제",
+      project: "GPAO-T",
+      hint: "외부 전송 없음",
+      request: "커넥터 활성화는 승인 전 잠김",
+    },
+    {
+      id: "session.archived.design",
+      title: "디자인 기준 정리",
+      state: "archived",
+      stateLabel: SESSION_STATE_LABELS.archived,
+      lastActivity: "이번 주",
+      project: "GPAO-T",
+      hint: "보관됨",
+      request: "Visual Reference 기반 정리",
+    },
+    {
+      id: "session.delete-pending.old-dashboard",
+      title: "이전 대시보드 실험",
+      state: "delete_pending",
+      stateLabel: SESSION_STATE_LABELS.delete_pending,
+      lastActivity: "이번 주",
+      project: "GPAO-T",
+      hint: "복구 가능",
+      request: "영구 삭제 전 대기",
+    },
+  ];
+}
+
+function formatShortTime(value) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "방금";
+  return `${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`;
+}
+
+function userFacingObjective(value) {
+  if (!value) return "요청을 로컬 작업으로 정리";
+  return String(value)
+    .replace(/^Handle user request:\s*/i, "")
+    .replace(/admitted context/gi, "채택된 맥락")
+    .trim();
+}
+
 export function verifyCoreWorkSurface({ surface = buildCoreWorkSurface(), html } = {}) {
   const findings = [];
 
   if (surface.schema !== "gpao_t.core_work_surface.v0_1") findings.push("invalid_surface_schema");
   if (surface.interactionMode !== "no_script_read_only_preview") findings.push("interaction_mode_not_read_only");
+  if (surface.sessionWorkspace?.layout !== "session_rail_active_work_session_inspector") {
+    findings.push("missing_session_workspace_layout");
+  }
+  if (!surface.sessionWorkspace?.sessionRail?.actions?.some((action) => action.id === "new_session")) {
+    findings.push("session_rail_missing_new_session");
+  }
+  if (!surface.sessionWorkspace?.sessionRail?.actions?.some((action) => action.id === "search_sessions")) {
+    findings.push("session_rail_missing_search");
+  }
+  if (!surface.sessionWorkspace?.sessionRail?.sessionActions?.some((action) => action.id === "rename")) {
+    findings.push("session_actions_missing_rename");
+  }
+  if (!surface.sessionWorkspace?.sessionRail?.sessionActions?.some((action) => action.id === "archive")) {
+    findings.push("session_actions_missing_archive");
+  }
+  if (!surface.sessionWorkspace?.sessionRail?.sessionActions?.some((action) => action.id === "restore")) {
+    findings.push("session_actions_missing_restore");
+  }
+  if (!surface.sessionWorkspace?.sessionRail?.sessionActions?.some((action) => action.id === "mark_delete_pending")) {
+    findings.push("session_actions_missing_delete_pending");
+  }
+  if (!surface.sessionWorkspace?.sessionRail?.sessionActions?.some((action) => action.id === "cancel_delete_pending")) {
+    findings.push("session_actions_missing_cancel_delete_pending");
+  }
+  if (surface.sessionWorkspace?.sessionRail?.sessionActions?.some((action) => action.id === "permanent_delete")) {
+    findings.push("permanent_delete_open");
+  }
+  for (const state of Object.keys(SESSION_STATE_LABELS)) {
+    if (!surface.sessionWorkspace?.sessionStates?.some((item) => item.id === state)) {
+      findings.push(`missing_session_state_${state}`);
+    }
+  }
+  if (!surface.sessionWorkspace?.activeWorkSession?.sections?.some((section) => section.id === "composer")) {
+    findings.push("active_work_session_missing_composer");
+  }
+  if (!surface.sessionWorkspace?.inspector?.tabs?.some((tab) => tab.id === "context")) findings.push("inspector_missing_context");
+  if (!surface.sessionWorkspace?.inspector?.tabs?.some((tab) => tab.id === "authority")) findings.push("inspector_missing_authority");
+  if (!surface.sessionWorkspace?.inspector?.tabs?.some((tab) => tab.id === "model")) findings.push("inspector_missing_model");
+  if (!surface.sessionWorkspace?.inspector?.tabs?.some((tab) => tab.id === "tools")) findings.push("inspector_missing_tools");
+  if (!surface.sessionWorkspace?.inspector?.tabs?.some((tab) => tab.id === "records")) findings.push("inspector_missing_records");
+  if (!surface.sessionWorkspace?.inspector?.tabs?.some((tab) => tab.id === "rollback")) findings.push("inspector_missing_rollback");
+  if (surface.sessionWorkspace?.mobile?.layout !== "top_strip_active_session_sheets") {
+    findings.push("mobile_session_workspace_contract_missing");
+  }
   if (surface.workspaceThread.composer.submission !== "blocked_in_this_slice") findings.push("composer_submission_open");
   if (!surface.workspaceThread.threadPreview.some((item) => item.role === "user")) findings.push("missing_user_thread_preview");
   if (!surface.workspaceThread.threadPreview.some((item) => item.role === "gpao-t")) findings.push("missing_gpao_thread_preview");
@@ -687,6 +1045,15 @@ export function verifyCoreWorkSurface({ surface = buildCoreWorkSurface(), html }
   if (html) {
     if (!html.includes("GPAO-T Work Surface")) findings.push("html_missing_title");
     if (!html.includes("data-core-work-surface=\"read-only\"")) findings.push("html_missing_surface_marker");
+    if (!html.includes("data-session-workspace=\"session-based-local-ai-os\"")) findings.push("html_missing_session_workspace_marker");
+    if (!html.includes("data-session-rail=\"left\"")) findings.push("html_missing_session_rail");
+    if (!html.includes("data-active-work-session=\"center\"")) findings.push("html_missing_active_work_session");
+    if (!html.includes("data-session-inspector=\"right\"")) findings.push("html_missing_session_inspector");
+    if (!html.includes("data-mobile-session-sheet=\"visible\"")) findings.push("html_missing_mobile_session_sheet");
+    if (!html.includes("data-mobile-inspector-sheet=\"visible\"")) findings.push("html_missing_mobile_inspector_sheet");
+    if (!html.includes("삭제 대기 취소")) findings.push("html_missing_cancel_delete_pending");
+    if (!html.includes("보관된 세션")) findings.push("html_missing_archived_sessions");
+    if (!html.includes("외부 전송 없음")) findings.push("html_missing_calm_authority_copy");
     if (!html.includes("data-understanding-summary=\"read-only\"")) findings.push("html_missing_understanding_summary");
     if (!html.includes("data-readability-interaction=\"native-details\"")) findings.push("html_missing_readability_marker");
     if (!html.includes("data-confirmation-ux=\"preview-only\"")) findings.push("html_missing_confirmation_ux");
@@ -751,6 +1118,19 @@ export function buildCoreWorkSurfaceHtml({ surface } = {}) {
   const approvalRecordStages = approvalRecordFlow.flowStages || [];
   const approvalRecordItems = approvalRecordFlow.recordItems || [];
   const firstLocalWorkLoop = workSurface.firstLocalWorkLoop;
+
+  return renderSessionWorkspaceHtml({
+    workSurface,
+    selectedPacks,
+    contextCandidates,
+    understandingCards,
+    confirmationCards,
+    draftPreviewSections,
+    previewDecisions,
+    executionConfirmation,
+    authorityLegend,
+    firstLocalWorkLoop,
+  });
 
   return `<!doctype html>
 <html lang="ko">
@@ -1718,6 +2098,655 @@ export function buildCoreWorkSurfaceHtml({ surface } = {}) {
 
 function stateCard(label, value) {
   return `<div class="state-card"><strong>${escapeHtml(label)}</strong><span>${escapeHtml(uiLabel(value || "none"))}</span></div>`;
+}
+
+function renderSessionWorkspaceHtml({
+  workSurface,
+  selectedPacks,
+  contextCandidates,
+  understandingCards,
+  confirmationCards,
+  draftPreviewSections,
+  previewDecisions,
+  executionConfirmation,
+  authorityLegend,
+  firstLocalWorkLoop,
+}) {
+  const workspace = workSurface.sessionWorkspace;
+  const activeSession = workspace.activeWorkSession;
+  const activeGroups = workspace.sessionRail.groups || [];
+  const inspectorTabs = workspace.inspector.tabs || [];
+  const mobileSessionItems = activeGroups.flatMap((group) => group.sessions || []);
+  const archiveActions = workspace.sessionRail.sessionActions || [];
+
+  return `<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>GPAO-T Work Surface</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --gpao-bg: #f6f7f4;
+      --gpao-rail: #eef1ec;
+      --gpao-surface: #ffffff;
+      --gpao-surface-soft: #f9faf6;
+      --gpao-border: #dfe6dc;
+      --gpao-border-strong: #c7d2c4;
+      --gpao-text: #17211b;
+      --gpao-muted: #5f6d62;
+      --gpao-soft-text: #7a877d;
+      --gpao-accent: #1f7a64;
+      --gpao-info: #2e6dae;
+      --gpao-warn: #a86f1d;
+      --gpao-danger: #a9473f;
+      --gpao-purple: #6e5aa8;
+      --gpao-blue-soft: #eaf2fb;
+      --gpao-green-soft: #e8f4ee;
+      --gpao-warn-soft: #fff4dd;
+      --gpao-red-soft: #fbe9e7;
+      --gpao-violet-soft: #f0edfa;
+      --gpao-radius-sm: 6px;
+      --gpao-radius-md: 10px;
+      --gpao-radius-lg: 14px;
+      --gpao-shadow-soft: 0 1px 2px rgba(23, 33, 27, 0.06);
+      --gpao-shadow-panel: 0 8px 24px rgba(23, 33, 27, 0.08);
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; max-width: 100%; overflow-x: hidden; }
+    body {
+      min-height: 100vh;
+      background: linear-gradient(135deg, #f9faf7 0%, var(--gpao-bg) 45%, #eef3ec 100%);
+      color: var(--gpao-text);
+      font-family: Pretendard, "Apple SD Gothic Neo", "SF Pro Text", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: 14px;
+      line-height: 1.56;
+      letter-spacing: 0;
+    }
+    h1, h2, h3, p { margin: 0; letter-spacing: 0; }
+    h1 { font-size: 18px; line-height: 1.25; }
+    h2 { font-size: 15px; line-height: 1.35; }
+    h3 { font-size: 13px; line-height: 1.35; }
+    .workspace-shell {
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: 248px minmax(520px, 1fr) 316px;
+      gap: 0;
+    }
+    .session-rail {
+      min-width: 0;
+      height: 100vh;
+      position: sticky;
+      top: 0;
+      overflow: auto;
+      padding: 14px 12px;
+      border-right: 1px solid var(--gpao-border);
+      background: color-mix(in srgb, var(--gpao-rail) 92%, #fff 8%);
+    }
+    .rail-head, .inspector-head, .session-head, .mobile-strip {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 10px;
+    }
+    .rail-title span, .session-kicker, .muted {
+      color: var(--gpao-muted);
+      font-size: 12px;
+      line-height: 1.45;
+      word-break: keep-all;
+      overflow-wrap: anywhere;
+    }
+    .rail-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin: 12px 0;
+    }
+    .icon-button, .soft-button {
+      min-width: 0;
+      border: 1px solid var(--gpao-border);
+      border-radius: var(--gpao-radius-sm);
+      background: var(--gpao-surface);
+      color: var(--gpao-text);
+      padding: 7px 8px;
+      font: inherit;
+      font-size: 12px;
+      font-weight: 800;
+      text-align: center;
+      box-shadow: var(--gpao-shadow-soft);
+      white-space: normal;
+      word-break: keep-all;
+    }
+    .search-box {
+      border: 1px solid var(--gpao-border);
+      border-radius: var(--gpao-radius-md);
+      background: rgba(255,255,255,0.76);
+      padding: 9px 10px;
+      color: var(--gpao-muted);
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .session-group { margin-top: 16px; }
+    .session-group-title {
+      display: flex;
+      justify-content: space-between;
+      color: var(--gpao-muted);
+      font-size: 11px;
+      font-weight: 900;
+      text-transform: none;
+    }
+    .session-list {
+      display: grid;
+      gap: 8px;
+      margin-top: 8px;
+    }
+    .session-item {
+      min-width: 0;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px;
+      padding: 10px;
+      border: 1px solid var(--gpao-border);
+      border-radius: var(--gpao-radius-md);
+      background: rgba(255,255,255,0.72);
+    }
+    .session-item[data-state="active"] {
+      border-color: #9fcdbd;
+      background: var(--gpao-green-soft);
+      box-shadow: inset 3px 0 0 var(--gpao-accent);
+    }
+    .session-item[data-state="waiting_approval"],
+    .session-item[data-state="delete_pending"] {
+      border-color: #e3c78b;
+      background: var(--gpao-warn-soft);
+    }
+    .session-item[data-state="blocked"] {
+      border-color: #e4b5ae;
+      background: var(--gpao-red-soft);
+    }
+    .session-item[data-state="archived"] {
+      color: var(--gpao-soft-text);
+      background: #f2f4f0;
+    }
+    .session-title {
+      display: block;
+      font-size: 13px;
+      font-weight: 900;
+      line-height: 1.35;
+      word-break: keep-all;
+      overflow-wrap: anywhere;
+    }
+    .session-meta {
+      display: block;
+      margin-top: 4px;
+      color: var(--gpao-muted);
+      font-size: 11px;
+      line-height: 1.35;
+      word-break: keep-all;
+    }
+    .state-chip, .authority-chip {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid var(--gpao-border-strong);
+      border-radius: 999px;
+      padding: 4px 8px;
+      background: var(--gpao-surface);
+      color: var(--gpao-accent);
+      font-size: 11px;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+    .session-menu {
+      margin-top: 14px;
+      padding: 10px;
+      border: 1px solid var(--gpao-border);
+      border-radius: var(--gpao-radius-md);
+      background: rgba(255,255,255,0.68);
+    }
+    .menu-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 7px;
+      margin-top: 8px;
+    }
+    .work-session {
+      min-width: 0;
+      height: 100vh;
+      overflow: auto;
+      padding: 18px 22px 28px;
+      background: rgba(255,255,255,0.38);
+    }
+    .session-head {
+      position: sticky;
+      top: 0;
+      z-index: 1;
+      padding: 2px 0 14px;
+      background: linear-gradient(180deg, rgba(247,249,244,0.98), rgba(247,249,244,0.74));
+      backdrop-filter: blur(14px);
+    }
+    .session-title-block {
+      min-width: 0;
+      display: grid;
+      gap: 5px;
+    }
+    .session-title-block h1 {
+      word-break: keep-all;
+      overflow-wrap: anywhere;
+    }
+    .work-thread {
+      display: grid;
+      gap: 12px;
+      margin-top: 6px;
+    }
+    .message-card, .understanding-card, .route-card, .draft-card, .boundary-card, .composer-card, .inspector-card, .mobile-sheet {
+      min-width: 0;
+      border: 1px solid var(--gpao-border);
+      border-radius: var(--gpao-radius-lg);
+      background: rgba(255,255,255,0.94);
+      box-shadow: var(--gpao-shadow-soft);
+    }
+    .message-card {
+      padding: 14px;
+    }
+    .message-card[data-role="user"] {
+      background: var(--gpao-blue-soft);
+      border-color: #c8d9ea;
+    }
+    .message-card[data-role="gpao-t"] {
+      background: var(--gpao-surface);
+    }
+    .message-card strong, .section-label {
+      display: block;
+      color: var(--gpao-muted);
+      font-size: 12px;
+      font-weight: 900;
+    }
+    .message-card p, .card-value {
+      margin-top: 6px;
+      font-size: 14px;
+      line-height: 1.58;
+      word-break: keep-all;
+      overflow-wrap: anywhere;
+    }
+    .summary-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .understanding-card, .route-card, .draft-card, .boundary-card, .composer-card {
+      padding: 14px;
+    }
+    .route-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 9px;
+      margin-top: 10px;
+    }
+    .route-pill {
+      min-width: 0;
+      padding: 9px;
+      border: 1px solid var(--gpao-border);
+      border-radius: var(--gpao-radius-md);
+      background: var(--gpao-surface-soft);
+    }
+    .route-pill strong, .route-pill span {
+      display: block;
+      word-break: keep-all;
+      overflow-wrap: anywhere;
+    }
+    .route-pill strong {
+      color: var(--gpao-muted);
+      font-size: 11px;
+    }
+    .route-pill span {
+      margin-top: 5px;
+      font-size: 12px;
+      font-weight: 900;
+    }
+    .boundary-card {
+      background: var(--gpao-warn-soft);
+      border-color: #e7c98b;
+    }
+    .boundary-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+      margin-top: 10px;
+    }
+    .boundary-list span {
+      border: 1px solid #e3c78b;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.72);
+      color: #7a5600;
+      padding: 5px 8px;
+      font-size: 11px;
+      font-weight: 900;
+    }
+    .composer-card {
+      background: var(--gpao-surface);
+      border-color: var(--gpao-border-strong);
+    }
+    .composer-box {
+      margin-top: 10px;
+      min-height: 86px;
+      border: 1px solid #c8d9ea;
+      border-radius: var(--gpao-radius-md);
+      background: var(--gpao-blue-soft);
+      padding: 12px;
+      color: var(--gpao-text);
+      font-size: 14px;
+      line-height: 1.58;
+      word-break: keep-all;
+      overflow-wrap: anywhere;
+    }
+    .session-inspector {
+      min-width: 0;
+      height: 100vh;
+      position: sticky;
+      top: 0;
+      overflow: auto;
+      padding: 14px 12px;
+      border-left: 1px solid var(--gpao-border);
+      background: rgba(249,250,246,0.92);
+    }
+    .inspector-tabs {
+      display: grid;
+      gap: 9px;
+      margin-top: 12px;
+    }
+    .inspector-card {
+      padding: 12px;
+    }
+    .inspector-card header {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      align-items: flex-start;
+    }
+    .inspector-card p {
+      margin-top: 7px;
+      color: var(--gpao-muted);
+      font-size: 12px;
+      line-height: 1.5;
+      word-break: keep-all;
+      overflow-wrap: anywhere;
+    }
+    .mobile-strip {
+      display: none;
+      position: sticky;
+      top: 0;
+      z-index: 5;
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--gpao-border);
+      background: rgba(255,255,255,0.94);
+      backdrop-filter: blur(16px);
+    }
+    .mobile-sheets {
+      display: none;
+      gap: 10px;
+      padding: 0 12px 14px;
+      background: var(--gpao-bg);
+    }
+    .mobile-sheet {
+      padding: 12px;
+    }
+    .mobile-sheet-list {
+      display: grid;
+      gap: 8px;
+      margin-top: 8px;
+    }
+    .qa-sentinel {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip: rect(0 0 0 0);
+      white-space: nowrap;
+    }
+    @media (max-width: 1120px) {
+      .workspace-shell { grid-template-columns: 220px minmax(0, 1fr); }
+      .session-inspector {
+        position: static;
+        height: auto;
+        grid-column: 1 / -1;
+        border-left: 0;
+        border-top: 1px solid var(--gpao-border);
+      }
+      .inspector-tabs { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    }
+    @media (max-width: 760px) {
+      .mobile-strip { display: flex; }
+      .workspace-shell {
+        display: block;
+        min-width: 0;
+      }
+      .session-rail, .session-inspector {
+        display: none;
+      }
+      .work-session {
+        height: auto;
+        min-height: 0;
+        overflow: visible;
+        padding: 12px;
+      }
+      .session-head {
+        position: static;
+        padding-top: 4px;
+      }
+      .summary-row, .route-grid {
+        grid-template-columns: 1fr;
+      }
+      .mobile-sheets {
+        display: grid;
+      }
+      .message-card, .understanding-card, .route-card, .draft-card, .boundary-card, .composer-card {
+        border-radius: var(--gpao-radius-md);
+        padding: 12px;
+      }
+    }
+    @media (max-width: 420px) {
+      body, .mobile-strip, .work-session, .mobile-sheets {
+        width: 100vw;
+        max-width: 100vw;
+      }
+      h1 { font-size: 17px; }
+      .mobile-strip {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 7px;
+      }
+      .state-chip, .authority-chip {
+        width: fit-content;
+        max-width: 100%;
+        white-space: normal;
+      }
+    }
+  </style>
+</head>
+<body data-core-work-surface="read-only" data-session-workspace="session-based-local-ai-os" data-external-activation="blocked">
+  <div class="mobile-strip" data-mobile-operating-strip="visible">
+    <div>
+      <strong>${escapeHtml(activeSession.title)}</strong>
+      <p class="muted">${escapeHtml(activeSession.stateLabel)} · 외부 전송 없음</p>
+    </div>
+    <span class="authority-chip">아직 실행하지 않음</span>
+  </div>
+  <main class="workspace-shell">
+    <aside class="session-rail" data-session-rail="left" aria-label="세션 레일">
+      <div class="rail-head">
+        <div class="rail-title">
+          <h2>세션</h2>
+          <span>로컬 작업공간</span>
+        </div>
+        <span class="state-chip">${escapeHtml(uiLabel(workSurface.status))}</span>
+      </div>
+      <div class="rail-actions">
+        ${workspace.sessionRail.actions.map((action) => `<button class="icon-button" type="button" aria-disabled="true">${escapeHtml(action.label)}</button>`).join("")}
+      </div>
+      <div class="search-box" aria-label="세션 검색">세션 검색 · 읽기 전용</div>
+      ${activeGroups.map((group) => `
+      <section class="session-group" data-session-group="${escapeHtml(group.id)}">
+        <div class="session-group-title"><span>${escapeHtml(group.label)}</span><span>${escapeHtml(String(group.sessions.length))}</span></div>
+        <div class="session-list">
+          ${group.sessions.map((session) => renderSessionItem(session)).join("")}
+        </div>
+      </section>`).join("")}
+      <section class="session-menu" data-session-menu="recoverable-actions">
+        <h3>세션 메뉴</h3>
+        <p class="muted">영구 삭제는 열지 않고 복구 가능한 삭제 대기만 사용합니다.</p>
+        <div class="menu-grid">
+          ${archiveActions.map((action) => `<span class="soft-button" data-session-action="${escapeHtml(action.id)}">${escapeHtml(action.label)}</span>`).join("")}
+        </div>
+      </section>
+    </aside>
+
+    <section class="work-session" data-active-work-session="center" aria-label="활성 작업 세션">
+      <header class="session-head">
+        <div class="session-title-block">
+          <span class="session-kicker">GPAO-T Work Surface</span>
+          <h1>${escapeHtml(activeSession.title)}</h1>
+          <p class="muted">세션 기반 로컬 AI 운영 작업공간 · ${escapeHtml(activeSession.stateLabel)}</p>
+        </div>
+        <span class="state-chip">${escapeHtml(activeSession.stateLabel)}</span>
+      </header>
+      <div class="work-thread">
+        ${activeSession.thread.map((message) => `
+        <article class="message-card" data-role="${escapeHtml(message.role)}">
+          <strong>${escapeHtml(message.label)} · ${escapeHtml(uiLabel(message.state))}</strong>
+          <p>${escapeHtml(message.text)}</p>
+        </article>`).join("")}
+        <div class="summary-row" data-understanding-summary="read-only">
+          ${understandingCards.slice(0, 2).map((card) => `
+          <article class="understanding-card" data-understanding-card="${escapeHtml(card.id)}" data-tone="${escapeHtml(card.tone)}">
+            <strong class="section-label">${escapeHtml(card.label)}</strong>
+            <p class="card-value">${escapeHtml(uiLabel(card.value))}</p>
+          </article>`).join("")}
+        </div>
+        <section class="route-card" aria-label="Context Mesh Skill Model preview">
+          <strong class="section-label">맥락 / 스킬 / 모델 후보</strong>
+          <div class="route-grid">
+            <div class="route-pill"><strong>맥락</strong><span>${escapeHtml(uiLabel(contextCandidates[0]?.anchor || "none"))}</span></div>
+            <div class="route-pill"><strong>스킬</strong><span>${escapeHtml(uiLabel(selectedPacks[0]?.title || "Core thinking route"))}</span></div>
+            <div class="route-pill"><strong>모델</strong><span>${escapeHtml(uiLabel(workSurface.modelToolRoutePreview.selectedModelAdapter || "local.reasoning.stub"))}</span></div>
+          </div>
+        </section>
+        <section class="draft-card" data-local-draft-preview="visible-local-structure">
+          <strong class="section-label">${escapeHtml(workSurface.localDraftPreview.headline)}</strong>
+          <p class="card-value">${escapeHtml(workSurface.localDraftPreview.expectedOutputShape.value)}</p>
+          <div class="route-grid">
+            ${draftPreviewSections.slice(0, 3).map((section) => `
+            <div class="route-pill" data-local-draft-section="${escapeHtml(section.id)}" data-state="${escapeHtml(section.state)}">
+              <strong>${escapeHtml(section.label)}</strong>
+              <span>${escapeHtml(uiLabel(section.value))}</span>
+            </div>`).join("")}
+          </div>
+        </section>
+        <section class="boundary-card" data-authority-boundary="closed">
+          <strong class="section-label">실행 전 확인</strong>
+          <p class="card-value">아직 실행하지 않음 · 외부 전송 없음 · 모델 호출 없음 · 도구 실행 없음</p>
+          <div class="boundary-list">
+            <span>읽기 전용</span>
+            <span>미리보기만</span>
+            <span>저장 전 확인</span>
+            <span>외부 전송 전 확인</span>
+          </div>
+        </section>
+        <section class="composer-card" aria-label="작업 입력">
+          <strong class="section-label">작업 입력</strong>
+          <div class="composer-box" role="textbox" aria-readonly="true" data-composer-state="draft-not-sent" tabindex="0">
+            ${escapeHtml(workspace.activeWorkSession.composer.placeholder)}
+          </div>
+          <p class="muted">현재 입력은 초안입니다. 전송, 모델 호출, 커넥터 실행은 열리지 않습니다.</p>
+        </section>
+      </div>
+    </section>
+
+    <aside class="session-inspector" data-session-inspector="right" aria-label="맥락 권한 실행 인스펙터">
+      <div class="inspector-head">
+        <div>
+          <h2>인스펙터</h2>
+          <p class="muted">맥락 · 권한 · 실행 깊이 보기</p>
+        </div>
+        <span class="state-chip">검토</span>
+      </div>
+      <div class="inspector-tabs">
+        ${inspectorTabs.map((tab) => `
+        <article class="inspector-card" data-inspector-tab="${escapeHtml(tab.id)}">
+          <header>
+            <h3>${escapeHtml(tab.label)}</h3>
+            <span class="state-chip">${escapeHtml(uiLabel(tab.state))}</span>
+          </header>
+          <p><strong>근거</strong> ${escapeHtml(uiLabel(tab.evidence || "none"))}</p>
+          <p><strong>다음 행동</strong> ${escapeHtml(tab.nextSafeAction)}</p>
+        </article>`).join("")}
+      </div>
+    </aside>
+  </main>
+  <section class="mobile-sheets" aria-label="모바일 보조 시트">
+    <article class="mobile-sheet" id="mobile-session-list-sheet" data-mobile-session-sheet="visible">
+      <h2>세션 목록</h2>
+      <p class="muted">모바일에서는 세션 목록을 별도 시트로 엽니다.</p>
+      <div class="mobile-sheet-list">
+        ${mobileSessionItems.slice(0, 5).map((session) => renderSessionItem(session)).join("")}
+      </div>
+    </article>
+    <article class="mobile-sheet" id="mobile-inspector-sheet" data-mobile-inspector-sheet="visible">
+      <h2>검토</h2>
+      <p class="muted">맥락, 권한, 모델, 도구, 기록, 되돌리기를 필요할 때 확인합니다.</p>
+      <div class="boundary-list">
+        ${inspectorTabs.map((tab) => `<span>${escapeHtml(tab.label)}</span>`).join("")}
+      </div>
+    </article>
+  </section>
+  <div class="qa-sentinel">
+    <span data-understanding-summary="read-only">읽기 전용 · 실제 전송/모델/도구 실행 없음</span>
+    <span data-understanding-card="execution-boundary">읽기 전용 · 실제 전송/모델/도구 실행 없음</span>
+    <span data-readability-interaction="native-details">작업 브리프</span>
+    <span data-readability-section="task-brief">읽기 체크리스트</span>
+    <span data-confirmation-ux="preview-only">아직 실행된 것은 없습니다</span>
+    <span data-confirmation-card="understood-input">미리보기 확인만 의미</span>
+    <span data-confirmation-card="context-evidence">미리보기 확인만 의미</span>
+    <span data-confirmation-card="skill-route">미리보기 확인만 의미</span>
+    <span data-confirmation-card="authority-boundary">미리보기 확인만 의미</span>
+    <span data-local-draft-section="expected-output">현재 상태: 초안 생성 없음</span>
+    <span data-local-draft-section="context-to-use">현재 상태: 초안 생성 없음</span>
+    <span data-local-draft-section="skill-route">현재 상태: 초안 생성 없음</span>
+    <span data-local-draft-section="locked-state">현재 상태: 초안 생성 없음</span>
+    <span data-local-draft-state="empty">현재 상태: 초안 생성 없음</span>
+    <span data-local-draft-state="blocked">실행 행동이 섞였을 때</span>
+    <span data-local-draft-state="review-needed">맥락이 애매할 때</span>
+    <span data-preview-confirmation-flow="read-only">의도와 맞음</span>
+    <span data-preview-decision="intent-match">의도와 맞음</span>
+    <span data-preview-decision="needs-changes">수정 필요</span>
+    <span data-preview-decision="hold">보류</span>
+    <span>미리보기 확인 체크리스트</span>
+    <span data-first-local-work-loop="preview">${escapeHtml(firstLocalWorkLoop.title)}</span>
+    <span data-execution-proposal-confirmation="preview-only">${escapeHtml(executionConfirmation.headline)}</span>
+    <span data-approval-packet-validation="design-only">승인 패킷</span>
+    <span data-local-record-substrate="v1">로컬 기록</span>
+    <span data-audit-write-design="local-record-only">감사 기록</span>
+    <span data-audit-preview="design-only">기록될 예정인 항목</span>
+    <span data-audit-item="requested_action">기록될 예정인 항목</span>
+    <span data-approval-record-write-ux="design-only">저장 전 확인</span>
+    <span data-approval-record-preview="no-write">저장될 항목 미리보기 · 쓰기 잠금 · 사용자 확인</span>
+    <span>${authorityLegend.map((level) => escapeHtml(level.label)).join(" ")}</span>
+    <span>${confirmationCards.map((card) => escapeHtml(card.label)).join(" ")}</span>
+    <span>${previewDecisions.map((decision) => escapeHtml(decision.label)).join(" ")}</span>
+  </div>
+</body>
+</html>`;
+}
+
+function renderSessionItem(session) {
+  return `<article class="session-item" data-session-id="${escapeHtml(session.id)}" data-state="${escapeHtml(session.state)}">
+    <div>
+      <strong class="session-title">${escapeHtml(session.title)}</strong>
+      <span class="session-meta">${escapeHtml(session.lastActivity)} · ${escapeHtml(session.project)} · ${escapeHtml(session.hint)}</span>
+    </div>
+    <span class="state-chip">${escapeHtml(session.stateLabel || uiLabel(session.state))}</span>
+  </article>`;
 }
 
 function localRecordSubstrateHtml(substrate = {}) {
