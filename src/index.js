@@ -138,6 +138,12 @@ import {
   buildRuntimeDataContract,
 } from "./core/operations-contract.js";
 import {
+  buildStages5To8Completion,
+  verifyStages5To8Completion,
+  verifyTeamAlphaPackage,
+  writeTeamAlphaPackage,
+} from "./core/production-completion.js";
+import {
   classifyContextCandidateUse,
   classifyRequestTarget,
 } from "./core/context-admission-policy.js";
@@ -259,6 +265,7 @@ export {
   inspectReadOnlyConnector,
   buildOperationsContractSummary,
   buildOperationsReliabilityContract,
+  buildStages5To8Completion,
   buildPackagedDesktopPlanningReview,
   buildRecoveryHistorySummary,
   buildRuntimeDataContract,
@@ -337,6 +344,8 @@ export {
   verifyProviderInvocationRuntime,
   verifyExecutionRuntimeInvocation,
   verifyExecutionRuntimePlan,
+  verifyStages5To8Completion,
+  verifyTeamAlphaPackage,
   verifyConnectorToolGovernance,
   verifyGpaoTDesignReferenceGate,
   verifyApprovalRecordWriteUxDesign,
@@ -374,5 +383,6 @@ export {
   runtimePaths,
   writeRuntimeState,
   writeApprovalAuditLocalRecords,
+  writeTeamAlphaPackage,
   recordWorkSurfaceExecutionFlow,
 };

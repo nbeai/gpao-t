@@ -45,6 +45,7 @@ import {
   buildModelProviderRegistry,
   buildOperationsContractSummary,
   buildOperationsReliabilityContract,
+  buildStages5To8Completion,
   buildPackagedDesktopPlanningReview,
   buildRuntimeDataContract,
   buildSelfGrowthProposal,
@@ -120,6 +121,8 @@ import {
   verifyProviderInvocationRuntime,
   verifyExecutionRuntimePlan,
   verifyExecutionRuntimeInvocation,
+  verifyStages5To8Completion,
+  verifyTeamAlphaPackage,
   verifyWorkSurfaceSubmissionDecisionGate,
   verifyWorkSurfaceSubmissionValidationGate,
   verifyWorkSurfaceExecutionFlow,
@@ -137,6 +140,7 @@ import {
   verifyTauriReadOnlyShellSlice,
   appendSkillExecutionRun,
   writeApprovalAuditLocalRecords,
+  writeTeamAlphaPackage,
   recordWorkSurfaceExecutionFlow,
   invokeModelLocally,
   invokeModelProvider,
@@ -209,6 +213,10 @@ function usage() {
     "  gpao-t ops hardening-record",
     "  gpao-t ops hardening-history",
     "  gpao-t ops hardening-summary",
+    "  gpao-t production stages-5-8",
+    "  gpao-t production stages-5-8-check",
+    "  gpao-t production alpha-package",
+    "  gpao-t production alpha-package-check",
     "  gpao-t adapters models",
     "  gpao-t adapters tools",
     "  gpao-t adapters model-router-boundary [text]",
@@ -544,6 +552,19 @@ try {
       printJson(buildInstallHardeningSummary());
     } else {
       throw new Error("ops command requires hardening, contract, data, reliability, hardening-record, hardening-history, or hardening-summary");
+    }
+  } else if (command === "production") {
+    const [subcommand] = args;
+    if (subcommand === "stages-5-8") {
+      printJson(await buildStages5To8Completion({ root: process.cwd() }));
+    } else if (subcommand === "stages-5-8-check") {
+      printJson(await verifyStages5To8Completion({ root: process.cwd() }));
+    } else if (subcommand === "alpha-package") {
+      printJson(writeTeamAlphaPackage({ root: process.cwd() }));
+    } else if (subcommand === "alpha-package-check") {
+      printJson(verifyTeamAlphaPackage({ root: process.cwd() }));
+    } else {
+      throw new Error("production command requires stages-5-8, stages-5-8-check, alpha-package, or alpha-package-check");
     }
   } else if (command === "adapters") {
     const [subcommand, ...textParts] = args;

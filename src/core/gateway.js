@@ -106,6 +106,12 @@ import {
   buildInstallHardeningSummary,
   readInstallHardeningReports,
 } from "./install-hardening.js";
+import {
+  buildStages5To8Completion,
+  verifyStages5To8Completion,
+  verifyTeamAlphaPackage,
+  writeTeamAlphaPackage,
+} from "./production-completion.js";
 import { captureMemoryEntry, readMemoryWiki, readTCellCandidates, resolveContextMesh } from "./memory-wiki.js";
 import {
   buildModelRouterBoundary,
@@ -661,6 +667,38 @@ export function handleGatewayRequest({ method = "GET", path = "/", body = {}, ro
       schema: "gpao_t.gateway_response.v0_1",
       status: 200,
       body: listConnectors(),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/production/stages-5-8") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: buildStages5To8Completion({ root }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/production/stages-5-8/verify") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: verifyStages5To8Completion({ root }),
+    };
+  }
+
+  if (normalizedMethod === "POST" && path === "/production/team-alpha-package") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: writeTeamAlphaPackage({ root }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/production/team-alpha-package/verify") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: verifyTeamAlphaPackage({ root }),
     };
   }
 
