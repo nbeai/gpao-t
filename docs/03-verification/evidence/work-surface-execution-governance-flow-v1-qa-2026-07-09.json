@@ -1,0 +1,51 @@
+{
+  "schema": "gpao_t.visual_qa.work_surface_execution_governance_flow_v1",
+  "date": "2026-07-09",
+  "stage": "GPAO-T Stage 3 - execution / approval / audit governance loop",
+  "surface": "work-surface",
+  "evidence": {
+    "desktop1440x960": "docs/03-verification/evidence/work-surface-execution-governance-flow-v1-desktop-1440x960.png",
+    "mobile390x844": "docs/03-verification/evidence/work-surface-execution-governance-flow-v1-mobile-390x844.png",
+    "mobileFullPage390x844": "docs/03-verification/evidence/work-surface-execution-governance-flow-v1-mobile-fullpage-390x844.png"
+  },
+  "checks": {
+    "desktopNonblankViewport": "pass",
+    "mobileNonblankViewport": "pass",
+    "mobileNoHorizontalOverflow": "pass",
+    "mobileViewportWidth": 390,
+    "mobileScrollWidth": 390,
+    "executionFlowVisible": "pass",
+    "executionFlowTop": 483.390625,
+    "executionFlowBottom": 725.125,
+    "authorityBoundaryVisible": "pass",
+    "desktopRightInspectorVisible": "pass",
+    "koreanLineBreaks": "pass",
+    "composerAccessibility": "pass"
+  },
+  "scores": {
+    "humanVisualQa": 4.5,
+    "visualPolish": 4.4,
+    "colorQuality": 4.4,
+    "layoutRhythm": 4.45,
+    "koreanTypography": 4.45,
+    "toneAndManner": 4.55,
+    "authorityClarity": 4.75,
+    "overallProductFeel": 4.5
+  },
+  "authorityBoundary": {
+    "localApprovalAuditJsonlRecordWrite": "allowed_after_explicit_user_confirmation",
+    "liveModelCall": "blocked",
+    "toolCliMcpExecution": "blocked",
+    "connectorActivation": "blocked",
+    "credentialAccess": "blocked",
+    "externalSend": "blocked",
+    "paidOrDestructiveAction": "blocked",
+    "durableMemoryPromotion": "blocked"
+  },
+  "remainingProductRisks": [],
+  "nonBlockingProductObservations": [
+    "Work Surface Execution Governance Flow v1 has no blocking visual or authority risk for this slice.",
+    "A later approved Stage 3 slice may turn the visible local approval/audit record state into a more explicit confirmation control.",
+    "A later interaction pass may make draft/result history more conversational while preserving the large central workspace."
+  ]
+}

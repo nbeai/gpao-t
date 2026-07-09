@@ -32,6 +32,11 @@ import {
   buildWorkSurfaceSubmissionValidationGate,
   verifyWorkSurfaceSubmissionValidationGate,
 } from "./core/work-surface-submission-validation-gate.js";
+import {
+  buildWorkSurfaceExecutionFlow,
+  recordWorkSurfaceExecutionFlow,
+  verifyWorkSurfaceExecutionFlow,
+} from "./core/work-surface-execution-flow.js";
 import { buildControlCenterSnapshot, buildControlCenterSummary } from "./core/control-center.js";
 import {
   buildControlCenterHtml,
@@ -209,6 +214,7 @@ export {
   buildCoreWorkSurfaceHtml,
   buildWorkSurfaceSubmissionDecisionGate,
   buildWorkSurfaceSubmissionValidationGate,
+  buildWorkSurfaceExecutionFlow,
   buildControlCenterSnapshot,
   buildControlCenterSummary,
   buildControlCenterHtml,
@@ -309,6 +315,7 @@ export {
   verifyCoreWorkSurface,
   verifyWorkSurfaceSubmissionDecisionGate,
   verifyWorkSurfaceSubmissionValidationGate,
+  verifyWorkSurfaceExecutionFlow,
   verifyBrowserLocalAppShell,
   verifyControlCenterPreviewServing,
   verifyPackagedDesktopPlanningReview,
@@ -331,4 +338,5 @@ export {
   runtimePaths,
   writeRuntimeState,
   writeApprovalAuditLocalRecords,
+  recordWorkSurfaceExecutionFlow,
 };

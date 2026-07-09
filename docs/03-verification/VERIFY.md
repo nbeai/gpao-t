@@ -98,6 +98,20 @@ Interactive Session Behavior v1:
   - `docs/03-verification/evidence/interactive-session-behavior-v1-visual-qa-2026-07-09.json`
   - `docs/03-verification/evidence/INTERACTIVE-SESSION-BEHAVIOR-V1-VISUAL-QA-2026-07-09.md`
 
+Work Surface Execution Governance Flow v1:
+
+- Engineering document: `docs/03-engineering/WORK-SURFACE-EXECUTION-GOVERNANCE-FLOW-V1.md`
+- Core module: `src/core/work-surface-execution-flow.js`
+- CLI surfaces: `node bin/gpao-t.js control work-surface-execution-flow [text]`, `node bin/gpao-t.js control work-surface-execution-flow-check [text]`, and `node bin/gpao-t.js control work-surface-execution-record [text]`
+- Gateway routes: `GET /work-surface/execution-flow`, `GET /work-surface/execution-flow/verify`, and `POST /work-surface/execution-flow/record`
+- Work Surface integration: `executionGovernanceFlow` must expose proposal, confirmation, local record, replay, and rollback stages in Korean product language.
+- Required local-record invariant: browser rendering must not write records. Local approval/audit JSONL writes are allowed only after explicit CLI/Gateway confirmation.
+- Required blocked boundary: live model call, tool/CLI/MCP execution, connector activation, credential access, external send, paid/destructive action, public release, and durable memory promotion remain blocked.
+- Visual evidence:
+  - `docs/03-verification/evidence/work-surface-execution-governance-flow-v1-desktop-1440x960.png`
+  - `docs/03-verification/evidence/work-surface-execution-governance-flow-v1-mobile-390x844.png`
+  - `docs/03-verification/evidence/work-surface-execution-governance-flow-v1-qa-2026-07-09.json`
+
 Model Router boundary:
 
 - CLI surface: `node bin/gpao-t.js adapters model-router-boundary [text]`

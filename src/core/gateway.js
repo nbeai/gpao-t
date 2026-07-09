@@ -18,6 +18,11 @@ import {
   buildWorkSurfaceSubmissionValidationGate,
   verifyWorkSurfaceSubmissionValidationGate,
 } from "./work-surface-submission-validation-gate.js";
+import {
+  buildWorkSurfaceExecutionFlow,
+  recordWorkSurfaceExecutionFlow,
+  verifyWorkSurfaceExecutionFlow,
+} from "./work-surface-execution-flow.js";
 import { buildControlCenterSnapshot, buildControlCenterSummary } from "./control-center.js";
 import {
   buildControlCenterUiContract,
@@ -279,6 +284,35 @@ export function handleGatewayRequest({ method = "GET", path = "/", body = {}, ro
       status: 200,
       body: verifyWorkSurfaceSubmissionValidationGate({
         gate: buildWorkSurfaceSubmissionValidationGate({ root }),
+      }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/work-surface/execution-flow") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: buildWorkSurfaceExecutionFlow({ root, request: body.request }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/work-surface/execution-flow/verify") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: verifyWorkSurfaceExecutionFlow({ root }),
+    };
+  }
+
+  if (normalizedMethod === "POST" && path === "/work-surface/execution-flow/record") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: recordWorkSurfaceExecutionFlow({
+        root,
+        request: body.request,
+        proposal: body.proposal,
+        confirmationState: body.confirmationState,
       }),
     };
   }

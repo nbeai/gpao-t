@@ -2,6 +2,7 @@ import { buildConnectorGovernanceSummary } from "./connector-governance.js";
 import { buildApprovalAuditLocalRecordSubstrate } from "./approval-audit-records.js";
 import { buildExecutionApprovalPreview } from "./execution-approval.js";
 import { buildFirstLocalWorkLoop } from "./first-local-work-loop.js";
+import { buildWorkSurfaceExecutionFlow } from "./work-surface-execution-flow.js";
 import { readMemoryWiki, readTCellCandidates, resolveContextMesh } from "./memory-wiki.js";
 import { routeModel } from "./model-router.js";
 import {
@@ -175,6 +176,7 @@ export function buildCoreWorkSurface({
     writeLocalRecords: false,
     now,
   });
+  const executionGovernanceFlow = buildWorkSurfaceExecutionFlow({ root, request: draftRequest, now });
   const primaryContext = contextPreview.retrievedCandidates.find((candidate) => candidate.answerAnchorEligible)
     || contextPreview.retrievedCandidates.find((candidate) => candidate.admissionRole !== "stale_supporting");
   const primarySkillPack = skillRoute.selectedPacks[0];
@@ -539,6 +541,7 @@ export function buildCoreWorkSurface({
       blockedActions: executionApprovalPreview.blockedActions,
       nextSafeAction: executionApprovalPreview.nextSafeAction,
     },
+    executionGovernanceFlow,
     taskState: {
       id: turnPreview.taskPacket.id,
       status: turnPreview.status,
@@ -592,6 +595,7 @@ export function buildCoreWorkSurface({
       externalModelCall: "blocked_until_configured_and_approved",
       externalToolAction: "blocked_until_explicit_approval",
       approvalRecordWrite: "blocked",
+      localApprovalAuditRecordWrite: "allowed_after_explicit_confirmation",
       dryRunInvocation: "blocked",
       durableMemoryPromotion: runtimeState.boundaries?.durableMemoryPromotion || "blocked",
       selfGrowthApply: "blocked",
@@ -605,6 +609,7 @@ export function buildCoreWorkSurface({
       executesTools: false,
       activatesConnectors: false,
       writesApprovalRecord: false,
+      writesLocalApprovalAuditRecordOnExplicitCommand: true,
       invokesDryRun: false,
       promotesDurableMemory: false,
       appliesSelfGrowth: false,
@@ -613,7 +618,7 @@ export function buildCoreWorkSurface({
       usesForm: false,
     },
     nextSafeAction:
-      "로컬 초안 미리보기가 의도와 맞음, 수정 필요, 보류 중 어디에 해당하는지 읽기 판단한다. 실제 제출/모델/도구/커넥터/외부 실행은 계속 열지 않는다.",
+      "실행 후보가 의도와 맞는지 확인한 뒤, 필요한 경우 로컬 승인/감사 기록만 남기고 replay/rollback 기준을 읽는다. 모델/도구/커넥터/외부 실행은 계속 열지 않는다.",
   };
 }
 
@@ -998,6 +1003,24 @@ export function verifyCoreWorkSurface({ surface = buildCoreWorkSurface(), html }
   if (surface.executionProposalConfirmation?.approvalRecordFlow?.writesApprovalRecordNow !== false) {
     findings.push("approval_record_write_open");
   }
+  if (surface.executionGovernanceFlow?.schema !== "gpao_t.work_surface_execution_governance_flow.v1") {
+    findings.push("missing_execution_governance_flow");
+  }
+  if ((surface.executionGovernanceFlow?.flowStages || []).length !== 5) {
+    findings.push("execution_governance_flow_stage_count_mismatch");
+  }
+  if (surface.executionGovernanceFlow?.localRecord?.writesDuringRender !== false) {
+    findings.push("execution_governance_flow_render_write_open");
+  }
+  if (surface.executionGovernanceFlow?.boundaries?.localJsonlRecordWrite !== "allowed_after_explicit_confirmation") {
+    findings.push("execution_governance_local_record_boundary_missing");
+  }
+  if (surface.executionGovernanceFlow?.boundaries?.toolCliMcpExecution !== "blocked") {
+    findings.push("execution_governance_tool_boundary_open");
+  }
+  if (surface.executionGovernanceFlow?.boundaries?.externalSend !== "blocked") {
+    findings.push("execution_governance_external_boundary_open");
+  }
   if (surface.localDraftPreview?.opensLiveSubmission !== false) findings.push("local_draft_submission_open");
   if (surface.localDraftPreview?.invokesModel !== false) findings.push("local_draft_model_open");
   if (surface.localDraftPreview?.executesTools !== false) findings.push("local_draft_tools_open");
@@ -1049,6 +1072,8 @@ export function verifyCoreWorkSurface({ surface = buildCoreWorkSurface(), html }
     if (!html.includes("data-approval-record-write-ux=\"design-only\"")) findings.push("html_missing_approval_record_write_ux");
     if (!html.includes("저장 전 확인")) findings.push("html_missing_write_before_approval_copy");
     if (!html.includes("data-approval-record-preview=\"no-write\"")) findings.push("html_missing_approval_record_preview");
+    if (!html.includes("data-execution-governance-flow=\"local-record-review\"")) findings.push("html_missing_execution_governance_flow");
+    if (!html.includes("로컬 기록 후 리플레이")) findings.push("html_missing_execution_replay_flow_copy");
     if (!html.includes("data-preview-decision=\"intent-match\"")) findings.push("html_missing_intent_match_decision");
     if (!html.includes("data-preview-decision=\"needs-changes\"")) findings.push("html_missing_needs_changes_decision");
     if (!html.includes("data-preview-decision=\"hold\"")) findings.push("html_missing_hold_decision");
@@ -1085,6 +1110,7 @@ export function buildCoreWorkSurfaceHtml({ surface } = {}) {
   const previewDecisions = workSurface.localDraftPreview.confirmationFlow?.decisions || [];
   const previewChecklist = workSurface.localDraftPreview.confirmationFlow?.checkBeforeProceeding || [];
   const executionConfirmation = workSurface.executionProposalConfirmation;
+  const executionGovernanceFlow = workSurface.executionGovernanceFlow;
   const authorityLegend = executionConfirmation.authorityLegend || [];
   const validationRules = executionConfirmation.validationRules || [];
   const auditPreview = executionConfirmation.auditPreview || {};
@@ -1103,6 +1129,7 @@ export function buildCoreWorkSurfaceHtml({ surface } = {}) {
     draftPreviewSections,
     previewDecisions,
     executionConfirmation,
+    executionGovernanceFlow,
     authorityLegend,
     firstLocalWorkLoop,
   });
@@ -2084,6 +2111,7 @@ function renderSessionWorkspaceHtml({
   draftPreviewSections,
   previewDecisions,
   executionConfirmation,
+  executionGovernanceFlow,
   authorityLegend,
   firstLocalWorkLoop,
 }) {
@@ -2421,6 +2449,55 @@ function renderSessionWorkspaceHtml({
       border-left: 4px solid #c9943b;
       box-shadow: none;
     }
+    .execution-flow {
+      padding: 14px 15px;
+      border-radius: var(--gpao-radius-lg);
+      border: 1px solid #d7e1d3;
+      border-left: 4px solid var(--gpao-accent);
+      background: rgba(255,255,255,0.88);
+      box-shadow: none;
+    }
+    .execution-flow-inline {
+      margin-top: 12px;
+      padding-top: 10px;
+      border-top: 1px solid var(--gpao-border);
+    }
+    .execution-flow-inline .execution-flow-grid {
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      margin-top: 8px;
+    }
+    .execution-flow-inline .execution-flow-step {
+      padding: 7px 8px;
+      background: rgba(249,250,246,0.92);
+    }
+    .execution-flow-grid {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 8px;
+      margin-top: 12px;
+    }
+    .execution-flow-step {
+      min-width: 0;
+      padding: 9px 10px;
+      border: 1px solid var(--gpao-border);
+      border-radius: var(--gpao-radius-md);
+      background: var(--gpao-surface-soft);
+    }
+    .execution-flow-step strong,
+    .execution-flow-step span {
+      display: block;
+      word-break: keep-all;
+      overflow-wrap: anywhere;
+    }
+    .execution-flow-step strong {
+      color: var(--gpao-muted);
+      font-size: 11px;
+    }
+    .execution-flow-step span {
+      margin-top: 5px;
+      font-size: 12px;
+      font-weight: 900;
+    }
     .boundary-list span {
       border: 1px solid #e3c78b;
       border-radius: 999px;
@@ -2547,8 +2624,8 @@ function renderSessionWorkspaceHtml({
         padding: 12px;
       }
       .conversation-canvas {
-        max-height: 440px;
-        overflow: auto;
+        max-height: none;
+        overflow: visible;
         padding: 12px;
       }
       .message-card {
@@ -2557,15 +2634,24 @@ function renderSessionWorkspaceHtml({
       .mobile-sheets {
         display: grid;
       }
-      .message-card, .assistant-work-note, .draft-inline-card, .boundary-strip, .composer-card {
+      .message-card, .assistant-work-note, .draft-inline-card, .boundary-strip, .execution-flow, .composer-card {
         border-radius: var(--gpao-radius-md);
         padding: 12px;
       }
+      .execution-flow-grid {
+        grid-template-columns: 1fr;
+      }
+      .execution-flow-inline .execution-flow-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+      .execution-flow-inline .execution-flow-step:last-child {
+        grid-column: 1 / -1;
+      }
       .composer-card {
-        margin: 0 12px 14px;
+        margin: 0 12px 10px;
       }
       .composer-box {
-        min-height: 128px;
+        min-height: 84px;
       }
     }
     @media (max-width: 420px) {
@@ -2652,6 +2738,17 @@ function renderSessionWorkspaceHtml({
               <span class="state-chip">미리보기만</span>
             </div>
             <p class="card-value">${escapeHtml(activeSession.thread[1]?.text || "요청을 로컬 작업으로 이해하고, 실행 전 미리보기 상태로 유지합니다.")}</p>
+            <div class="execution-flow-inline" data-execution-governance-flow="local-record-review">
+              <strong class="section-label">${escapeHtml(executionGovernanceFlow.headline)}</strong>
+              <div class="execution-flow-grid" aria-label="실행 확인 흐름">
+                ${executionGovernanceFlow.flowStages.map((stage) => `
+                <div class="execution-flow-step" data-execution-flow-stage="${escapeHtml(stage.id)}">
+                  <strong>${escapeHtml(stage.step)}. ${escapeHtml(stage.label)}</strong>
+                  <span>${escapeHtml(stage.state)}</span>
+                </div>`).join("")}
+              </div>
+              <p class="muted">로컬 기록 후 리플레이 · 실제 실행 없음</p>
+            </div>
             <div class="signal-strip" aria-label="맥락 스킬 모델 후보">
               <div class="signal-pill"><strong>맥락</strong><span>${escapeHtml(uiLabel(contextCandidates[0]?.anchor || "맥락 후보 확인 필요"))}</span></div>
               <div class="signal-pill"><strong>스킬</strong><span>${escapeHtml(uiLabel(selectedPacks[0]?.title || "핵심 사고 정리"))}</span></div>
@@ -2678,6 +2775,18 @@ function renderSessionWorkspaceHtml({
               <span>저장 전 확인</span>
               <span>외부 전송 전 확인</span>
             </div>
+          </section>
+          <section class="execution-flow" data-execution-governance-flow="local-record-review-detail">
+            <strong class="section-label">${escapeHtml(executionGovernanceFlow.headline)}</strong>
+            <p class="card-value">${escapeHtml(executionGovernanceFlow.userMessage)}</p>
+            <div class="execution-flow-grid" aria-label="실행 확인 흐름">
+              ${executionGovernanceFlow.flowStages.map((stage) => `
+              <div class="execution-flow-step" data-execution-flow-stage="${escapeHtml(stage.id)}">
+                <strong>${escapeHtml(stage.step)}. ${escapeHtml(stage.label)}</strong>
+                <span>${escapeHtml(stage.state)}</span>
+              </div>`).join("")}
+            </div>
+            <p class="muted">로컬 기록 후 리플레이 · ${escapeHtml(executionGovernanceFlow.replay.rollbackReference)}</p>
           </section>
         </div>
         <section class="composer-card" aria-label="작업 입력">
@@ -2760,6 +2869,7 @@ function renderSessionWorkspaceHtml({
     <span data-audit-item="requested_action">기록될 예정인 항목</span>
     <span data-approval-record-write-ux="design-only">저장 전 확인</span>
     <span data-approval-record-preview="no-write">저장될 항목 미리보기 · 쓰기 잠금 · 사용자 확인</span>
+    <span data-execution-governance-flow="local-record-review">실행 확인 흐름 · 로컬 기록 후 리플레이</span>
     <span>${authorityLegend.map((level) => escapeHtml(level.label)).join(" ")}</span>
     <span>${confirmationCards.map((card) => escapeHtml(card.label)).join(" ")}</span>
     <span>${previewDecisions.map((decision) => escapeHtml(decision.label)).join(" ")}</span>

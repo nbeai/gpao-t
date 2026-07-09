@@ -792,6 +792,12 @@ describe("GPAO-T Local Control Center readiness", () => {
     assert.equal(surface.executionProposalConfirmation.approvalRecordFlow.recordItems.length, 10);
     assert.equal(surface.executionProposalConfirmation.approvalRecordFlow.writesApprovalRecordNow, false);
     assert.equal(surface.executionProposalConfirmation.uxContract.defaultLocale, "ko-KR");
+    assert.equal(surface.executionGovernanceFlow.schema, "gpao_t.work_surface_execution_governance_flow.v1");
+    assert.equal(surface.executionGovernanceFlow.flowStages.length, 5);
+    assert.equal(surface.executionGovernanceFlow.localRecord.writesDuringRender, false);
+    assert.equal(surface.executionGovernanceFlow.boundaries.localJsonlRecordWrite, "allowed_after_explicit_confirmation");
+    assert.equal(surface.executionGovernanceFlow.boundaries.toolCliMcpExecution, "blocked");
+    assert.equal(surface.executionGovernanceFlow.boundaries.externalSend, "blocked");
     assert.equal(surface.taskState.objective.includes("GPAO-T"), true);
     assert.equal(surface.contextPreview.boundary.includes("preview only"), true);
     assert.equal(surface.skillRoutePreview.selectedPacks.length >= 1, true);
@@ -872,6 +878,9 @@ describe("GPAO-T Local Control Center readiness", () => {
     assert.match(html, /저장될 항목 미리보기/);
     assert.match(html, /쓰기 잠금/);
     assert.match(html, /사용자 확인/);
+    assert.match(html, /data-execution-governance-flow="local-record-review"/);
+    assert.match(html, /실행 확인 흐름/);
+    assert.match(html, /로컬 기록 후 리플레이/);
     assert.match(html, /data-composer-state="draft-not-sent"/);
     assert.match(html, /data-authority-boundary="closed"/);
     assert.doesNotMatch(html, /<script/i);
@@ -1048,6 +1057,8 @@ describe("GPAO-T Local Control Center readiness", () => {
     assert.equal(contract.routes.some((route) => route.path === "/work-surface/submission-gate/verify"), true);
     assert.equal(contract.routes.some((route) => route.path === "/work-surface/submission-validation-gate"), true);
     assert.equal(contract.routes.some((route) => route.path === "/work-surface/submission-validation-gate/verify"), true);
+    assert.equal(contract.routes.some((route) => route.path === "/work-surface/execution-flow"), true);
+    assert.equal(contract.routes.some((route) => route.path === "/work-surface/execution-flow/verify"), true);
     assert.equal(contract.routes.some((route) => route.path === "/sessions"), true);
     assert.equal(contract.routes.some((route) => route.path === "/sessions/verify"), true);
     assert.equal(contract.previewLifecycle.serveCheck, "ephemeral_start_verify_stop");
@@ -1084,6 +1095,8 @@ describe("GPAO-T Local Control Center readiness", () => {
     assert.equal(contract.allowedGetRoutes.includes("/work-surface/submission-gate/verify"), true);
     assert.equal(contract.allowedGetRoutes.includes("/work-surface/submission-validation-gate"), true);
     assert.equal(contract.allowedGetRoutes.includes("/work-surface/submission-validation-gate/verify"), true);
+    assert.equal(contract.allowedGetRoutes.includes("/work-surface/execution-flow"), true);
+    assert.equal(contract.allowedGetRoutes.includes("/work-surface/execution-flow/verify"), true);
     assert.equal(contract.allowedGetRoutes.includes("/sessions"), true);
     assert.equal(contract.allowedGetRoutes.includes("/sessions/verify"), true);
     assert.equal(contract.allowedGetRoutes.includes("/control-center/ui-validate"), true);

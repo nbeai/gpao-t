@@ -31,6 +31,7 @@ import {
   buildFirstLocalWorkLoop,
   buildWorkSurfaceSubmissionDecisionGate,
   buildWorkSurfaceSubmissionValidationGate,
+  buildWorkSurfaceExecutionFlow,
   buildGrowthApplicationGate,
   buildGrowthApplicationGateSummary,
   buildInstallHardeningReport,
@@ -109,6 +110,7 @@ import {
   verifyModelRouterPolicy,
   verifyWorkSurfaceSubmissionDecisionGate,
   verifyWorkSurfaceSubmissionValidationGate,
+  verifyWorkSurfaceExecutionFlow,
   verifyPackagedDesktopPlanningReview,
   verifyTauriInstallDryRunPlan,
   verifyTauriInstallDryRunApprovalRecordStorageDesign,
@@ -123,6 +125,7 @@ import {
   verifyTauriReadOnlyShellSlice,
   appendSkillExecutionRun,
   writeApprovalAuditLocalRecords,
+  recordWorkSurfaceExecutionFlow,
 } from "../src/index.js";
 
 function usage() {
@@ -218,6 +221,9 @@ function usage() {
     "  gpao-t control work-surface-submission-gate-check",
     "  gpao-t control work-surface-submission-validation-gate",
     "  gpao-t control work-surface-submission-validation-gate-check",
+    "  gpao-t control work-surface-execution-flow [text]",
+    "  gpao-t control work-surface-execution-flow-check [text]",
+    "  gpao-t control work-surface-execution-record [text]",
     "  gpao-t control app-shell-contract",
     "  gpao-t control app-shell-state",
     "  gpao-t control app-shell-html",
@@ -598,6 +604,19 @@ try {
       printJson(buildWorkSurfaceSubmissionValidationGate());
     } else if (subcommand === "work-surface-submission-validation-gate-check") {
       printJson(verifyWorkSurfaceSubmissionValidationGate());
+    } else if (subcommand === "work-surface-execution-flow") {
+      printJson(buildWorkSurfaceExecutionFlow({
+        request: args.slice(1).join(" ") || undefined,
+      }));
+    } else if (subcommand === "work-surface-execution-flow-check") {
+      const flow = buildWorkSurfaceExecutionFlow({
+        request: args.slice(1).join(" ") || undefined,
+      });
+      printJson(verifyWorkSurfaceExecutionFlow({ flow }));
+    } else if (subcommand === "work-surface-execution-record") {
+      printJson(recordWorkSurfaceExecutionFlow({
+        request: args.slice(1).join(" ") || undefined,
+      }));
     } else if (subcommand === "app-shell-contract") {
       printJson(buildBrowserLocalAppShellContract());
     } else if (subcommand === "app-shell-state") {
@@ -657,7 +676,7 @@ try {
     } else if (subcommand === "tauri-shell-check") {
       printJson(verifyTauriReadOnlyShellSlice());
     } else {
-      throw new Error("control command requires snapshot, summary, design, design-reference-gate, design-reference-gate-check, ui-contract, ui-snapshot, ui-validate, html, render, serve-contract, serve-check, serve, work-surface, work-surface-html, work-surface-check, sessions, sessions-action, sessions-check, work-surface-local-loop, work-surface-local-loop-check, work-surface-submission-gate, work-surface-submission-gate-check, work-surface-submission-validation-gate, work-surface-submission-validation-gate-check, app-shell-contract, app-shell-state, app-shell-html, app-shell-check, tauri-gate, tauri-gate-check, packaged-desktop-review, packaged-desktop-review-check, tauri-install-gate, tauri-install-gate-check, tauri-prerequisite-doctor, tauri-prerequisite-doctor-check, tauri-dry-run-contract, tauri-dry-run-contract-check, tauri-dry-run-design, tauri-dry-run-design-check, tauri-dry-run-plan, tauri-dry-run-plan-check, tauri-dry-run-preview, tauri-dry-run-preview-check, tauri-dry-run-invocation-approval, tauri-dry-run-invocation-approval-check, tauri-dry-run-approval-storage, tauri-dry-run-approval-storage-check, tauri-dry-run-approval-write-gate, tauri-shell-slice, tauri-shell-html, or tauri-shell-check");
+      throw new Error("control command requires snapshot, summary, design, design-reference-gate, design-reference-gate-check, ui-contract, ui-snapshot, ui-validate, html, render, serve-contract, serve-check, serve, work-surface, work-surface-html, work-surface-check, sessions, sessions-action, sessions-check, work-surface-local-loop, work-surface-local-loop-check, work-surface-submission-gate, work-surface-submission-gate-check, work-surface-submission-validation-gate, work-surface-submission-validation-gate-check, work-surface-execution-flow, work-surface-execution-flow-check, work-surface-execution-record, app-shell-contract, app-shell-state, app-shell-html, app-shell-check, tauri-gate, tauri-gate-check, packaged-desktop-review, packaged-desktop-review-check, tauri-install-gate, tauri-install-gate-check, tauri-prerequisite-doctor, tauri-prerequisite-doctor-check, tauri-dry-run-contract, tauri-dry-run-contract-check, tauri-dry-run-design, tauri-dry-run-design-check, tauri-dry-run-plan, tauri-dry-run-plan-check, tauri-dry-run-preview, tauri-dry-run-preview-check, tauri-dry-run-invocation-approval, tauri-dry-run-invocation-approval-check, tauri-dry-run-approval-storage, tauri-dry-run-approval-storage-check, tauri-dry-run-approval-write-gate, tauri-shell-slice, tauri-shell-html, or tauri-shell-check");
     }
   } else if (command === "gateway") {
     const [method, requestPath, rawBody] = args;
