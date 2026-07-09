@@ -47,7 +47,11 @@ import {
   buildControlCenterUiSnapshot,
   validateControlCenterUiSnapshot,
 } from "./core/control-center-ui-contract.js";
-import { buildLocalControlCenterDesignContract } from "./core/design-contract.js";
+import {
+  buildGpaoTDesignReferenceGate,
+  buildLocalControlCenterDesignContract,
+  verifyGpaoTDesignReferenceGate,
+} from "./core/design-contract.js";
 import { buildContextRuntime } from "./core/context-runtime.js";
 import { runDoctor } from "./core/doctor.js";
 import {
@@ -194,6 +198,7 @@ export {
   buildGrowthApplicationGateSummary,
   buildInstallHardeningReport,
   buildInstallHardeningSummary,
+  buildGpaoTDesignReferenceGate,
   buildLocalControlCenterDesignContract,
   buildModelRouterBoundary,
   buildModelRouterPolicy,
@@ -260,6 +265,7 @@ export {
   verifyModelRouterBoundary,
   verifyModelRouterPolicy,
   verifyConnectorToolGovernance,
+  verifyGpaoTDesignReferenceGate,
   verifyApprovalRecordWriteUxDesign,
   verifyAuditWriteDesignProof,
   verifyExecutionApprovalPreview,

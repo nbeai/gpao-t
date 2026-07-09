@@ -4,8 +4,10 @@ import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { describe, it } from "node:test";
 import {
+  buildGpaoTDesignReferenceGate,
   buildLocalControlCenterDesignContract,
   handleGatewayRequest,
+  verifyGpaoTDesignReferenceGate,
 } from "../src/index.js";
 
 const ROOT = fileURLToPath(new URL("..", import.meta.url));
@@ -122,5 +124,65 @@ describe("GPAO-T Local Control Center design recipe", () => {
     assert.equal(cliContract.schema, contract.schema);
     assert.equal(gateway.status, 200);
     assert.equal(gateway.body.schema, contract.schema);
+  });
+
+  it("requires the GPAO-T design reference gate for every UI/UX slice", () => {
+    const gate = buildGpaoTDesignReferenceGate({
+      slice: "approval-record-write-gate-implementation-design",
+      surface: "Control Center Design Reference panel",
+    });
+    const verification = verifyGpaoTDesignReferenceGate({ gate });
+    const cliOutput = execFileSync(process.execPath, [
+      CLI,
+      "control",
+      "design-reference-gate",
+      "approval-record-write-gate-implementation-design",
+    ], {
+      cwd: ROOT,
+      encoding: "utf8",
+    });
+    const cliGate = JSON.parse(cliOutput);
+    const cliCheck = JSON.parse(execFileSync(process.execPath, [CLI, "control", "design-reference-gate-check"], {
+      cwd: ROOT,
+      encoding: "utf8",
+    }));
+    const gateway = handleGatewayRequest({ method: "GET", path: "/control-center/design-reference-gate" });
+    const gatewayVerify = handleGatewayRequest({ method: "GET", path: "/control-center/design-reference-gate/verify" });
+
+    assert.equal(gate.schema, "gpao_t.design_reference_gate.v0_1");
+    assert.equal(gate.status, "required_for_every_ui_ux_slice");
+    assert.equal(gate.mode, "evidence_contract_only_no_execution");
+    assert.equal(gate.language, "ko");
+    assert.equal(gate.referenceAxes.length, 5);
+    assert.equal(gate.referenceAxes.some((axis) => axis.label === "Codex급 시각/대화 UX"), true);
+    assert.equal(gate.referenceAxes.some((axis) => axis.label === "Claude Code급 운영/권한 UX"), true);
+    assert.equal(gate.evidenceRequirements.length, 10);
+    assert.equal(gate.evidenceRequirements.every((item) => item.required === true), true);
+    assert.equal(gate.evidenceRequirements.some((item) => item.id === "desktop_screenshot"), true);
+    assert.equal(gate.evidenceRequirements.some((item) => item.id === "mobile_screenshot"), true);
+    assert.equal(gate.evidenceRequirements.some((item) => item.id === "korean_typography_line_break_review"), true);
+    assert.equal(gate.requiredReportFields.includes("appliedSurfaces"), true);
+    assert.equal(gate.requiredReportFields.includes("visualAdjustments"), true);
+    assert.equal(gate.requiredReportFields.includes("desktopMobileFindings"), true);
+    assert.equal(gate.requiredReportFields.includes("codexLevelFit"), true);
+    assert.equal(gate.requiredReportFields.includes("claudeCodeLevelFit"), true);
+    assert.equal(gate.requiredReportFields.includes("remainingAestheticRisks"), true);
+    assert.equal(gate.requiredReportFields.includes("userPerceivedQualityRisk"), true);
+    assert.equal(gate.blockedActions.includes("actual approval record write"), true);
+    assert.equal(gate.blockedActions.includes("audit write"), true);
+    assert.equal(gate.blockedActions.includes("tool/CLI/MCP execution"), true);
+    assert.equal(gate.blockedActions.includes("durable memory promotion"), true);
+    assert.equal(gate.deferredProductPolishRisks.some((risk) => risk.id === "control_center_density"), true);
+    assert.equal(gate.deferredProductPolishRisks.some((risk) => risk.id === "product_wide_icon_system"), true);
+    assert.equal(gate.deferredProductPolishRisks.some((risk) => risk.id === "mixed_english_technical_labels"), true);
+    assert.equal(Object.values(gate.safetyInvariants).every((value) => value === false), true);
+    assert.equal(verification.status, "ready");
+    assert.equal(cliGate.schema, gate.schema);
+    assert.equal(cliGate.slice, "approval-record-write-gate-implementation-design");
+    assert.equal(cliCheck.status, "ready");
+    assert.equal(gateway.status, 200);
+    assert.equal(gateway.body.schema, gate.schema);
+    assert.equal(gatewayVerify.status, 200);
+    assert.equal(gatewayVerify.body.status, "ready");
   });
 });

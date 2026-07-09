@@ -19,7 +19,8 @@ The user opens the GPAO-T core work surface and sees a draft task input area rat
 9. The card explains the proposed tool kind, action type, authority level, expected effect, risk, rollback reference, and required approval packet checks.
 10. GPAO-T shows the audit write design preview: proposal id, source, requested action, authority level, expected effect, risk, rollback reference, and user confirmation state.
 11. GPAO-T shows the approval record write UX/design preview: `미리보기 -> 확인 -> 승인 패킷 -> 기록 미리보기 -> 쓰기 잠금`, plus the fields that would be saved later.
-12. GPAO-T gives the next safe action.
+12. GPAO-T shows the design reference gate when the work is UI/UX-related, so the user can see which screen evidence and human visual review must exist before the slice is considered closed.
+13. GPAO-T gives the next safe action.
 
 ## Current Result
 
@@ -32,3 +33,5 @@ The core work surface substrate is closed for the current read-only preview phas
 The current major axis is Approval Record Write UX/design for execution proposals. The user should be able to inspect which model/skill/user-request output became an execution proposal, which product-language authority tier it belongs to, which approval packet fields are required, which validation rules would reject unsafe packets, which exact audit target fields would be recorded later, and which approval record fields would be saved only after a future explicit write gate. Authority levels use short Korean default labels: `읽기 전용`, `미리보기만`, `저장 전 확인`, `외부 전송 전 확인`, `되돌리기 어려움`, and `비용 발생 가능`.
 
 Model output remains proposal material only. Audit write design and approval record write UX remain design/proof only. Actual tool/CLI/MCP execution, connector activation, external network/send, credential read/write, paid action, destructive action, approval record write, approval directory creation/read, audit write, dry-run invocation, install/update/rollback, and durable memory promotion remain blocked.
+
+Every future UI/UX slice must pass the GPAO-T design reference gate before closeout. The affected screen must state what was visually adjusted, show desktop/mobile evidence, explain Codex-level work/chat fit, explain Claude-Code-level authority UX fit, and record any remaining aesthetic or user-perceived product-quality risk.

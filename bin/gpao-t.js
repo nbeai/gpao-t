@@ -29,6 +29,7 @@ import {
   buildGrowthApplicationGateSummary,
   buildInstallHardeningReport,
   buildInstallHardeningSummary,
+  buildGpaoTDesignReferenceGate,
   buildLocalControlCenterDesignContract,
   buildModelRouterBoundary,
   buildModelRouterPolicy,
@@ -90,6 +91,7 @@ import {
   verifyControlCenterPreviewServing,
   verifyConnectorToolGovernance,
   verifyCoreWorkSurface,
+  verifyGpaoTDesignReferenceGate,
   verifyApprovalRecordWriteUxDesign,
   verifyAuditWriteDesignProof,
   verifyExecutionApprovalPreview,
@@ -176,6 +178,8 @@ function usage() {
     "  gpao-t control snapshot",
     "  gpao-t control summary",
     "  gpao-t control design",
+    "  gpao-t control design-reference-gate [slice]",
+    "  gpao-t control design-reference-gate-check",
     "  gpao-t control ui-contract",
     "  gpao-t control ui-snapshot",
     "  gpao-t control ui-validate",
@@ -478,6 +482,10 @@ try {
       printJson(buildControlCenterSummary());
     } else if (subcommand === "design") {
       printJson(buildLocalControlCenterDesignContract());
+    } else if (subcommand === "design-reference-gate") {
+      printJson(buildGpaoTDesignReferenceGate({ slice: args[1] || "future-ui-ux-slice" }));
+    } else if (subcommand === "design-reference-gate-check") {
+      printJson(verifyGpaoTDesignReferenceGate());
     } else if (subcommand === "ui-contract") {
       printJson(buildControlCenterUiContract());
     } else if (subcommand === "ui-snapshot") {
@@ -590,7 +598,7 @@ try {
     } else if (subcommand === "tauri-shell-check") {
       printJson(verifyTauriReadOnlyShellSlice());
     } else {
-      throw new Error("control command requires snapshot, summary, design, ui-contract, ui-snapshot, ui-validate, html, render, serve-contract, serve-check, serve, work-surface, work-surface-html, work-surface-check, work-surface-submission-gate, work-surface-submission-gate-check, work-surface-submission-validation-gate, work-surface-submission-validation-gate-check, app-shell-contract, app-shell-state, app-shell-html, app-shell-check, tauri-gate, tauri-gate-check, packaged-desktop-review, packaged-desktop-review-check, tauri-install-gate, tauri-install-gate-check, tauri-prerequisite-doctor, tauri-prerequisite-doctor-check, tauri-dry-run-contract, tauri-dry-run-contract-check, tauri-dry-run-design, tauri-dry-run-design-check, tauri-dry-run-plan, tauri-dry-run-plan-check, tauri-dry-run-preview, tauri-dry-run-preview-check, tauri-dry-run-invocation-approval, tauri-dry-run-invocation-approval-check, tauri-dry-run-approval-storage, tauri-dry-run-approval-storage-check, tauri-dry-run-approval-write-gate, tauri-dry-run-approval-write-gate-check, tauri-shell-slice, tauri-shell-html, or tauri-shell-check");
+      throw new Error("control command requires snapshot, summary, design, design-reference-gate, design-reference-gate-check, ui-contract, ui-snapshot, ui-validate, html, render, serve-contract, serve-check, serve, work-surface, work-surface-html, work-surface-check, work-surface-submission-gate, work-surface-submission-gate-check, work-surface-submission-validation-gate, work-surface-submission-validation-gate-check, app-shell-contract, app-shell-state, app-shell-html, app-shell-check, tauri-gate, tauri-gate-check, packaged-desktop-review, packaged-desktop-review-check, tauri-install-gate, tauri-install-gate-check, tauri-prerequisite-doctor, tauri-prerequisite-doctor-check, tauri-dry-run-contract, tauri-dry-run-contract-check, tauri-dry-run-design, tauri-dry-run-design-check, tauri-dry-run-plan, tauri-dry-run-plan-check, tauri-dry-run-preview, tauri-dry-run-preview-check, tauri-dry-run-invocation-approval, tauri-dry-run-invocation-approval-check, tauri-dry-run-approval-storage, tauri-dry-run-approval-storage-check, tauri-dry-run-approval-write-gate, tauri-dry-run-approval-write-gate-check, tauri-shell-slice, tauri-shell-html, or tauri-shell-check");
     }
   } else if (command === "gateway") {
     const [method, requestPath, rawBody] = args;

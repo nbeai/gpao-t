@@ -57,7 +57,11 @@ import {
   buildTauriReadOnlyShellSlice,
   verifyTauriReadOnlyShellSlice,
 } from "./tauri-readonly-shell.js";
-import { buildLocalControlCenterDesignContract } from "./design-contract.js";
+import {
+  buildGpaoTDesignReferenceGate,
+  buildLocalControlCenterDesignContract,
+  verifyGpaoTDesignReferenceGate,
+} from "./design-contract.js";
 import {
   buildApprovalRecordWriteUxDesign,
   buildAuditWriteDesignProof,
@@ -237,6 +241,22 @@ export function handleGatewayRequest({ method = "GET", path = "/", body = {}, ro
       schema: "gpao_t.gateway_response.v0_1",
       status: 200,
       body: buildLocalControlCenterDesignContract(),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/control-center/design-reference-gate") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: buildGpaoTDesignReferenceGate(),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/control-center/design-reference-gate/verify") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: verifyGpaoTDesignReferenceGate(),
     };
   }
 
@@ -832,7 +852,7 @@ export function handleGatewayRequest({ method = "GET", path = "/", body = {}, ro
     status: 404,
     body: {
       error: "not_found",
-      nextSafeAction: "Use GET /health, POST /init, GET /state, GET /events, GET /memory, GET /tcells, GET /control-center, GET /control-center/summary, GET /control-center/design, GET /control-center/ui-contract, GET /control-center/ui-snapshot, GET /control-center/ui-validate, GET /app-shell/tauri-install-gate, GET /app-shell/tauri-install-gate/verify, GET /app-shell/tauri-prerequisite-doctor, GET /app-shell/tauri-prerequisite-doctor/verify, GET /app-shell/tauri-dry-run-contract, GET /app-shell/tauri-dry-run-contract/verify, GET /app-shell/tauri-dry-run-design, GET /app-shell/tauri-dry-run-design/verify, GET /app-shell/tauri-dry-run-plan, GET /app-shell/tauri-dry-run-plan/verify, GET /app-shell/tauri-dry-run-preview, GET /app-shell/tauri-dry-run-preview/verify, GET /app-shell/tauri-dry-run-invocation-approval, GET /app-shell/tauri-dry-run-invocation-approval/verify, GET /app-shell/tauri-dry-run-approval-storage, GET /app-shell/tauri-dry-run-approval-storage/verify, GET /app-shell/tauri-dry-run-approval-write-gate, GET /app-shell/tauri-dry-run-approval-write-gate/verify, GET /connectors, GET /connectors/governance, GET /connectors/tool-governance, GET /connectors/tool-governance/verify, GET /approval/execution-proposal, GET /approval/execution-proposal/verify, GET /approval/audit-write-design, GET /approval/audit-write-design/verify, GET /approval/approval-record-write-ux, GET /approval/approval-record-write-ux/verify, POST /connectors/review, GET /adapters/models, GET /adapters/tools, POST /adapters/plan, POST /memory/capture, POST /mesh/resolve, GET /skill/atlas, GET /skill/roadmap, GET /skill/build-queue, GET /skill/production-status, POST /skill/execute, POST /skill/execute/record, GET /skill/execution-history, GET /skill/execution-summary, POST /replay/recovery, POST /replay/record, GET /recovery/history, GET /recovery/summary, POST /growth/preview, POST /growth/propose, GET /growth/proposals, POST /growth/application-gate, POST /growth/application-gate/record, GET /growth/application-gates, GET /growth/application-gates/summary, GET /ops/install-hardening, POST /ops/install-hardening/record, GET /ops/install-hardening/history, GET /ops/install-hardening/summary, or POST /turn.",
+      nextSafeAction: "Use GET /health, POST /init, GET /state, GET /events, GET /memory, GET /tcells, GET /control-center, GET /control-center/summary, GET /control-center/design, GET /control-center/design-reference-gate, GET /control-center/design-reference-gate/verify, GET /control-center/ui-contract, GET /control-center/ui-snapshot, GET /control-center/ui-validate, GET /app-shell/tauri-install-gate, GET /app-shell/tauri-install-gate/verify, GET /app-shell/tauri-prerequisite-doctor, GET /app-shell/tauri-prerequisite-doctor/verify, GET /app-shell/tauri-dry-run-contract, GET /app-shell/tauri-dry-run-contract/verify, GET /app-shell/tauri-dry-run-design, GET /app-shell/tauri-dry-run-design/verify, GET /app-shell/tauri-dry-run-plan, GET /app-shell/tauri-dry-run-plan/verify, GET /app-shell/tauri-dry-run-preview, GET /app-shell/tauri-dry-run-preview/verify, GET /app-shell/tauri-dry-run-invocation-approval, GET /app-shell/tauri-dry-run-invocation-approval/verify, GET /app-shell/tauri-dry-run-approval-storage, GET /app-shell/tauri-dry-run-approval-storage/verify, GET /app-shell/tauri-dry-run-approval-write-gate, GET /app-shell/tauri-dry-run-approval-write-gate/verify, GET /connectors, GET /connectors/governance, GET /connectors/tool-governance, GET /connectors/tool-governance/verify, GET /approval/execution-proposal, GET /approval/execution-proposal/verify, GET /approval/audit-write-design, GET /approval/audit-write-design/verify, GET /approval/approval-record-write-ux, GET /approval/approval-record-write-ux/verify, POST /connectors/review, GET /adapters/models, GET /adapters/tools, POST /adapters/plan, POST /memory/capture, POST /mesh/resolve, GET /skill/atlas, GET /skill/roadmap, GET /skill/build-queue, GET /skill/production-status, POST /skill/execute, POST /skill/execute/record, GET /skill/execution-history, GET /skill/execution-summary, POST /replay/recovery, POST /replay/record, GET /recovery/history, GET /recovery/summary, POST /growth/preview, POST /growth/propose, GET /growth/proposals, POST /growth/application-gate, POST /growth/application-gate/record, GET /growth/application-gates, GET /growth/application-gates/summary, GET /ops/install-hardening, POST /ops/install-hardening/record, GET /ops/install-hardening/history, GET /ops/install-hardening/summary, or POST /turn.",
     },
   };
 }

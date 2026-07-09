@@ -26,7 +26,11 @@ import {
   buildControlCenterUiSnapshot,
   validateControlCenterUiSnapshot,
 } from "./control-center-ui-contract.js";
-import { buildLocalControlCenterDesignContract } from "./design-contract.js";
+import {
+  buildGpaoTDesignReferenceGate,
+  buildLocalControlCenterDesignContract,
+  verifyGpaoTDesignReferenceGate,
+} from "./design-contract.js";
 import { runDoctor } from "./doctor.js";
 import {
   buildPackagedDesktopPlanningReview,
@@ -122,6 +126,8 @@ export function buildControlCenterServingContract({
       { path: "/app-shell/tauri-shell/verify", content: "tauri_readonly_shell_slice_verification" },
       { path: "/control-center/summary", content: "local_json_control_center_summary" },
       { path: "/control-center/design", content: "local_json_control_center_design" },
+      { path: "/control-center/design-reference-gate", content: "local_json_gpao_t_design_reference_gate" },
+      { path: "/control-center/design-reference-gate/verify", content: "local_json_gpao_t_design_reference_gate_verification" },
       { path: "/control-center/ui-contract", content: "local_json_control_center_ui_contract" },
       { path: "/control-center/ui-snapshot", content: "local_json_control_center_ui_snapshot" },
       { path: "/control-center/ui-validate", content: "local_json_control_center_ui_validation" },
@@ -234,6 +240,16 @@ export async function startControlCenterPreviewServer({
 
     if (url.pathname === "/control-center/design") {
       respondJson(response, 200, buildLocalControlCenterDesignContract());
+      return;
+    }
+
+    if (url.pathname === "/control-center/design-reference-gate") {
+      respondJson(response, 200, buildGpaoTDesignReferenceGate());
+      return;
+    }
+
+    if (url.pathname === "/control-center/design-reference-gate/verify") {
+      respondJson(response, 200, verifyGpaoTDesignReferenceGate());
       return;
     }
 

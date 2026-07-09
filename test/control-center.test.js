@@ -100,6 +100,14 @@ const APPROVAL_RECORD_WRITE_UX_QA_DOC = fileURLToPath(new URL(
   "../docs/03-verification/evidence/APPROVAL-RECORD-WRITE-UX-QA-2026-07-09.md",
   import.meta.url,
 ));
+const DESIGN_REFERENCE_GATE_QA_JSON = fileURLToPath(new URL(
+  "../docs/03-verification/evidence/design-reference-gate-qa-2026-07-09.json",
+  import.meta.url,
+));
+const DESIGN_REFERENCE_GATE_QA_DOC = fileURLToPath(new URL(
+  "../docs/03-verification/evidence/DESIGN-REFERENCE-GATE-QA-2026-07-09.md",
+  import.meta.url,
+));
 const WORK_SURFACE_VISUAL_QA_JSON = fileURLToPath(new URL(
   "../docs/03-verification/evidence/work-surface-visual-qa-baseline-2026-07-09.json",
   import.meta.url,
@@ -156,6 +164,9 @@ describe("GPAO-T Local Control Center readiness", () => {
     assert.equal(snapshot.counts.connectorToolBlockedActions, 9);
     assert.equal(snapshot.counts.growthApplicationGates, 0);
     assert.equal(snapshot.counts.approvalPreviewStages, 5);
+    assert.equal(snapshot.counts.designReferenceAxes, 5);
+    assert.equal(snapshot.counts.designReferenceEvidenceRequirements, 10);
+    assert.equal(snapshot.counts.designReferenceRequiredReportFields, 7);
     assert.equal(snapshot.counts.approvalPreviewBlockedActions, 10);
     assert.equal(snapshot.counts.executionApprovalAuthorityLevels, 6);
     assert.equal(snapshot.counts.executionApprovalRequiredFields, 15);
@@ -175,6 +186,7 @@ describe("GPAO-T Local Control Center readiness", () => {
     assert.equal(snapshot.authorityBoundary.growthApplication, "blocked_in_this_slice");
     assert.equal(snapshot.authorityBoundary.installExecution, "blocked_until_user_approval");
     assert.equal(snapshot.authorityBoundary.approvalPreviewFlow, "local_preview_only_no_write_no_invocation");
+    assert.equal(snapshot.authorityBoundary.designReferenceGate, "required_for_every_ui_ux_slice");
     assert.equal(snapshot.authorityBoundary.executionApprovalPacket, "preview_validation_only_no_write_no_invocation");
     assert.equal(snapshot.authorityBoundary.auditWriteDesign, "design_proof_only_no_write");
     assert.equal(snapshot.authorityBoundary.approvalRecordWriteUx, "ux_design_only_no_write");
@@ -205,6 +217,19 @@ describe("GPAO-T Local Control Center readiness", () => {
       && panel.data.stages.every((stage) => Number.isInteger(stage.step))
       && panel.data.safetyInvariants.writesApprovalRecord === false
       && panel.data.safetyInvariants.invokesDryRunExecutor === false
+    ));
+    assert.ok(snapshot.panels.some((panel) =>
+      panel.id === "design-reference"
+      && panel.status === "review"
+      && panel.data.schema === "gpao_t.design_reference_gate.v0_1"
+      && panel.data.referenceAxes.length === 5
+      && panel.data.evidenceRequirements.length === 10
+      && panel.data.requiredReportFields.includes("codexLevelFit")
+      && panel.data.requiredReportFields.includes("claudeCodeLevelFit")
+      && panel.data.blockedActions.includes("actual approval record write")
+      && panel.data.blockedActions.includes("durable memory promotion")
+      && panel.data.safetyInvariants.writesApprovalRecord === false
+      && panel.data.safetyInvariants.invokesDryRun === false
     ));
     assert.ok(snapshot.panels.some((panel) =>
       panel.id === "execution-approval"
@@ -412,6 +437,15 @@ describe("GPAO-T Local Control Center readiness", () => {
     assert.match(html, /권한 경계/);
     assert.match(html, /data-panel="memory"/);
     assert.match(html, /data-panel="approval-preview"/);
+    assert.match(html, /data-panel="design-reference"/);
+    assert.match(html, /data-design-reference-gate="required"/);
+    assert.match(html, /data-design-reference-axes="required"/);
+    assert.match(html, /data-design-evidence="required"/);
+    assert.match(html, /data-visual-assessment="required"/);
+    assert.match(html, /data-design-reference-boundary="no-execution"/);
+    assert.match(html, /Codex급 시각\/대화 UX/);
+    assert.match(html, /Claude Code급 운영\/권한 UX/);
+    assert.match(html, /한국어 기본 UI/);
     assert.match(html, /Approval \/ Preview/);
     assert.match(html, /data-approval-stage="plan"/);
     assert.match(html, /data-approval-stage="write-gate"/);
@@ -489,6 +523,7 @@ describe("GPAO-T Local Control Center readiness", () => {
     assert.match(htmlOutput, /approval-safe-note/);
     assert.match(htmlOutput, /approval-stage-number/);
     assert.match(htmlOutput, /blocked-actions/);
+    assert.match(htmlOutput, /data-design-reference-gate="required"/);
     assert.equal(render.schema, "gpao_t.local_control_center_render.v0_1");
     assert.equal(existsSync(render.outputPath), true);
   });
@@ -515,6 +550,7 @@ describe("GPAO-T Local Control Center readiness", () => {
     assert.match(html, /data-panel-inspector="core-work-surface"/);
     assert.match(html, /data-panel-inspector="skill-ecosystem"/);
     assert.match(html, /data-panel-inspector="approval-preview"/);
+    assert.match(html, /data-panel-inspector="design-reference"/);
     assert.match(html, /href="#inspect-runtime"/);
     assert.match(html, /id="inspect-runtime"/);
     assert.match(html, /data-panel-action="inspect"/);
@@ -1546,6 +1582,62 @@ describe("GPAO-T Local Control Center readiness", () => {
     assert.match(verifyDoc, /mobile fixed topbar action line/);
   });
 
+  it("keeps the GPAO-T design reference gate visual QA evidence replayable", () => {
+    const qa = JSON.parse(readFileSync(DESIGN_REFERENCE_GATE_QA_JSON, "utf8"));
+    const qaDoc = readFileSync(DESIGN_REFERENCE_GATE_QA_DOC, "utf8");
+    const verifyDoc = readFileSync(VERIFY_DOC_PATH, "utf8");
+    const screenshotPaths = Object.values(qa.evidenceFiles);
+    const screenshots = screenshotPaths.map((relativePath) => readFileSync(join(ROOT, relativePath)));
+
+    assert.equal(qa.schema, "gpao_t.design_reference_gate_visual_qa.v0_1");
+    assert.equal(qa.status, "ready");
+    assert.equal(qa.target, "/control-center#panel-design-reference");
+    assert.equal(qa.fileFormat, "png");
+    assert.equal(qa.appliedSurfaces.includes("Control Center Design Reference panel"), true);
+    assert.equal(qa.invariants.designReferenceGateVisible, true);
+    assert.equal(qa.invariants.codexLevelUxVisible, true);
+    assert.equal(qa.invariants.claudeCodeAuthorityUxVisible, true);
+    assert.equal(qa.invariants.koreanDefaultUiLanguage, true);
+    assert.equal(qa.invariants.noActualApprovalRecordWrite, true);
+    assert.equal(qa.invariants.noActualAuditWrite, true);
+    assert.equal(qa.invariants.noDryRunInvocation, true);
+    assert.equal(qa.invariants.noToolCliMcpExecution, true);
+    assert.equal(qa.invariants.noConnectorActivation, true);
+    assert.equal(qa.invariants.noCredentialAccess, true);
+    assert.equal(qa.invariants.noExternalSend, true);
+    assert.equal(qa.invariants.noPaidOrDestructiveAction, true);
+    assert.equal(qa.invariants.noDurableMemoryPromotion, true);
+    assert.equal(qa.invariants.noScript, true);
+    assert.equal(qa.invariants.noHorizontalOverflow, true);
+    assert.equal(qa.invariants.mobileTopbarActionLineVisible, true);
+    assert.equal(qa.evidenceRequirements.length, 10);
+    assert.equal(qa.reportFields.length, 7);
+    assert.equal(qa.checks.length, 4);
+    assert.equal(qa.checks.every((check) => check.nonblankViewport), true);
+    assert.equal(qa.checks.every((check) => check.designReferencePanelVisible), true);
+    assert.equal(qa.checks.every((check) => check.referenceAxisCount === 5), true);
+    assert.equal(qa.checks.every((check) => check.evidenceRequirementCount === 10), true);
+    assert.equal(qa.checks.every((check) => check.nextSafeActionVisible), true);
+    assert.equal(qa.checks.every((check) => check.authorityBoundaryVisible), true);
+    assert.equal(qa.checks.every((check) => check.noHorizontalOverflow), true);
+    assert.equal(qa.checks.every((check) => !check.hasScript), true);
+    assert.equal(qa.colorQuality.status, "acceptable_baseline");
+    assert.equal(qa.layoutRhythm.status, "acceptable_baseline");
+    assert.equal(qa.iconAlignment.status, "limited_existing_icon_system");
+    assert.equal(qa.koreanTypographyLineBreak.status, "acceptable_baseline");
+    assert.equal(qa.toneAndMannerConsistency.status, "ready_for_next_slice");
+    assert.equal(qa.codexLevelFit.includes("work/chat rhythm"), true);
+    assert.equal(qa.claudeCodeLevelFit.includes("permission"), true);
+    assert.equal(qa.userPerceivedProductQualityRisk.status, "watch");
+    assert.equal(screenshotPaths.every((filePath) => existsSync(join(ROOT, filePath))), true);
+    assert.equal(screenshots.every((bytes) => bytes[0] === 0x89 && bytes[1] === 0x50), true);
+    assert.match(qaDoc, /GPAO-T Design Reference Gate QA/);
+    assert.match(qaDoc, /Codex급 시각\/대화 UX/);
+    assert.match(qaDoc, /Claude Code급 운영\/권한 UX/);
+    assert.match(verifyDoc, /design-reference-gate-qa-2026-07-09\.json/);
+    assert.match(verifyDoc, /GPAO-T design reference gate/);
+  });
+
   it("keeps execution approval UX visual QA evidence replayable and execution-free", () => {
     const qa = JSON.parse(readFileSync(EXECUTION_APPROVAL_QA_JSON, "utf8"));
     const qaDoc = readFileSync(EXECUTION_APPROVAL_QA_DOC, "utf8");
@@ -1795,6 +1887,10 @@ describe("GPAO-T Local Control Center readiness", () => {
       const tauriShellSlice = await fetchJson(`http://127.0.0.1:${preview.port}/app-shell/tauri-shell/slice`);
       const tauriShellVerify = await fetchJson(`http://127.0.0.1:${preview.port}/app-shell/tauri-shell/verify`);
       const controlSummary = await fetchJson(`http://127.0.0.1:${preview.port}/control-center/summary`);
+      const designReferenceGate = await fetchJson(`http://127.0.0.1:${preview.port}/control-center/design-reference-gate`);
+      const designReferenceGateVerify = await fetchJson(
+        `http://127.0.0.1:${preview.port}/control-center/design-reference-gate/verify`,
+      );
       const blockedPost = await fetchJson(`http://127.0.0.1:${preview.port}/app-shell`, { method: "POST" });
 
       assert.equal(preview.schema, "gpao_t.control_center_preview_server.v0_1");
@@ -1828,6 +1924,10 @@ describe("GPAO-T Local Control Center readiness", () => {
       assert.equal(workSurfaceSubmissionValidationGate.body.confirmationCard.confirmAction.opensLiveSubmission, false);
       assert.equal(workSurfaceSubmissionValidationGate.body.stopRuleAfterThisGate.rule, "do_not_split_submission_meta_gates_further");
       assert.equal(workSurfaceSubmissionValidationGateVerify.body.status, "ready");
+      assert.equal(designReferenceGate.status, 200);
+      assert.equal(designReferenceGate.body.schema, "gpao_t.design_reference_gate.v0_1");
+      assert.equal(designReferenceGate.body.evidenceRequirements.length, 10);
+      assert.equal(designReferenceGateVerify.body.status, "ready");
       assert.equal(appShell.status, 200);
       assert.match(appShell.body, /GPAO-T Browser-Local App Shell/);
       assert.doesNotMatch(appShell.body, /<script/i);

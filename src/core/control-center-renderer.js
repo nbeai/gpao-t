@@ -24,6 +24,7 @@ const PANEL_GROUPS = {
   runtime: "Work",
   "skill-ecosystem": "Work",
   "approval-preview": "Authority",
+  "design-reference": "Authority",
   "execution-approval": "Authority",
   memory: "Context",
   recovery: "Evidence",
@@ -287,6 +288,9 @@ export function buildControlCenterHtml({ snapshot, designContract } = {}) {
     .panel[data-panel="approval-preview"] {
       grid-column: 1 / -1;
     }
+    .panel[data-panel="design-reference"] {
+      grid-column: 1 / -1;
+    }
     .panel[data-panel="core-work-surface"] {
       grid-column: 1 / -1;
     }
@@ -365,6 +369,9 @@ export function buildControlCenterHtml({ snapshot, designContract } = {}) {
       gap: 8px;
       margin-top: 10px;
     }
+    .panel[data-panel="design-reference"] .approval-flow {
+      grid-template-columns: repeat(auto-fit, minmax(188px, 1fr));
+    }
     .approval-safe-note {
       margin-top: 10px;
       padding: 9px 10px;
@@ -424,6 +431,8 @@ export function buildControlCenterHtml({ snapshot, designContract } = {}) {
       color: var(--muted);
       font-size: 10px;
       line-height: 1.25;
+      word-break: keep-all;
+      overflow-wrap: anywhere;
     }
     .blocked-actions {
       display: grid;
@@ -962,6 +971,7 @@ function panelHtml(panel) {
             </div>
             ${coreWorkSurfaceHtml(panel)}
             ${approvalPreviewHtml(panel)}
+            ${designReferenceHtml(panel)}
             ${executionApprovalHtml(panel)}
             <div class="panel-actions" aria-label="${escapeHtml(panel.label)} local drilldown actions">
               <a class="panel-action" data-panel-action="inspect" href="#inspect-${escapeHtml(panel.id)}">인스펙터</a>
@@ -981,6 +991,7 @@ function panelHtml(panel) {
                 ${inspectorRow("Authority State", states.authority)}
                 ${inspectorRow("Next State", states.next)}
                 ${approvalInspectorRows(panel)}
+                ${designReferenceInspectorRows(panel)}
                 ${executionApprovalInspectorRows(panel)}
                 ${coreWorkSurfaceInspectorRows(panel)}
                 ${adapterInspectorRows(panel)}
@@ -1117,6 +1128,60 @@ function approvalInspectorRows(panel) {
     inspectorRow("Preview State", panel.data.userUnderstanding),
     inspectorRow("Stages", (panel.data.stages || []).map((stage) => `${stage.label}:${stage.status}`).join(" · ")),
     inspectorRow("Still Blocked", (panel.data.blockedActions || []).join(" · ")),
+  ].join("");
+}
+
+function designReferenceHtml(panel) {
+  if (panel.id !== "design-reference" || !panel.data) return "";
+  const data = panel.data;
+  const axes = data.referenceAxes || [];
+  const evidence = data.evidenceRequirements || [];
+  const criteria = data.visualAssessmentCriteria || [];
+
+  return `
+            <p class="approval-safe-note" data-design-reference-gate="required">${escapeHtml(data.nextSafeAction)}</p>
+            <div class="approval-flow" aria-label="GPAO-T design reference axes" data-design-reference-axes="required">
+              ${axes.map((axis, index) => `
+              <div class="approval-stage" data-design-axis="${escapeHtml(axis.id)}">
+                <span class="approval-stage-number">${escapeHtml(index + 1)}</span>
+                <strong>${escapeHtml(axis.label)}</strong>
+                <span class="approval-stage-status">필수</span>
+                <small>${escapeHtml((axis.requiredSignals || []).slice(0, 3).join(" · "))}</small>
+              </div>`).join("")}
+            </div>
+            <div class="blocked-actions" aria-label="Required design evidence" data-design-evidence="required">
+              <strong>다음부터 남길 evidence</strong>
+              ${evidence.map((item) => `
+              <span class="blocked-action" data-design-evidence-item="${escapeHtml(item.id)}">
+                <span class="blocked-action-label">${escapeHtml(item.label)}</span>${escapeHtml(item.userMeaning)}
+                <span class="blocked-action-detail">${escapeHtml(item.required ? "required" : "optional")}</span>
+              </span>`).join("")}
+            </div>
+            <div class="blocked-actions" aria-label="Visual assessment criteria" data-visual-assessment="required">
+              <strong>사람 눈 기준 평가</strong>
+              ${criteria.map((item) => `
+              <span class="blocked-action" data-visual-criterion="${escapeHtml(item.id)}">
+                <span class="blocked-action-label">${escapeHtml(item.label)}</span>${escapeHtml(item.fits)}
+                <span class="blocked-action-detail">visual review</span>
+              </span>`).join("")}
+            </div>
+            <div class="blocked-actions" aria-label="Design reference blocked actions" data-design-reference-boundary="no-execution">
+              <strong>디자인 게이트가 열지 않는 것</strong>
+              ${(data.blockedActions || []).map((action) => `
+              <span class="blocked-action"><span class="blocked-action-label">잠김</span>${escapeHtml(action)}<span class="blocked-action-detail">no write · no invocation</span></span>`).join("")}
+            </div>`;
+}
+
+function designReferenceInspectorRows(panel) {
+  if (panel.id !== "design-reference" || !panel.data) return "";
+  const data = panel.data;
+  return [
+    inspectorRow("Mode", data.mode),
+    inspectorRow("Reference Axes", (data.referenceAxes || []).map((axis) => axis.label).join(" · ")),
+    inspectorRow("Evidence Requirements", `${(data.evidenceRequirements || []).length}`),
+    inspectorRow("Report Fields", (data.requiredReportFields || []).join(" · ")),
+    inspectorRow("Supported Surfaces", (data.supportedSurfaces || []).join(" · ")),
+    inspectorRow("Still Blocked", (data.blockedActions || []).join(" · ")),
   ].join("");
 }
 

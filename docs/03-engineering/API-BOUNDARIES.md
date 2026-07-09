@@ -12,6 +12,8 @@ Allowed read surfaces:
 - `GET /control-center`
 - `GET /control-center/summary`
 - `GET /control-center/design`
+- `GET /control-center/design-reference-gate`
+- `GET /control-center/design-reference-gate/verify`
 - `GET /control-center/ui-contract`
 - `GET /control-center/ui-snapshot`
 - `GET /control-center/ui-validate`

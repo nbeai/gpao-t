@@ -172,3 +172,21 @@ Tauri prerequisite doctor and dry-run executor contract:
 - Packaged desktop planning review: `docs/03-engineering/PACKAGED-DESKTOP-PLANNING-REVIEW.md`, `node bin/gpao-t.js control packaged-desktop-review`, `node bin/gpao-t.js control packaged-desktop-review-check`, `GET /app-shell/packaged-desktop-review`, and `GET /app-shell/packaged-desktop-review/verify`.
 - Required packaged desktop planning invariant: the review must list closed read-only/preview surfaces, keep approval record write, dry-run invocation, Tauri build, install/update/rollback execution, IPC, external network, and connector/model/tool activation blocked, define minimum conditions before any packaged desktop build or executor, and set a stop-line against further meta-gate repetition.
 - Next gate: return to user-facing GPAO-T core work surface planning/build. Do not add another approval/write/dry-run/packaged-desktop meta-gate unless a concrete mutating action is explicitly approved.
+
+GPAO-T design reference gate:
+
+- Runtime contract: `node bin/gpao-t.js control design-reference-gate [slice]`
+- Contract check: `node bin/gpao-t.js control design-reference-gate-check`
+- Loopback routes: `GET /control-center/design-reference-gate` and `GET /control-center/design-reference-gate/verify`
+- Control Center panel: `Design Reference`
+- Required axes: Codex급 시각/대화 UX, Claude Code급 운영/권한 UX, 시각 디자인 전체, 한국어 UI/UX, 톤앤매너 통일성.
+- Required report fields: `appliedSurfaces`, `visualAdjustments`, `desktopMobileFindings`, `codexLevelFit`, `claudeCodeLevelFit`, `remainingAestheticRisks`, and `userPerceivedQualityRisk`.
+- Required visual evidence: desktop screenshot, mobile screenshot, full-page screenshot when needed, human visual polish review, color quality review, layout rhythm review, icon alignment review, Korean typography / line break review, tone-and-manner consistency review, and user-perceived product quality risk.
+- Visual QA evidence: `docs/03-verification/evidence/design-reference-gate-qa-2026-07-09.json` and `docs/03-verification/evidence/DESIGN-REFERENCE-GATE-QA-2026-07-09.md`.
+- Visual QA screenshots:
+  - Desktop viewport: `docs/03-verification/evidence/design-reference-gate-2026-07-09-control-center-desktop-1440x960.png`
+  - Mobile viewport: `docs/03-verification/evidence/design-reference-gate-2026-07-09-control-center-mobile-390x844.png`
+  - Desktop full page: `docs/03-verification/evidence/design-reference-gate-2026-07-09-control-center-desktop-full-1440x960.png`
+  - Mobile full page: `docs/03-verification/evidence/design-reference-gate-2026-07-09-control-center-mobile-full-390x844.png`
+- Required invariant: future UI/UX slices may not close with "design reference applied" unless the affected screens have screenshot evidence and a human-eye visual polish, color, layout, icon, Korean typography, tone, and product-quality-risk review.
+- Required blocked boundary: actual approval record write, audit write, dry-run invocation, tool/CLI/MCP execution, connector activation, credential access, external send, paid/destructive action, and durable memory promotion remain blocked.

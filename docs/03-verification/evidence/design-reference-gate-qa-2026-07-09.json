@@ -1,0 +1,181 @@
+{
+  "schema": "gpao_t.design_reference_gate_visual_qa.v0_1",
+  "status": "ready",
+  "generatedAt": "2026-07-09T05:52:00.000Z",
+  "target": "/control-center#panel-design-reference",
+  "fileFormat": "png",
+  "scope": "gpao_t_design_reference_gate_for_future_ui_ux_slices",
+  "captureMethod": "in_app_browser_loopback_viewport_and_full_page_screenshot",
+  "appliedSurfaces": [
+    "Control Center Design Reference panel"
+  ],
+  "visualAdjustments": [
+    "Design Reference panel was promoted to full-width Control Center layout so the gate reads as a product-level authority/design surface, not a narrow backend card.",
+    "Design reference axes use responsive cards with wider desktop minimums and single-column mobile wrapping.",
+    "Existing calm approval-safe note, blocked-action cards, status badge, and inspection rows were reused for product-system consistency.",
+    "Korean-first state language was kept visible: 검토 흐름, 권한 확인, 다음 행동 있음, 필수, 잠김."
+  ],
+  "evidenceFiles": {
+    "controlCenterDesktop": "docs/03-verification/evidence/design-reference-gate-2026-07-09-control-center-desktop-1440x960.png",
+    "controlCenterMobile": "docs/03-verification/evidence/design-reference-gate-2026-07-09-control-center-mobile-390x844.png",
+    "controlCenterDesktopFull": "docs/03-verification/evidence/design-reference-gate-2026-07-09-control-center-desktop-full-1440x960.png",
+    "controlCenterMobileFull": "docs/03-verification/evidence/design-reference-gate-2026-07-09-control-center-mobile-full-390x844.png"
+  },
+  "evidenceRequirements": [
+    "desktop_screenshot",
+    "mobile_screenshot",
+    "full_page_screenshot_when_needed",
+    "human_visual_polish_review",
+    "color_quality_review",
+    "layout_rhythm_review",
+    "icon_alignment_review",
+    "korean_typography_line_break_review",
+    "tone_consistency_review",
+    "user_perceived_quality_risk"
+  ],
+  "reportFields": [
+    "appliedSurfaces",
+    "visualAdjustments",
+    "desktopMobileFindings",
+    "codexLevelFit",
+    "claudeCodeLevelFit",
+    "remainingAestheticRisks",
+    "userPerceivedQualityRisk"
+  ],
+  "invariants": {
+    "designReferenceGateVisible": true,
+    "codexLevelUxVisible": true,
+    "claudeCodeAuthorityUxVisible": true,
+    "visualSystemReviewVisible": true,
+    "koreanDefaultUiLanguage": true,
+    "toneAndMannerConsistencyVisible": true,
+    "noActualApprovalRecordWrite": true,
+    "noActualAuditWrite": true,
+    "noDryRunInvocation": true,
+    "noToolCliMcpExecution": true,
+    "noConnectorActivation": true,
+    "noCredentialAccess": true,
+    "noExternalSend": true,
+    "noPaidOrDestructiveAction": true,
+    "noDurableMemoryPromotion": true,
+    "noScript": true,
+    "noForm": true,
+    "noHorizontalOverflow": true,
+    "authorityBoundaryVisible": true,
+    "nextSafeActionVisible": true,
+    "mobileTopbarActionLineVisible": true
+  },
+  "checks": [
+    {
+      "id": "control-center-desktop",
+      "viewport": "1440x960",
+      "screenshotKind": "viewport",
+      "nonblankViewport": true,
+      "designReferencePanelVisible": true,
+      "referenceAxisCount": 5,
+      "evidenceRequirementCount": 10,
+      "authorityBoundaryVisible": true,
+      "nextSafeActionVisible": true,
+      "noHorizontalOverflow": true,
+      "hasScript": false,
+      "hasForm": false,
+      "externalLinks": [],
+      "desktopLayoutFinding": "Full-width panel gives the five axes and evidence cards room to breathe. English technical tokens still create some dense lines, but no horizontal overflow is visible."
+    },
+    {
+      "id": "control-center-mobile",
+      "viewport": "390x844",
+      "screenshotKind": "viewport",
+      "nonblankViewport": true,
+      "designReferencePanelVisible": true,
+      "referenceAxisCount": 5,
+      "evidenceRequirementCount": 10,
+      "authorityBoundaryVisible": true,
+      "nextSafeActionVisible": true,
+      "mobileTopbarActionLineVisible": true,
+      "noHorizontalOverflow": true,
+      "hasScript": false,
+      "hasForm": false,
+      "externalLinks": [],
+      "mobileLayoutFinding": "Topbar action line, panel heading, Korean gate explanation, state cards, and first design axes are visible without crowding or overlap."
+    },
+    {
+      "id": "control-center-desktop-full",
+      "viewport": "1440x960",
+      "screenshotKind": "full_page",
+      "nonblankViewport": true,
+      "designReferencePanelVisible": true,
+      "referenceAxisCount": 5,
+      "evidenceRequirementCount": 10,
+      "authorityBoundaryVisible": true,
+      "nextSafeActionVisible": true,
+      "noHorizontalOverflow": true,
+      "hasScript": false,
+      "hasForm": false,
+      "externalLinks": []
+    },
+    {
+      "id": "control-center-mobile-full",
+      "viewport": "390x844",
+      "screenshotKind": "full_page",
+      "nonblankViewport": true,
+      "designReferencePanelVisible": true,
+      "referenceAxisCount": 5,
+      "evidenceRequirementCount": 10,
+      "authorityBoundaryVisible": true,
+      "nextSafeActionVisible": true,
+      "mobileTopbarActionLineVisible": true,
+      "noHorizontalOverflow": true,
+      "hasScript": false,
+      "hasForm": false,
+      "externalLinks": []
+    }
+  ],
+  "visualPolish": {
+    "status": "acceptable_baseline",
+    "review": "The panel now reads as a serious product inspector surface. It is calm, scan-friendly, and clearly a required gate rather than a decorative checklist."
+  },
+  "colorQuality": {
+    "status": "acceptable_baseline",
+    "review": "The existing blue outline, green safe-note, cream evidence cards, and amber review chip remain restrained and consistent with the Control Center authority language."
+  },
+  "layoutRhythm": {
+    "status": "acceptable_baseline",
+    "review": "Full-width desktop layout improves rhythm; mobile stacks naturally. Evidence and blocked sections are dense but not visually broken."
+  },
+  "iconAlignment": {
+    "status": "limited_existing_icon_system",
+    "review": "The surface currently uses numbered circular markers and text chips rather than a mature icon set. Alignment is clean, but a future Design Readiness Pass should introduce a more consistent icon grammar."
+  },
+  "koreanTypographyLineBreak": {
+    "status": "acceptable_baseline",
+    "review": "Korean explanatory text wraps naturally on mobile and desktop. Mixed English route terms remain dense but readable; future copy polishing can reduce English token load."
+  },
+  "toneAndMannerConsistency": {
+    "status": "ready_for_next_slice",
+    "review": "The language is calm and operational: required evidence and blocked actions are explicit without sounding threatening."
+  },
+  "codexLevelFit": "Matches work/chat rhythm expectations through small state chips, inline next safe action, inspectable details, reviewable evidence, and a clear safe next action before any execution.",
+  "claudeCodeLevelFit": "Matches permission and execution governance expectations by making preview -> confirmation -> approval -> audit -> replay -> rollback evidence requirements visible while keeping writes and invocations blocked.",
+  "remainingAestheticRisks": [
+    "The current Control Center is still denser than the final product surface should be.",
+    "Icon language is functional but not yet a polished product-wide icon system.",
+    "Some English technical labels are necessary for developer clarity but should be softened or localized in a future product polish pass."
+  ],
+  "userPerceivedProductQualityRisk": {
+    "status": "watch",
+    "risk": "The gate is trustworthy and usable, but the broader Control Center still needs a later Design Readiness Pass to feel less like an inspector and more like a polished daily-use product."
+  },
+  "blockedActionsRemainClosed": [
+    "actual approval record write",
+    "audit write",
+    "dry-run invocation",
+    "tool/CLI/MCP execution",
+    "connector activation",
+    "credential access",
+    "external send",
+    "paid/destructive action",
+    "durable memory promotion"
+  ],
+  "nextSafeAction": "Use this gate as the mandatory closeout contract for the next UI/UX slice, then move to approval record write gate implementation design or audit/write storage consistency design without opening actual writes or invocation."
+}

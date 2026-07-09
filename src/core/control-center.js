@@ -6,6 +6,7 @@ import {
   buildAuditWriteDesignProof,
   buildExecutionApprovalPreview,
 } from "./execution-approval.js";
+import { buildGpaoTDesignReferenceGate } from "./design-contract.js";
 import { runDoctor } from "./doctor.js";
 import { buildGrowthApplicationGateSummary } from "./growth-application-gates.js";
 import { readSelfGrowthProposals } from "./growth-proposals.js";
@@ -42,6 +43,7 @@ export function buildControlCenterSnapshot({ root } = {}) {
   const executionApprovalPreview = buildExecutionApprovalPreview();
   const auditWriteDesignProof = buildAuditWriteDesignProof();
   const approvalRecordWriteUx = buildApprovalRecordWriteUxDesign();
+  const designReferenceGate = buildGpaoTDesignReferenceGate({ slice: "all-ui-ux-slices" });
   const installHardening = buildInstallHardeningSummary({ root });
   const operationsContract = buildOperationsContractSummary();
   const skillPacks = listSkillPacks();
@@ -58,6 +60,7 @@ export function buildControlCenterSnapshot({ root } = {}) {
     buildRuntimePanel({ doctor, runtimeState, auditEvents }),
     buildOpsPanel({ installHardening, operationsContract }),
     buildApprovalPreviewPanel({ approvalPreviewFlow }),
+    buildDesignReferencePanel({ designReferenceGate }),
     buildExecutionApprovalPanel({ executionApprovalPreview }),
     buildSkillPanel({
       skillPacks,
@@ -102,6 +105,9 @@ export function buildControlCenterSnapshot({ root } = {}) {
       skillExecutionRuns: skillExecution.totalRuns,
       skillExecutionGrowthSignals: skillExecution.growthSignalCandidates.length,
       approvalPreviewStages: approvalPreviewFlow.stages.length,
+      designReferenceAxes: designReferenceGate.referenceAxes.length,
+      designReferenceEvidenceRequirements: designReferenceGate.evidenceRequirements.length,
+      designReferenceRequiredReportFields: designReferenceGate.requiredReportFields.length,
       approvalPreviewBlockedActions: approvalPreviewFlow.blockedActions.length,
       approvalPreviewReadyStages: approvalPreviewFlow.stages.filter((stage) => stage.status === "ready").length,
       executionApprovalAuthorityLevels: executionApprovalPreview.authorityLegend.length,
@@ -140,6 +146,7 @@ export function buildControlCenterSnapshot({ root } = {}) {
       updateExecution: installHardening.authorityBoundary.updateExecution,
       destructiveRollback: installHardening.authorityBoundary.destructiveRollback,
       approvalPreviewFlow: "local_preview_only_no_write_no_invocation",
+      designReferenceGate: "required_for_every_ui_ux_slice",
       executionApprovalPacket: "preview_validation_only_no_write_no_invocation",
       auditWriteDesign: "design_proof_only_no_write",
       approvalRecordWriteUx: "ux_design_only_no_write",
@@ -405,6 +412,17 @@ function buildApprovalPreviewPanel({ approvalPreviewFlow }) {
     headline: "승인 전 프리뷰 단계다. 아직 실행된 것은 없고, dry-run/approval 흐름만 읽을 수 있다.",
     data: approvalPreviewFlow,
     nextSafeAction: approvalPreviewFlow.nextSafeAction,
+  };
+}
+
+function buildDesignReferencePanel({ designReferenceGate }) {
+  return {
+    id: "design-reference",
+    label: "Design Reference",
+    status: "review",
+    headline: "모든 UI/UX slice는 Codex급 작업 리듬, Claude Code급 권한 UX, 한국어 제품감을 실제 화면 증거로 확인해야 한다.",
+    data: designReferenceGate,
+    nextSafeAction: designReferenceGate.nextSafeAction,
   };
 }
 

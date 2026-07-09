@@ -18,7 +18,9 @@ Design reference bridge:
 ## Local Control Center
 
 - Purpose: inspect GPAO-T runtime, context, recovery, growth, authority, approval/preview, and work-surface readiness.
-- Must show: panel navigation, inspector evidence, Model Router boundary, mobile action visibility, authority boundary, and next safe action without script or external activation.
+- Must show: panel navigation, inspector evidence, Model Router boundary, mobile action visibility, authority boundary, next safe action, and the `Design Reference` panel without script or external activation.
+- Must show design reference gate: Codex급 시각/대화 UX, Claude Code급 운영/권한 UX, 시각 디자인 전체, 한국어 UI/UX, 톤앤매너 통일성, required screenshot evidence, human visual review, and still-blocked execution/write boundaries.
+- Must not let a UI/UX slice close with only a document checklist. Affected screens need desktop/mobile visual evidence and human-eye review for color, layout rhythm, icon alignment, Korean typography, tone consistency, and user-perceived product quality risk.
 
 ## Model Router Boundary
 
