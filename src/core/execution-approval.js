@@ -443,7 +443,7 @@ export function buildAuditWriteDesignProof({
       performsDestructiveAction: false,
       promotesDurableMemory: false,
     },
-    nextSafeAction: "Control Center와 work-surface에서 기록 예정 항목을 확인한다. 실제 audit write와 승인 기록 write는 다음 gate 전까지 열지 않는다.",
+    nextSafeAction: "Control Center와 work-surface에서 기록 예정 항목을 확인한다. 로컬 승인/감사 기록은 JSONL로 남길 수 있고, 실제 실행은 열지 않는다.",
   };
 }
 
@@ -581,7 +581,7 @@ export function buildApprovalRecordWriteUxDesign({
       performsDestructiveAction: false,
       promotesDurableMemory: false,
     },
-    nextSafeAction: "승인 기록 저장 전 화면을 검토한다. 실제 approval record write는 별도 구현/검증 gate 전까지 열지 않는다.",
+    nextSafeAction: "승인 기록 저장 전 화면을 검토한다. 로컬 JSONL 기록은 가능하지만 실행, 외부 전송, 비용/파괴 행동은 열지 않는다.",
   };
 }
 
@@ -759,7 +759,7 @@ export function buildExecutionApprovalPreview({
       writesAudit: false,
       promotesDurableMemory: false,
     },
-    nextSafeAction: "Control Center와 work-surface에서 proposal을 읽고, 승인 패킷 검증 규칙을 확인한다. 실제 실행과 기록 쓰기는 계속 열지 않는다.",
+    nextSafeAction: "Control Center와 work-surface에서 제안과 승인 패킷을 읽고, 승인/감사 기록은 로컬 JSONL로 남긴다. 실제 실행은 계속 열지 않는다.",
   };
 }
 

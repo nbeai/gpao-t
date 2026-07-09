@@ -49,6 +49,22 @@ const UI_LABELS = {
   "model connector live execution": "모델 연결 실행",
   "connector activation": "커넥터 활성화",
   "approval record write": "승인 기록 쓰기",
+  "audit record write": "감사 기록 쓰기",
+  "replay read": "기록 재생 읽기",
+  "rollback reference read": "되돌리기 기준 읽기",
+  local_jsonl_write_available: "로컬 기록 가능",
+  local_jsonl_only: "로컬 기록 한정",
+  local_jsonl_record_write_read_replay: "로컬 기록/재생",
+  written_local_only: "로컬 저장됨",
+  confirmed_for_local_record_only: "로컬 기록만 확인",
+  dry_run: "미리보기 후보",
+  cli: "로컬 명령 후보",
+  cli_command_execution: "명령 실행",
+  dry_run_invocation: "미리보기 실행 호출",
+  model_output_persistence: "모델 출력 저장",
+  approval_record_write: "승인 기록 저장",
+  audit_write: "감사 기록 저장",
+  tool_cli_mcp_execution: "도구/명령/MCP 실행",
   "dry-run invocation": "미리보기 실행",
   "durable memory promotion": "지속 기억 승격",
   "self-growth apply": "자가성장 적용",
@@ -1246,7 +1262,7 @@ function designReferenceHtml(panel) {
             <div class="blocked-actions" aria-label="Design reference blocked actions" data-design-reference-boundary="no-execution">
               <strong>디자인 게이트가 열지 않는 것</strong>
               ${(data.blockedActions || []).map((action) => `
-              <span class="blocked-action"><span class="blocked-action-label">잠김</span>${escapeHtml(action)}<span class="blocked-action-detail">no write · no invocation</span></span>`).join("")}
+              <span class="blocked-action"><span class="blocked-action-label">잠김</span>${escapeHtml(uiLabel(action))}<span class="blocked-action-detail">쓰기 없음 · 호출 없음</span></span>`).join("")}
             </div>`;
 }
 
@@ -1273,6 +1289,7 @@ function executionApprovalHtml(panel) {
   const approvalRecordWriteUx = data.approvalRecordWriteUx || {};
   const approvalRecordStages = approvalRecordWriteUx.flowStages || [];
   const approvalRecordItems = approvalRecordWriteUx.recordItems || [];
+  const localRecordSubstrate = data.localRecordSubstrate || {};
   return `
             <div class="approval-flow" aria-label="Execution proposal confirmation" data-execution-proposal-confirmation="preview-only">
               <p class="approval-safe-note" data-execution-no-write="true">${escapeHtml(data.uxContract.noExecutionNotice)} ${escapeHtml(data.uxContract.primaryQuestion)}</p>
@@ -1301,7 +1318,7 @@ function executionApprovalHtml(panel) {
                 ${validationRules.slice(0, 4).map((rule) => `
                 <span class="blocked-action">
                   <span class="blocked-action-label">${escapeHtml(rule.label)}</span>${escapeHtml(rule.userMessage)}
-                  <span class="blocked-action-detail">design only</span>
+                  <span class="blocked-action-detail">검증 기준</span>
                 </span>`).join("")}
               </div>
               <div class="blocked-actions" aria-label="Planned audit items" data-audit-preview="design-only">
@@ -1328,10 +1345,11 @@ function executionApprovalHtml(panel) {
                   <span class="blocked-action-detail">${escapeHtml(item.userMeaning)}</span>
                 </span>`).join("")}
               </div>
+              ${localRecordSubstrateHtml(localRecordSubstrate)}
               <div class="blocked-actions" aria-label="Execution approval blocked actions" data-audit-write-design="no-write">
                 <strong>아직 열지 않음</strong>
                 ${data.blockedActions.slice(0, 8).map((action) => `
-                <span class="blocked-action"><span class="blocked-action-label">잠김</span>${escapeHtml(action)}<span class="blocked-action-detail">no write · no execution</span></span>`).join("")}
+                <span class="blocked-action"><span class="blocked-action-label">잠김</span>${escapeHtml(uiLabel(action))}<span class="blocked-action-detail">외부 실행 없음</span></span>`).join("")}
               </div>
             </div>`;
 }
@@ -1347,11 +1365,34 @@ function executionApprovalInspectorRows(panel) {
     inspectorRow("Approval Fields", `${data.approvalPacket.requiredFields.length}`),
     inspectorRow("Validation Rules", `${data.validation.rules.length}`),
     inspectorRow("Audit Items", `${data.auditWriteDesign.plannedAuditItems.length}`),
-    inspectorRow("Audit Write", data.auditWriteDesign.auditWriteNow === false ? "기록 설계만 · 실제 기록 없음" : "write open"),
-    inspectorRow("Approval Record UX", data.approvalRecordWriteUx.writesApprovalRecordNow === false ? "저장 설계만 · 실제 저장 없음" : "write open"),
+    inspectorRow("Audit Write", data.localRecordSubstrate ? "로컬 JSONL 기록 가능" : "기록 설계만"),
+    inspectorRow("Approval Record UX", data.localRecordSubstrate ? "로컬 JSONL 기록 가능" : "저장 설계만"),
     inspectorRow("Approval Record Items", `${data.approvalRecordWriteUx.recordItems.length}`),
+    inspectorRow("Local Records", `승인 ${data.localRecordSubstrate?.counts?.approvalRecords || 0} · 감사 ${data.localRecordSubstrate?.counts?.auditRecords || 0}`),
+    inspectorRow("Replay", data.localRecordSubstrate?.latest?.approvalRecord?.replayReference || "아직 없음"),
     inspectorRow("UX Locale", data.uxContract.defaultLocale),
   ].join("");
+}
+
+function localRecordSubstrateHtml(substrate = {}) {
+  const counts = substrate.counts || {};
+  const latest = substrate.latest?.approvalRecord;
+  return `
+              <div class="blocked-actions" aria-label="Local approval audit record substrate" data-local-record-substrate="v1">
+                <strong>로컬 승인/감사 기록</strong>
+                <span class="blocked-action">
+                  <span class="blocked-action-label">기록</span>승인 ${escapeHtml(counts.approvalRecords || 0)} · 감사 ${escapeHtml(counts.auditRecords || 0)}
+                  <span class="blocked-action-detail">${escapeHtml(substrate.storage?.format || "jsonl")}</span>
+                </span>
+                <span class="blocked-action">
+                  <span class="blocked-action-label">최근</span>${escapeHtml(latest?.id || "아직 없음")}
+                  <span class="blocked-action-detail">${escapeHtml(latest?.replayReference || "replay 대기")}</span>
+                </span>
+                <span class="blocked-action">
+                  <span class="blocked-action-label">잠김</span>${escapeHtml((substrate.blockedBoundaries || []).slice(0, 4).join(" · "))}
+                  <span class="blocked-action-detail">외부/비용/파괴/credential 차단</span>
+                </span>
+              </div>`;
 }
 
 function metric(label, value, hint) {

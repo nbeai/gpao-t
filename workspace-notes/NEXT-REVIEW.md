@@ -2,25 +2,24 @@
 
 ## Next Safe Action
 
-Proceed from `GPAO-T Design Reference Realization Pass 001` into the next product slice only after preserving the new visual baseline. The next slice should not be another design-reference registration gate; use this pass as the baseline for user-facing work.
+Move from Approval/Audit Local Record Substrate v1 into the next user-felt loop: use the saved local approval/audit replay as the basis for a controlled dry-run preview or connector/tool governance slice.
 
 ## Review Before Continuing
 
-- Review `docs/03-verification/evidence/design-realization-pass-001-qa-2026-07-09.json` and the four screenshot evidence files before claiming any later UI/UX surface is visually aligned.
-- Preserve the applied Visual Reference Pack tokens: warm local-desk background, raised white surfaces, green/blue/amber/red/violet authority tones, 10-12px card radius, Korean-first line rhythm, and calm permission language.
-- Keep actual approval record write, audit write, dry-run invocation, command/tool/CLI/MCP execution, connector activation, credential access, external send, paid/destructive action, and durable memory promotion blocked.
-- Treat the closeout blocker as a BEAI session-language/product-quality review blocker, not as a failing npm/test gate. Use `implemented but needs review` unless the blocker is explicitly cleared.
+- Preserve the current opened boundary: local `.gpao-t/approval/*.jsonl` approval/audit records are allowed.
+- Keep external send, paid/destructive action, credential access, connector live activation, public release, durable memory promotion, live model call, and tool/CLI/MCP execution blocked.
+- Review `docs/03-verification/evidence/VISUAL-POLISH-PASS-002-QA-2026-07-09.md` and `docs/03-verification/evidence/approval-audit-local-record-substrate-v1-qa-2026-07-09.json`.
+- Treat BEAI closeout blocked language as a session/product-quality review blocker, not as failing npm/test evidence.
 
 ## Session Resume
 
-Current position: Design Reference Realization Pass 001 has applied the visual reference to actual Control Center and Work Surface rendering, added screenshot-backed QA evidence, and connected the evidence to tests and `VERIFY.md`.
+Current position: Visual Product Polish Pass 002 and Approval/Audit Local Record Substrate v1 are implemented and verified by local tests, full test run, BEAI verify, serve-check, local record write/replay, and screenshot evidence.
 
 ## Recent Evidence
 
-- preflight: Read-only workspace check completed for gpao-t.
-- route: Routed work as strict.
-- plan: Saved build plan.
-- `node --test test/control-center.test.js`: pass, 30 tests.
-- `npm run verify`: pass, 116 tests across 16 suites.
-- `beai verify --cwd "/Users/jyp/Documents/Playground 2/gpao-t" --run --scenario --meaning`: completion gate ready 100/100, scenario pass, product quality review warning.
-- closeout: blocked only by unresolved BEAI session blocker `product-quality`, while automated checks and QA evidence pass.
+- `npm run check`: passed.
+- `npm test`: 120 tests passed.
+- `node --test test/approval-audit-records.test.js test/control-center.test.js`: 34 tests passed.
+- `node bin/gpao-t.js approval record-write "...": written_local_only`, replay ready.
+- `node bin/gpao-t.js control serve-check`: ready.
+- `beai verify --run`: checks passed; product-quality review warning remains.

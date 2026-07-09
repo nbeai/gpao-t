@@ -1,4 +1,5 @@
 import { listModelAdapters, listToolAdapters } from "./adapter-boundary.js";
+import { buildApprovalAuditLocalRecordSubstrate } from "./approval-audit-records.js";
 import { buildConnectorGovernanceSummary } from "./connector-governance.js";
 import { buildCoreWorkSurface } from "./core-work-surface.js";
 import {
@@ -43,6 +44,7 @@ export function buildControlCenterSnapshot({ root } = {}) {
   const executionApprovalPreview = buildExecutionApprovalPreview();
   const auditWriteDesignProof = buildAuditWriteDesignProof();
   const approvalRecordWriteUx = buildApprovalRecordWriteUxDesign();
+  const approvalAuditLocalRecordSubstrate = buildApprovalAuditLocalRecordSubstrate({ root });
   const designReferenceGate = buildGpaoTDesignReferenceGate({ slice: "all-ui-ux-slices" });
   const installHardening = buildInstallHardeningSummary({ root });
   const operationsContract = buildOperationsContractSummary();
@@ -61,7 +63,7 @@ export function buildControlCenterSnapshot({ root } = {}) {
     buildOpsPanel({ installHardening, operationsContract }),
     buildApprovalPreviewPanel({ approvalPreviewFlow }),
     buildDesignReferencePanel({ designReferenceGate }),
-    buildExecutionApprovalPanel({ executionApprovalPreview }),
+    buildExecutionApprovalPanel({ executionApprovalPreview, approvalAuditLocalRecordSubstrate }),
     buildSkillPanel({
       skillPacks,
       skillReadiness,
@@ -120,6 +122,8 @@ export function buildControlCenterSnapshot({ root } = {}) {
       approvalRecordFlowStages: approvalRecordWriteUx.flow.stages.length,
       approvalRecordPreviewItems: approvalRecordWriteUx.recordItems.length,
       approvalRecordBlockedActions: approvalRecordWriteUx.blockedActions.length,
+      approvalLocalRecords: approvalAuditLocalRecordSubstrate.counts.approvalRecords,
+      auditLocalRecords: approvalAuditLocalRecordSubstrate.counts.auditRecords,
       coreWorkSurfaceThreadMessages: coreWorkSurface.workspaceThread.threadPreview.length,
       coreWorkSurfaceSelectedSkillPacks: coreWorkSurface.skillRoutePreview.selectedPacks.length,
       coreWorkSurfaceContextCandidates: coreWorkSurface.contextPreview.retrievedCandidates.length,
@@ -148,9 +152,9 @@ export function buildControlCenterSnapshot({ root } = {}) {
       approvalPreviewFlow: "local_preview_only_no_write_no_invocation",
       designReferenceGate: "required_for_every_ui_ux_slice",
       executionApprovalPacket: "preview_validation_only_no_write_no_invocation",
-      auditWriteDesign: "design_proof_only_no_write",
-      approvalRecordWriteUx: "ux_design_only_no_write",
-      approvalRecordWrite: "blocked",
+      auditWriteDesign: "local_jsonl_write_available",
+      approvalRecordWriteUx: "local_jsonl_write_available",
+      approvalRecordWrite: "local_jsonl_only",
       dryRunInvocation: "blocked",
       tauriBuild: "blocked",
       dependencyInstall: "blocked",
@@ -426,14 +430,17 @@ function buildDesignReferencePanel({ designReferenceGate }) {
   };
 }
 
-function buildExecutionApprovalPanel({ executionApprovalPreview }) {
+function buildExecutionApprovalPanel({ executionApprovalPreview, approvalAuditLocalRecordSubstrate }) {
   return {
     id: "execution-approval",
     label: "Execution Approval",
     status: "review",
-    headline: "실행 전 확인 패킷이다. 무엇이 실행될 예정인지와 무엇을 기록 대상으로 둘지 보여주지만 아직 실행하거나 기록하지 않는다.",
-    data: executionApprovalPreview,
-    nextSafeAction: executionApprovalPreview.nextSafeAction,
+    headline: "실행 후보를 확인하고 승인/감사 기록만 로컬 JSONL에 남길 수 있다.",
+    data: {
+      ...executionApprovalPreview,
+      localRecordSubstrate: approvalAuditLocalRecordSubstrate,
+    },
+    nextSafeAction: approvalAuditLocalRecordSubstrate.visualConfirmation.nextSafeAction,
   };
 }
 

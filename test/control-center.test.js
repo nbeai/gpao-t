@@ -196,9 +196,9 @@ describe("GPAO-T Local Control Center readiness", () => {
     assert.equal(snapshot.authorityBoundary.approvalPreviewFlow, "local_preview_only_no_write_no_invocation");
     assert.equal(snapshot.authorityBoundary.designReferenceGate, "required_for_every_ui_ux_slice");
     assert.equal(snapshot.authorityBoundary.executionApprovalPacket, "preview_validation_only_no_write_no_invocation");
-    assert.equal(snapshot.authorityBoundary.auditWriteDesign, "design_proof_only_no_write");
-    assert.equal(snapshot.authorityBoundary.approvalRecordWriteUx, "ux_design_only_no_write");
-    assert.equal(snapshot.authorityBoundary.approvalRecordWrite, "blocked");
+    assert.equal(snapshot.authorityBoundary.auditWriteDesign, "local_jsonl_write_available");
+    assert.equal(snapshot.authorityBoundary.approvalRecordWriteUx, "local_jsonl_write_available");
+    assert.equal(snapshot.authorityBoundary.approvalRecordWrite, "local_jsonl_only");
     assert.equal(snapshot.authorityBoundary.dryRunInvocation, "blocked");
     assert.equal(snapshot.authorityBoundary.externalModelCall, "blocked_until_configured_and_approved");
     assert.ok(snapshot.panels.some((panel) =>
@@ -806,7 +806,8 @@ describe("GPAO-T Local Control Center readiness", () => {
     assert.match(html, /비용 발생 가능/);
     assert.doesNotMatch(html, />\s*(eye|scan|edit-3|send|octagon-alert|circle-dollar-sign)\s*·/);
     assert.match(html, /data-approval-packet-validation="design-only"/);
-    assert.match(html, /data-audit-write-design="no-write"/);
+    assert.match(html, /data-audit-write-design="local-record-only"/);
+    assert.match(html, /data-local-record-substrate="v1"/);
     assert.match(html, /data-audit-preview="design-only"/);
     assert.match(html, /기록될 예정인 항목/);
     assert.match(html, /data-audit-item="requested_action"/);
@@ -2045,7 +2046,7 @@ describe("GPAO-T Local Control Center readiness", () => {
       assert.equal(tauriShellVerify.body.status, "ready");
       assert.equal(controlSummary.body.schema, "gpao_t.control_center_summary.v0_1");
       assert.equal(controlSummary.body.panels.some((panel) => panel.id === "approval-preview"), true);
-      assert.equal(controlSummary.body.authorityBoundary.approvalRecordWrite, "blocked");
+      assert.equal(controlSummary.body.authorityBoundary.approvalRecordWrite, "local_jsonl_only");
       assert.equal(controlSummary.body.authorityBoundary.dryRunInvocation, "blocked");
       assert.equal(blockedPost.status, 405);
       assert.equal(blockedPost.body.status, "blocked");

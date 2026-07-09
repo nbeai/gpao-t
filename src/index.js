@@ -55,6 +55,14 @@ import {
 import { buildContextRuntime } from "./core/context-runtime.js";
 import { runDoctor } from "./core/doctor.js";
 import {
+  buildApprovalAuditLocalRecordSubstrate,
+  buildApprovalAuditReplay,
+  readApprovalRecords,
+  readAuditRecords,
+  verifyApprovalAuditLocalRecordSubstrate,
+  writeApprovalAuditLocalRecords,
+} from "./core/approval-audit-records.js";
+import {
   buildApprovalRecordWriteUxDesign,
   buildAuditWriteDesignProof,
   buildExecutionApprovalPreview,
@@ -194,6 +202,8 @@ export {
   buildControlCenterServingContract,
   buildControlCenterUiContract,
   buildControlCenterUiSnapshot,
+  buildApprovalAuditLocalRecordSubstrate,
+  buildApprovalAuditReplay,
   buildGrowthApplicationGate,
   buildGrowthApplicationGateSummary,
   buildInstallHardeningReport,
@@ -250,6 +260,8 @@ export {
   listToolAdapters,
   listSkillPacks,
   readAuditEvents,
+  readApprovalRecords,
+  readAuditRecords,
   readGrowthApplicationGates,
   readInstallHardeningReports,
   readMemoryWiki,
@@ -267,6 +279,7 @@ export {
   verifyConnectorToolGovernance,
   verifyGpaoTDesignReferenceGate,
   verifyApprovalRecordWriteUxDesign,
+  verifyApprovalAuditLocalRecordSubstrate,
   verifyAuditWriteDesignProof,
   verifyExecutionApprovalPreview,
   renderControlCenterHtml,
@@ -297,4 +310,5 @@ export {
   runTurn,
   runtimePaths,
   writeRuntimeState,
+  writeApprovalAuditLocalRecords,
 };

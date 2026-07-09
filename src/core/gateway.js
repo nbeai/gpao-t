@@ -63,6 +63,14 @@ import {
   verifyGpaoTDesignReferenceGate,
 } from "./design-contract.js";
 import {
+  buildApprovalAuditLocalRecordSubstrate,
+  buildApprovalAuditReplay,
+  readApprovalRecords,
+  readAuditRecords,
+  verifyApprovalAuditLocalRecordSubstrate,
+  writeApprovalAuditLocalRecords,
+} from "./approval-audit-records.js";
+import {
   buildApprovalRecordWriteUxDesign,
   buildAuditWriteDesignProof,
   buildExecutionApprovalPreview,
@@ -572,6 +580,59 @@ export function handleGatewayRequest({ method = "GET", path = "/", body = {}, ro
       schema: "gpao_t.gateway_response.v0_1",
       status: 200,
       body: verifyApprovalRecordWriteUxDesign(),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/approval/local-record-substrate") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: buildApprovalAuditLocalRecordSubstrate({ root }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/approval/local-record-substrate/verify") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: verifyApprovalAuditLocalRecordSubstrate({ root }),
+    };
+  }
+
+  if (normalizedMethod === "POST" && path === "/approval/local-records/write") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: writeApprovalAuditLocalRecords({
+        root,
+        proposal: body.proposal,
+        request: body.request,
+        confirmationState: body.confirmationState,
+      }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/approval/local-records") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: readApprovalRecords({ root }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/approval/local-audit-records") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: readAuditRecords({ root }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/approval/local-records/replay") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: buildApprovalAuditReplay({ root }),
     };
   }
 

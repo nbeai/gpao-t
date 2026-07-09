@@ -10,6 +10,8 @@ Design reference bridge:
 - Claude Code is a quality bar for permission, execution governance, multi-surface continuity, memory/instruction discipline, hooks, skills, MCP, and review-before-action, not a product to copy.
 - Use `GPAO-T-VISUAL-REFERENCE.md` before every UI/UX implementation or review.
 - GPAO-T visual reference is the concrete bar for color, surface, card style, icon treatment, Korean typography, layout rhythm, tone-and-manner, and human-perceived product quality.
+- The GPAO-T Official Visual Source Atlas, Screen Annotation Matrix, Safe Capture Protocol, and Design Textbook are mandatory before claiming design reference application.
+- Design reference application requires actual desktop/mobile visual evidence, including color, visual polish, icon placement, Korean line rhythm, and tone-and-manner consistency. Route checks and test counts are not enough.
 
 ## Core Work Surface
 

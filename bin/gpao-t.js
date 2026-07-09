@@ -16,6 +16,8 @@ import {
   buildControlCenterServingContract,
   buildControlCenterUiContract,
   buildControlCenterUiSnapshot,
+  buildApprovalAuditLocalRecordSubstrate,
+  buildApprovalAuditReplay,
   buildConnectorGovernanceSummary,
   buildConnectorToolGovernance,
   buildCoreWorkSurface,
@@ -67,6 +69,8 @@ import {
   buildRecoveryHistorySummary,
   getSkillPack,
   readAuditEvents,
+  readApprovalRecords,
+  readAuditRecords,
   readGrowthApplicationGates,
   readInstallHardeningReports,
   listConnectors,
@@ -88,6 +92,7 @@ import {
   startControlCenterPreviewServer,
   validateControlCenterUiSnapshot,
   verifyBrowserLocalAppShell,
+  verifyApprovalAuditLocalRecordSubstrate,
   verifyControlCenterPreviewServing,
   verifyConnectorToolGovernance,
   verifyCoreWorkSurface,
@@ -112,6 +117,7 @@ import {
   verifyTauriPackagedDesktopGate,
   verifyTauriReadOnlyShellSlice,
   appendSkillExecutionRun,
+  writeApprovalAuditLocalRecords,
 } from "../src/index.js";
 
 function usage() {
@@ -161,6 +167,13 @@ function usage() {
     "  gpao-t approval audit-write-design-check",
     "  gpao-t approval approval-record-write-ux [text]",
     "  gpao-t approval approval-record-write-ux-check",
+    "  gpao-t approval local-record-substrate",
+    "  gpao-t approval local-record-substrate-check",
+    "  gpao-t approval record-write [text]",
+    "  gpao-t approval audit-write [text]",
+    "  gpao-t approval records",
+    "  gpao-t approval audit-records",
+    "  gpao-t approval replay [record-id]",
     "  gpao-t ops hardening",
     "  gpao-t ops contract",
     "  gpao-t ops data",
@@ -427,8 +440,21 @@ try {
       printJson(buildApprovalRecordWriteUxDesign(request ? { request } : undefined));
     } else if (subcommand === "approval-record-write-ux-check") {
       printJson(verifyApprovalRecordWriteUxDesign());
+    } else if (subcommand === "local-record-substrate") {
+      printJson(buildApprovalAuditLocalRecordSubstrate());
+    } else if (subcommand === "local-record-substrate-check") {
+      printJson(verifyApprovalAuditLocalRecordSubstrate());
+    } else if (subcommand === "record-write" || subcommand === "audit-write") {
+      const request = textParts.join(" ").trim();
+      printJson(writeApprovalAuditLocalRecords(request ? { request } : undefined));
+    } else if (subcommand === "records") {
+      printJson(readApprovalRecords());
+    } else if (subcommand === "audit-records") {
+      printJson(readAuditRecords());
+    } else if (subcommand === "replay") {
+      printJson(buildApprovalAuditReplay({ recordId: textParts[0] }));
     } else {
-      throw new Error("approval command requires execution-proposal, execution-proposal-check, audit-write-design, audit-write-design-check, approval-record-write-ux, or approval-record-write-ux-check");
+      throw new Error("approval command requires execution-proposal, execution-proposal-check, audit-write-design, audit-write-design-check, approval-record-write-ux, approval-record-write-ux-check, local-record-substrate, local-record-substrate-check, record-write, audit-write, records, audit-records, or replay");
     }
   } else if (command === "ops") {
     const [subcommand] = args;

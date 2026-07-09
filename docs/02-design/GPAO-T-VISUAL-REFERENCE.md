@@ -32,7 +32,12 @@ Before any UI/UX work, read:
 - `/Users/jyp/Documents/Playground 2/gpao-t-references/gpao-t-visual-reference/05-SCREEN-BLUEPRINTS.md`
 - `/Users/jyp/Documents/Playground 2/gpao-t-references/gpao-t-visual-reference/06-VISUAL-QA-RUBRIC.md`
 - `/Users/jyp/Documents/Playground 2/gpao-t-references/gpao-t-visual-reference/07-DEVELOPMENT-DIRECTIVE.md`
+- `/Users/jyp/Documents/Playground 2/gpao-t-references/gpao-t-visual-reference/08-OFFICIAL-VISUAL-SOURCE-ATLAS.md`
+- `/Users/jyp/Documents/Playground 2/gpao-t-references/gpao-t-visual-reference/09-SCREEN-ANNOTATION-MATRIX.md`
+- `/Users/jyp/Documents/Playground 2/gpao-t-references/gpao-t-visual-reference/10-SAFE-CAPTURE-PROTOCOL.md`
+- `/Users/jyp/Documents/Playground 2/gpao-t-references/gpao-t-visual-reference/11-DESIGN-TEXTBOOK.md`
 - `/Users/jyp/Documents/Playground 2/gpao-t-references/gpao-t-visual-reference/GPAO-T-VISUAL-REFERENCE-BOARD.html`
+- `/Users/jyp/Documents/Playground 2/gpao-t-references/gpao-t-visual-reference/GPAO-T-OFFICIAL-SOURCE-ATLAS.html`
 
 ## Non-Negotiable Rule
 
@@ -51,3 +56,19 @@ The screen must be inspected for:
 - tone-and-manner consistency
 - user-perceived product quality
 
+## Visual Source Requirement
+
+The official visual-source atlas and design textbook are mandatory. A UI/UX pass cannot claim `GPAO-T Design Reference applied` unless it uses the official Codex, Claude Code, Raycast, Linear, and secondary Cursor/Notion references as visual quality inputs and then proves the result with actual desktop/mobile screenshots.
+
+The goal is not to copy Codex or Claude Code.
+
+The goal is to reach that level of:
+
+- visual polish
+- color discipline
+- spacing rhythm
+- icon alignment
+- Korean readability
+- authority clarity
+- tone-and-manner unity
+- user-perceived product quality

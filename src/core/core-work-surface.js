@@ -1,4 +1,5 @@
 import { buildConnectorGovernanceSummary } from "./connector-governance.js";
+import { buildApprovalAuditLocalRecordSubstrate } from "./approval-audit-records.js";
 import { buildExecutionApprovalPreview } from "./execution-approval.js";
 import { readMemoryWiki, readTCellCandidates, resolveContextMesh } from "./memory-wiki.js";
 import { routeModel } from "./model-router.js";
@@ -43,6 +44,9 @@ const UI_LABELS = {
   "model connector live execution": "모델 연결 실행",
   "connector activation": "커넥터 활성화",
   "approval record write": "승인 기록 쓰기",
+  "audit record write": "감사 기록 쓰기",
+  "replay read": "기록 재생 읽기",
+  "rollback reference read": "되돌리기 기준 읽기",
   "dry-run invocation": "미리보기 실행",
   "durable memory promotion": "지속 기억 승격",
   "self-growth apply": "자가성장 적용",
@@ -50,8 +54,12 @@ const UI_LABELS = {
   "messenger send": "메신저 전송",
   "recurring automation": "반복 자동화",
   general_request: "일반 요청",
-  cli: "CLI 후보",
-  dry_run: "미리보기 실행 후보",
+  cli: "로컬 명령 후보",
+  dry_run: "미리보기 후보",
+  confirmed_for_local_record_only: "로컬 기록만 확인",
+  written_local_only: "로컬 저장됨",
+  local_jsonl_record_write_read_replay: "로컬 기록/재생",
+  local_record_only: "로컬 기록 한정",
 };
 
 export function buildCoreWorkSurface({
@@ -72,6 +80,7 @@ export function buildCoreWorkSurface({
   });
   const connectorGovernance = buildConnectorGovernanceSummary();
   const executionApprovalPreview = buildExecutionApprovalPreview({ request: draftRequest });
+  const approvalAuditLocalRecordSubstrate = buildApprovalAuditLocalRecordSubstrate({ root });
   const primaryContext = contextPreview.retrievedCandidates[0];
   const primarySkillPack = skillRoute.selectedPacks[0];
 
@@ -400,6 +409,7 @@ export function buildCoreWorkSurface({
         recordItems: executionApprovalPreview.approvalRecordWriteUx.recordItems,
         writesApprovalRecordNow: false,
       },
+      localRecordSubstrate: approvalAuditLocalRecordSubstrate,
       confirmationChoices: executionApprovalPreview.workSurfaceView.confirmationChoices,
       uxContract: executionApprovalPreview.uxContract,
       blockedActions: executionApprovalPreview.blockedActions,
@@ -583,7 +593,7 @@ export function verifyCoreWorkSurface({ surface = buildCoreWorkSurface(), html }
     if (!html.includes("읽기 전용")) findings.push("html_missing_korean_readonly_label");
     if (!html.includes("외부 전송 전 확인")) findings.push("html_missing_korean_external_send_label");
     if (!html.includes("data-approval-packet-validation=\"design-only\"")) findings.push("html_missing_approval_packet_validation");
-    if (!html.includes("data-audit-write-design=\"no-write\"")) findings.push("html_missing_audit_write_design");
+    if (!html.includes("data-audit-write-design=\"local-record-only\"")) findings.push("html_missing_audit_write_design");
     if (!html.includes("data-audit-preview=\"design-only\"")) findings.push("html_missing_audit_preview");
     if (!html.includes("기록될 예정인 항목")) findings.push("html_missing_planned_audit_items");
     if (!html.includes("data-approval-record-write-ux=\"design-only\"")) findings.push("html_missing_approval_record_write_ux");
@@ -1410,7 +1420,7 @@ export function buildCoreWorkSurfaceHtml({ surface } = {}) {
             <span>${escapeHtml(rule.userMessage)}</span>
           </div>`).join("")}
         </div>
-        <p class="confirmation-note" data-audit-write-design="no-write">audit write: ${escapeHtml(executionConfirmation.auditWriteDesign.auditWriteNow)} · approval record write: ${escapeHtml(executionConfirmation.approvalPacket.writesPacketNow)} · invocation: ${escapeHtml(executionConfirmation.approvalPacket.opensInvocationNow)}</p>
+        <p class="confirmation-note" data-audit-write-design="local-record-only">감사 기록/승인 기록: 로컬 JSONL만 가능 · 실제 실행: ${escapeHtml(executionConfirmation.approvalPacket.opensInvocationNow)}</p>
         <div class="audit-preview-grid" data-audit-preview="design-only" aria-label="Planned audit items">
           ${plannedAuditItems.map((item) => `
           <div class="audit-item" data-audit-item="${escapeHtml(item.id)}">
@@ -1438,6 +1448,7 @@ export function buildCoreWorkSurfaceHtml({ surface } = {}) {
           </div>`).join("")}
         </div>
         <p class="confirmation-note">저장 전 확인: ${escapeHtml(approvalRecordFlow.userMessage || "저장 설계만 · 실제 저장 없음")}</p>
+        ${localRecordSubstrateHtml(executionConfirmation.localRecordSubstrate)}
       </section>
       <p class="next">${escapeHtml(workSurface.nextSafeAction)}</p>
     </section>
@@ -1469,8 +1480,8 @@ export function buildCoreWorkSurfaceHtml({ surface } = {}) {
         </div>
       </article>
       <article class="panel" data-authority-boundary="closed">
-        <h2>Authority / Approval</h2>
-        <p class="muted">${escapeHtml(workSurface.authoritySummary.approvalStatus)}</p>
+        <h2>권한 / 승인</h2>
+        <p class="muted">${escapeHtml(uiLabel(workSurface.authoritySummary.approvalStatus))}</p>
         <div class="authority-strip">
           ${workSurface.authoritySummary.closedActions.slice(0, 8).map((action) => `<span class="lock">${escapeHtml(uiLabel(action))}</span>`).join("")}
         </div>
@@ -1483,6 +1494,29 @@ export function buildCoreWorkSurfaceHtml({ surface } = {}) {
 
 function stateCard(label, value) {
   return `<div class="state-card"><strong>${escapeHtml(label)}</strong><span>${escapeHtml(uiLabel(value || "none"))}</span></div>`;
+}
+
+function localRecordSubstrateHtml(substrate = {}) {
+  const counts = substrate.counts || {};
+  const latest = substrate.latest?.approvalRecord;
+  return `
+        <div class="audit-preview-grid" data-local-record-substrate="v1" aria-label="Local approval and audit record substrate">
+          <div class="audit-item">
+            <strong>로컬 기록</strong>
+            <span>승인 ${escapeHtml(counts.approvalRecords || 0)} · 감사 ${escapeHtml(counts.auditRecords || 0)}</span>
+            <small>${escapeHtml(substrate.visualConfirmation?.userMessage || "로컬 JSONL 기록만 허용됩니다.")}</small>
+          </div>
+          <div class="audit-item">
+            <strong>최근 기록</strong>
+            <span>${escapeHtml(latest?.id || "아직 없음")}</span>
+            <small>${escapeHtml(latest?.rollbackReference || "기록 후 replay에서 되돌리기 기준을 읽습니다.")}</small>
+          </div>
+          <div class="audit-item">
+            <strong>계속 잠김</strong>
+            <span>${escapeHtml((substrate.blockedBoundaries || []).slice(0, 4).join(" · "))}</span>
+            <small>외부 전송, 비용/파괴, credential, connector live는 열리지 않습니다.</small>
+          </div>
+        </div>`;
 }
 
 function uiLabel(value) {
