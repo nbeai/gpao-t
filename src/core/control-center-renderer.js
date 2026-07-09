@@ -42,6 +42,7 @@ const UI_LABELS = {
   allowed: "허용됨",
   draft_not_sent: "초안 · 미전송",
   preview_only: "미리보기만",
+  visible_preview_ready: "미리보기 준비",
   local_execution_plan: "로컬 계획",
   local_reasoning_stub: "로컬 추론 후보",
   "external action": "외부 행동",
@@ -80,6 +81,8 @@ const UI_LABELS = {
   local_jsonl_only: "로컬 기록 한정",
   local_jsonl_record_write_read_replay: "로컬 기록/재생",
   written_local_only: "로컬 저장됨",
+  not_written: "아직 저장 전",
+  local_record: "로컬 기록",
   confirmed_for_local_record_only: "로컬 기록만 확인",
   dry_run: "미리보기 후보",
   cli: "로컬 명령 후보",
@@ -960,6 +963,8 @@ export function buildControlCenterHtml({ snapshot, designContract } = {}) {
       }
       .layout {
         padding-top: 140px;
+        width: 100vw;
+        max-width: 100vw;
       }
       .brand {
         align-items: flex-start;
@@ -977,14 +982,32 @@ export function buildControlCenterHtml({ snapshot, designContract } = {}) {
       .topbar-action {
         display: -webkit-box;
         width: 100%;
+        max-width: 100%;
         max-height: 34px;
         overflow: hidden;
         color: var(--muted);
         font-size: 11px;
         line-height: 1.35;
         overflow-wrap: anywhere;
+        word-break: break-word;
         -webkit-box-orient: vertical;
         -webkit-line-clamp: 2;
+      }
+      .topbar,
+      .layout,
+      main,
+      nav,
+      aside,
+      .panel,
+      .work-composer,
+      .work-message,
+      .work-signal,
+      .blocked-action {
+        max-width: 100%;
+        min-width: 0;
+        white-space: normal;
+        overflow-wrap: anywhere;
+        word-break: break-word;
       }
       main,
       aside,
@@ -1009,12 +1032,12 @@ export function buildControlCenterHtml({ snapshot, designContract } = {}) {
         background: var(--surface-muted);
       }
       .decision-strip {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-columns: 1fr;
         gap: 8px;
         margin-bottom: 10px;
       }
       .workflow-state-view {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-columns: 1fr;
         gap: 8px;
         margin-bottom: 10px;
       }
@@ -1066,7 +1089,7 @@ export function buildControlCenterHtml({ snapshot, designContract } = {}) {
         gap: 6px;
       }
       .state-ribbon {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-columns: 1fr;
         gap: 6px;
       }
       .approval-flow {
@@ -1080,7 +1103,7 @@ export function buildControlCenterHtml({ snapshot, designContract } = {}) {
         grid-template-columns: 1fr;
       }
       .work-surface-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-columns: 1fr;
       }
       .approval-stage {
         min-height: 0;
@@ -1089,7 +1112,7 @@ export function buildControlCenterHtml({ snapshot, designContract } = {}) {
         font-size: 11px;
       }
       .blocked-actions {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-columns: 1fr;
       }
       .panel-action {
         min-height: 34px;
@@ -1322,6 +1345,7 @@ function coreWorkSurfaceHtml(panel) {
   const selectedPacks = surface.skillRoutePreview?.selectedPacks || [];
   const contextCandidates = surface.contextPreview?.retrievedCandidates || [];
   const closedActions = surface.authoritySummary?.closedActions || [];
+  const localLoop = surface.firstLocalWorkLoop;
 
   return `
             <div class="work-thread-preview" data-core-work-surface="read-only">
@@ -1357,6 +1381,12 @@ function coreWorkSurfaceHtml(panel) {
                 ${workSignal("모델 후보", surface.modelToolRoutePreview.selectedModelAdapter || "none")}
                 ${workSignal("도구 후보", `${surface.modelToolRoutePreview.toolAdapters.length}`)}
               </div>
+              <div class="work-surface-grid" aria-label="First local work loop" data-first-local-work-loop="preview">
+                ${workSignal("첫 로컬 루프", localLoop?.status || "none")}
+                ${workSignal("작업 패킷", localLoop?.packet?.id || "none")}
+                ${workSignal("기록 상태", localLoop?.approvalAudit?.recordWrite?.status || "none")}
+                ${workSignal("replay 기준", localLoop?.approvalAudit?.rollbackReference || "none")}
+              </div>
             </div>`;
 }
 
@@ -1372,6 +1402,8 @@ function coreWorkSurfaceInspectorRows(panel) {
     inspectorRow("작업 상태", `${uiLabel(surface.taskState.status)} · ${uiLabel(surface.taskState.inputSignal)}`),
     inspectorRow("맥락 미리보기", `${uiLabel(surface.contextPreview.status)} · 후보 ${surface.contextPreview.retrievedCandidates.length}`),
     inspectorRow("스킬 경로", (surface.skillRoutePreview.selectedPacks || []).map((pack) => uiLabel(pack.title || pack.id)).join(" · ") || "없음"),
+    inspectorRow("첫 로컬 루프", `${uiLabel(surface.firstLocalWorkLoop?.status || "none")} · ${surface.firstLocalWorkLoop?.packet?.id || "none"}`),
+    inspectorRow("로컬 기록/replay", `${uiLabel(surface.firstLocalWorkLoop?.approvalAudit?.recordWrite?.status || "none")} · ${surface.firstLocalWorkLoop?.approvalAudit?.rollbackReference || "none"}`),
     inspectorRow("권한 요약", (surface.authoritySummary.closedActions || []).map(uiLabel).join(" · ")),
   ].join("");
 }

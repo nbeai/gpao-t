@@ -1,0 +1,81 @@
+{
+  "schema": "gpao_t.first_local_work_loop_v1_visual_qa.v1",
+  "status": "ready",
+  "date": "2026-07-09",
+  "openDesign": {
+    "attempted": true,
+    "status": "transport_closed",
+    "fallback": "GPAO-T Visual Reference Pack, Design Tokens, Component Style Guide, Screen Blueprints, Visual QA Rubric"
+  },
+  "screens": [
+    {
+      "surface": "work-surface",
+      "viewport": "desktop",
+      "path": "docs/03-verification/evidence/first-local-work-loop-v1-work-surface-desktop-1440x960.png",
+      "metricsPath": "docs/03-verification/evidence/first-local-work-loop-v1-desktop-cdp-metrics-2026-07-09.json",
+      "nonblank": true,
+      "overflowX": false,
+      "script": false,
+      "form": false,
+      "authorityVisible": true,
+      "nextSafeActionVisible": true,
+      "localLoopVisible": true
+    },
+    {
+      "surface": "work-surface",
+      "viewport": "mobile",
+      "path": "docs/03-verification/evidence/first-local-work-loop-v1-work-surface-mobile-390x844.png",
+      "metricsPath": "docs/03-verification/evidence/first-local-work-loop-v1-mobile-cdp-metrics-2026-07-09.json",
+      "nonblank": true,
+      "overflowX": false,
+      "script": false,
+      "form": false,
+      "authorityVisible": true,
+      "nextSafeActionVisible": true,
+      "localLoopVisible": true
+    },
+    {
+      "surface": "control-center",
+      "viewport": "desktop",
+      "path": "docs/03-verification/evidence/first-local-work-loop-v1-control-center-desktop-1440x960.png",
+      "metricsPath": "docs/03-verification/evidence/first-local-work-loop-v1-desktop-cdp-metrics-2026-07-09.json",
+      "nonblank": true,
+      "overflowX": false,
+      "script": false,
+      "form": false,
+      "authorityVisible": true,
+      "nextSafeActionVisible": true,
+      "localLoopVisible": true
+    },
+    {
+      "surface": "control-center",
+      "viewport": "mobile",
+      "path": "docs/03-verification/evidence/first-local-work-loop-v1-control-center-mobile-390x844.png",
+      "metricsPath": "docs/03-verification/evidence/first-local-work-loop-v1-mobile-cdp-metrics-2026-07-09.json",
+      "nonblank": true,
+      "overflowX": false,
+      "script": false,
+      "form": false,
+      "authorityVisible": true,
+      "nextSafeActionVisible": true,
+      "localLoopVisible": true
+    }
+  ],
+  "humanVisualReview": {
+    "visualPolish": 4.45,
+    "colorQuality": 4.45,
+    "layoutRhythm": 4.45,
+    "componentSystem": 4.4,
+    "koreanTypography": 4.5,
+    "toneAndManner": 4.55,
+    "authorityUx": 4.65,
+    "overallProductFeel": 4.5
+  },
+  "appliedDesignReference": {
+    "colors": "GPAO-T warm neutral base, green ready, amber locked, blue preview, violet approval",
+    "layout": "work/chat first, local loop as four-step preview, Control Center inspector remains subordinate",
+    "koreanTypography": "15px Korean body rhythm, mobile break-word fallback, no raw enum on primary surface",
+    "authorityLanguage": "모델/도구/커넥터/외부 전송 잠김 and local record/replay language are visible without sounding alarming"
+  },
+  "remainingProductQualityRisk": "Control Center is still information-dense. It is acceptable as an inspector for this stage, but future product-feel passes should further compress lower panels and strengthen the icon system."
+}

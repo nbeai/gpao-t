@@ -46,6 +46,29 @@ Core work surface first slice:
 - Checked visual invariant: desktop/mobile evidence confirms nonblank viewport, draft input visibility, task state visibility, context/skill route readability, authority boundary visibility, next safe action visibility, no overflow, mobile topbar/action visibility, no script, no form, and no external activation.
 - Next gate: the core work surface substrate is closed for the current read-only preview phase. The next major axis is Model Router boundary, not another work-surface/submission meta-gate. Live submission and all model/tool/connector execution remain blocked.
 
+First Local Work Loop v1:
+
+- Engineering document: `docs/03-engineering/FIRST-LOCAL-WORK-LOOP-V1.md`
+- Core module: `src/core/first-local-work-loop.js`
+- CLI surfaces: `node bin/gpao-t.js control work-surface-local-loop [text]` and `node bin/gpao-t.js control work-surface-local-loop-check [text]`
+- Gateway routes: `POST /work-surface/local-loop` and `POST /work-surface/local-loop/verify`
+- Work Surface integration: `node bin/gpao-t.js control work-surface`, `node bin/gpao-t.js control work-surface-html`, and `node bin/gpao-t.js control work-surface-check` must expose `data-first-local-work-loop="preview"` without writing records during render.
+- Control Center integration: `control snapshot`, `control summary`, and `control html` must expose the first local loop preview inside the `Work Surface` panel and inspector.
+- Local record invariant: explicit CLI/Gateway local-loop submission may write approval/audit JSONL records only under `.gpao-t/approval/*.jsonl` and must attach replay and rollback references. Browser rendering does not write records.
+- Required blocked boundary: live model call, tool/CLI/MCP execution, connector activation, credential access, external send, paid action, destructive action, install/update/rollback execution, public release, durable memory promotion, and self-growth live apply remain blocked.
+- Visual QA JSON: `docs/03-verification/evidence/first-local-work-loop-v1-visual-qa-2026-07-09.json`
+- Visual QA report: `docs/03-verification/evidence/FIRST-LOCAL-WORK-LOOP-V1-VISUAL-QA-2026-07-09.md`
+- Desktop screenshots:
+  - `docs/03-verification/evidence/first-local-work-loop-v1-work-surface-desktop-1440x960.png`
+  - `docs/03-verification/evidence/first-local-work-loop-v1-control-center-desktop-1440x960.png`
+- Mobile screenshots:
+  - `docs/03-verification/evidence/first-local-work-loop-v1-work-surface-mobile-390x844.png`
+  - `docs/03-verification/evidence/first-local-work-loop-v1-control-center-mobile-390x844.png`
+- CDP metrics:
+  - `docs/03-verification/evidence/first-local-work-loop-v1-desktop-cdp-metrics-2026-07-09.json`
+  - `docs/03-verification/evidence/first-local-work-loop-v1-mobile-cdp-metrics-2026-07-09.json`
+- Required visual invariant: desktop/mobile CDP metrics must show nonblank viewport, no horizontal overflow, no script, no form, visible local loop, visible authority boundary, and visible next safe action.
+
 Model Router boundary:
 
 - CLI surface: `node bin/gpao-t.js adapters model-router-boundary [text]`

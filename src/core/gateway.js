@@ -78,6 +78,10 @@ import {
   verifyAuditWriteDesignProof,
   verifyExecutionApprovalPreview,
 } from "./execution-approval.js";
+import {
+  buildFirstLocalWorkLoop,
+  verifyFirstLocalWorkLoop,
+} from "./first-local-work-loop.js";
 import { runDoctor } from "./doctor.js";
 import {
   appendSelfGrowthProposal,
@@ -241,6 +245,35 @@ export function handleGatewayRequest({ method = "GET", path = "/", body = {}, ro
       body: verifyWorkSurfaceSubmissionValidationGate({
         gate: buildWorkSurfaceSubmissionValidationGate({ root }),
       }),
+    };
+  }
+
+  if (normalizedMethod === "POST" && path === "/work-surface/local-loop") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: buildFirstLocalWorkLoop({
+        root,
+        request: body.request,
+        sourceSurface: body.sourceSurface || "/work-surface",
+        confirmationState: body.confirmationState || "confirmed_for_local_record_only",
+        writeLocalRecords: body.writeLocalRecords !== false,
+      }),
+    };
+  }
+
+  if (normalizedMethod === "POST" && path === "/work-surface/local-loop/verify") {
+    const loop = buildFirstLocalWorkLoop({
+      root,
+      request: body.request,
+      sourceSurface: body.sourceSurface || "/work-surface",
+      confirmationState: body.confirmationState || "confirmed_for_local_record_only",
+      writeLocalRecords: body.writeLocalRecords !== false,
+    });
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: verifyFirstLocalWorkLoop({ loop }),
     };
   }
 

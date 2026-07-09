@@ -1,6 +1,7 @@
 import { buildConnectorGovernanceSummary } from "./connector-governance.js";
 import { buildApprovalAuditLocalRecordSubstrate } from "./approval-audit-records.js";
 import { buildExecutionApprovalPreview } from "./execution-approval.js";
+import { buildFirstLocalWorkLoop } from "./first-local-work-loop.js";
 import { readMemoryWiki, readTCellCandidates, resolveContextMesh } from "./memory-wiki.js";
 import { routeModel } from "./model-router.js";
 import { routeSkillPacks, buildSkillExecutionPlan } from "./skill-ecosystem.js";
@@ -31,6 +32,7 @@ const UI_LABELS = {
   draft_not_sent: "초안 · 미전송",
   preview_only: "미리보기만",
   visible_preview_only: "미리보기만",
+  visible_preview_ready: "미리보기 준비",
   visible_local_preview_structure: "로컬 preview",
   confirm_before_draft: "초안 전 확인",
   attached_preview: "근거 연결됨",
@@ -60,6 +62,8 @@ const UI_LABELS = {
   dry_run: "미리보기 후보",
   confirmed_for_local_record_only: "로컬 기록만 확인",
   written_local_only: "로컬 저장됨",
+  not_written: "아직 저장 전",
+  local_record: "로컬 기록",
   local_jsonl_record_write_read_replay: "로컬 기록/재생",
   local_record_only: "로컬 기록 한정",
   blocked_in_this_slice: "이번 단계에서는 미전송",
@@ -138,6 +142,12 @@ export function buildCoreWorkSurface({
   const connectorGovernance = buildConnectorGovernanceSummary();
   const executionApprovalPreview = buildExecutionApprovalPreview({ request: draftRequest });
   const approvalAuditLocalRecordSubstrate = buildApprovalAuditLocalRecordSubstrate({ root });
+  const firstLocalWorkLoopPreview = buildFirstLocalWorkLoop({
+    root,
+    request: draftRequest,
+    writeLocalRecords: false,
+    now,
+  });
   const primaryContext = contextPreview.retrievedCandidates[0];
   const primarySkillPack = skillRoute.selectedPacks[0];
 
@@ -432,6 +442,23 @@ export function buildCoreWorkSurface({
       installsUpdatesOrRollsBack: false,
       promotesDurableMemory: false,
     },
+    firstLocalWorkLoop: {
+      schema: "gpao_t.work_surface_first_local_work_loop_view.v1",
+      status: "visible_preview_ready",
+      title: "첫 로컬 작업 루프",
+      userMessage:
+        "입력을 작업 패킷으로 만들고 맥락, 스킬, 권한, 기록/replay 기준까지 연결하는 첫 로컬 루프입니다. 이 화면에서는 preview만 보여주며 실제 기록 쓰기는 로컬 제출 명령에서만 일어납니다.",
+      packet: firstLocalWorkLoopPreview.packet,
+      taskPacket: firstLocalWorkLoopPreview.taskPacket,
+      contextMesh: firstLocalWorkLoopPreview.contextMesh,
+      skillRoute: firstLocalWorkLoopPreview.skillRoute,
+      modelRoute: firstLocalWorkLoopPreview.modelRoute,
+      localDraftPreview: firstLocalWorkLoopPreview.localDraftPreview,
+      approvalAudit: firstLocalWorkLoopPreview.approvalAudit,
+      boundaryState: firstLocalWorkLoopPreview.boundaryState,
+      blockedActions: firstLocalWorkLoopPreview.blockedActions,
+      nextSafeAction: firstLocalWorkLoopPreview.nextSafeAction,
+    },
     executionProposalConfirmation: {
       schema: "gpao_t.work_surface_execution_proposal_confirmation.v0_1",
       status: "visible_preview_only",
@@ -585,6 +612,11 @@ export function verifyCoreWorkSurface({ surface = buildCoreWorkSurface(), html }
   if (surface.localDraftPreview?.confirmationFlow?.closesCoreWorkSurfaceSubstrateAfterThisPass !== true) findings.push("substrate_close_marker_missing");
   if (surface.localDraftPreview?.confirmationFlow?.opensLiveSubmission !== false) findings.push("confirmation_flow_submission_open");
   if (surface.localDraftPreview?.confirmationFlow?.invokesModel !== false) findings.push("confirmation_flow_model_open");
+  if (surface.firstLocalWorkLoop?.status !== "visible_preview_ready") findings.push("missing_first_local_work_loop_view");
+  if (!surface.firstLocalWorkLoop?.packet?.id?.startsWith("work.local.")) findings.push("first_local_loop_packet_missing");
+  if (surface.firstLocalWorkLoop?.modelRoute?.liveModelCall !== false) findings.push("first_local_loop_model_call_open");
+  if (surface.firstLocalWorkLoop?.boundaryState?.toolCliMcpExecution !== false) findings.push("first_local_loop_tool_execution_open");
+  if (surface.firstLocalWorkLoop?.boundaryState?.externalSend !== false) findings.push("first_local_loop_external_send_open");
   if (surface.executionProposalConfirmation?.status !== "visible_preview_only") findings.push("missing_execution_proposal_confirmation");
   if (!surface.executionProposalConfirmation?.proposal?.toolKind) findings.push("execution_proposal_missing_tool_kind");
   if (!surface.executionProposalConfirmation?.proposal?.actionType) findings.push("execution_proposal_missing_action_type");
@@ -646,6 +678,8 @@ export function verifyCoreWorkSurface({ surface = buildCoreWorkSurface(), html }
     if (!html.includes("data-local-draft-state=\"blocked\"")) findings.push("html_missing_local_draft_blocked_state");
     if (!html.includes("data-local-draft-state=\"review-needed\"")) findings.push("html_missing_local_draft_review_state");
     if (!html.includes("data-preview-confirmation-flow=\"read-only\"")) findings.push("html_missing_preview_confirmation_flow");
+    if (!html.includes("data-first-local-work-loop=\"preview\"")) findings.push("html_missing_first_local_work_loop");
+    if (!html.includes("첫 로컬 작업 루프")) findings.push("html_missing_first_local_loop_title");
     if (!html.includes("data-execution-proposal-confirmation=\"preview-only\"")) findings.push("html_missing_execution_proposal_confirmation");
     if (!html.includes("읽기 전용")) findings.push("html_missing_korean_readonly_label");
     if (!html.includes("외부 전송 전 확인")) findings.push("html_missing_korean_external_send_label");
@@ -699,6 +733,7 @@ export function buildCoreWorkSurfaceHtml({ surface } = {}) {
   const approvalRecordFlow = executionConfirmation.approvalRecordFlow || {};
   const approvalRecordStages = approvalRecordFlow.flowStages || [];
   const approvalRecordItems = approvalRecordFlow.recordItems || [];
+  const firstLocalWorkLoop = workSurface.firstLocalWorkLoop;
 
   return `<!doctype html>
 <html lang="ko">
@@ -1128,6 +1163,57 @@ export function buildCoreWorkSurfaceHtml({ surface } = {}) {
       font-size: 12px;
       overflow-wrap: anywhere;
     }
+    .local-loop {
+      margin-top: 12px;
+      padding: 14px;
+      border: 1px solid #c9dccf;
+      border-radius: 12px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.96), rgba(251,252,248,0.96));
+      box-shadow: var(--shadow);
+    }
+    .local-loop-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .local-loop-step {
+      min-width: 0;
+      min-height: 116px;
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: var(--surface);
+    }
+    .local-loop-step[data-authority-boundary="closed"] {
+      border-color: #efd2a8;
+      background: var(--amber-soft);
+    }
+    .local-loop-step strong,
+    .local-loop-step span,
+    .local-loop-step small {
+      display: block;
+      overflow-wrap: anywhere;
+      word-break: keep-all;
+    }
+    .local-loop-step strong {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+    .local-loop-step span {
+      margin-top: 6px;
+      color: var(--text);
+      font-size: 12px;
+      font-weight: 800;
+      line-height: 1.45;
+    }
+    .local-loop-step small {
+      margin-top: 5px;
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.45;
+    }
     .execution-proposal {
       margin-top: 12px;
       padding: 14px;
@@ -1315,6 +1401,7 @@ export function buildCoreWorkSurfaceHtml({ surface } = {}) {
       .topbar { flex-direction: column; gap: 8px; }
       .understanding-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .confirmation-grid, .draft-preview-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .local-loop-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .draft-state-strip, .preview-decision-strip, .authority-level-grid, .approval-packet-grid, .audit-preview-grid { grid-template-columns: 1fr; }
       h1 { font-size: 17px; }
     }
@@ -1333,8 +1420,37 @@ export function buildCoreWorkSurfaceHtml({ surface } = {}) {
       }
       .layout { padding-top: 160px; }
       .state-grid, .authority-strip, .understanding-strip, .confirmation-grid, .draft-preview-grid, .preview-decision-strip { grid-template-columns: 1fr; }
+      .local-loop-grid { grid-template-columns: 1fr; }
       .authority-level-grid, .approval-packet-grid, .audit-preview-grid { grid-template-columns: 1fr; }
       .thread, .panel { padding: 12px; }
+      .layout {
+        width: 100vw;
+        max-width: 100vw;
+        padding-left: 12px;
+        padding-right: 12px;
+      }
+      .topbar,
+      .layout,
+      .thread,
+      .panel,
+      .composer,
+      .composer-body,
+      .message,
+      .understanding-card,
+      .confirmation-item,
+      .draft-preview-item,
+      .draft-state,
+      .preview-decision,
+      .local-loop-step,
+      .state-card,
+      .item,
+      .lock {
+        max-width: 100%;
+        min-width: 0;
+        white-space: normal;
+        overflow-wrap: anywhere;
+        word-break: break-word;
+      }
     }
   </style>
 </head>
@@ -1445,6 +1561,37 @@ export function buildCoreWorkSurfaceHtml({ surface } = {}) {
         </div>
         <p class="confirmation-note">${escapeHtml(workSurface.localDraftPreview.nextAfterPreview)}</p>
         <p class="confirmation-note">현재 상태: 초안 생성 없음 · 모델 호출 없음 · 도구 실행 없음 · 커넥터 연결 없음</p>
+      </section>
+      <section class="local-loop" data-first-local-work-loop="preview" aria-label="First local work loop preview">
+        <div class="draft-preview-head">
+          <div>
+            <h2>${escapeHtml(firstLocalWorkLoop.title)}</h2>
+            <p class="muted">${escapeHtml(firstLocalWorkLoop.userMessage)}</p>
+          </div>
+          <span class="status">${escapeHtml(uiLabel(firstLocalWorkLoop.status))}</span>
+        </div>
+        <div class="local-loop-grid">
+          <div class="local-loop-step">
+            <strong>작업 패킷</strong>
+            <span>${escapeHtml(firstLocalWorkLoop.packet.id)}</span>
+            <small>${escapeHtml(firstLocalWorkLoop.taskPacket.objective || firstLocalWorkLoop.packet.userInput.text)}</small>
+          </div>
+          <div class="local-loop-step">
+            <strong>맥락 / 스킬</strong>
+            <span>${escapeHtml(uiLabel(firstLocalWorkLoop.contextMesh.retrievedCandidates[0]?.anchor || "no candidate admitted"))}</span>
+            <small>${escapeHtml(uiLabel(firstLocalWorkLoop.skillRoute.selectedPacks[0]?.title || "Core thinking route"))}</small>
+          </div>
+          <div class="local-loop-step">
+            <strong>기록 / replay</strong>
+            <span>${escapeHtml(uiLabel(firstLocalWorkLoop.approvalAudit.recordWrite.status))}</span>
+            <small>${escapeHtml(firstLocalWorkLoop.approvalAudit.rollbackReference)}</small>
+          </div>
+          <div class="local-loop-step" data-authority-boundary="closed">
+            <strong>닫힌 경계</strong>
+            <span>모델 · 도구 · 커넥터 · 외부 전송 잠김</span>
+            <small>${escapeHtml(firstLocalWorkLoop.nextSafeAction)}</small>
+          </div>
+        </div>
       </section>
       <div class="state-grid" aria-label="Current task state">
         ${stateCard("작업 상태", workSurface.taskState.status)}

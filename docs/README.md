@@ -22,9 +22,13 @@ Control Center approval/preview UX evidence is maintained in `docs/03-verificati
 
 The first GPAO-T core work surface is now exposed as a read-only user-facing slice. It gives the user a draft work input area, a preview thread, a compact read-only task understanding summary, native no-script readability details for task brief / context route / authority boundary, current task state, Context Mesh / Memory Wiki / T-cell candidate summary, Skill Pack route preview, model/tool route preview, authority/approval summary, closed action list, and next safe action. It is intentionally not a live chat executor yet: input submission, external model calls, tool execution, connector activation, approval-record writes, dry-run invocation, durable memory promotion, self-growth apply, deployment, messenger send, and recurring automation remain blocked.
 
+First Local Work Loop v1 is documented in `docs/03-engineering/FIRST-LOCAL-WORK-LOOP-V1.md`. It is the first local product loop behind the Work Surface: user work text becomes a local submission packet, task packet, Context Mesh evidence, Skill route, Model Router candidate, local draft preview, local approval/audit JSONL record, replay read, and rollback reference. The browser Work Surface remains no-script/no-form and does not write records while rendering. Explicit CLI/Gateway local-loop submission may write approval/audit records only to `.gpao-t/approval/*.jsonl`; live model calls, tool/CLI/MCP execution, connector activation, credential access, external send, paid/destructive action, install/update/rollback execution, public release, durable memory promotion, and self-growth live apply remain blocked.
+
 The work-surface submission decision gate is documented in `docs/03-engineering/WORK-SURFACE-SUBMISSION-DECISION-GATE.md`. It defines the future input packet schema, immediate preview state, Context Mesh / Skill route / Authority attachment, pre-submit confirmation, review/block conditions, and stop line before execution. It is design-only; live submission remains blocked.
 
 Work surface visual QA evidence is maintained in `docs/03-verification/evidence/work-surface-visual-qa-baseline-2026-07-09.json`, `docs/03-verification/evidence/WORK-SURFACE-VISUAL-QA-BASELINE-2026-07-09.md`, `docs/03-verification/evidence/work-surface-local-draft-preview-qa-2026-07-09.json`, and `docs/03-verification/evidence/WORK-SURFACE-LOCAL-DRAFT-PREVIEW-QA-2026-07-09.md`. The `/work-surface` baseline must preserve nonblank desktop/mobile viewports, visible draft input, read-only task understanding summary, native readability details, confirmation card, first local draft preview, intent-match / needs-changes / hold confirmation flow, empty/blocked/review-needed preview states, visible task state, Context Mesh / Memory Wiki preview, Skill Pack route preview, authority boundary, closed action text, next safe action, mobile topbar action line, no horizontal overflow, no script/form, and no external activation as read-only task interaction improves.
+
+First Local Work Loop v1 visual QA evidence is maintained in `docs/03-verification/evidence/first-local-work-loop-v1-visual-qa-2026-07-09.json` and `docs/03-verification/evidence/FIRST-LOCAL-WORK-LOOP-V1-VISUAL-QA-2026-07-09.md`. It includes Work Surface and Control Center desktop/mobile screenshots plus CDP overflow metrics. Open Design MCP was attempted first but unavailable in this run; the GPAO-T Visual Reference Pack was applied as fallback design authority.
 
 Execution proposal confirmation is now exposed as the next pre-execution authority surface. It combines execution proposal preview, approval packet validation, and audit write design into one user-visible axis. The Control Center `Execution Approval` panel and the core work surface must show the proposed tool kind, action type, authority level, expected effect, risk, rollback reference, required approval packet fields, validation rules, planned audit items, and audit/replay reference without opening any actual execution. Korean product-language authority labels are the default: `읽기 전용`, `미리보기만`, `저장 전 확인`, `외부 전송 전 확인`, `되돌리기 어려움`, and `비용 발생 가능`.
 
@@ -76,6 +80,7 @@ The first slice implements a local, dependency-free runtime skeleton:
 - `Self-Growth Proposals`: review-only improvement candidates from replay-proven patterns
 - `Growth Application Gates`: replay, approval, audit, and rollback review before any growth proposal can become live behavior
 - `Core Work Surface`: the first read-only user-facing task surface with draft input, preview thread, context/skill route preview, authority summary, and next safe action
+- `First Local Work Loop`: explicit local submission into task packet, Context Mesh/Skill/Authority preview, local approval/audit JSONL write, replay read, and rollback reference while live execution remains blocked
 
 ## Guided First Workflow
 
@@ -162,6 +167,8 @@ node bin/gpao-t.js control summary
 node bin/gpao-t.js control work-surface
 node bin/gpao-t.js control work-surface-html
 node bin/gpao-t.js control work-surface-check
+node bin/gpao-t.js control work-surface-local-loop "GPAO-T 첫 로컬 작업 루프를 확인해줘."
+node bin/gpao-t.js control work-surface-local-loop-check "GPAO-T 첫 로컬 작업 루프를 확인해줘."
 node bin/gpao-t.js control work-surface-submission-gate
 node bin/gpao-t.js control work-surface-submission-gate-check
 node bin/gpao-t.js control work-surface-submission-validation-gate

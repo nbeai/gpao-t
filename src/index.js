@@ -70,6 +70,10 @@ import {
   verifyAuditWriteDesignProof,
   verifyExecutionApprovalPreview,
 } from "./core/execution-approval.js";
+import {
+  buildFirstLocalWorkLoop,
+  verifyFirstLocalWorkLoop,
+} from "./core/first-local-work-loop.js";
 import { handleGatewayRequest } from "./core/gateway.js";
 import {
   appendGrowthApplicationGate,
@@ -222,6 +226,7 @@ export {
   buildApprovalRecordWriteUxDesign,
   buildAuditWriteDesignProof,
   buildExecutionApprovalPreview,
+  buildFirstLocalWorkLoop,
   buildSessionOverlay,
   appendSkillExecutionRun,
   buildSkillBuildQueue,
@@ -282,6 +287,7 @@ export {
   verifyApprovalAuditLocalRecordSubstrate,
   verifyAuditWriteDesignProof,
   verifyExecutionApprovalPreview,
+  verifyFirstLocalWorkLoop,
   renderControlCenterHtml,
   renderTauriInstallDryRunPreview,
   startControlCenterPreviewServer,

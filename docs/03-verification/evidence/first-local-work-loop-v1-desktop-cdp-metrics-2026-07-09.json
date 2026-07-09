@@ -1,0 +1,34 @@
+[
+  {
+    "route": "work-surface",
+    "file": "/Users/jyp/Documents/Playground 2/gpao-t/docs/03-verification/evidence/first-local-work-loop-v1-work-surface-desktop-1440x960.png",
+    "metrics": {
+      "innerWidth": 1440,
+      "bodyScrollWidth": 1440,
+      "documentScrollWidth": 1440,
+      "overflowX": false,
+      "textLength": 5167,
+      "hasLocalLoop": true,
+      "hasScript": false,
+      "hasForm": false,
+      "hasAuthority": true,
+      "hasNext": true
+    }
+  },
+  {
+    "route": "control-center",
+    "file": "/Users/jyp/Documents/Playground 2/gpao-t/docs/03-verification/evidence/first-local-work-loop-v1-control-center-desktop-1440x960.png",
+    "metrics": {
+      "innerWidth": 1440,
+      "bodyScrollWidth": 1440,
+      "documentScrollWidth": 1440,
+      "overflowX": false,
+      "textLength": 9432,
+      "hasLocalLoop": true,
+      "hasScript": false,
+      "hasForm": false,
+      "hasAuthority": true,
+      "hasNext": true
+    }
+  }
+]
