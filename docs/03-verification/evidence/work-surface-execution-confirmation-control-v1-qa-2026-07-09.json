@@ -1,0 +1,53 @@
+{
+  "schema": "gpao_t.visual_qa.work_surface_execution_confirmation_control_v1",
+  "date": "2026-07-09",
+  "stage": "GPAO-T Stage 3 - execution / approval / audit governance loop",
+  "surface": "work-surface",
+  "evidence": {
+    "desktop1440x960": "docs/03-verification/evidence/work-surface-execution-confirmation-control-v1-desktop-1440x960.png",
+    "mobile390x844": "docs/03-verification/evidence/work-surface-execution-confirmation-control-v1-mobile-390x844.png",
+    "mobileFullPage390x844": "docs/03-verification/evidence/work-surface-execution-confirmation-control-v1-mobile-fullpage-390x844.png"
+  },
+  "checks": {
+    "desktopNonblankViewport": "pass",
+    "mobileNonblankViewport": "pass",
+    "mobileNoHorizontalOverflow": "pass",
+    "mobileViewportWidth": 390,
+    "mobileScrollWidth": 390,
+    "confirmationControlVisible": "pass",
+    "confirmationControlTop": 483.390625,
+    "confirmationControlBottom": 858.609375,
+    "matchesIntentTop": 575.328125,
+    "matchesIntentVisible": "pass",
+    "confirmationPacketVisible": "pass",
+    "authorityBoundaryVisible": "pass",
+    "rawVisibleStateRemoved": "pass",
+    "koreanProductLanguage": "pass"
+  },
+  "scores": {
+    "humanVisualQa": 4.55,
+    "visualPolish": 4.45,
+    "colorQuality": 4.45,
+    "layoutRhythm": 4.5,
+    "koreanTypography": 4.5,
+    "toneAndManner": 4.6,
+    "authorityClarity": 4.8,
+    "overallProductFeel": 4.55
+  },
+  "authorityBoundary": {
+    "browserRenderWritesRecords": false,
+    "localApprovalAuditJsonlRecordWrite": "allowed_only_when_confirmation_choice_matches_intent",
+    "needsChangesOrHold": "blocks_local_record_write",
+    "liveModelCall": "blocked",
+    "toolCliMcpExecution": "blocked",
+    "connectorActivation": "blocked",
+    "credentialAccess": "blocked",
+    "externalSend": "blocked",
+    "paidOrDestructiveAction": "blocked",
+    "durableMemoryPromotion": "blocked"
+  },
+  "remainingProductRisks": [],
+  "nonBlockingProductObservations": [
+    "A later Stage 3 interaction slice may turn the no-script confirmation choices into an actual browser-mediated local confirmation action, still behind explicit authority boundaries."
+  ]
+}

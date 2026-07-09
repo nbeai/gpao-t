@@ -16,16 +16,18 @@ It does not open live model calls, tool/CLI/MCP execution, connector activation,
 -> 되돌리기 기준 확인
 ```
 
-The browser Work Surface renders the flow without writing records. Local records are written only through explicit CLI/Gateway calls.
+The browser Work Surface renders the flow without writing records. Local records are written only through explicit CLI/Gateway calls after the confirmation control selects `matches_intent`.
 
 ## Runtime Surfaces
 
 - Core module: `src/core/work-surface-execution-flow.js`
 - Work Surface data: `executionGovernanceFlow`
 - CLI preview: `node bin/gpao-t.js control work-surface-execution-flow [text]`
+- CLI confirmation control: `node bin/gpao-t.js control work-surface-execution-confirmation [matches_intent|needs_changes|hold]`
 - CLI check: `node bin/gpao-t.js control work-surface-execution-flow-check [text]`
-- CLI local record write: `node bin/gpao-t.js control work-surface-execution-record [text]`
+- CLI local record write: `node bin/gpao-t.js control work-surface-execution-record [text] matches_intent`
 - Gateway preview: `GET /work-surface/execution-flow`
+- Gateway confirmation control: `GET /work-surface/execution-flow/confirmation`
 - Gateway check: `GET /work-surface/execution-flow/verify`
 - Gateway local record write: `POST /work-surface/execution-flow/record`
 
@@ -56,6 +58,7 @@ Required checks:
 
 ```bash
 node --test test/work-surface-execution-flow.test.js
+node bin/gpao-t.js control work-surface-execution-confirmation matches_intent
 node bin/gpao-t.js control work-surface-execution-flow-check
 node bin/gpao-t.js control work-surface-check
 npm run verify

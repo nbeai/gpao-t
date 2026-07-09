@@ -33,6 +33,7 @@ import {
   verifyWorkSurfaceSubmissionValidationGate,
 } from "./core/work-surface-submission-validation-gate.js";
 import {
+  buildWorkSurfaceExecutionConfirmationControl,
   buildWorkSurfaceExecutionFlow,
   recordWorkSurfaceExecutionFlow,
   verifyWorkSurfaceExecutionFlow,
@@ -214,6 +215,7 @@ export {
   buildCoreWorkSurfaceHtml,
   buildWorkSurfaceSubmissionDecisionGate,
   buildWorkSurfaceSubmissionValidationGate,
+  buildWorkSurfaceExecutionConfirmationControl,
   buildWorkSurfaceExecutionFlow,
   buildControlCenterSnapshot,
   buildControlCenterSummary,

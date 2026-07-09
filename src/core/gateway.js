@@ -19,6 +19,7 @@ import {
   verifyWorkSurfaceSubmissionValidationGate,
 } from "./work-surface-submission-validation-gate.js";
 import {
+  buildWorkSurfaceExecutionConfirmationControl,
   buildWorkSurfaceExecutionFlow,
   recordWorkSurfaceExecutionFlow,
   verifyWorkSurfaceExecutionFlow,
@@ -292,7 +293,22 @@ export function handleGatewayRequest({ method = "GET", path = "/", body = {}, ro
     return {
       schema: "gpao_t.gateway_response.v0_1",
       status: 200,
-      body: buildWorkSurfaceExecutionFlow({ root, request: body.request }),
+      body: buildWorkSurfaceExecutionFlow({
+        root,
+        request: body.request,
+        confirmationChoice: body.confirmationChoice,
+      }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/work-surface/execution-flow/confirmation") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: buildWorkSurfaceExecutionConfirmationControl({
+        proposal: body.proposal,
+        confirmationChoice: body.confirmationChoice,
+      }),
     };
   }
 
@@ -312,6 +328,7 @@ export function handleGatewayRequest({ method = "GET", path = "/", body = {}, ro
         root,
         request: body.request,
         proposal: body.proposal,
+        confirmationChoice: body.confirmationChoice,
         confirmationState: body.confirmationState,
       }),
     };

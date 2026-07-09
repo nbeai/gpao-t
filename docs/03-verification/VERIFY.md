@@ -102,15 +102,19 @@ Work Surface Execution Governance Flow v1:
 
 - Engineering document: `docs/03-engineering/WORK-SURFACE-EXECUTION-GOVERNANCE-FLOW-V1.md`
 - Core module: `src/core/work-surface-execution-flow.js`
-- CLI surfaces: `node bin/gpao-t.js control work-surface-execution-flow [text]`, `node bin/gpao-t.js control work-surface-execution-flow-check [text]`, and `node bin/gpao-t.js control work-surface-execution-record [text]`
-- Gateway routes: `GET /work-surface/execution-flow`, `GET /work-surface/execution-flow/verify`, and `POST /work-surface/execution-flow/record`
+- CLI surfaces: `node bin/gpao-t.js control work-surface-execution-flow [text]`, `node bin/gpao-t.js control work-surface-execution-confirmation [matches_intent|needs_changes|hold]`, `node bin/gpao-t.js control work-surface-execution-flow-check [text]`, and `node bin/gpao-t.js control work-surface-execution-record [text] matches_intent`
+- Gateway routes: `GET /work-surface/execution-flow`, `GET /work-surface/execution-flow/confirmation`, `GET /work-surface/execution-flow/verify`, and `POST /work-surface/execution-flow/record`
 - Work Surface integration: `executionGovernanceFlow` must expose proposal, confirmation, local record, replay, and rollback stages in Korean product language.
+- Required confirmation invariant: `confirmationControl` must show `의도와 맞음`, `수정 필요`, and `보류`; only `matches_intent` can allow local approval/audit JSONL record write.
 - Required local-record invariant: browser rendering must not write records. Local approval/audit JSONL writes are allowed only after explicit CLI/Gateway confirmation.
 - Required blocked boundary: live model call, tool/CLI/MCP execution, connector activation, credential access, external send, paid/destructive action, public release, and durable memory promotion remain blocked.
 - Visual evidence:
   - `docs/03-verification/evidence/work-surface-execution-governance-flow-v1-desktop-1440x960.png`
   - `docs/03-verification/evidence/work-surface-execution-governance-flow-v1-mobile-390x844.png`
   - `docs/03-verification/evidence/work-surface-execution-governance-flow-v1-qa-2026-07-09.json`
+  - `docs/03-verification/evidence/work-surface-execution-confirmation-control-v1-desktop-1440x960.png`
+  - `docs/03-verification/evidence/work-surface-execution-confirmation-control-v1-mobile-390x844.png`
+  - `docs/03-verification/evidence/work-surface-execution-confirmation-control-v1-qa-2026-07-09.json`
 
 Model Router boundary:
 

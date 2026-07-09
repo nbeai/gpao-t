@@ -20,6 +20,7 @@ import {
   verifyWorkSurfaceSubmissionValidationGate,
 } from "./work-surface-submission-validation-gate.js";
 import {
+  buildWorkSurfaceExecutionConfirmationControl,
   buildWorkSurfaceExecutionFlow,
   verifyWorkSurfaceExecutionFlow,
 } from "./work-surface-execution-flow.js";
@@ -102,6 +103,7 @@ export function buildControlCenterServingContract({
       { path: "/work-surface/submission-validation-gate", content: "work_surface_submission_validation_gate" },
       { path: "/work-surface/submission-validation-gate/verify", content: "work_surface_submission_validation_gate_verification" },
       { path: "/work-surface/execution-flow", content: "work_surface_execution_governance_flow" },
+      { path: "/work-surface/execution-flow/confirmation", content: "work_surface_execution_confirmation_control" },
       { path: "/work-surface/execution-flow/verify", content: "work_surface_execution_governance_flow_verification" },
       { path: "/sessions", content: "session_workspace_state" },
       { path: "/sessions/verify", content: "session_workspace_behavior_verification" },
@@ -335,6 +337,11 @@ export async function startControlCenterPreviewServer({
 
     if (url.pathname === "/work-surface/execution-flow") {
       respondJson(response, 200, buildWorkSurfaceExecutionFlow({ root, now }));
+      return;
+    }
+
+    if (url.pathname === "/work-surface/execution-flow/confirmation") {
+      respondJson(response, 200, buildWorkSurfaceExecutionConfirmationControl({ now }));
       return;
     }
 
@@ -576,6 +583,7 @@ export async function verifyControlCenterPreviewServing({
     const workSurfaceSubmissionValidationGate = await fetchJson(`http://${host}:${preview.port}/work-surface/submission-validation-gate`);
     const workSurfaceSubmissionValidationGateVerify = await fetchJson(`http://${host}:${preview.port}/work-surface/submission-validation-gate/verify`);
     const workSurfaceExecutionFlow = await fetchJson(`http://${host}:${preview.port}/work-surface/execution-flow`);
+    const workSurfaceExecutionConfirmation = await fetchJson(`http://${host}:${preview.port}/work-surface/execution-flow/confirmation`);
     const workSurfaceExecutionFlowVerify = await fetchJson(`http://${host}:${preview.port}/work-surface/execution-flow/verify`);
     const sessionWorkspace = await fetchJson(`http://${host}:${preview.port}/sessions`);
     const sessionWorkspaceVerify = await fetchJson(`http://${host}:${preview.port}/sessions/verify`);
@@ -655,6 +663,12 @@ export async function verifyControlCenterPreviewServing({
       || workSurfaceExecutionFlow.body.schema !== "gpao_t.work_surface_execution_governance_flow.v1"
     ) {
       findings.push("work_surface_execution_flow_not_ready");
+    }
+    if (
+      workSurfaceExecutionConfirmation.status !== 200
+      || workSurfaceExecutionConfirmation.body.schema !== "gpao_t.work_surface_execution_confirmation_control.v1"
+    ) {
+      findings.push("work_surface_execution_confirmation_not_ready");
     }
     if (workSurfaceExecutionFlowVerify.status !== 200 || workSurfaceExecutionFlowVerify.body.status !== "ready") {
       findings.push("work_surface_execution_flow_verify_not_ready");
@@ -831,6 +845,9 @@ export async function verifyControlCenterPreviewServing({
       workSurfaceSubmissionGateVerifyStatus: workSurfaceSubmissionGateVerify.status,
       workSurfaceSubmissionValidationGateStatus: workSurfaceSubmissionValidationGate.status,
       workSurfaceSubmissionValidationGateVerifyStatus: workSurfaceSubmissionValidationGateVerify.status,
+      workSurfaceExecutionFlowStatus: workSurfaceExecutionFlow.status,
+      workSurfaceExecutionConfirmationStatus: workSurfaceExecutionConfirmation.status,
+      workSurfaceExecutionFlowVerifyStatus: workSurfaceExecutionFlowVerify.status,
       pageStatus: page.status,
       appShellStatus: appShell.status,
       tauriGateStatus: tauriGate.status,

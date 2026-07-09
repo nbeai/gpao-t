@@ -1058,6 +1058,7 @@ describe("GPAO-T Local Control Center readiness", () => {
     assert.equal(contract.routes.some((route) => route.path === "/work-surface/submission-validation-gate"), true);
     assert.equal(contract.routes.some((route) => route.path === "/work-surface/submission-validation-gate/verify"), true);
     assert.equal(contract.routes.some((route) => route.path === "/work-surface/execution-flow"), true);
+    assert.equal(contract.routes.some((route) => route.path === "/work-surface/execution-flow/confirmation"), true);
     assert.equal(contract.routes.some((route) => route.path === "/work-surface/execution-flow/verify"), true);
     assert.equal(contract.routes.some((route) => route.path === "/sessions"), true);
     assert.equal(contract.routes.some((route) => route.path === "/sessions/verify"), true);
@@ -1096,6 +1097,7 @@ describe("GPAO-T Local Control Center readiness", () => {
     assert.equal(contract.allowedGetRoutes.includes("/work-surface/submission-validation-gate"), true);
     assert.equal(contract.allowedGetRoutes.includes("/work-surface/submission-validation-gate/verify"), true);
     assert.equal(contract.allowedGetRoutes.includes("/work-surface/execution-flow"), true);
+    assert.equal(contract.allowedGetRoutes.includes("/work-surface/execution-flow/confirmation"), true);
     assert.equal(contract.allowedGetRoutes.includes("/work-surface/execution-flow/verify"), true);
     assert.equal(contract.allowedGetRoutes.includes("/sessions"), true);
     assert.equal(contract.allowedGetRoutes.includes("/sessions/verify"), true);

@@ -8,6 +8,7 @@ import { describe, it } from "node:test";
 import {
   buildCoreWorkSurface,
   buildCoreWorkSurfaceHtml,
+  buildWorkSurfaceExecutionConfirmationControl,
   buildWorkSurfaceExecutionFlow,
   handleGatewayRequest,
   readApprovalRecords,
@@ -36,6 +37,10 @@ describe("Work Surface Execution Governance Flow v1", () => {
     assert.equal(flow.status, "ready_for_local_record_review");
     assert.equal(flow.flowStages.length, 5);
     assert.equal(flow.flowStages.map((stage) => stage.id).join(","), "proposal,confirmation,local_record,replay,rollback");
+    assert.equal(flow.confirmationControl.schema, "gpao_t.work_surface_execution_confirmation_control.v1");
+    assert.equal(flow.confirmationControl.writeAllowed, false);
+    assert.equal(flow.confirmationControl.packet.executionState, "not_executed");
+    assert.equal(flow.confirmationControl.choices.some((choice) => choice.id === "matches_intent"), true);
     assert.equal(flow.localRecord.writesDuringRender, false);
     assert.equal(flow.boundaries.localJsonlRecordWrite, "allowed_after_explicit_confirmation");
     assert.equal(flow.boundaries.liveModelCall, "blocked");
@@ -48,9 +53,22 @@ describe("Work Surface Execution Governance Flow v1", () => {
 
   it("writes only local approval/audit records after explicit confirmation and exposes replay", () => {
     const root = tempRoot();
+    const blocked = recordWorkSurfaceExecutionFlow({
+      root,
+      request: "실행 후보를 로컬 기록으로 남겨줘",
+      confirmationChoice: "needs_changes",
+      now: "2026-07-09T12:00:30.000Z",
+    });
+
+    assert.equal(blocked.status, "blocked");
+    assert.equal(blocked.reason, "explicit_confirmation_required");
+    assert.equal(readApprovalRecords({ root }).length, 0);
+    assert.equal(readAuditRecords({ root }).length, 0);
+
     const result = recordWorkSurfaceExecutionFlow({
       root,
       request: "실행 후보를 로컬 기록으로 남겨줘",
+      confirmationChoice: "matches_intent",
       confirmationState: "confirmed_for_local_record_only",
       now: "2026-07-09T12:01:00.000Z",
     });
@@ -69,6 +87,27 @@ describe("Work Surface Execution Governance Flow v1", () => {
     assert.equal(reread.replay.status, "ready");
   });
 
+  it("builds an explicit confirmation control that separates local record permission from execution", () => {
+    const waiting = buildWorkSurfaceExecutionConfirmationControl({
+      confirmationChoice: "hold",
+      now: "2026-07-09T12:02:00.000Z",
+    });
+    assert.equal(waiting.status, "waiting_for_user_confirmation");
+    assert.equal(waiting.writeAllowed, false);
+    assert.equal(waiting.packet.localRecordWrite, "blocked_until_matches_intent");
+    assert.equal(waiting.packet.executionState, "not_executed");
+    assert.equal(waiting.packet.blockedActions.includes("external send"), true);
+
+    const confirmed = buildWorkSurfaceExecutionConfirmationControl({
+      confirmationChoice: "matches_intent",
+      now: "2026-07-09T12:03:00.000Z",
+    });
+    assert.equal(confirmed.status, "ready_to_write_local_record");
+    assert.equal(confirmed.writeAllowed, true);
+    assert.equal(confirmed.packet.localRecordWrite, "allowed_after_explicit_confirmation");
+    assert.equal(confirmed.packet.executionState, "not_executed");
+  });
+
   it("integrates the flow into Work Surface, Gateway, and CLI without opening live execution", () => {
     const root = tempRoot();
     const surface = buildCoreWorkSurface({ root });
@@ -77,15 +116,27 @@ describe("Work Surface Execution Governance Flow v1", () => {
 
     assert.equal(surface.executionGovernanceFlow.schema, "gpao_t.work_surface_execution_governance_flow.v1");
     assert.equal(surface.executionGovernanceFlow.flowStages.length, 5);
+    assert.equal(surface.executionGovernanceFlow.confirmationControl.writeAllowed, false);
     assert.equal(surface.executionGovernanceFlow.localRecord.writesDuringRender, false);
     assert.equal(surface.executionGovernanceFlow.boundaries.externalSend, "blocked");
     assert.match(html, /data-execution-governance-flow="local-record-review"/);
+    assert.match(html, /data-execution-confirmation-control="local-record-only"/);
+    assert.match(html, /data-execution-confirmation-choice="matches_intent"/);
     assert.match(html, /로컬 기록 후 리플레이/);
     assert.equal(check.status, "ready");
 
     const gatewayFlow = handleGatewayRequest({ root, method: "GET", path: "/work-surface/execution-flow" });
     assert.equal(gatewayFlow.status, 200);
     assert.equal(gatewayFlow.body.schema, "gpao_t.work_surface_execution_governance_flow.v1");
+
+    const gatewayConfirmation = handleGatewayRequest({
+      root,
+      method: "GET",
+      path: "/work-surface/execution-flow/confirmation",
+      body: { confirmationChoice: "matches_intent" },
+    });
+    assert.equal(gatewayConfirmation.body.schema, "gpao_t.work_surface_execution_confirmation_control.v1");
+    assert.equal(gatewayConfirmation.body.writeAllowed, true);
 
     const gatewayCheck = handleGatewayRequest({ root, method: "GET", path: "/work-surface/execution-flow/verify" });
     assert.equal(gatewayCheck.body.status, "ready");
@@ -96,6 +147,7 @@ describe("Work Surface Execution Governance Flow v1", () => {
       path: "/work-surface/execution-flow/record",
       body: {
         request: "로컬 기록만 남겨줘",
+        confirmationChoice: "matches_intent",
         confirmationState: "confirmed_for_local_record_only",
       },
     });
@@ -109,6 +161,14 @@ describe("Work Surface Execution Governance Flow v1", () => {
       "실행 확인 흐름",
     ], { encoding: "utf8" }));
     assert.equal(cliFlow.schema, "gpao_t.work_surface_execution_governance_flow.v1");
+
+    const cliConfirmation = JSON.parse(execFileSync(process.execPath, [
+      CLI,
+      "control",
+      "work-surface-execution-confirmation",
+      "matches_intent",
+    ], { encoding: "utf8" }));
+    assert.equal(cliConfirmation.writeAllowed, true);
 
     const cliCheck = JSON.parse(execFileSync(process.execPath, [
       CLI,

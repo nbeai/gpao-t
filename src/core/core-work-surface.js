@@ -1009,6 +1009,18 @@ export function verifyCoreWorkSurface({ surface = buildCoreWorkSurface(), html }
   if ((surface.executionGovernanceFlow?.flowStages || []).length !== 5) {
     findings.push("execution_governance_flow_stage_count_mismatch");
   }
+  if (surface.executionGovernanceFlow?.confirmationControl?.schema !== "gpao_t.work_surface_execution_confirmation_control.v1") {
+    findings.push("execution_confirmation_control_missing");
+  }
+  if (surface.executionGovernanceFlow?.confirmationControl?.writeAllowed !== false) {
+    findings.push("execution_confirmation_control_write_open_in_render");
+  }
+  if (!surface.executionGovernanceFlow?.confirmationControl?.choices?.some((choice) => choice.id === "matches_intent")) {
+    findings.push("execution_confirmation_choice_matches_intent_missing");
+  }
+  if (surface.executionGovernanceFlow?.confirmationControl?.packet?.executionState !== "not_executed") {
+    findings.push("execution_confirmation_packet_not_locked");
+  }
   if (surface.executionGovernanceFlow?.localRecord?.writesDuringRender !== false) {
     findings.push("execution_governance_flow_render_write_open");
   }
@@ -1074,6 +1086,9 @@ export function verifyCoreWorkSurface({ surface = buildCoreWorkSurface(), html }
     if (!html.includes("data-approval-record-preview=\"no-write\"")) findings.push("html_missing_approval_record_preview");
     if (!html.includes("data-execution-governance-flow=\"local-record-review\"")) findings.push("html_missing_execution_governance_flow");
     if (!html.includes("로컬 기록 후 리플레이")) findings.push("html_missing_execution_replay_flow_copy");
+    if (!html.includes("data-execution-confirmation-control=\"local-record-only\"")) findings.push("html_missing_execution_confirmation_control");
+    if (!html.includes("data-execution-confirmation-choice=\"matches_intent\"")) findings.push("html_missing_execution_confirmation_matches_intent");
+    if (!html.includes("data-confirmation-packet=\"not-executed\"")) findings.push("html_missing_execution_confirmation_packet");
     if (!html.includes("data-preview-decision=\"intent-match\"")) findings.push("html_missing_intent_match_decision");
     if (!html.includes("data-preview-decision=\"needs-changes\"")) findings.push("html_missing_needs_changes_decision");
     if (!html.includes("data-preview-decision=\"hold\"")) findings.push("html_missing_hold_decision");
@@ -2121,6 +2136,7 @@ function renderSessionWorkspaceHtml({
   const inspectorTabs = workspace.inspector.tabs || [];
   const mobileSessionItems = activeGroups.flatMap((group) => group.sessions || []);
   const archiveActions = workspace.sessionRail.sessionActions || [];
+  const executionConfirmationControl = executionGovernanceFlow.confirmationControl;
 
   return `<!doctype html>
 <html lang="ko">
@@ -2498,6 +2514,61 @@ function renderSessionWorkspaceHtml({
       font-size: 12px;
       font-weight: 900;
     }
+    .execution-confirmation-control {
+      margin-top: 12px;
+      padding: 12px;
+      border: 1px solid #d7e1d3;
+      border-radius: var(--gpao-radius-lg);
+      background: linear-gradient(180deg, rgba(255,255,255,0.94), rgba(245,248,243,0.9));
+    }
+    .confirmation-choice-strip {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .confirmation-choice {
+      min-width: 0;
+      padding: 9px 10px;
+      border: 1px solid var(--gpao-border);
+      border-radius: var(--gpao-radius-md);
+      background: var(--gpao-surface-soft);
+    }
+    .confirmation-choice[data-choice="matches_intent"] {
+      border-color: #a8c9bd;
+      background: #eef8f2;
+    }
+    .confirmation-choice strong,
+    .confirmation-choice span {
+      display: block;
+      word-break: keep-all;
+      overflow-wrap: anywhere;
+    }
+    .confirmation-choice strong {
+      color: var(--gpao-text);
+      font-size: 12px;
+    }
+    .confirmation-choice span {
+      margin-top: 5px;
+      color: var(--gpao-muted);
+      font-size: 11px;
+      line-height: 1.45;
+    }
+    .confirmation-packet {
+      margin-top: 10px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+    }
+    .confirmation-packet span {
+      padding: 5px 8px;
+      border: 1px solid var(--gpao-border);
+      border-radius: 999px;
+      background: rgba(255,255,255,0.78);
+      color: var(--gpao-muted);
+      font-size: 11px;
+      font-weight: 900;
+    }
     .boundary-list span {
       border: 1px solid #e3c78b;
       border-radius: 999px;
@@ -2647,6 +2718,9 @@ function renderSessionWorkspaceHtml({
       .execution-flow-inline .execution-flow-step:last-child {
         grid-column: 1 / -1;
       }
+      .confirmation-choice-strip {
+        grid-template-columns: 1fr;
+      }
       .composer-card {
         margin: 0 12px 10px;
       }
@@ -2738,6 +2812,22 @@ function renderSessionWorkspaceHtml({
               <span class="state-chip">미리보기만</span>
             </div>
             <p class="card-value">${escapeHtml(activeSession.thread[1]?.text || "요청을 로컬 작업으로 이해하고, 실행 전 미리보기 상태로 유지합니다.")}</p>
+            <div class="execution-confirmation-control" data-execution-confirmation-control="local-record-only">
+              <strong class="section-label">${escapeHtml(executionConfirmationControl.headline)}</strong>
+              <p class="card-value">${escapeHtml(executionConfirmationControl.userMessage)}</p>
+              <div class="confirmation-choice-strip" aria-label="로컬 기록 전 확인 선택">
+                ${executionConfirmationControl.choices.map((choice) => `
+                <span class="confirmation-choice" data-execution-confirmation-choice="${escapeHtml(choice.id)}" data-choice="${escapeHtml(choice.id)}">
+                  <strong>${escapeHtml(choice.label)}</strong>
+                  <span>${escapeHtml(choice.result)}</span>
+                </span>`).join("")}
+              </div>
+              <div class="confirmation-packet" data-confirmation-packet="not-executed">
+                <span>저장 범위: 로컬 승인/감사 기록</span>
+                <span>현재 상태: 아직 실행하지 않음</span>
+                <span>외부 전송 없음</span>
+              </div>
+            </div>
             <div class="execution-flow-inline" data-execution-governance-flow="local-record-review">
               <strong class="section-label">${escapeHtml(executionGovernanceFlow.headline)}</strong>
               <div class="execution-flow-grid" aria-label="실행 확인 흐름">

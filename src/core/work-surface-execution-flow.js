@@ -21,11 +21,17 @@ export function buildWorkSurfaceExecutionFlow({
   root,
   request = "GPAO-T 실행 전 확인 흐름을 로컬 기록 기준으로 보여줘.",
   proposal,
+  confirmationChoice,
   now = new Date().toISOString(),
 } = {}) {
   const preview = buildExecutionApprovalPreview(proposal ? { proposal, request } : { request });
   const substrate = buildApprovalAuditLocalRecordSubstrate({ root });
   const replay = buildApprovalAuditReplay({ root });
+  const confirmationControl = buildWorkSurfaceExecutionConfirmationControl({
+    proposal: preview.proposal,
+    confirmationChoice,
+    now,
+  });
 
   return {
     schema: "gpao_t.work_surface_execution_governance_flow.v1",
@@ -43,6 +49,7 @@ export function buildWorkSurfaceExecutionFlow({
       liveInvocation: "blocked",
     },
     flowStages: buildExecutionFlowStages({ preview, substrate, replay }),
+    confirmationControl,
     localRecord: {
       status: "available_after_confirmation",
       storage: substrate.storage,
@@ -60,13 +67,10 @@ export function buildWorkSurfaceExecutionFlow({
       executionState: replay.executionState,
     },
     confirmation: {
-      state: "not_confirmed_in_browser_surface",
+      state: confirmationControl.state,
       requiredBeforeLocalRecordWrite: true,
-      userChoices: [
-        { id: "matches_intent", label: "의도와 맞음", result: "local_record_write_allowed_by_explicit_command" },
-        { id: "needs_changes", label: "수정 필요", result: "return_to_composer" },
-        { id: "hold", label: "보류", result: "keep_preview_only" },
-      ],
+      userChoices: confirmationControl.choices,
+      packet: confirmationControl.packet,
     },
     blockedLiveActions: BLOCKED_LIVE_ACTIONS,
     boundaries: {
@@ -89,9 +93,26 @@ export function recordWorkSurfaceExecutionFlow({
   root,
   request = "GPAO-T 실행 확인 흐름 로컬 기록",
   proposal,
+  confirmationChoice = "matches_intent",
   confirmationState = "confirmed_for_local_record_only",
   now = new Date().toISOString(),
 } = {}) {
+  const confirmationControl = buildWorkSurfaceExecutionConfirmationControl({
+    proposal,
+    confirmationChoice,
+    now,
+  });
+  if (!confirmationControl.writeAllowed) {
+    return {
+      schema: "gpao_t.work_surface_execution_governance_record_result.v1",
+      status: "blocked",
+      reason: "explicit_confirmation_required",
+      confirmationControl,
+      blockedLiveActions: BLOCKED_LIVE_ACTIONS,
+      nextSafeAction: confirmationControl.nextSafeAction,
+    };
+  }
+
   const writeResult = writeApprovalAuditLocalRecords({
     root,
     proposal,
@@ -99,7 +120,7 @@ export function recordWorkSurfaceExecutionFlow({
     confirmationState,
     now,
   });
-  const flow = buildWorkSurfaceExecutionFlow({ root, request, proposal, now });
+  const flow = buildWorkSurfaceExecutionFlow({ root, request, proposal, confirmationChoice, now });
 
   return {
     schema: "gpao_t.work_surface_execution_governance_record_result.v1",
@@ -123,6 +144,13 @@ export function verifyWorkSurfaceExecutionFlow({ root, flow = buildWorkSurfaceEx
   if (!flow.proposal?.actionType) findings.push("missing_proposal_action_type");
   if (!flow.proposal?.authorityLevel) findings.push("missing_proposal_authority_level");
   if ((flow.flowStages || []).length !== 5) findings.push("flow_stage_count_mismatch");
+  if (flow.confirmationControl?.schema !== "gpao_t.work_surface_execution_confirmation_control.v1") {
+    findings.push("missing_confirmation_control");
+  }
+  if (flow.confirmationControl?.writeAllowed !== false) findings.push("render_confirmation_allows_write");
+  if (flow.confirmationControl?.packet?.executionState !== "not_executed") {
+    findings.push("confirmation_packet_execution_state_not_locked");
+  }
   if (flow.localRecord?.writesDuringRender !== false) findings.push("render_writes_record");
   if (flow.boundaries?.localJsonlRecordWrite !== "allowed_after_explicit_confirmation") {
     findings.push("local_record_write_boundary_not_explicit");
@@ -144,13 +172,67 @@ export function verifyWorkSurfaceExecutionFlow({ root, flow = buildWorkSurfaceEx
   };
 }
 
+export function buildWorkSurfaceExecutionConfirmationControl({
+  proposal,
+  confirmationChoice = "not_selected",
+  now = new Date().toISOString(),
+} = {}) {
+  const normalizedChoice = normalizeConfirmationChoice(confirmationChoice);
+  const writeAllowed = normalizedChoice === "matches_intent";
+  const state = writeAllowed ? "confirmed_for_local_record_only" : confirmationStateForChoice(normalizedChoice);
+  const proposalId = proposal?.id || "proposal.local_draft_preview";
+  return {
+    schema: "gpao_t.work_surface_execution_confirmation_control.v1",
+    status: writeAllowed ? "ready_to_write_local_record" : "waiting_for_user_confirmation",
+    state,
+    createdAt: now,
+    headline: "승인 기록 남기기 전 확인",
+    userMessage: "실행 승인이 아니라 로컬 기록을 남겨도 되는지 확인합니다.",
+    selectedChoice: normalizedChoice,
+    writeAllowed,
+    choices: [
+      {
+        id: "matches_intent",
+        label: "의도와 맞음",
+        tone: "ready",
+        result: "로컬 승인/감사 기록 저장 가능",
+      },
+      {
+        id: "needs_changes",
+        label: "수정 필요",
+        tone: "review",
+        result: "작업 입력으로 돌아감",
+      },
+      {
+        id: "hold",
+        label: "보류",
+        tone: "locked",
+        result: "미리보기만 유지",
+      },
+    ],
+    packet: {
+      schema: "gpao_t.work_surface_execution_confirmation_packet.v1",
+      proposalId,
+      selectedChoice: normalizedChoice,
+      confirmationState: state,
+      scope: "local_approval_audit_record_only",
+      executionState: "not_executed",
+      localRecordWrite: writeAllowed ? "allowed_after_explicit_confirmation" : "blocked_until_matches_intent",
+      blockedActions: BLOCKED_LIVE_ACTIONS,
+    },
+    nextSafeAction: writeAllowed
+      ? "로컬 승인/감사 기록만 남기고 replay와 rollback 기준을 읽습니다. 실제 실행은 열지 않습니다."
+      : "의도와 맞으면 '의도와 맞음'으로 확인합니다. 수정이 필요하거나 애매하면 기록을 남기지 않습니다.",
+  };
+}
+
 function buildExecutionFlowStages({ preview, substrate, replay }) {
   return [
     {
       id: "proposal",
       step: 1,
       label: "실행 후보",
-      state: "visible",
+      state: "보임",
       userMeaning: `${preview.proposal.toolKind} · ${preview.authorityDisplay.label}`,
     },
     {
@@ -182,4 +264,16 @@ function buildExecutionFlowStages({ preview, substrate, replay }) {
       userMeaning: replay.rollbackReference,
     },
   ];
+}
+
+function normalizeConfirmationChoice(choice) {
+  if (choice === "confirmed_for_local_record_only") return "matches_intent";
+  if (choice === "needs_changes" || choice === "hold" || choice === "matches_intent") return choice;
+  return "not_selected";
+}
+
+function confirmationStateForChoice(choice) {
+  if (choice === "needs_changes") return "needs_changes_before_local_record";
+  if (choice === "hold") return "held_preview_only";
+  return "not_confirmed_in_browser_surface";
 }

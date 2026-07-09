@@ -14,8 +14,8 @@
 
 ## Current Completion Boundary
 
-- Stage 3 is not fully complete until explicit local approval/audit confirmation control, replay review, and rollback reference reading are user-visible in the Work Surface.
-- Current slice status: Work Surface Execution Governance Flow v1 is implemented and verified.
+- Stage 3 is not fully complete until browser-mediated local confirmation, replay review, and rollback reference reading are all user-visible and authority-bounded.
+- Current slice status: Work Surface Execution Confirmation Control v1 is implemented and verified.
 - Do not claim live execution readiness. This slice intentionally keeps live model/tool/connector/external action blocked.
 
 ## Blockers
@@ -24,4 +24,4 @@
 
 ## Next Product Gap
 
-- The user can see the execution governance flow, but the next slice should make the local approval/audit record action feel like a deliberate confirmation moment rather than only a visible flow state.
+- The user can see the confirmation choices and the CLI/Gateway can enforce `matches_intent`; the next slice should make the browser-mediated local confirmation action itself visible without opening live execution.
