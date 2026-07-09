@@ -106,7 +106,7 @@ Work Surface Execution Governance Flow v1:
 - Gateway routes: `GET /work-surface/execution-flow`, `GET /work-surface/execution-flow/confirmation`, `GET /work-surface/execution-flow/verify`, and `POST /work-surface/execution-flow/record`
 - Work Surface integration: `executionGovernanceFlow` must expose proposal, confirmation, local record, replay, and rollback stages in Korean product language.
 - Required confirmation invariant: `confirmationControl` must show `의도와 맞음`, `수정 필요`, and `보류`; only `matches_intent` can allow local approval/audit JSONL record write.
-- Required local-record invariant: browser rendering must not write records. Local approval/audit JSONL writes are allowed only after explicit CLI/Gateway confirmation.
+- Required local-record invariant: browser rendering must not write records during page load. The only browser write path is the same-origin `data-local-confirmation-form="approval-audit-record"` form posting to `POST /work-surface/execution-flow/record` after `의도와 맞음`; it may write only local approval/audit JSONL records and must return a result page that keeps live execution blocked.
 - Required blocked boundary: live model call, tool/CLI/MCP execution, connector activation, credential access, external send, paid/destructive action, public release, and durable memory promotion remain blocked.
 - Visual evidence:
   - `docs/03-verification/evidence/work-surface-execution-governance-flow-v1-desktop-1440x960.png`
@@ -115,6 +115,11 @@ Work Surface Execution Governance Flow v1:
   - `docs/03-verification/evidence/work-surface-execution-confirmation-control-v1-desktop-1440x960.png`
   - `docs/03-verification/evidence/work-surface-execution-confirmation-control-v1-mobile-390x844.png`
   - `docs/03-verification/evidence/work-surface-execution-confirmation-control-v1-qa-2026-07-09.json`
+  - `docs/03-verification/evidence/work-surface-stage-3-complete-desktop-1440x960.png`
+  - `docs/03-verification/evidence/work-surface-stage-3-complete-mobile-390x844.png`
+  - `docs/03-verification/evidence/work-surface-stage-3-record-result-desktop-1440x960.png`
+  - `docs/03-verification/evidence/work-surface-stage-3-record-result-mobile-390x844.png`
+  - `docs/03-verification/evidence/work-surface-stage-3-complete-qa-2026-07-09.json`
 
 Model Router boundary:
 

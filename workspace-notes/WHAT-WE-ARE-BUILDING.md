@@ -1,30 +1,37 @@
 # What We Are Building
 
-GPAO-T is a session-based local AI operating workspace: a user creates and resumes work sessions, asks GPAO-T to understand the task, sees Context Mesh / skill / model candidates, reviews execution boundaries, and only then allows local records or later execution paths.
+GPAO-T is a local-first Growth Personal AI Operating System with T-cell theory as kernel doctrine.
+
+The product face is a session-based local AI work workspace:
+
+```text
+left session rail -> center active work session -> right context / authority / execution inspector
+```
 
 ## Current Big Stage
 
-- Stage: 3 of 4
-- Name: Work Surface execution / approval / audit governance loop
-- Current slice: Work Surface Execution Confirmation Control v1
-- Status: implemented and verified as the current baseline
+- Stage 1: Session workspace repair / product face - completed.
+- Stage 2: First local work loop and session behavior - completed.
+- Stage 3: Execution approval / audit / replay / rollback governance loop - completed in local-only form.
+- Stage 4: Local app / desktop production hardening - next.
 
-## Current Product Shape
+## Stage 3 Completion Meaning
 
-- Left rail: session workspace navigation.
-- Center: active work session, task understanding, explicit local-record confirmation control, execution flow, and composer.
-- Right rail: context, authority, model, tool, record, and rollback inspector.
-- Control Center: secondary inspector, not the primary product surface.
+The Work Surface now lets the user review an execution proposal, confirm `의도와 맞음`, write only local approval/audit JSONL records, read replay status, and see rollback reference through a browser-local result page.
 
-## Completed In This Slice
+The following remain blocked:
 
-- Work Surface now shows an explicit "승인 기록 남기기 전 확인" control before the execution flow.
-- `의도와 맞음` is the only confirmation choice that allows local approval/audit JSONL record write.
-- `수정 필요` and `보류` block local record write and keep the state preview-only.
-- Browser rendering still writes no records.
-- Live model calls, tool execution, connector activation, external send, credentials, paid/destructive actions, and durable memory promotion remain blocked.
-- Desktop/mobile screenshot evidence was captured for the confirmation control.
+- live model call
+- tool/CLI/MCP execution
+- connector activation
+- credential access
+- external send
+- paid/destructive action
+- public release
+- durable memory promotion
 
 ## Product Principle
 
-The user should feel: "I can give GPAO-T work here, see how it understood me, decide whether a local approval/audit record should be kept, and stay in control before anything risky happens."
+AI does the work. User keeps authority.
+
+GPAO-T must feel like a calm local AI operating workspace, not a generic backend dashboard and not a messenger-first bot.

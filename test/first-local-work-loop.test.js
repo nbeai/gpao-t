@@ -155,7 +155,10 @@ describe("First Local Work Loop v1", () => {
     assert.match(html, /data-first-local-work-loop="preview"/);
     assert.match(html, /첫 로컬 작업 루프/);
     assert.doesNotMatch(html, /<script/i);
-    assert.doesNotMatch(html, /<form/i);
+    assert.match(html, /data-local-confirmation-form="approval-audit-record"/);
+    assert.match(html, /method="post" action="\/work-surface\/execution-flow\/record"/);
+    assert.equal(readApprovalRecords({ root }).length, 0);
+    assert.equal(readAuditRecords({ root }).length, 0);
 
     const snapshot = buildControlCenterSnapshot({ root });
     const controlHtml = buildControlCenterHtml({ snapshot });

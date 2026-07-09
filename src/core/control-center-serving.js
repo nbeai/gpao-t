@@ -22,6 +22,7 @@ import {
 import {
   buildWorkSurfaceExecutionConfirmationControl,
   buildWorkSurfaceExecutionFlow,
+  recordWorkSurfaceExecutionFlow,
   verifyWorkSurfaceExecutionFlow,
 } from "./work-surface-execution-flow.js";
 import {
@@ -222,8 +223,32 @@ export async function startControlCenterPreviewServer({
   const pageHtml = html || readFileSync(render.outputPath, "utf8");
   const contract = buildControlCenterServingContract({ host, port });
 
-  const server = createServer((request, response) => {
+  const server = createServer(async (request, response) => {
     const url = new URL(request.url || "/", `http://${host}`);
+    if (request.method === "POST" && url.pathname === "/work-surface/execution-flow/record") {
+      const body = await readRequestBody(request);
+      const parsedBody = parseRecordRequestBody(body, request.headers["content-type"]);
+      const result = recordWorkSurfaceExecutionFlow({
+        root,
+        request: parsedBody.request,
+        confirmationChoice: parsedBody.confirmationChoice,
+        confirmationState: parsedBody.confirmationState,
+        now,
+      });
+      const wantsJson = String(request.headers.accept || "").includes("application/json");
+      if (wantsJson) {
+        respondJson(response, result.status === "blocked" ? 409 : 200, result);
+        return;
+      }
+      respondHtml(response, result.status === "blocked" ? 409 : 200, renderWorkSurfaceExecutionRecordResultHtml({
+        result,
+        requestText: parsedBody.request,
+      }), {
+        "x-gpao-t-surface": "work-surface-local-record-result",
+      });
+      return;
+    }
+
     if (request.method !== "GET") {
       respondJson(response, 405, {
         schema: "gpao_t.browser_local_app_shell_blocked_route.v0_1",
@@ -585,6 +610,18 @@ export async function verifyControlCenterPreviewServing({
     const workSurfaceExecutionFlow = await fetchJson(`http://${host}:${preview.port}/work-surface/execution-flow`);
     const workSurfaceExecutionConfirmation = await fetchJson(`http://${host}:${preview.port}/work-surface/execution-flow/confirmation`);
     const workSurfaceExecutionFlowVerify = await fetchJson(`http://${host}:${preview.port}/work-surface/execution-flow/verify`);
+    const workSurfaceExecutionRecord = await fetchJson(`http://${host}:${preview.port}/work-surface/execution-flow/record`, {
+      method: "POST",
+      headers: {
+        "accept": "application/json",
+        "content-type": "application/x-www-form-urlencoded",
+      },
+      body: new URLSearchParams({
+        request: "serve-check local record",
+        confirmationChoice: "matches_intent",
+        confirmationState: "confirmed_for_local_record_only",
+      }),
+    });
     const sessionWorkspace = await fetchJson(`http://${host}:${preview.port}/sessions`);
     const sessionWorkspaceVerify = await fetchJson(`http://${host}:${preview.port}/sessions/verify`);
     const appShell = await fetchText(`http://${host}:${preview.port}/app-shell`);
@@ -626,8 +663,11 @@ export async function verifyControlCenterPreviewServing({
     if (/<script/i.test(workSurface.body)) {
       findings.push("work_surface_script_tag_present");
     }
-    if (/<form/i.test(workSurface.body)) {
-      findings.push("work_surface_form_present");
+    if (/<form/i.test(workSurface.body) && !workSurface.body.includes("data-local-confirmation-form=\"approval-audit-record\"")) {
+      findings.push("work_surface_unapproved_form_present");
+    }
+    if (!workSurface.body.includes("action=\"/work-surface/execution-flow/record\"")) {
+      findings.push("work_surface_local_record_form_missing");
     }
     if (!workSurface.body.includes("data-core-work-surface=\"read-only\"")) {
       findings.push("work_surface_missing_marker");
@@ -672,6 +712,13 @@ export async function verifyControlCenterPreviewServing({
     }
     if (workSurfaceExecutionFlowVerify.status !== 200 || workSurfaceExecutionFlowVerify.body.status !== "ready") {
       findings.push("work_surface_execution_flow_verify_not_ready");
+    }
+    if (
+      workSurfaceExecutionRecord.status !== 200
+      || workSurfaceExecutionRecord.body.status !== "written_local_only"
+      || workSurfaceExecutionRecord.body.writeResult?.boundaryState?.externalSend !== false
+    ) {
+      findings.push("work_surface_execution_record_not_written_local_only");
     }
     if (sessionWorkspace.status !== 200 || sessionWorkspace.body.schema !== "gpao_t.session_workspace_state.v1") {
       findings.push("session_workspace_route_not_ready");
@@ -848,6 +895,7 @@ export async function verifyControlCenterPreviewServing({
       workSurfaceExecutionFlowStatus: workSurfaceExecutionFlow.status,
       workSurfaceExecutionConfirmationStatus: workSurfaceExecutionConfirmation.status,
       workSurfaceExecutionFlowVerifyStatus: workSurfaceExecutionFlowVerify.status,
+      workSurfaceExecutionRecordStatus: workSurfaceExecutionRecord.status,
       pageStatus: page.status,
       appShellStatus: appShell.status,
       tauriGateStatus: tauriGate.status,
@@ -891,6 +939,166 @@ function respondHtml(response, statusCode, html, headers = {}) {
     ...headers,
   });
   response.end(html);
+}
+
+function readRequestBody(request) {
+  return new Promise((resolve, reject) => {
+    const chunks = [];
+    request.on("data", (chunk) => chunks.push(chunk));
+    request.on("error", reject);
+    request.on("end", () => resolve(Buffer.concat(chunks).toString("utf8")));
+  });
+}
+
+function parseRecordRequestBody(body, contentType = "") {
+  if (String(contentType).includes("application/json")) {
+    try {
+      return JSON.parse(body || "{}");
+    } catch {
+      return {};
+    }
+  }
+  const params = new URLSearchParams(body || "");
+  return {
+    request: params.get("request") || undefined,
+    confirmationChoice: params.get("confirmationChoice") || undefined,
+    confirmationState: params.get("confirmationState") || undefined,
+  };
+}
+
+function renderWorkSurfaceExecutionRecordResultHtml({ result, requestText }) {
+  const written = result.status === "written_local_only";
+  const approvalId = result.writeResult?.approvalRecord?.id || "기록 없음";
+  const auditId = result.writeResult?.auditRecord?.id || "기록 없음";
+  const replayStatus = result.writeResult?.replay?.status || result.flow?.replay?.status || "아직 없음";
+  const rollbackReference = result.writeResult?.replay?.rollbackReference
+    || result.flow?.replay?.rollbackReference
+    || "실행이 없어서 되돌릴 외부 변화가 없습니다.";
+  return `<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>GPAO-T 로컬 기록 결과</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f5f7f2;
+      --surface: #ffffff;
+      --surface-soft: #f9faf6;
+      --text: #17211b;
+      --muted: #526257;
+      --line: #dbe5dc;
+      --ready: #1f7a64;
+      --review: #9b6a1c;
+      --locked: #8f4a42;
+      --blue-soft: #e8f1fa;
+      --green-soft: #e7f4ed;
+      --amber-soft: #fff4d8;
+      --shadow: 0 1px 2px rgba(23,33,27,0.05), 0 18px 44px rgba(23,33,27,0.08);
+    }
+    * { box-sizing: border-box; }
+    html, body { max-width: 100%; overflow-x: hidden; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: Pretendard, "Apple SD Gothic Neo", "SF Pro Display", "SF Pro Text", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      line-height: 1.58;
+    }
+    main {
+      width: min(960px, calc(100vw - 28px));
+      margin: 0 auto;
+      padding: 28px 0;
+    }
+    .result-card {
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: var(--surface);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+    header {
+      padding: 22px;
+      border-bottom: 1px solid var(--line);
+      background: ${written ? "var(--green-soft)" : "var(--amber-soft)"};
+    }
+    h1, h2, p { margin: 0; letter-spacing: 0; }
+    h1 { font-size: 22px; line-height: 1.25; }
+    p { color: var(--muted); word-break: keep-all; overflow-wrap: anywhere; }
+    .content { padding: 18px 22px 22px; display: grid; gap: 12px; }
+    .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+    .item {
+      min-width: 0;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: var(--surface-soft);
+      padding: 12px;
+    }
+    .item strong, .item span { display: block; word-break: keep-all; overflow-wrap: anywhere; }
+    .item strong { font-size: 12px; color: var(--muted); }
+    .item span { margin-top: 6px; font-size: 14px; font-weight: 850; }
+    .boundary {
+      border-color: #ead39a;
+      background: var(--amber-soft);
+    }
+    .actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+    a {
+      color: #255f99;
+      font-weight: 850;
+      text-decoration: none;
+      border: 1px solid #bfd2e5;
+      border-radius: 999px;
+      background: var(--blue-soft);
+      padding: 8px 11px;
+    }
+    @media (max-width: 620px) {
+      main { width: min(100vw - 20px, 420px); padding: 12px 0; }
+      header, .content { padding: 14px; }
+      h1 { font-size: 18px; }
+      .grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body data-work-surface-record-result="${written ? "written-local-only" : "blocked"}" data-external-activation="blocked">
+  <main>
+    <section class="result-card" aria-label="로컬 기록 결과">
+      <header>
+        <p>${written ? "로컬 승인/감사 기록" : "기록 보류"}</p>
+        <h1>${written ? "로컬 기록을 남겼습니다" : "아직 기록하지 않았습니다"}</h1>
+        <p>${written ? "승인 기록과 감사 기록만 로컬 JSONL에 저장했습니다. 실제 모델, 도구, 커넥터, 외부 전송은 실행하지 않았습니다." : "의도 확인이 완료되지 않아 로컬 기록 저장을 멈췄습니다. 실제 실행도 열리지 않았습니다."}</p>
+      </header>
+      <div class="content">
+        <div class="grid">
+          <div class="item"><strong>요청</strong><span>${escapeHtml(requestText || "GPAO-T 실행 확인 흐름 로컬 기록")}</span></div>
+          <div class="item"><strong>상태</strong><span>${written ? "로컬 저장됨" : "저장 전 확인 필요"}</span></div>
+          <div class="item"><strong>승인 기록</strong><span>${escapeHtml(approvalId)}</span></div>
+          <div class="item"><strong>감사 기록</strong><span>${escapeHtml(auditId)}</span></div>
+          <div class="item"><strong>리플레이</strong><span>${escapeHtml(replayStatus)}</span></div>
+          <div class="item"><strong>되돌리기 기준</strong><span>${escapeHtml(rollbackReference)}</span></div>
+        </div>
+        <div class="item boundary" data-authority-boundary="closed">
+          <strong>계속 잠긴 행동</strong>
+          <span>모델 호출 없음 · 도구/명령/MCP 실행 없음 · 커넥터 활성화 없음 · 외부 전송 없음 · 비용/파괴 행동 없음 · 지속 기억 승격 없음</span>
+        </div>
+        <div class="actions">
+          <a href="/work-surface">작업 표면으로 돌아가기</a>
+          <a href="/work-surface/execution-flow">기록 상태 JSON 보기</a>
+        </div>
+      </div>
+    </section>
+  </main>
+</body>
+</html>`;
+}
+
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
 }
 
 async function fetchText(url) {

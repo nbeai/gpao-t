@@ -1,25 +1,24 @@
 # Next Review
 
-## Next Safe Action
+## Current Position
 
-Move Stage 3 from no-script visible confirmation control to a browser-mediated local confirmation action, while keeping live model/tool/connector/external actions blocked.
+Stage 3 is complete: browser-local execution confirmation now writes local approval/audit records, returns a local result page, and exposes replay / rollback reference without live execution.
+
+## Next Big Stage
+
+Stage 4: Local app / desktop production hardening.
+
+Recommended focus:
+
+- packaged desktop readiness from the existing browser-local proof
+- Tauri source scaffold review without opening build/install yet unless explicitly approved
+- local serving robustness
+- state/replay/rollback inspection polish
+- visual product polish for Work Surface density and mobile record-id display
 
 ## Review Before Continuing
 
-- Preserve the large central Work Surface. Do not collapse the workspace into card-dashboard density.
-- Keep Korean product language on the primary surface; raw schemas and low-level metadata belong in the inspector.
-- Keep live model calls, tool/CLI/MCP execution, connector activation, external send, credential access, paid/destructive actions, public release, and durable memory promotion blocked.
-- Local approval/audit JSONL record write is allowed only after explicit `matches_intent` confirmation and must remain replay/audit visible.
-- Any UI/UX work needs desktop/mobile screenshot evidence.
-
-## Session Resume
-
-Current stage is Stage 3 of 4. The previous slice implemented Work Surface Execution Confirmation Control v1 and captured desktop/mobile evidence.
-
-## Recent Evidence
-
-- `docs/03-verification/evidence/work-surface-execution-confirmation-control-v1-desktop-1440x960.png`
-- `docs/03-verification/evidence/work-surface-execution-confirmation-control-v1-mobile-390x844.png`
-- `docs/03-verification/evidence/work-surface-execution-confirmation-control-v1-mobile-fullpage-390x844.png`
-- `docs/03-verification/evidence/WORK-SURFACE-EXECUTION-CONFIRMATION-CONTROL-V1-QA-2026-07-09.md`
-- `docs/03-verification/evidence/work-surface-execution-confirmation-control-v1-qa-2026-07-09.json`
+- Keep model/tool/connector/external execution blocked unless explicitly approved.
+- Keep credential access, paid/destructive action, deployment, and durable memory promotion blocked.
+- Treat local approval/audit records as local governance substrate, not execution permission.
+- Continue using desktop/mobile screenshot evidence for UI-facing work.

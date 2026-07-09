@@ -122,6 +122,9 @@ describe("Work Surface Execution Governance Flow v1", () => {
     assert.match(html, /data-execution-governance-flow="local-record-review"/);
     assert.match(html, /data-execution-confirmation-control="local-record-only"/);
     assert.match(html, /data-execution-confirmation-choice="matches_intent"/);
+    assert.match(html, /data-local-confirmation-form="approval-audit-record"/);
+    assert.match(html, /method="post" action="\/work-surface\/execution-flow\/record"/);
+    assert.match(html, /의도와 맞음 · 로컬 기록만 남기기/);
     assert.match(html, /로컬 기록 후 리플레이/);
     assert.equal(check.status, "ready");
 

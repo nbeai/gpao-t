@@ -16,7 +16,7 @@ It does not open live model calls, tool/CLI/MCP execution, connector activation,
 -> 되돌리기 기준 확인
 ```
 
-The browser Work Surface renders the flow without writing records. Local records are written only through explicit CLI/Gateway calls after the confirmation control selects `matches_intent`.
+The browser Work Surface renders the flow without writing during page load. It exposes one same-origin loopback form for `matches_intent`; submitting that form writes only local approval/audit JSONL records and returns a local result page. Local records can also be written through explicit CLI/Gateway calls after the confirmation control selects `matches_intent`.
 
 ## Runtime Surfaces
 
@@ -30,6 +30,8 @@ The browser Work Surface renders the flow without writing records. Local records
 - Gateway confirmation control: `GET /work-surface/execution-flow/confirmation`
 - Gateway check: `GET /work-surface/execution-flow/verify`
 - Gateway local record write: `POST /work-surface/execution-flow/record`
+- Browser-local confirmation form: `POST /work-surface/execution-flow/record` with `data-local-confirmation-form="approval-audit-record"`
+- Browser-local result page: shows approval id, audit id, replay status, rollback reference, and still-blocked live actions
 
 ## Authority Boundary
 
@@ -39,6 +41,7 @@ Allowed in this slice:
 - local JSONL audit record write after explicit confirmation
 - replay read
 - rollback reference read
+- one same-origin browser form that writes only the local approval/audit records after `의도와 맞음`
 
 Blocked in this slice:
 
@@ -69,3 +72,8 @@ Required visual evidence:
 - `docs/03-verification/evidence/work-surface-execution-governance-flow-v1-desktop-1440x960.png`
 - `docs/03-verification/evidence/work-surface-execution-governance-flow-v1-mobile-390x844.png`
 - `docs/03-verification/evidence/work-surface-execution-governance-flow-v1-qa-2026-07-09.json`
+- `docs/03-verification/evidence/work-surface-stage-3-complete-desktop-1440x960.png`
+- `docs/03-verification/evidence/work-surface-stage-3-complete-mobile-390x844.png`
+- `docs/03-verification/evidence/work-surface-stage-3-record-result-desktop-1440x960.png`
+- `docs/03-verification/evidence/work-surface-stage-3-record-result-mobile-390x844.png`
+- `docs/03-verification/evidence/work-surface-stage-3-complete-qa-2026-07-09.json`

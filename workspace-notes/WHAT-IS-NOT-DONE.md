@@ -1,27 +1,24 @@
 # What Is Not Done
 
-## Still Excluded
+## Still Blocked After Stage 3
 
-- live model/provider calls
-- tool / CLI / MCP execution from model output
-- connector activation
-- credential read/write
-- external send
-- paid or destructive action
-- public release / deployment
-- durable memory promotion
-- permanent deletion without recoverable pending state
+- Live model call is not open.
+- Tool / CLI / MCP execution from model output is not open.
+- Connector activation and OAuth / credential access are not open.
+- External send is not open.
+- Paid or destructive action is not open.
+- Public release / deployment is not open.
+- Durable memory promotion and self-growth live apply are not open.
+- Tauri packaged build / installer / update / rollback execution is not open.
 
 ## Current Completion Boundary
 
-- Stage 3 is not fully complete until browser-mediated local confirmation, replay review, and rollback reference reading are all user-visible and authority-bounded.
-- Current slice status: Work Surface Execution Confirmation Control v1 is implemented and verified.
-- Do not claim live execution readiness. This slice intentionally keeps live model/tool/connector/external action blocked.
+Stage 3 is complete only as a local approval/audit/replay/rollback substrate.
 
-## Blockers
+The browser Work Surface can write local approval/audit JSONL records only through the scoped same-origin confirmation form after `의도와 맞음`. It still does not execute the proposed action.
 
-- No unresolved session blocker is recorded.
+## Known Product Quality Risks
 
-## Next Product Gap
-
-- The user can see the confirmation choices and the CLI/Gateway can enforce `matches_intent`; the next slice should make the browser-mediated local confirmation action itself visible without opening live execution.
+- Work Surface remains visually dense and needs later polish.
+- Mobile result page wraps long record ids safely, but shortened display ids would feel cleaner.
+- Replay/rollback review is visible, but should become a richer Work Surface panel in a later stage.

@@ -615,7 +615,8 @@ export function buildCoreWorkSurface({
       appliesSelfGrowth: false,
       deploysOrSendsExternally: false,
       usesScript: false,
-      usesForm: false,
+      usesForm: true,
+      usesOnlyLocalConfirmationForm: true,
     },
     nextSafeAction:
       "실행 후보가 의도와 맞는지 확인한 뒤, 필요한 경우 로컬 승인/감사 기록만 남기고 replay/rollback 기준을 읽는다. 모델/도구/커넥터/외부 실행은 계속 열지 않는다.",
@@ -1050,7 +1051,8 @@ export function verifyCoreWorkSurface({ surface = buildCoreWorkSurface(), html }
   if (surface.safetyInvariants.executesTools !== false) findings.push("tool_execution_open");
   if (surface.safetyInvariants.activatesConnectors !== false) findings.push("connector_activation_open");
   if (surface.safetyInvariants.usesScript !== false) findings.push("script_invariant_open");
-  if (surface.safetyInvariants.usesForm !== false) findings.push("form_invariant_open");
+  if (surface.safetyInvariants.usesForm !== true) findings.push("local_confirmation_form_missing");
+  if (surface.safetyInvariants.usesOnlyLocalConfirmationForm !== true) findings.push("unscoped_form_invariant_open");
 
   if (html) {
     if (!html.includes("GPAO-T Work Surface")) findings.push("html_missing_title");
@@ -1097,8 +1099,17 @@ export function verifyCoreWorkSurface({ surface = buildCoreWorkSurface(), html }
     if (!html.includes("data-composer-state=\"draft-not-sent\"")) findings.push("html_missing_composer_marker");
     if (!html.includes("data-authority-boundary=\"closed\"")) findings.push("html_missing_authority_marker");
     if (/<script/i.test(html)) findings.push("script_tag_present");
-    if (/<form/i.test(html)) findings.push("form_present");
-    if (/method=["']?post/i.test(html)) findings.push("post_form_present");
+    if (!html.includes("data-local-confirmation-form=\"approval-audit-record\"")) {
+      findings.push("html_missing_local_confirmation_form");
+    }
+    if (!html.includes("method=\"post\" action=\"/work-surface/execution-flow/record\"")) {
+      findings.push("html_local_confirmation_form_not_scoped");
+    }
+    const formCount = (html.match(/<form/gi) || []).length;
+    if (formCount !== 1) findings.push("html_unexpected_form_count");
+    if (/<form/i.test(html) && !html.includes("data-local-confirmation-form=\"approval-audit-record\"")) {
+      findings.push("unapproved_form_present");
+    }
     if (/https?:\/\/(?!127\.0\.0\.1|localhost)/i.test(html)) findings.push("external_url_present");
   }
 
@@ -2569,6 +2580,33 @@ function renderSessionWorkspaceHtml({
       font-size: 11px;
       font-weight: 900;
     }
+    .local-record-form {
+      margin-top: 10px;
+      padding: 10px;
+      border: 1px solid #b9d5c3;
+      border-radius: var(--gpao-radius-md);
+      background: #eef8f2;
+    }
+    .local-record-form button {
+      width: 100%;
+      min-height: 42px;
+      border: 1px solid #91b9a7;
+      border-radius: 12px;
+      background: #1f7a64;
+      color: white;
+      font: inherit;
+      font-size: 13px;
+      font-weight: 950;
+      cursor: pointer;
+    }
+    .local-record-form p {
+      margin: 8px 0 0;
+      color: var(--gpao-muted);
+      font-size: 11px;
+      line-height: 1.45;
+      word-break: keep-all;
+      overflow-wrap: anywhere;
+    }
     .boundary-list span {
       border: 1px solid #e3c78b;
       border-radius: 999px;
@@ -2827,6 +2865,13 @@ function renderSessionWorkspaceHtml({
                 <span>현재 상태: 아직 실행하지 않음</span>
                 <span>외부 전송 없음</span>
               </div>
+              <form class="local-record-form" method="post" action="/work-surface/execution-flow/record" data-local-confirmation-form="approval-audit-record">
+                <input type="hidden" name="request" value="${escapeHtml(activeSession.thread[0]?.text || "GPAO-T 실행 확인 흐름 로컬 기록")}">
+                <input type="hidden" name="confirmationChoice" value="matches_intent">
+                <input type="hidden" name="confirmationState" value="confirmed_for_local_record_only">
+                <button type="submit">의도와 맞음 · 로컬 기록만 남기기</button>
+                <p>이 버튼은 127.0.0.1 안에서 승인/감사 JSONL 기록만 저장합니다. 모델 호출, 도구 실행, 커넥터 활성화, 외부 전송은 열지 않습니다.</p>
+              </form>
             </div>
             <div class="execution-flow-inline" data-execution-governance-flow="local-record-review">
               <strong class="section-label">${escapeHtml(executionGovernanceFlow.headline)}</strong>

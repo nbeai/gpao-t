@@ -811,7 +811,8 @@ describe("GPAO-T Local Control Center readiness", () => {
     assert.equal(surface.safetyInvariants.executesTools, false);
     assert.equal(surface.safetyInvariants.activatesConnectors, false);
     assert.equal(surface.safetyInvariants.usesScript, false);
-    assert.equal(surface.safetyInvariants.usesForm, false);
+    assert.equal(surface.safetyInvariants.usesForm, true);
+    assert.equal(surface.safetyInvariants.usesOnlyLocalConfirmationForm, true);
     assert.match(html, /GPAO-T Work Surface/);
     assert.match(html, /data-core-work-surface="read-only"/);
     assert.match(html, /data-session-workspace="session-based-local-ai-os"/);
@@ -884,7 +885,8 @@ describe("GPAO-T Local Control Center readiness", () => {
     assert.match(html, /data-composer-state="draft-not-sent"/);
     assert.match(html, /data-authority-boundary="closed"/);
     assert.doesNotMatch(html, /<script/i);
-    assert.doesNotMatch(html, /<form/i);
+    assert.match(html, /data-local-confirmation-form="approval-audit-record"/);
+    assert.match(html, /method="post" action="\/work-surface\/execution-flow\/record"/);
     assert.equal(verification.status, "ready");
     assert.equal(cliSurface.schema, surface.schema);
     assert.equal(cliCheck.status, "ready");
@@ -2073,6 +2075,18 @@ describe("GPAO-T Local Control Center readiness", () => {
       const designReferenceGateVerify = await fetchJson(
         `http://127.0.0.1:${preview.port}/control-center/design-reference-gate/verify`,
       );
+      const localRecordResult = await fetchJson(`http://127.0.0.1:${preview.port}/work-surface/execution-flow/record`, {
+        method: "POST",
+        headers: {
+          "accept": "application/json",
+          "content-type": "application/x-www-form-urlencoded",
+        },
+        body: new URLSearchParams({
+          request: "브라우저에서 로컬 승인/감사 기록만 남겨줘",
+          confirmationChoice: "matches_intent",
+          confirmationState: "confirmed_for_local_record_only",
+        }),
+      });
       const blockedPost = await fetchJson(`http://127.0.0.1:${preview.port}/app-shell`, { method: "POST" });
 
       assert.equal(preview.schema, "gpao_t.control_center_preview_server.v0_1");
@@ -2091,7 +2105,8 @@ describe("GPAO-T Local Control Center readiness", () => {
       assert.match(workSurface.body, /GPAO-T Work Surface/);
       assert.match(workSurface.body, /data-composer-state="draft-not-sent"/);
       assert.doesNotMatch(workSurface.body, /<script/i);
-      assert.doesNotMatch(workSurface.body, /<form/i);
+      assert.match(workSurface.body, /data-local-confirmation-form="approval-audit-record"/);
+      assert.match(workSurface.body, /method="post" action="\/work-surface\/execution-flow\/record"/);
       assert.equal(workSurfaceState.body.schema, "gpao_t.core_work_surface.v0_1");
       assert.equal(workSurfaceVerify.body.status, "ready");
       assert.equal(workSurfaceSubmissionGate.body.schema, "gpao_t.work_surface_submission_decision_gate.v0_1");
@@ -2110,6 +2125,10 @@ describe("GPAO-T Local Control Center readiness", () => {
       assert.equal(designReferenceGate.body.schema, "gpao_t.design_reference_gate.v0_1");
       assert.equal(designReferenceGate.body.evidenceRequirements.length, 10);
       assert.equal(designReferenceGateVerify.body.status, "ready");
+      assert.equal(localRecordResult.status, 200);
+      assert.equal(localRecordResult.body.status, "written_local_only");
+      assert.equal(localRecordResult.body.writeResult.boundaryState.toolCliMcpExecution, false);
+      assert.equal(localRecordResult.body.writeResult.boundaryState.externalSend, false);
       assert.equal(appShell.status, 200);
       assert.match(appShell.body, /GPAO-T Browser-Local App Shell/);
       assert.doesNotMatch(appShell.body, /<script/i);
