@@ -350,6 +350,15 @@ export function buildCoreWorkSurface({
       },
       validationRules: executionApprovalPreview.validation.rules,
       auditWriteDesign: executionApprovalPreview.auditWriteDesign,
+      auditPreview: {
+        schema: "gpao_t.work_surface_audit_write_design_preview.v0_1",
+        status: "visible_design_only_no_write",
+        title: "기록될 예정인 항목",
+        userMessage: executionApprovalPreview.auditWriteDesign.userVisibleSummary,
+        auditTarget: executionApprovalPreview.auditWriteDesign.auditTarget,
+        plannedAuditItems: executionApprovalPreview.auditWriteDesign.plannedAuditItems,
+        writesAuditNow: false,
+      },
       confirmationChoices: executionApprovalPreview.workSurfaceView.confirmationChoices,
       uxContract: executionApprovalPreview.uxContract,
       blockedActions: executionApprovalPreview.blockedActions,
@@ -480,6 +489,13 @@ export function verifyCoreWorkSurface({ surface = buildCoreWorkSurface(), html }
   if (surface.executionProposalConfirmation?.approvalPacket?.writesPacketNow !== false) findings.push("execution_approval_packet_write_open");
   if (surface.executionProposalConfirmation?.approvalPacket?.opensInvocationNow !== false) findings.push("execution_invocation_open");
   if (surface.executionProposalConfirmation?.auditWriteDesign?.auditWriteNow !== false) findings.push("execution_audit_write_open");
+  if (surface.executionProposalConfirmation?.auditPreview?.status !== "visible_design_only_no_write") {
+    findings.push("execution_audit_preview_missing");
+  }
+  if ((surface.executionProposalConfirmation?.auditPreview?.plannedAuditItems || []).length !== 8) {
+    findings.push("execution_audit_preview_items_incomplete");
+  }
+  if (surface.executionProposalConfirmation?.auditPreview?.writesAuditNow !== false) findings.push("execution_audit_preview_write_open");
   if (surface.localDraftPreview?.opensLiveSubmission !== false) findings.push("local_draft_submission_open");
   if (surface.localDraftPreview?.invokesModel !== false) findings.push("local_draft_model_open");
   if (surface.localDraftPreview?.executesTools !== false) findings.push("local_draft_tools_open");
@@ -515,6 +531,8 @@ export function verifyCoreWorkSurface({ surface = buildCoreWorkSurface(), html }
     if (!html.includes("외부 전송 전 확인")) findings.push("html_missing_korean_external_send_label");
     if (!html.includes("data-approval-packet-validation=\"design-only\"")) findings.push("html_missing_approval_packet_validation");
     if (!html.includes("data-audit-write-design=\"no-write\"")) findings.push("html_missing_audit_write_design");
+    if (!html.includes("data-audit-preview=\"design-only\"")) findings.push("html_missing_audit_preview");
+    if (!html.includes("기록될 예정인 항목")) findings.push("html_missing_planned_audit_items");
     if (!html.includes("data-preview-decision=\"intent-match\"")) findings.push("html_missing_intent_match_decision");
     if (!html.includes("data-preview-decision=\"needs-changes\"")) findings.push("html_missing_needs_changes_decision");
     if (!html.includes("data-preview-decision=\"hold\"")) findings.push("html_missing_hold_decision");
@@ -553,6 +571,8 @@ export function buildCoreWorkSurfaceHtml({ surface } = {}) {
   const executionConfirmation = workSurface.executionProposalConfirmation;
   const authorityLegend = executionConfirmation.authorityLegend || [];
   const validationRules = executionConfirmation.validationRules || [];
+  const auditPreview = executionConfirmation.auditPreview || {};
+  const plannedAuditItems = auditPreview.plannedAuditItems || [];
 
   return `<!doctype html>
 <html lang="ko">
@@ -968,14 +988,16 @@ export function buildCoreWorkSurfaceHtml({ surface } = {}) {
       overflow-wrap: anywhere;
     }
     .authority-level-grid,
-    .approval-packet-grid {
+    .approval-packet-grid,
+    .audit-preview-grid {
       display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
       gap: 8px;
       margin-top: 10px;
     }
     .authority-level,
-    .approval-rule {
+    .approval-rule,
+    .audit-item {
       min-width: 0;
       min-height: 104px;
       padding: 10px;
@@ -1002,19 +1024,34 @@ export function buildCoreWorkSurfaceHtml({ surface } = {}) {
     .authority-level strong,
     .authority-level span,
     .approval-rule strong,
-    .approval-rule span {
+    .approval-rule span,
+    .audit-item strong,
+    .audit-item span,
+    .audit-item small {
       display: block;
       overflow-wrap: anywhere;
+      word-break: keep-all;
     }
     .authority-level strong,
-    .approval-rule strong {
+    .approval-rule strong,
+    .audit-item strong {
       font-size: 12px;
     }
     .authority-level span,
-    .approval-rule span {
+    .approval-rule span,
+    .audit-item span {
       margin-top: 5px;
       color: var(--muted);
       font-size: 12px;
+    }
+    .audit-item span {
+      color: var(--text);
+      font-weight: 800;
+    }
+    .audit-item small {
+      margin-top: 5px;
+      color: var(--muted);
+      font-size: 11px;
     }
     .checklist strong {
       display: block;
@@ -1104,7 +1141,7 @@ export function buildCoreWorkSurfaceHtml({ surface } = {}) {
       .topbar { flex-direction: column; gap: 8px; }
       .understanding-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .confirmation-grid, .draft-preview-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-      .draft-state-strip, .preview-decision-strip, .authority-level-grid, .approval-packet-grid { grid-template-columns: 1fr; }
+      .draft-state-strip, .preview-decision-strip, .authority-level-grid, .approval-packet-grid, .audit-preview-grid { grid-template-columns: 1fr; }
       h1 { font-size: 17px; }
     }
     @media (max-width: 520px) {
@@ -1118,7 +1155,7 @@ export function buildCoreWorkSurfaceHtml({ surface } = {}) {
       .topbar-action { max-width: 100%; }
       .layout { padding-top: 160px; }
       .state-grid, .authority-strip, .understanding-strip, .confirmation-grid, .draft-preview-grid, .preview-decision-strip { grid-template-columns: 1fr; }
-      .authority-level-grid, .approval-packet-grid { grid-template-columns: 1fr; }
+      .authority-level-grid, .approval-packet-grid, .audit-preview-grid { grid-template-columns: 1fr; }
       .thread, .panel { padding: 12px; }
     }
   </style>
@@ -1237,7 +1274,7 @@ export function buildCoreWorkSurfaceHtml({ surface } = {}) {
         ${stateCard("Target", workSurface.taskState.activeTargetId)}
         ${stateCard("Skill Mode", workSurface.taskState.skillExecutionMode)}
       </div>
-      <section class="execution-proposal" data-execution-proposal-confirmation="preview-only" aria-label="Execution proposal confirmation">
+      <section id="execution-proposal-confirmation" class="execution-proposal" data-execution-proposal-confirmation="preview-only" aria-label="Execution proposal confirmation">
         <div class="execution-proposal-head">
           <div>
             <h2>${escapeHtml(executionConfirmation.headline)}</h2>
@@ -1266,6 +1303,15 @@ export function buildCoreWorkSurfaceHtml({ surface } = {}) {
           </div>`).join("")}
         </div>
         <p class="confirmation-note" data-audit-write-design="no-write">audit write: ${escapeHtml(executionConfirmation.auditWriteDesign.auditWriteNow)} · approval record write: ${escapeHtml(executionConfirmation.approvalPacket.writesPacketNow)} · invocation: ${escapeHtml(executionConfirmation.approvalPacket.opensInvocationNow)}</p>
+        <div class="audit-preview-grid" data-audit-preview="design-only" aria-label="Planned audit items">
+          ${plannedAuditItems.map((item) => `
+          <div class="audit-item" data-audit-item="${escapeHtml(item.id)}">
+            <strong>${escapeHtml(item.label)}</strong>
+            <span>${escapeHtml(item.value)}</span>
+            <small>${escapeHtml(item.userMeaning)}</small>
+          </div>`).join("")}
+        </div>
+        <p class="confirmation-note">기록될 예정인 항목: ${escapeHtml(auditPreview.userMessage || "기록 설계만 · 실제 기록 없음")}</p>
       </section>
       <p class="next">${escapeHtml(workSurface.nextSafeAction)}</p>
     </section>

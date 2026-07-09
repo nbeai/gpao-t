@@ -1,33 +1,26 @@
 # What Is Not Done
 
-## Still Excluded
+## Still Blocked
 
-- large rewrite
-- unapproved deployment
-- unrelated refactor
-- actual tool execution
-- CLI command execution
-- MCP invocation
-- connector activation
-- external network/send
-- credential read/write
-- paid action
-- destructive action
-- approval record write
-- audit write
-- dry-run invocation
-- durable memory promotion
+- Actual audit write.
+- Approval record write.
+- Dry-run invocation.
+- Tool, CLI, or MCP execution.
+- Connector activation.
+- External network/send.
+- Credential read/write.
+- Paid action.
+- Destructive action.
+- Durable memory promotion.
+- Install/update/rollback execution.
+- Tauri build, IPC activation, packaging, deployment, messenger, or recurring automation.
 
 ## Current Completion Boundary
 
-- Do not call this complete unless verification evidence and completion language guard pass.
-- Do not ask the user to test before AI/developer scenario verification covers success, empty, and failure states when applicable.
-- Current status: Execution Approval UX / approval packet validation proof is verified as preview-only; live invocation remains blocked.
+The audit write design proof is implemented and verified as a read-only design/proof surface. It shows what would be recorded later, but it does not write records, execute proposals, invoke dry-runs, or activate tools/connectors/models.
 
-## Blockers
+BEAI closeout remains blocked by a conservative product-quality freshness rule because `VERIFY.md` was updated after implementation files to record visual QA and audit evidence. Automated tests and scenario verification pass.
 
-- No unresolved session blocker is recorded.
+## Next Open Question
 
-## Next Product Gap
-
-- Future live invocation still needs a separate approval record write implementation gate, dry-run invocation gate, audit write gate, replay invocation, rollback/compensation proof, and explicit user confirmation before any execution-capable surface opens.
+How approval record write should become user-visible without opening live invocation. The next phase should start from UX/design and validation, not from storage mutation.

@@ -20,6 +20,7 @@ import {
   buildConnectorToolGovernance,
   buildCoreWorkSurface,
   buildCoreWorkSurfaceHtml,
+  buildAuditWriteDesignProof,
   buildExecutionApprovalPreview,
   buildWorkSurfaceSubmissionDecisionGate,
   buildWorkSurfaceSubmissionValidationGate,
@@ -88,6 +89,7 @@ import {
   verifyControlCenterPreviewServing,
   verifyConnectorToolGovernance,
   verifyCoreWorkSurface,
+  verifyAuditWriteDesignProof,
   verifyExecutionApprovalPreview,
   verifyModelRouterBoundary,
   verifyModelRouterPolicy,
@@ -151,6 +153,8 @@ function usage() {
     "  gpao-t connectors review <connector-id> [action]",
     "  gpao-t approval execution-proposal [text]",
     "  gpao-t approval execution-proposal-check",
+    "  gpao-t approval audit-write-design [text]",
+    "  gpao-t approval audit-write-design-check",
     "  gpao-t ops hardening",
     "  gpao-t ops contract",
     "  gpao-t ops data",
@@ -405,8 +409,13 @@ try {
       printJson(buildExecutionApprovalPreview(request ? { request } : undefined));
     } else if (subcommand === "execution-proposal-check") {
       printJson(verifyExecutionApprovalPreview());
+    } else if (subcommand === "audit-write-design") {
+      const request = textParts.join(" ").trim();
+      printJson(buildAuditWriteDesignProof(request ? { request } : undefined));
+    } else if (subcommand === "audit-write-design-check") {
+      printJson(verifyAuditWriteDesignProof());
     } else {
-      throw new Error("approval command requires execution-proposal or execution-proposal-check");
+      throw new Error("approval command requires execution-proposal, execution-proposal-check, audit-write-design, or audit-write-design-check");
     }
   } else if (command === "ops") {
     const [subcommand] = args;

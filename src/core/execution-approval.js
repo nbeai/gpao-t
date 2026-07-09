@@ -125,6 +125,197 @@ const VALIDATION_RULES = [
   },
 ];
 
+const AUDIT_TARGET_FIELD_ORDER = [
+  "proposal_id",
+  "source",
+  "requested_action",
+  "authority_level",
+  "expected_effect",
+  "risk",
+  "rollback_reference",
+  "user_confirmation_state",
+];
+
+function buildAuditTarget({ proposal, authorityDisplay }) {
+  return {
+    proposal_id: proposal.id,
+    source: proposal.source,
+    requested_action: `${proposal.toolKind}.${proposal.actionType}`,
+    authority_level: proposal.authorityLevel,
+    authority_label: authorityDisplay.label,
+    expected_effect: proposal.expectedEffect,
+    risk: proposal.risk,
+    rollback_reference: proposal.rollbackReference,
+    user_confirmation_state: "not_confirmed",
+  };
+}
+
+function buildPlannedAuditItems({ auditTarget }) {
+  return [
+    {
+      id: "proposal_id",
+      label: "제안 ID",
+      value: auditTarget.proposal_id,
+      userMeaning: "어떤 실행 제안에서 나온 기록인지 구분합니다.",
+      required: true,
+    },
+    {
+      id: "source",
+      label: "출처",
+      value: auditTarget.source,
+      userMeaning: "모델, 스킬, 사용자 요청 중 어디에서 제안이 시작됐는지 남깁니다.",
+      required: true,
+    },
+    {
+      id: "requested_action",
+      label: "요청 행동",
+      value: auditTarget.requested_action,
+      userMeaning: "실제로 하려던 행동 종류를 짧게 남깁니다.",
+      required: true,
+    },
+    {
+      id: "authority_level",
+      label: "권한 단계",
+      value: `${auditTarget.authority_label} · ${auditTarget.authority_level}`,
+      userMeaning: "읽기, 미리보기, 저장, 전송, 고위험, 비용 중 어떤 경계인지 남깁니다.",
+      required: true,
+    },
+    {
+      id: "expected_effect",
+      label: "예상 효과",
+      value: auditTarget.expected_effect,
+      userMeaning: "사용자가 무엇이 바뀌거나 확인될 예정인지 이해할 수 있게 합니다.",
+      required: true,
+    },
+    {
+      id: "risk",
+      label: "위험",
+      value: auditTarget.risk,
+      userMeaning: "위험을 숨기지 않고 짧고 차분한 문장으로 남깁니다.",
+      required: true,
+    },
+    {
+      id: "rollback_reference",
+      label: "되돌리기 기준",
+      value: auditTarget.rollback_reference,
+      userMeaning: "문제가 생겼을 때 무엇을 기준으로 멈추거나 되돌릴지 남깁니다.",
+      required: true,
+    },
+    {
+      id: "user_confirmation_state",
+      label: "사용자 확인",
+      value: auditTarget.user_confirmation_state,
+      userMeaning: "사용자가 아직 확인하지 않았는지, 수정/보류인지 구분합니다.",
+      required: true,
+    },
+  ];
+}
+
+export function buildAuditWriteDesignProof({
+  proposal = DEFAULT_PROPOSAL,
+  request = "GPAO-T 실행 후보의 감사 기록 대상을 확인한다.",
+} = {}) {
+  const preview = buildExecutionApprovalPreview({ proposal, request });
+  const auditTarget = buildAuditTarget({
+    proposal: preview.proposal,
+    authorityDisplay: preview.authorityDisplay,
+  });
+  const plannedAuditItems = buildPlannedAuditItems({ auditTarget });
+
+  return {
+    schema: "gpao_t.audit_write_design_proof.v0_1",
+    status: "review",
+    mode: "design_proof_only_no_write",
+    language: "ko",
+    title: "기록 예정 항목",
+    userMessage: "실행 제안이 생겼을 때 무엇을 감사 기록 대상으로 남길지 먼저 확인합니다. 아직 기록은 쓰지 않습니다.",
+    auditTarget,
+    plannedAuditItems,
+    requiredFields: AUDIT_TARGET_FIELD_ORDER,
+    futureEvent: {
+      eventType: "execution.proposal.audit_previewed",
+      writePath: ".gpao-t/events/audit.jsonl",
+      writePathStatus: "reference_only_not_written",
+      appendOnlyRequired: true,
+      timestampRequired: true,
+      replayReferenceRequired: true,
+      rollbackReferenceRequired: true,
+    },
+    displayContract: {
+      controlCenter: {
+        panelId: "execution-approval",
+        sectionLabel: "기록 예정 항목",
+        visibleItemCount: plannedAuditItems.length,
+      },
+      workSurface: {
+        sectionId: "execution-audit-preview",
+        sectionLabel: "기록될 예정인 항목",
+        visibleItemCount: plannedAuditItems.length,
+      },
+      koreanUx: {
+        tone: "차분하게, 숨기지 않고, 겁주지 않기",
+        shortStatus: "기록 설계만 · 실제 기록 없음",
+        mobileReadability: "긴 한글 문장은 카드 안에서 줄바꿈되고, 상태 라벨은 짧게 유지한다.",
+      },
+    },
+    validation: {
+      schema: "gpao_t.audit_write_design_validation.v0_1",
+      status: "ready",
+      rules: [
+        {
+          id: "all_required_audit_targets_visible",
+          label: "기록 대상 확인",
+          userMessage: "제안 ID, 출처, 요청 행동, 권한 단계, 예상 효과, 위험, 되돌리기 기준, 사용자 확인 상태가 보여야 합니다.",
+        },
+        {
+          id: "no_audit_write_now",
+          label: "실제 기록 없음",
+          userMessage: "이번 단계에서는 audit 파일에 아무것도 쓰지 않습니다.",
+        },
+        {
+          id: "no_approval_record_write_now",
+          label: "승인 기록 없음",
+          userMessage: "승인 기록 저장은 다음 별도 gate 전까지 열지 않습니다.",
+        },
+        {
+          id: "no_invocation_from_audit_design",
+          label: "실행 연결 없음",
+          userMessage: "기록 설계가 도구 실행이나 dry-run 호출로 이어지지 않습니다.",
+        },
+      ],
+    },
+    blockedActions: [
+      "actual_tool_execution",
+      "cli_command_execution",
+      "mcp_invocation",
+      "connector_activation",
+      "external_network_or_send",
+      "credential_read_or_write",
+      "paid_action",
+      "destructive_action",
+      "approval_record_write",
+      "audit_write",
+      "dry_run_invocation",
+      "durable_memory_promotion",
+    ],
+    safetyInvariants: {
+      writesAudit: false,
+      writesApprovalRecord: false,
+      invokesDryRun: false,
+      executesTool: false,
+      runsCli: false,
+      invokesMcp: false,
+      activatesConnector: false,
+      sendsExternalNetworkRequest: false,
+      readsOrWritesCredentials: false,
+      spendsMoney: false,
+      performsDestructiveAction: false,
+      promotesDurableMemory: false,
+    },
+    nextSafeAction: "Control Center와 work-surface에서 기록 예정 항목을 확인한다. 실제 audit write와 승인 기록 write는 다음 gate 전까지 열지 않는다.",
+  };
+}
+
 export function buildExecutionApprovalPreview({
   proposal = DEFAULT_PROPOSAL,
   request = "GPAO-T 실행 후보를 승인 전 preview로 확인한다.",
@@ -136,6 +327,8 @@ export function buildExecutionApprovalPreview({
   });
   const authorityDisplay = AUTHORITY_DISPLAY.find((item) => item.id === proposal.authorityLevel)
     || AUTHORITY_DISPLAY[1];
+  const auditTarget = buildAuditTarget({ proposal, authorityDisplay });
+  const plannedAuditItems = buildPlannedAuditItems({ auditTarget });
 
   return {
     schema: "gpao_t.execution_approval_preview.v0_1",
@@ -189,23 +382,15 @@ export function buildExecutionApprovalPreview({
     auditWriteDesign: {
       schema: "gpao_t.audit_write_design.v0_1",
       status: "design_only",
-      requiredAuditFields: [
-        "proposal_id",
-        "packet_id",
-        "actor",
-        "authority_level",
-        "expected_effect",
-        "risk",
-        "approval_state",
-        "replay_reference",
-        "rollback_reference",
-        "timestamp",
-      ],
+      auditTarget,
+      plannedAuditItems,
+      requiredAuditFields: AUDIT_TARGET_FIELD_ORDER,
       auditWriteNow: false,
       storagePathNow: "not_created",
       eventTypeFuture: "execution.approval_packet.reviewed",
       replayReferenceRequired: true,
       rollbackReferenceRequired: true,
+      userVisibleSummary: "기록 설계만 · 실제 기록 없음",
     },
     uxContract: {
       schema: "gpao_t.execution_approval_ux_contract.v0_1",
@@ -315,6 +500,16 @@ export function verifyExecutionApprovalPreview({
   if (preview.validation?.blocksInvocation !== true) findings.push("validation_does_not_block_invocation");
   if (preview.auditWriteDesign?.auditWriteNow !== false) findings.push("audit_write_opened");
   if (preview.auditWriteDesign?.storagePathNow !== "not_created") findings.push("audit_storage_created");
+  if ((preview.auditWriteDesign?.requiredAuditFields || []).length !== AUDIT_TARGET_FIELD_ORDER.length) {
+    findings.push("audit_required_fields_incomplete");
+  }
+  if (!preview.auditWriteDesign?.requiredAuditFields?.includes("requested_action")) findings.push("audit_requested_action_missing");
+  if (!preview.auditWriteDesign?.requiredAuditFields?.includes("user_confirmation_state")) {
+    findings.push("audit_user_confirmation_state_missing");
+  }
+  if ((preview.auditWriteDesign?.plannedAuditItems || []).length !== AUDIT_TARGET_FIELD_ORDER.length) {
+    findings.push("planned_audit_items_incomplete");
+  }
   if (preview.uxContract?.defaultLocale !== "ko-KR") findings.push("ux_default_locale_not_ko_kr");
   if (!preview.uxContract?.mobileRules?.some((rule) => rule.includes("overflow"))) findings.push("mobile_overflow_rule_missing");
   if (preview.uxContract?.visualQa?.screenshotsRequiredBeforeLiveInvocation !== true) findings.push("visual_qa_before_live_missing");
@@ -340,5 +535,47 @@ export function verifyExecutionApprovalPreview({
     nextSafeAction: findings.length
       ? "Fix execution approval preview findings before UI integration."
       : preview.nextSafeAction,
+  };
+}
+
+export function verifyAuditWriteDesignProof({
+  proof = buildAuditWriteDesignProof(),
+} = {}) {
+  const findings = [];
+
+  if (proof.schema !== "gpao_t.audit_write_design_proof.v0_1") findings.push("schema_mismatch");
+  if (proof.mode !== "design_proof_only_no_write") findings.push("mode_not_design_only");
+  for (const field of AUDIT_TARGET_FIELD_ORDER) {
+    if (!proof.requiredFields?.includes(field)) findings.push(`missing_required_field:${field}`);
+    if (!Object.hasOwn(proof.auditTarget || {}, field)) findings.push(`missing_audit_target:${field}`);
+  }
+  if ((proof.plannedAuditItems || []).length !== AUDIT_TARGET_FIELD_ORDER.length) findings.push("planned_audit_items_incomplete");
+  if (!proof.plannedAuditItems?.every((item) => item.label && item.value && item.userMeaning)) {
+    findings.push("planned_audit_item_missing_korean_display");
+  }
+  if (proof.futureEvent?.writePathStatus !== "reference_only_not_written") findings.push("future_write_path_opened");
+  if (proof.displayContract?.koreanUx?.shortStatus !== "기록 설계만 · 실제 기록 없음") {
+    findings.push("korean_short_status_missing");
+  }
+  if ((proof.validation?.rules || []).length < 4) findings.push("validation_rules_incomplete");
+  if (Object.values(proof.safetyInvariants || {}).some(Boolean)) findings.push("safety_invariant_opened_action");
+  if (!proof.blockedActions?.includes("audit_write")) findings.push("audit_write_not_blocked");
+  if (!proof.blockedActions?.includes("approval_record_write")) findings.push("approval_record_write_not_blocked");
+  if (!proof.blockedActions?.includes("dry_run_invocation")) findings.push("dry_run_invocation_not_blocked");
+
+  return {
+    schema: "gpao_t.audit_write_design_proof_verification.v0_1",
+    status: findings.length ? "blocked" : "ready",
+    findings,
+    checked: [
+      "audit_target_required_fields",
+      "planned_audit_items_user_visible",
+      "korean_status_language",
+      "control_center_and_work_surface_contract",
+      "no_actual_audit_write_or_invocation",
+    ],
+    nextSafeAction: findings.length
+      ? "Fix audit write design proof findings before UI integration."
+      : proof.nextSafeAction,
   };
 }

@@ -1,38 +1,23 @@
 # What We Are Building
 
-GPAO-T is a local-first Growth Personal AI Operating System with T-cell theory as kernel doctrine. The current product slice is the pre-execution authority surface that lets a user see what would run before anything actually runs.
+GPAO-T is a Growth Personal AI Operating System with T-cell / Context Mesh / Memory Wiki / Self-growth loop as its meaning and growth kernel, while preserving OpenClaw-grade local runtime stability and Codex-grade work-surface comfort.
 
 ## Current Phase
 
-- Phase: execution approval UX / approval packet validation proof
-- Command: local implementation and verification
-- Status: verified preview-only proof
+- Track: execution authority substrate.
+- Slice: audit write design proof for execution proposals.
+- Status: implemented and verified as read-only; BEAI closeout language remains blocked by documentation freshness review.
 
-## User Mode
+## User-Facing Product Goal
 
-- Mode: Korean-default user-facing product language
-- Task type: GPAO-T production-track local AI OS development
+The user should see what GPAO-T is about to do, what would be recorded, what remains blocked, and what the next safe action is before any live execution or durable state write exists.
 
-## First Workflow
+## Current Surface
 
-The user starts from the work surface or Control Center, sees an execution proposal, checks authority level, expected effect, risk, rollback reference, approval packet validation, audit/replay reference, and next safe action, while all live execution remains locked.
+- Control Center `Execution Approval` panel shows proposal, authority level, approval packet validation, planned audit items, and blocked actions.
+- Work-surface shows execution proposal confirmation and `기록될 예정인 항목`.
+- Korean status language is the default for authority and risk communication.
 
-## Companion Principle
+## Current Boundary
 
-AI does the work. User keeps authority.
-
-## AI First
-
-- AI/developer verifies first success path for local preview surfaces.
-- AI/developer verifies empty or first-time state before asking the user to test.
-- AI/developer verifies likely failure or recovery state before claiming completion.
-- AI/developer inspects the main visual flow when a UI exists.
-
-## User Authority
-
-- Approve any live invocation, external send, connector activation, credential read/write, paid action, destructive action, durable memory promotion, or deployment.
-- Judge whether the Korean status language feels calm, clear, and not overbearing.
-
-## Latest Summary
-
-Implemented and verified the Execution Approval proof. GPAO-T now shows execution proposal confirmation, Korean authority labels, approval packet validation rules, audit write design boundaries, and desktop/mobile visual QA evidence in Control Center and the core work surface. Actual tool/CLI/MCP execution, connector activation, external network/send, credential read/write, paid action, destructive action, approval record write, audit write, dry-run invocation, and durable memory promotion remain blocked.
+No actual audit write, approval record write, dry-run invocation, tool/CLI/MCP execution, connector activation, credential access, external send, paid/destructive action, or durable memory promotion is open.

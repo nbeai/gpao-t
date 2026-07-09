@@ -245,6 +245,7 @@ Required fields:
 - risk
 - rollback reference
 - approval packet validation state
+- planned audit items
 - audit/replay reference
 - next safe action
 
@@ -260,6 +261,28 @@ Korean default authority labels:
 | `paid_action` | `비용 발생 가능` | Blocked or approval-required state. Make cost visibility mandatory. |
 
 Each level must show label, icon, tone/color, and one short explanation. Long Korean sentences must wrap cleanly on mobile. The card must state that nothing has executed yet.
+
+### AuditWriteDesignPreview
+
+Use after an execution proposal exists and before any approval record write, audit write, or invocation.
+
+Required planned items:
+
+- `제안 ID`
+- `출처`
+- `요청 행동`
+- `권한 단계`
+- `예상 효과`
+- `위험`
+- `되돌리기 기준`
+- `사용자 확인`
+
+Rules:
+
+- Label the section `기록 예정 항목` in Control Center and `기록될 예정인 항목` in the work surface.
+- State `기록 설계만 · 실제 기록 없음` when no audit event is written.
+- Do not imply approval, execution, or storage happened.
+- Keep the mobile layout one column when needed so Korean descriptions do not overflow.
 
 ### GrowthProposalCard
 

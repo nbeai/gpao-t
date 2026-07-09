@@ -290,6 +290,9 @@ export function buildControlCenterHtml({ snapshot, designContract } = {}) {
     .panel[data-panel="core-work-surface"] {
       grid-column: 1 / -1;
     }
+    .panel[data-panel="execution-approval"] {
+      grid-column: 1 / -1;
+    }
     .panel:target {
       outline: 2px solid var(--approval);
       outline-offset: 2px;
@@ -424,7 +427,7 @@ export function buildControlCenterHtml({ snapshot, designContract } = {}) {
     }
     .blocked-actions {
       display: grid;
-      grid-template-columns: repeat(5, minmax(0, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(154px, 1fr));
       gap: 5px;
       margin-top: 8px;
     }
@@ -485,7 +488,7 @@ export function buildControlCenterHtml({ snapshot, designContract } = {}) {
     }
     .work-surface-grid {
       display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
       gap: 6px;
       margin-top: 8px;
     }
@@ -1123,6 +1126,7 @@ function executionApprovalHtml(panel) {
   const proposal = data.proposal || {};
   const authorityLegend = data.authorityLegend || [];
   const validationRules = data.validation?.rules || [];
+  const plannedAuditItems = data.auditWriteDesign?.plannedAuditItems || [];
   return `
             <div class="approval-flow" aria-label="Execution proposal confirmation" data-execution-proposal-confirmation="preview-only">
               <p class="approval-safe-note" data-execution-no-write="true">${escapeHtml(data.uxContract.noExecutionNotice)} ${escapeHtml(data.uxContract.primaryQuestion)}</p>
@@ -1154,6 +1158,14 @@ function executionApprovalHtml(panel) {
                   <span class="blocked-action-detail">design only</span>
                 </span>`).join("")}
               </div>
+              <div class="blocked-actions" aria-label="Planned audit items" data-audit-preview="design-only">
+                <strong>기록 예정 항목</strong>
+                ${plannedAuditItems.map((item) => `
+                <span class="blocked-action" data-audit-item="${escapeHtml(item.id)}">
+                  <span class="blocked-action-label">${escapeHtml(item.label)}</span>${escapeHtml(item.value)}
+                  <span class="blocked-action-detail">${escapeHtml(item.userMeaning)}</span>
+                </span>`).join("")}
+              </div>
               <div class="blocked-actions" aria-label="Execution approval blocked actions" data-audit-write-design="no-write">
                 <strong>아직 열지 않음</strong>
                 ${data.blockedActions.slice(0, 8).map((action) => `
@@ -1172,7 +1184,8 @@ function executionApprovalInspectorRows(panel) {
     inspectorRow("Rollback", data.proposal.rollbackReference),
     inspectorRow("Approval Fields", `${data.approvalPacket.requiredFields.length}`),
     inspectorRow("Validation Rules", `${data.validation.rules.length}`),
-    inspectorRow("Audit Write", data.auditWriteDesign.auditWriteNow === false ? "design only · no write" : "write open"),
+    inspectorRow("Audit Items", `${data.auditWriteDesign.plannedAuditItems.length}`),
+    inspectorRow("Audit Write", data.auditWriteDesign.auditWriteNow === false ? "기록 설계만 · 실제 기록 없음" : "write open"),
     inspectorRow("UX Locale", data.uxContract.defaultLocale),
   ].join("");
 }

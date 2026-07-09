@@ -5,10 +5,12 @@ import { describe, it } from "node:test";
 import {
   buildConnectorGovernanceSummary,
   buildConnectorToolGovernance,
+  buildAuditWriteDesignProof,
   buildExecutionApprovalPreview,
   handleGatewayRequest,
   listConnectors,
   reviewConnectorPermission,
+  verifyAuditWriteDesignProof,
   verifyConnectorToolGovernance,
   verifyExecutionApprovalPreview,
 } from "../src/index.js";
@@ -95,6 +97,45 @@ describe("GPAO-T connector governance", () => {
     assert.deepEqual(verification.findings, []);
   });
 
+  it("builds audit write design proof without writing audit records", () => {
+    const proof = buildAuditWriteDesignProof({
+      request: "로컬 검증 계획의 기록 예정 항목을 보여줘.",
+    });
+    const verification = verifyAuditWriteDesignProof({ proof });
+
+    assert.equal(proof.schema, "gpao_t.audit_write_design_proof.v0_1");
+    assert.equal(proof.mode, "design_proof_only_no_write");
+    assert.equal(proof.language, "ko");
+    assert.equal(proof.auditTarget.proposal_id, "proposal.local_draft_preview");
+    assert.equal(proof.auditTarget.source, "model_skill_user_request_preview");
+    assert.equal(proof.auditTarget.requested_action, "cli.dry_run");
+    assert.equal(proof.auditTarget.authority_level, "dry_run");
+    assert.equal(proof.auditTarget.user_confirmation_state, "not_confirmed");
+    assert.deepEqual(proof.requiredFields, [
+      "proposal_id",
+      "source",
+      "requested_action",
+      "authority_level",
+      "expected_effect",
+      "risk",
+      "rollback_reference",
+      "user_confirmation_state",
+    ]);
+    assert.equal(proof.plannedAuditItems.length, 8);
+    assert.equal(proof.plannedAuditItems.every((item) => item.label && item.value && item.userMeaning), true);
+    assert.equal(proof.futureEvent.writePathStatus, "reference_only_not_written");
+    assert.equal(proof.displayContract.koreanUx.shortStatus, "기록 설계만 · 실제 기록 없음");
+    assert.equal(proof.safetyInvariants.writesAudit, false);
+    assert.equal(proof.safetyInvariants.writesApprovalRecord, false);
+    assert.equal(proof.safetyInvariants.invokesDryRun, false);
+    assert.equal(proof.safetyInvariants.executesTool, false);
+    assert.equal(proof.blockedActions.includes("audit_write"), true);
+    assert.equal(proof.blockedActions.includes("approval_record_write"), true);
+    assert.equal(proof.blockedActions.includes("dry_run_invocation"), true);
+    assert.equal(verification.status, "ready");
+    assert.deepEqual(verification.findings, []);
+  });
+
   it("allows only local read preview and keeps execution boundaries blocked", () => {
     const review = reviewConnectorPermission({
       connectorId: "local.filesystem",
@@ -158,17 +199,29 @@ describe("GPAO-T connector governance", () => {
       cwd: ROOT,
       encoding: "utf8",
     });
+    const cliAuditDesignOutput = execFileSync(process.execPath, [CLI, "approval", "audit-write-design", "기록 예정 항목을 보여줘"], {
+      cwd: ROOT,
+      encoding: "utf8",
+    });
+    const cliAuditDesignCheckOutput = execFileSync(process.execPath, [CLI, "approval", "audit-write-design-check"], {
+      cwd: ROOT,
+      encoding: "utf8",
+    });
     const cliReview = JSON.parse(cliOutput);
     const cliGovernance = JSON.parse(cliGovernanceOutput);
     const cliGovernanceCheck = JSON.parse(cliGovernanceCheckOutput);
     const cliApproval = JSON.parse(cliApprovalOutput);
     const cliApprovalCheck = JSON.parse(cliApprovalCheckOutput);
+    const cliAuditDesign = JSON.parse(cliAuditDesignOutput);
+    const cliAuditDesignCheck = JSON.parse(cliAuditDesignCheckOutput);
     const registry = handleGatewayRequest({ method: "GET", path: "/connectors" });
     const summary = handleGatewayRequest({ method: "GET", path: "/connectors/governance" });
     const toolGovernance = handleGatewayRequest({ method: "GET", path: "/connectors/tool-governance" });
     const toolGovernanceCheck = handleGatewayRequest({ method: "GET", path: "/connectors/tool-governance/verify" });
     const approval = handleGatewayRequest({ method: "GET", path: "/approval/execution-proposal" });
     const approvalCheck = handleGatewayRequest({ method: "GET", path: "/approval/execution-proposal/verify" });
+    const auditDesign = handleGatewayRequest({ method: "GET", path: "/approval/audit-write-design" });
+    const auditDesignCheck = handleGatewayRequest({ method: "GET", path: "/approval/audit-write-design/verify" });
     const review = handleGatewayRequest({
       method: "POST",
       path: "/connectors/review",
@@ -182,6 +235,9 @@ describe("GPAO-T connector governance", () => {
     assert.equal(cliApproval.schema, "gpao_t.execution_approval_preview.v0_1");
     assert.equal(cliApproval.approvalPacket.writesPacketNow, false);
     assert.equal(cliApprovalCheck.status, "ready");
+    assert.equal(cliAuditDesign.schema, "gpao_t.audit_write_design_proof.v0_1");
+    assert.equal(cliAuditDesign.plannedAuditItems.length, 8);
+    assert.equal(cliAuditDesignCheck.status, "ready");
     assert.equal(registry.status, 200);
     assert.equal(summary.status, 200);
     assert.equal(toolGovernance.status, 200);
@@ -192,6 +248,10 @@ describe("GPAO-T connector governance", () => {
     assert.equal(approval.body.auditWriteDesign.auditWriteNow, false);
     assert.equal(approvalCheck.status, 200);
     assert.equal(approvalCheck.body.status, "ready");
+    assert.equal(auditDesign.status, 200);
+    assert.equal(auditDesign.body.futureEvent.writePathStatus, "reference_only_not_written");
+    assert.equal(auditDesignCheck.status, 200);
+    assert.equal(auditDesignCheck.body.status, "ready");
     assert.equal(review.status, 200);
     assert.equal(review.body.status, "blocked");
   });

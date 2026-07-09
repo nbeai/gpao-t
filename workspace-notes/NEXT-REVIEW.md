@@ -1,35 +1,24 @@
 # Next Review
 
+## Current Position
+
+GPAO-T is in the execution authority substrate track. The latest implemented-and-verified slice is audit write design proof for execution proposals.
+
 ## Next Safe Action
 
-Commit the verified Execution Approval UX / approval packet validation proof, then move to the next product axis without opening live invocation.
+Move to approval record write UX/design planning only after confirming the audit write design proof remains read-only and visible in both Control Center and work-surface.
 
 ## Review Before Continuing
 
-- Check whether the current phase has pass/blocked evidence.
-- Confirm that AI/developer scenario verification happened before final user review.
-- Keep risky actions manual, preview-only, or explicitly approval-gated until separately approved.
-- Use `applied but unverified` until verification evidence exists.
-
-## Session Resume
-
-Resume from Execution Approval closeout. Do not open live tool/CLI/MCP/connector invocation until approval record write, dry-run invocation, audit write, replay invocation, rollback/compensation proof, and explicit user confirmation are implemented and verified as a separate authority gate.
+- Keep actual audit write, approval record write, dry-run invocation, command execution, file mutation, connector activation, credential access, external send, paid/destructive action, and durable memory promotion blocked.
+- Reuse the audit target fields: proposal id, source, requested action, authority level, expected effect, risk, rollback reference, and user confirmation state.
+- Preserve Korean product language: `기록 예정 항목`, `기록될 예정인 항목`, `제안 ID`, `출처`, `요청 행동`, `권한 단계`, `예상 효과`, `위험`, `되돌리기 기준`, `사용자 확인`.
+- Preserve desktop/mobile no-overflow evidence before opening any next approval write surface.
 
 ## Recent Evidence
 
-- route: Routed work as strict.
-- preflight: Read-only workspace check completed for gpao-t.
-- plan: Saved build plan.
-- targeted tests: `node --test test/connector-governance.test.js test/control-center.test.js` passed, 33 tests.
-- full verify: `npm run verify` passed, 109 tests across 16 suites.
-- BEAI verify: ready, completion gate 100/100, scenario pass, product meaning pass.
-- BEAI closeout: completion language allowed; review signal is intentional blocked-boundary wording, not a failed product check.
-- visual QA: execution approval desktop/mobile screenshots captured for Control Center and work-surface.
-
-## Cleanup Candidates
-
-- `workspace-notes/NEXT-REVIEW 2.md`
-- `workspace-notes/WHAT-IS-NOT-DONE 2.md`
-- `workspace-notes/WHAT-WE-ARE-BUILDING 2.md`
-
-Do not delete these during feature work; leave them as a later cleanup/closeout decision.
+- `npm run verify`: pass, 111 tests across 16 suites.
+- `node --test test/connector-governance.test.js test/control-center.test.js`: pass, 35 tests.
+- `beai verify --run --scenario --meaning`: automated checks and scenario verification pass; product-quality closeout remains review because `VERIFY.md` is newer than implementation files.
+- Audit visual QA evidence: `docs/03-verification/evidence/audit-write-design-qa-2026-07-09.json`.
+- Human QA report: `docs/03-verification/evidence/AUDIT-WRITE-DESIGN-QA-2026-07-09.md`.

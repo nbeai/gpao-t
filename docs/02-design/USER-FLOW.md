@@ -17,7 +17,8 @@ The user opens the GPAO-T core work surface and sees a draft task input area rat
 7. GPAO-T shows authority/approval status and the closed execution boundary.
 8. GPAO-T shows an execution proposal confirmation card before any future execution.
 9. The card explains the proposed tool kind, action type, authority level, expected effect, risk, rollback reference, and required approval packet checks.
-10. GPAO-T gives the next safe action.
+10. GPAO-T shows the audit write design preview: proposal id, source, requested action, authority level, expected effect, risk, rollback reference, and user confirmation state.
+11. GPAO-T gives the next safe action.
 
 ## Current Result
 
@@ -27,6 +28,6 @@ The first slice is read-only and no-script. It now includes a compact task under
 
 The core work surface substrate is closed for the current read-only preview phase. The user can see the understood task, expected output, context to use, skill route, locked execution state, whether the preview is `의도와 맞음`, `수정 필요`, or `보류`, and what execution proposal would need confirmation before anything can run.
 
-The current major axis is Execution Proposal Confirmation / Approval Packet Validation. The user should be able to inspect which model/skill/user-request output became an execution proposal, which product-language authority tier it belongs to, which approval packet fields are required, which validation rules would reject unsafe packets, and which audit/replay/rollback references must exist before future invocation. Authority levels use short Korean default labels: `읽기 전용`, `미리보기만`, `저장 전 확인`, `외부 전송 전 확인`, `되돌리기 어려움`, and `비용 발생 가능`.
+The current major axis is Audit Write Design for execution proposals. The user should be able to inspect which model/skill/user-request output became an execution proposal, which product-language authority tier it belongs to, which approval packet fields are required, which validation rules would reject unsafe packets, and which exact audit target fields would be recorded later. Authority levels use short Korean default labels: `읽기 전용`, `미리보기만`, `저장 전 확인`, `외부 전송 전 확인`, `되돌리기 어려움`, and `비용 발생 가능`.
 
-Model output remains proposal material only. Actual tool/CLI/MCP execution, connector activation, external network/send, credential read/write, paid action, destructive action, approval record write, install/update/rollback, and durable memory promotion remain blocked.
+Model output remains proposal material only. Audit write design remains design/proof only. Actual tool/CLI/MCP execution, connector activation, external network/send, credential read/write, paid action, destructive action, approval record write, audit write, dry-run invocation, install/update/rollback, and durable memory promotion remain blocked.

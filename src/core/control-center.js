@@ -1,7 +1,7 @@
 import { listModelAdapters, listToolAdapters } from "./adapter-boundary.js";
 import { buildConnectorGovernanceSummary } from "./connector-governance.js";
 import { buildCoreWorkSurface } from "./core-work-surface.js";
-import { buildExecutionApprovalPreview } from "./execution-approval.js";
+import { buildAuditWriteDesignProof, buildExecutionApprovalPreview } from "./execution-approval.js";
 import { runDoctor } from "./doctor.js";
 import { buildGrowthApplicationGateSummary } from "./growth-application-gates.js";
 import { readSelfGrowthProposals } from "./growth-proposals.js";
@@ -36,6 +36,7 @@ export function buildControlCenterSnapshot({ root } = {}) {
   const toolAdapters = listToolAdapters();
   const connectorGovernance = buildConnectorGovernanceSummary();
   const executionApprovalPreview = buildExecutionApprovalPreview();
+  const auditWriteDesignProof = buildAuditWriteDesignProof();
   const installHardening = buildInstallHardeningSummary({ root });
   const operationsContract = buildOperationsContractSummary();
   const skillPacks = listSkillPacks();
@@ -102,6 +103,9 @@ export function buildControlCenterSnapshot({ root } = {}) {
       executionApprovalRequiredFields: executionApprovalPreview.approvalPacket.requiredFields.length,
       executionApprovalValidationRules: executionApprovalPreview.validation.rules.length,
       executionApprovalBlockedActions: executionApprovalPreview.blockedActions.length,
+      auditWritePlannedItems: auditWriteDesignProof.plannedAuditItems.length,
+      auditWriteRequiredFields: auditWriteDesignProof.requiredFields.length,
+      auditWriteBlockedActions: auditWriteDesignProof.blockedActions.length,
       coreWorkSurfaceThreadMessages: coreWorkSurface.workspaceThread.threadPreview.length,
       coreWorkSurfaceSelectedSkillPacks: coreWorkSurface.skillRoutePreview.selectedPacks.length,
       coreWorkSurfaceContextCandidates: coreWorkSurface.contextPreview.retrievedCandidates.length,
@@ -129,6 +133,7 @@ export function buildControlCenterSnapshot({ root } = {}) {
       destructiveRollback: installHardening.authorityBoundary.destructiveRollback,
       approvalPreviewFlow: "local_preview_only_no_write_no_invocation",
       executionApprovalPacket: "preview_validation_only_no_write_no_invocation",
+      auditWriteDesign: "design_proof_only_no_write",
       approvalRecordWrite: "blocked",
       dryRunInvocation: "blocked",
       tauriBuild: "blocked",
@@ -399,7 +404,7 @@ function buildExecutionApprovalPanel({ executionApprovalPreview }) {
     id: "execution-approval",
     label: "Execution Approval",
     status: "review",
-    headline: "실행 전 확인 패킷이다. 무엇이 실행될 예정인지 보여주지만 아직 실행하거나 기록하지 않는다.",
+    headline: "실행 전 확인 패킷이다. 무엇이 실행될 예정인지와 무엇을 기록 대상으로 둘지 보여주지만 아직 실행하거나 기록하지 않는다.",
     data: executionApprovalPreview,
     nextSafeAction: executionApprovalPreview.nextSafeAction,
   };

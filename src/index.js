@@ -51,7 +51,9 @@ import { buildLocalControlCenterDesignContract } from "./core/design-contract.js
 import { buildContextRuntime } from "./core/context-runtime.js";
 import { runDoctor } from "./core/doctor.js";
 import {
+  buildAuditWriteDesignProof,
   buildExecutionApprovalPreview,
+  verifyAuditWriteDesignProof,
   verifyExecutionApprovalPreview,
 } from "./core/execution-approval.js";
 import { handleGatewayRequest } from "./core/gateway.js";
@@ -200,6 +202,7 @@ export {
   buildRuntimeDataContract,
   buildAuthorityDecision,
   buildContextRuntime,
+  buildAuditWriteDesignProof,
   buildExecutionApprovalPreview,
   buildSessionOverlay,
   appendSkillExecutionRun,
@@ -254,6 +257,7 @@ export {
   verifyModelRouterBoundary,
   verifyModelRouterPolicy,
   verifyConnectorToolGovernance,
+  verifyAuditWriteDesignProof,
   verifyExecutionApprovalPreview,
   renderControlCenterHtml,
   renderTauriInstallDryRunPreview,
