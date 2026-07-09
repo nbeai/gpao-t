@@ -1,0 +1,173 @@
+{
+  "schema": "gpao_t.design_realization_pass_002_visual_qa.v0_1",
+  "status": "ready",
+  "scope": "GPAO-T Design Realization Pass 002",
+  "date": "2026-07-09",
+  "fileFormat": "png",
+  "openDesign": {
+    "projectId": "gpao-t-design-realization-pass-002",
+    "previewUrl": "http://127.0.0.1:7456/api/projects/gpao-t-design-realization-pass-002/raw/index.html",
+    "artifactSource": "/Users/jyp/Documents/Playground 2/open-design/.od/projects/gpao-t-design-realization-pass-002/index.html",
+    "desktopScreenshot": "docs/03-verification/evidence/design-realization-pass-002-open-design-desktop-1440x960.png",
+    "mobileScreenshot": "docs/03-verification/evidence/design-realization-pass-002-open-design-mobile-390x844.png"
+  },
+  "referencePackUsed": [
+    "docs/02-design/GPAO-T-VISUAL-REFERENCE.md",
+    "gpao-t-references/gpao-t-visual-reference/08-OFFICIAL-VISUAL-SOURCE-ATLAS.md",
+    "gpao-t-references/gpao-t-visual-reference/09-SCREEN-ANNOTATION-MATRIX.md",
+    "gpao-t-references/gpao-t-visual-reference/10-SAFE-CAPTURE-PROTOCOL.md",
+    "gpao-t-references/gpao-t-visual-reference/11-DESIGN-TEXTBOOK.md",
+    "gpao-t-references/gpao-t-visual-reference/GPAO-T-OFFICIAL-SOURCE-ATLAS.html"
+  ],
+  "appliedScreens": [
+    "Control Center first viewport",
+    "Control Center right rail and inspector language",
+    "Control Center Execution Approval panel",
+    "Work Surface main task thread",
+    "Work Surface Context Mesh / Memory Wiki rail",
+    "Work Surface Skill route and Authority / Approval rail"
+  ],
+  "beforeEvidence": {
+    "controlCenterDesktop": "docs/03-verification/evidence/visual-polish-pass-002-control-center-desktop-1440x960.png",
+    "controlCenterMobile": "docs/03-verification/evidence/visual-polish-pass-002-control-center-mobile-390x844.png",
+    "workSurfaceDesktop": "docs/03-verification/evidence/visual-polish-pass-002-work-surface-desktop-1440x960.png",
+    "workSurfaceMobile": "docs/03-verification/evidence/visual-polish-pass-002-work-surface-mobile-390x844.png"
+  },
+  "afterEvidence": {
+    "controlCenterDesktop": "docs/03-verification/evidence/design-realization-pass-002-control-center-desktop-1440x960.png",
+    "controlCenterMobile": "docs/03-verification/evidence/design-realization-pass-002-control-center-mobile-390x844.png",
+    "workSurfaceDesktop": "docs/03-verification/evidence/design-realization-pass-002-work-surface-desktop-1440x960.png",
+    "workSurfaceMobile": "docs/03-verification/evidence/design-realization-pass-002-work-surface-mobile-390x844.png",
+    "controlCenterDesktopFull": "docs/03-verification/evidence/design-realization-pass-002-control-center-desktop-full-1440x960.png",
+    "controlCenterMobileFull": "docs/03-verification/evidence/design-realization-pass-002-control-center-mobile-full-390x844.png",
+    "workSurfaceDesktopFull": "docs/03-verification/evidence/design-realization-pass-002-work-surface-desktop-full-1440x960.png",
+    "workSurfaceMobileFull": "docs/03-verification/evidence/design-realization-pass-002-work-surface-mobile-full-390x844.png"
+  },
+  "designTokenApplication": {
+    "background": "#F5F7F2",
+    "surface": "#FFFFFF",
+    "surfaceMuted": "#EEF3EC",
+    "ready": "#1F7A64",
+    "review": "#A86F1D",
+    "blocked": "#A9473F",
+    "approval": "#2E6DAE",
+    "radius": "10px to 14px on product panels",
+    "shadow": "soft local-desk elevation"
+  },
+  "visualAdjustments": [
+    "Removed raw primary labels such as cli.dry_run, actual_tool_execution, dry_run, design only, Tool, Action, blocked_until, local draft preview, and English pack names from visible product text.",
+    "Moved remaining technical identifiers into data attributes or internal contracts while rendering Korean product language in primary surfaces and opened details.",
+    "Reframed Work Surface route cards with Korean task, context, skill, and authority language.",
+    "Reframed Control Center workflow state and authority rail with Korean state labels and softer product wording.",
+    "Preserved no-script, no-form, GET-only preview behavior and kept all execution expansion blocked."
+  ],
+  "checks": [
+    {
+      "id": "control-center-desktop",
+      "viewport": "1440x960",
+      "nonblankViewport": true,
+      "noHorizontalOverflow": true,
+      "hasScript": false,
+      "hasForm": false,
+      "externalLinks": [],
+      "nextSafeActionVisible": true,
+      "authorityBoundaryVisible": true,
+      "koreanProductLanguageVisible": true,
+      "rawPrimaryLabelsVisible": false,
+      "screenshot": "docs/03-verification/evidence/design-realization-pass-002-control-center-desktop-1440x960.png"
+    },
+    {
+      "id": "control-center-mobile",
+      "viewport": "390x844",
+      "nonblankViewport": true,
+      "noHorizontalOverflow": true,
+      "hasScript": false,
+      "hasForm": false,
+      "externalLinks": [],
+      "nextSafeActionVisible": true,
+      "authorityBoundaryVisible": true,
+      "mobileTopbarActionLineVisible": true,
+      "koreanProductLanguageVisible": true,
+      "rawPrimaryLabelsVisible": false,
+      "screenshot": "docs/03-verification/evidence/design-realization-pass-002-control-center-mobile-390x844.png"
+    },
+    {
+      "id": "work-surface-desktop",
+      "viewport": "1440x960",
+      "nonblankViewport": true,
+      "noHorizontalOverflow": true,
+      "hasScript": false,
+      "hasForm": false,
+      "externalLinks": [],
+      "nextSafeActionVisible": true,
+      "authorityBoundaryVisible": true,
+      "koreanProductLanguageVisible": true,
+      "rawPrimaryLabelsVisible": false,
+      "screenshot": "docs/03-verification/evidence/design-realization-pass-002-work-surface-desktop-1440x960.png"
+    },
+    {
+      "id": "work-surface-mobile",
+      "viewport": "390x844",
+      "nonblankViewport": true,
+      "noHorizontalOverflow": true,
+      "hasScript": false,
+      "hasForm": false,
+      "externalLinks": [],
+      "nextSafeActionVisible": true,
+      "authorityBoundaryVisible": true,
+      "mobileTopbarActionLineVisible": true,
+      "koreanProductLanguageVisible": true,
+      "rawPrimaryLabelsVisible": false,
+      "screenshot": "docs/03-verification/evidence/design-realization-pass-002-work-surface-mobile-390x844.png"
+    }
+  ],
+  "scores": {
+    "humanVisualQa": 4.5,
+    "visualPolish": 4.5,
+    "colorQuality": 4.5,
+    "layoutRhythm": 4.4,
+    "koreanTypography": 4.5,
+    "toneAndManner": 4.6,
+    "authorityClarity": 4.7,
+    "overallProductFeel": 4.5
+  },
+  "invariants": {
+    "noScript": true,
+    "noForm": true,
+    "noExternalActivation": true,
+    "noModelCall": true,
+    "noConnectorToolActivation": true,
+    "noCredentialAccess": true,
+    "noExternalSend": true,
+    "noPaidAction": true,
+    "noDestructiveAction": true,
+    "noDurableMemoryPromotion": true,
+    "noApprovalWriteExpansion": true
+  },
+  "blockedActionsRemainClosed": [
+    "actual approval record write",
+    "audit write expansion",
+    "dry-run invocation",
+    "tool/CLI/MCP execution",
+    "connector activation",
+    "model call",
+    "credential access",
+    "external send",
+    "paid/destructive action",
+    "durable memory promotion"
+  ],
+  "remainingProductQualityRisks": [
+    "Control Center still carries high information density because it is an inspector surface; future passes should add stronger progressive disclosure before it becomes a daily user surface.",
+    "Icon system is still a polished symbol fallback rather than a full component/icon library.",
+    "Some domain terms such as Context Mesh, Memory Wiki, T-cell, and GPAO-T remain intentionally untranslated as product concepts.",
+    "Work Surface is still read-only preview; perceived product quality will need another pass after live local submission is opened."
+  ],
+  "thresholds": {
+    "visualPolish": 4.4,
+    "colorQuality": 4.4,
+    "koreanTypography": 4.4,
+    "toneAndManner": 4.5,
+    "authorityClarity": 4.6,
+    "overallProductFeel": 4.5
+  }
+}

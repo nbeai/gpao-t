@@ -203,6 +203,24 @@ GPAO-T Design Reference Realization Pass 001:
   - Control Center mobile: `docs/03-verification/evidence/design-realization-pass-001-control-center-mobile-390x844.png`
   - Work Surface desktop: `docs/03-verification/evidence/design-realization-pass-001-work-surface-desktop-1440x960.png`
   - Work Surface mobile: `docs/03-verification/evidence/design-realization-pass-001-work-surface-mobile-390x844.png`
+
+GPAO-T Design Realization Pass 002:
+- QA report: `docs/03-verification/evidence/design-realization-pass-002-qa-2026-07-09.json`
+- Human-readable report: `docs/03-verification/evidence/DESIGN-REALIZATION-PASS-002-QA-2026-07-09.md`
+- Design issue classification: `docs/02-design/DESIGN-REALIZATION-PASS-002-ISSUE-CLASSIFICATION.md`
+- Design Delta Report: `docs/02-design/DESIGN-DELTA-REPORT-PASS-002.md`
+- Open Design preview: `http://127.0.0.1:7456/api/projects/gpao-t-design-realization-pass-002/raw/index.html`
+- Open Design artifact source: `/Users/jyp/Documents/Playground 2/open-design/.od/projects/gpao-t-design-realization-pass-002/index.html`
+- Visual evidence:
+  - Open Design desktop: `docs/03-verification/evidence/design-realization-pass-002-open-design-desktop-1440x960.png`
+  - Open Design mobile: `docs/03-verification/evidence/design-realization-pass-002-open-design-mobile-390x844.png`
+  - Control Center desktop: `docs/03-verification/evidence/design-realization-pass-002-control-center-desktop-1440x960.png`
+  - Control Center mobile: `docs/03-verification/evidence/design-realization-pass-002-control-center-mobile-390x844.png`
+  - Work Surface desktop: `docs/03-verification/evidence/design-realization-pass-002-work-surface-desktop-1440x960.png`
+  - Work Surface mobile: `docs/03-verification/evidence/design-realization-pass-002-work-surface-mobile-390x844.png`
+- Required threshold: visual polish >= 4.4, color quality >= 4.4, Korean typography >= 4.4, tone-and-manner >= 4.5, authority clarity >= 4.6, overall product feel >= 4.5.
+- Checked invariant: primary UI does not expose raw labels such as `cli.dry_run`, `actual_tool_execution`, `dry_run`, `design only`, `Tool`, `Action`, `blocked_until`, or English pack names. Desktop/mobile evidence preserves no-script, no-form, no external link, no overflow, next safe action visibility, authority boundary visibility, and Korean-first product language.
+- Closed boundary: no new execution function is opened. Actual approval write expansion, audit write expansion, dry-run invocation, tool/CLI/MCP execution, connector activation, model call, credential access, external send, paid/destructive action, and durable memory promotion remain blocked.
 - Applied tokens: `#F5F7F2`, `#EEF3EC`, `#FBFCF8`, `#DDE5DC`, `#BFD0C0`, `#17211B`, `#526257`, `#1F7A64`, `#2E6DAE`, `#A86F1D`, `#A9473F`, and `#6E5AA8`.
 - Required score threshold: human visual QA, visual polish, color quality, layout rhythm, Korean typography, and tone-and-manner must all be 4.0 or higher before calling the pass ready.
 - QA result: human visual QA 4.2, visual polish 4.1, color quality 4.4, layout rhythm 4.1, Korean typography 4.2, tone-and-manner 4.2.

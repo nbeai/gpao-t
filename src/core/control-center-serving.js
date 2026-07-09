@@ -158,7 +158,7 @@ export function buildControlCenterServingContract({
         ".decision-strip",
         ".mobile-next-action",
         "[data-panel=\"memory\"]",
-        "[data-group=\"Authority\"]",
+        "[data-group=\"권한\"]",
       ],
       requiredInteractionSignals: [
         "nonblank_viewport",

@@ -20,19 +20,19 @@ const STATUS_LABELS = {
 };
 
 const PANEL_GROUPS = {
-  "core-work-surface": "Work",
-  runtime: "Work",
-  "skill-ecosystem": "Work",
-  "approval-preview": "Authority",
-  "design-reference": "Authority",
-  "execution-approval": "Authority",
-  memory: "Context",
-  recovery: "Evidence",
-  growth: "Growth",
-  authority: "Authority",
-  adapters: "Authority",
-  connectors: "Authority",
-  ops: "Authority",
+  "core-work-surface": "작업",
+  runtime: "작업",
+  "skill-ecosystem": "작업",
+  "approval-preview": "권한",
+  "design-reference": "권한",
+  "execution-approval": "권한",
+  memory: "맥락",
+  recovery: "근거",
+  growth: "성장",
+  authority: "권한",
+  adapters: "권한",
+  connectors: "권한",
+  ops: "권한",
 };
 
 const UI_LABELS = {
@@ -45,6 +45,30 @@ const UI_LABELS = {
   local_execution_plan: "로컬 계획",
   local_reasoning_stub: "로컬 추론 후보",
   "external action": "외부 행동",
+  externalModelCall: "외부 모델 호출",
+  modelRouterBoundary: "모델 라우터 경계",
+  externalToolAction: "외부 도구 행동",
+  installExecution: "설치 실행",
+  updateExecution: "업데이트 실행",
+  destructiveRollback: "되돌리기 어려운 롤백",
+  approvalPreviewFlow: "승인 미리보기 흐름",
+  designReferenceGate: "디자인 기준 게이트",
+  executionApprovalPacket: "실행 승인 패킷",
+  auditWriteDesign: "감사 기록 설계",
+  approvalRecordWriteUx: "승인 기록 화면",
+  approvalRecordWrite: "승인 기록 저장",
+  dryRunInvocation: "미리보기 실행",
+  tauriBuild: "Tauri 빌드",
+  dependencyInstall: "의존성 설치",
+  connectorActivation: "커넥터 활성화",
+  connectorWriteAccess: "커넥터 쓰기 권한",
+  connectorExternalSend: "커넥터 외부 전송",
+  toolCliMcpExecution: "도구/명령/MCP 실행",
+  growthApplication: "성장 규칙 적용",
+  durableMemoryPromotion: "지속 기억 승격",
+  publicRelease: "공개 배포",
+  localPreview: "로컬 미리보기",
+  secrets: "인증 정보",
   "tool activation": "도구 실행",
   "model connector live execution": "모델 연결 실행",
   "connector activation": "커넥터 활성화",
@@ -59,8 +83,36 @@ const UI_LABELS = {
   confirmed_for_local_record_only: "로컬 기록만 확인",
   dry_run: "미리보기 후보",
   cli: "로컬 명령 후보",
+  "cli.dry_run": "로컬 명령 미리보기",
+  "미리보기만 · dry_run": "미리보기만",
+  "cli,dry_run": "로컬 명령 미리보기",
+  model_skill_user_request_preview: "모델/스킬/요청에서 나온 미리보기",
+  proposal_local_draft_preview: "로컬 초안 제안",
+  "proposal.local_draft_preview": "로컬 초안 제안",
+  approval_record_preview_only: "승인 기록 미리보기",
+  "approval_record.preview_only": "승인 기록 미리보기",
+  preview_packet_not_written: "저장 전 승인 패킷",
+  local_preview_only: "로컬 미리보기 한정",
+  preview_only_not_scheduled: "만료 없음 · 미리보기",
+  "replay.reference.required_before_write": "기록 전 리플레이 기준 필요",
+  ".gpao-t/events/audit.jsonl": "로컬 감사 기록 위치",
+  not_confirmed: "아직 확인 전",
+  not_invoked: "아직 실행 전",
+  validation_design_only: "검증 설계만",
+  design_only: "설계만",
+  true: "예",
+  false: "아니오",
+  none: "없음",
   cli_command_execution: "명령 실행",
   dry_run_invocation: "미리보기 실행 호출",
+  actual_tool_execution: "실제 도구 실행",
+  mcp_invocation: "MCP 호출",
+  external_network_or_send: "외부 전송",
+  credential_read_or_write: "인증 정보 접근",
+  paid_action: "비용 발생 행동",
+  destructive_action: "되돌리기 어려운 행동",
+  approval_directory_create: "승인 폴더 생성",
+  approval_store_read: "승인 저장소 읽기",
   model_output_persistence: "모델 출력 저장",
   approval_record_write: "승인 기록 저장",
   audit_write: "감사 기록 저장",
@@ -71,6 +123,84 @@ const UI_LABELS = {
   deployment: "배포",
   "messenger send": "메신저 전송",
   "recurring automation": "반복 자동화",
+  Work: "작업",
+  Authority: "권한",
+  Context: "맥락",
+  Evidence: "근거",
+  Growth: "성장",
+  blocked_until_configured_and_approved: "설정과 승인 전까지 잠김",
+  blocked_until_explicit_approval: "명시적 승인 전까지 잠김",
+  blocked_until_provider_setup_task_approval_and_audit: "제공자 설정, 작업 승인, 감사 전까지 잠김",
+  blocked_until_user_approval: "사용자 승인 전까지 잠김",
+  blocked_until_connector_setup: "커넥터 설정 전까지 잠김",
+  blocked_until_write_approval: "쓰기 승인 전까지 잠김",
+  blocked_until_explicit_send_approval: "외부 전송 승인 전까지 잠김",
+  blocked_until_destructive_approval: "되돌리기 어려운 행동 승인 전까지 잠김",
+  blocked_until_cost_ceiling_and_explicit_cost_approval: "비용 한도와 비용 승인 전까지 잠김",
+  blocked_until_preview_approval_replay_and_audit: "미리보기, 승인, 리플레이, 감사 전까지 잠김",
+  blocked_until_configured: "설정 전까지 잠김",
+  blocked_until_user_session: "사용자 세션 전까지 잠김",
+  blocked_until_task_approval: "작업 승인 전까지 잠김",
+  blocked_until_replay_audit_rollback_approval: "리플레이, 감사, 롤백 기준, 승인 전까지 잠김",
+  local_preview_only_no_write_no_invocation: "로컬 미리보기만 · 쓰기/호출 없음",
+  required_for_every_ui_ux_slice: "모든 UI/UX slice 필수",
+  preview_validation_only_no_write_no_invocation: "검증 미리보기만 · 쓰기/호출 없음",
+  local_jsonl_write_available: "로컬 JSONL 기록 가능",
+  local_jsonl_only: "로컬 JSONL 한정",
+  blocked: "잠김",
+  allowed: "허용됨",
+  not_stored: "저장하지 않음",
+  "GPAO Core Thinking Pack": "핵심 사고 정리 팩",
+  "GPAO Document Output Pack": "문서 결과물 정리 팩",
+  "GPAO Visual Design Pack": "시각 품질 점검 팩",
+  "Recover the release-file active target and answer or draft only within local authority.":
+    "현재 릴리스 파일 흐름을 복구하고, 로컬 권한 안에서만 답변하거나 초안을 만듭니다.",
+  "release-file": "릴리스 파일",
+  candidate: "후보",
+  candidates: "후보",
+  intent_recovery: "의도 복구",
+  supporting_skill: "보조 스킬",
+  quality_anchor: "품질 기준",
+  general_request: "일반 요청",
+  blocked_in_this_slice: "이번 단계에서는 미전송",
+  balanced_reasoning: "균형 추론",
+  "local.reasoning.stub": "로컬 추론 후보",
+  prefer_local_then_metered_after_approval: "로컬 우선 · 승인 후 비용 모델",
+  "local.fast.stub": "로컬 빠른 후보",
+  fast_context_recovery: "빠른 맥락 복구",
+  private_summary: "민감 요약",
+  deep_design_review: "깊은 디자인 검토",
+  no_safe_adapter: "안전한 어댑터 없음",
+  context_not_admitted: "맥락 미채택",
+  privacy_boundary: "개인정보 경계",
+  provider_unconfigured: "제공자 미설정",
+  tool_execution_requested: "도구 실행 요청됨",
+  admitted_context_only: "채택된 맥락만",
+  authority_boundary_attached: "권한 경계 포함",
+  active_target_visible: "현재 대상 표시",
+  skill_route_preview_only: "스킬 경로 미리보기만",
+  "live model call": "실시간 모델 호출",
+  "provider credential read": "제공자 인증 정보 읽기",
+  "provider credential write": "제공자 인증 정보 쓰기",
+  "external network request": "외부 네트워크 요청",
+  "paid token spend": "토큰 비용 발생",
+  "model output persistence": "모델 출력 저장",
+  "tool execution from model output": "모델 출력 기반 도구 실행",
+  "tool.local_read": "도구 읽기",
+  "cli.local_dry_run": "로컬 명령 미리보기",
+  "mcp.read_only": "MCP 읽기",
+  "connector.read": "커넥터 읽기",
+  "connector.write": "커넥터 쓰기",
+  "external.send": "외부 전송",
+  "destructive.action": "되돌리기 어려운 행동",
+  read_only: "읽기 전용",
+  write: "저장 전 확인",
+  external_send: "외부 전송 전 확인",
+  destructive: "되돌리기 어려움",
+  paid_action: "비용 발생 가능",
+  preview_candidate_allowed: "미리보기 후보 허용",
+  "Use this governance contract as the execution-candidate boundary before designing any live tool, CLI, MCP, or connector invocation.":
+    "실제 도구, 명령, MCP, 커넥터 실행을 설계하기 전에 이 권한 경계를 먼저 확인한다.",
 };
 
 export function buildControlCenterHtml({ snapshot, designContract } = {}) {
@@ -117,6 +247,7 @@ export function buildControlCenterHtml({ snapshot, designContract } = {}) {
       --red-soft: #fbe9e7;
       --violet-soft: #efecfa;
       --shadow: 0 1px 2px rgba(23, 33, 27, 0.05), 0 14px 36px rgba(23, 33, 27, 0.06);
+      --shadow-soft: 0 1px 1px rgba(23, 33, 27, 0.04), 0 8px 22px rgba(23, 33, 27, 0.045);
     }
     * { box-sizing: border-box; }
     html {
@@ -175,7 +306,7 @@ export function buildControlCenterHtml({ snapshot, designContract } = {}) {
     }
     .layout {
       display: grid;
-      grid-template-columns: 196px minmax(0, 1fr) 336px;
+      grid-template-columns: 188px minmax(0, 1fr) 320px;
       min-height: 0;
       max-width: 100vw;
       overflow-x: hidden;
@@ -192,7 +323,7 @@ export function buildControlCenterHtml({ snapshot, designContract } = {}) {
       font-size: 12px;
       font-weight: 700;
       margin: 0 0 10px;
-      text-transform: uppercase;
+      text-transform: none;
     }
     .nav-item {
       display: flex;
@@ -337,7 +468,7 @@ export function buildControlCenterHtml({ snapshot, designContract } = {}) {
     .panel {
       padding: 18px;
       min-width: 0;
-      min-height: 142px;
+      min-height: 138px;
       scroll-margin-top: 78px;
       background: rgba(255, 255, 255, 0.92);
     }
@@ -408,7 +539,7 @@ export function buildControlCenterHtml({ snapshot, designContract } = {}) {
       display: block;
       color: var(--muted);
       font-size: 10px;
-      text-transform: uppercase;
+      text-transform: none;
     }
     .state-pill span {
       display: block;
@@ -496,6 +627,83 @@ export function buildControlCenterHtml({ snapshot, designContract } = {}) {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
       gap: 8px;
+      margin-top: 10px;
+    }
+    .proposal-hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1.1fr) minmax(220px, 0.9fr);
+      gap: 10px;
+      margin-top: 10px;
+      align-items: stretch;
+    }
+    .proposal-card {
+      min-width: 0;
+      padding: 14px;
+      border: 1px solid #d8c8f0;
+      border-radius: 12px;
+      background: linear-gradient(180deg, #ffffff, var(--violet-soft));
+      box-shadow: var(--shadow-soft);
+      overflow-wrap: anywhere;
+      word-break: keep-all;
+    }
+    .proposal-card strong {
+      display: block;
+      font-size: 14px;
+      line-height: 1.4;
+    }
+    .proposal-card p {
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.55;
+    }
+    .proposal-meta {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+    .record-flow {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .record-flow > strong,
+    .compact-review-grid > strong {
+      grid-column: 1 / -1;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+    .record-step {
+      min-width: 0;
+      min-height: 82px;
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: var(--surface-warm);
+      overflow-wrap: anywhere;
+      word-break: keep-all;
+    }
+    .record-step strong {
+      display: block;
+      font-size: 12px;
+      line-height: 1.35;
+    }
+    .record-step span {
+      display: block;
+      margin-top: 5px;
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.45;
+    }
+    .compact-review-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .execution-review {
       margin-top: 10px;
     }
     .blocked-actions strong {
@@ -620,8 +828,11 @@ export function buildControlCenterHtml({ snapshot, designContract } = {}) {
     }
     .inspector {
       margin-top: 10px;
-      border-top: 1px solid var(--line);
-      padding-top: 10px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 10px;
+      background: rgba(251, 252, 248, 0.88);
+      box-shadow: var(--shadow-soft);
       scroll-margin-top: 92px;
     }
     .inspector:target {
@@ -648,7 +859,7 @@ export function buildControlCenterHtml({ snapshot, designContract } = {}) {
     }
     .inspector-row {
       display: grid;
-      grid-template-columns: 92px minmax(0, 1fr);
+      grid-template-columns: 108px minmax(0, 1fr);
       gap: 8px;
       font-size: 12px;
     }
@@ -861,6 +1072,13 @@ export function buildControlCenterHtml({ snapshot, designContract } = {}) {
       .approval-flow {
         grid-template-columns: 1fr;
       }
+      .proposal-hero,
+      .record-flow {
+        grid-template-columns: 1fr;
+      }
+      .proposal-meta {
+        grid-template-columns: 1fr;
+      }
       .work-surface-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
       }
@@ -934,10 +1152,10 @@ export function buildControlCenterHtml({ snapshot, designContract } = {}) {
     </header>
     <div class="layout">
       <nav aria-label="GPAO-T information architecture">
-        <p class="nav-title">Operating Objects</p>
+        <p class="nav-title">운영 영역</p>
         ${uiSnapshot.operatingObjects.map((item) => `
-        <div class="nav-item"><span>${escapeHtml(item.type)}</span><span>${escapeHtml(item.panelCount)}</span></div>`).join("")}
-        <p class="nav-title nav-panel-title">Panels</p>
+        <div class="nav-item"><span>${escapeHtml(uiLabel(item.type))}</span><span>${escapeHtml(item.panelCount)}</span></div>`).join("")}
+        <p class="nav-title nav-panel-title">패널</p>
         ${panels.map((panel) => `
         <a class="nav-item" href="#panel-${escapeHtml(panel.id)}"><span>${escapeHtml(panel.label)}</span><span>${escapeHtml(STATUS_LABELS[panel.status] || panel.status)}</span></a>`).join("")}
       </nav>
@@ -949,16 +1167,16 @@ export function buildControlCenterHtml({ snapshot, designContract } = {}) {
           <a class="focus-link" href="#authority-boundary">권한</a>
         </section>
         <section class="decision-strip" id="decision-strip" aria-label="Current operating state">
-          ${metric("Panels", uiSnapshot.firstViewport.counts.panels, "visible OS surfaces")}
-          ${metric("Blocked", uiSnapshot.firstViewport.counts.blocked, "requires recovery before action")}
-          ${metric("Review", uiSnapshot.firstViewport.counts.review, "needs human-readable inspection")}
-          ${metric("Evidence", uiSnapshot.firstViewport.counts.evidence, "recorded replay signals")}
+          ${metric("화면", uiSnapshot.firstViewport.counts.panels, "현재 보이는 운영 표면")}
+          ${metric("잠김", uiSnapshot.firstViewport.counts.blocked, "행동 전 복구 필요")}
+          ${metric("검토", uiSnapshot.firstViewport.counts.review, "사람이 읽고 확인")}
+          ${metric("근거", uiSnapshot.firstViewport.counts.evidence, "기록된 재검토 신호")}
         </section>
         <section class="workflow-state-view" id="workflow-state-view" aria-label="Workflow, recovery, authority, and next action states">
-          ${stateCard("Workflow", workflowState(controlSnapshot), "전체 Control Center 진행 상태")}
-          ${stateCard("Recovery", recoveryState(controlSnapshot), "복구 우선순위와 검토 필요성")}
-          ${stateCard("Authority", authorityState(controlSnapshot), "외부 실행과 권한 경계")}
-          ${stateCard("Next", nextActionState(controlSnapshot), "지금 이어갈 안전 행동")}
+          ${stateCard("작업 흐름", workflowState(controlSnapshot), "전체 Control Center 진행 상태")}
+          ${stateCard("복구 상태", recoveryState(controlSnapshot), "복구 우선순위와 검토 필요성")}
+          ${stateCard("권한 경계", authorityState(controlSnapshot), "외부 실행과 권한 경계")}
+          ${stateCard("다음 행동", nextActionState(controlSnapshot), "지금 이어갈 안전 행동")}
         </section>
         <section class="mobile-next-action" id="next-safe-action" aria-label="Mobile next safe action">
           <h2>다음 안전 행동</h2>
@@ -978,8 +1196,8 @@ export function buildControlCenterHtml({ snapshot, designContract } = {}) {
           <div class="side-list">
             ${authorityEntries.map(([key, value]) => `
             <div class="authority-row">
-              <strong>${escapeHtml(key)}</strong>
-              <span>${escapeHtml(value)}</span>
+              <strong>${escapeHtml(uiLabel(key))}</strong>
+              <span>${escapeHtml(uiLabel(value))}</span>
             </div>`).join("")}
           </div>
         </section>
@@ -988,8 +1206,8 @@ export function buildControlCenterHtml({ snapshot, designContract } = {}) {
           <ul class="quality">
             ${uiSnapshot.designGate.slice(0, 6).map((gate) => `<li>${escapeHtml(gate)}</li>`).join("")}
           </ul>
-          <p class="footer-note">Interaction: no-script local inspection · panel anchors, focus navigation, and inspectors only.</p>
-          <p class="footer-note">Source: ${escapeHtml(contract.recipePath)} · schema ${escapeHtml(controlSnapshot.schema)}</p>
+          <p class="footer-note">상호작용: 스크립트 없는 로컬 검사 · 패널 이동 · 인스펙터만 허용.</p>
+          <p class="footer-note">기준: ${escapeHtml(contract.recipePath)} · schema ${escapeHtml(controlSnapshot.schema)}</p>
         </section>
       </aside>
     </div>
@@ -1045,7 +1263,7 @@ export function renderControlCenterHtml({ root, outputPath = DEFAULT_OUTPUT_PATH
 }
 
 function panelHtml(panel) {
-  const group = PANEL_GROUPS[panel.id] || "Work";
+  const group = PANEL_GROUPS[panel.id] || "작업";
   const states = panelStateLens(panel, group);
   return `
           <section class="panel" id="panel-${escapeHtml(panel.id)}" data-panel="${escapeHtml(panel.id)}" data-group="${escapeHtml(group)}">
@@ -1056,12 +1274,12 @@ function panelHtml(panel) {
               </div>
               ${statusChip(panel.status)}
             </div>
-            <p class="next">${escapeHtml(panel.nextSafeAction)}</p>
+            <p class="next">${escapeHtml(uiLabel(panel.nextSafeAction))}</p>
             <div class="state-ribbon" aria-label="${escapeHtml(panel.label)} workflow state">
-              ${statePill("Workflow", states.workflow)}
-              ${statePill("Recovery", states.recovery)}
-              ${statePill("Authority", states.authority)}
-              ${statePill("Next", states.next)}
+              ${statePill("작업", states.workflow)}
+              ${statePill("복구", states.recovery)}
+              ${statePill("권한", states.authority)}
+              ${statePill("다음", states.next)}
             </div>
             ${coreWorkSurfaceHtml(panel)}
             ${approvalPreviewHtml(panel)}
@@ -1075,23 +1293,23 @@ function panelHtml(panel) {
             <details class="inspector" id="inspect-${escapeHtml(panel.id)}" data-panel-inspector="${escapeHtml(panel.id)}">
               <summary>운영 드릴다운</summary>
               <div class="inspector-grid" aria-label="Control Center panel inspector">
-                ${inspectorRow("Panel ID", panel.id)}
-                ${inspectorRow("Group", group)}
-                ${inspectorRow("Status", STATUS_LABELS[panel.status] || panel.status)}
-                ${inspectorRow("Headline", panel.headline)}
-                ${inspectorRow("Next", panel.nextSafeAction)}
-                ${inspectorRow("Workflow State", states.workflow)}
-                ${inspectorRow("Recovery State", states.recovery)}
-                ${inspectorRow("Authority State", states.authority)}
-                ${inspectorRow("Next State", states.next)}
+                ${inspectorRow("패널 ID", panel.id)}
+                ${inspectorRow("그룹", group)}
+                ${inspectorRow("상태", STATUS_LABELS[panel.status] || panel.status)}
+                ${inspectorRow("요약", panel.headline)}
+                ${inspectorRow("다음 행동", uiLabel(panel.nextSafeAction))}
+                ${inspectorRow("작업 상태", states.workflow)}
+                ${inspectorRow("복구 상태", states.recovery)}
+                ${inspectorRow("권한 상태", states.authority)}
+                ${inspectorRow("다음 상태", states.next)}
                 ${approvalInspectorRows(panel)}
                 ${designReferenceInspectorRows(panel)}
                 ${executionApprovalInspectorRows(panel)}
                 ${coreWorkSurfaceInspectorRows(panel)}
                 ${adapterInspectorRows(panel)}
                 ${connectorInspectorRows(panel)}
-                ${inspectorRow("Authority", authorityLens(group))}
-                ${inspectorRow("Evidence", evidenceLens(panel))}
+                ${inspectorRow("권한 설명", authorityLens(group))}
+                ${inspectorRow("근거", evidenceLens(panel))}
                 ${inspectorLinks(panel)}
               </div>
             </details>
@@ -1117,16 +1335,16 @@ function coreWorkSurfaceHtml(panel) {
                 ${escapeHtml(message.text)}
               </div>`).join("")}
               <div class="work-surface-grid" aria-label="Core work surface state">
-                ${workSignal("Task", surface.taskState.status)}
-                ${workSignal("Context", surface.contextPreview.status)}
-                ${workSignal("Skill", surface.skillRoutePreview.status)}
-                ${workSignal("Authority", surface.authoritySummary.approvalStatus)}
+                ${workSignal("작업 상태", surface.taskState.status)}
+                ${workSignal("맥락", surface.contextPreview.status)}
+                ${workSignal("스킬", surface.skillRoutePreview.status)}
+                ${workSignal("권한", surface.authoritySummary.approvalStatus)}
               </div>
               <div class="work-surface-grid" aria-label="Core work surface route preview">
-                ${workSignal("Memory", `${surface.contextPreview.memoryEntries}`)}
-                ${workSignal("T-cells", `${surface.contextPreview.tcellCandidates}`)}
-                ${workSignal("Packs", `${selectedPacks.length}`)}
-                ${workSignal("Closed", `${closedActions.length}`)}
+                ${workSignal("기억", `${surface.contextPreview.memoryEntries}`)}
+                ${workSignal("T-cell", `${surface.contextPreview.tcellCandidates}`)}
+                ${workSignal("스킬 후보", `${selectedPacks.length}`)}
+                ${workSignal("잠긴 행동", `${closedActions.length}`)}
               </div>
               <div class="blocked-actions" aria-label="Core work surface closed authority actions" data-authority-boundary="closed">
                 <strong>닫힌 실행 경계</strong>
@@ -1134,10 +1352,10 @@ function coreWorkSurfaceHtml(panel) {
                 ${closedActions.slice(0, 6).map((action) => `<span class="blocked-action"><span class="blocked-action-label">잠김</span>${escapeHtml(uiLabel(action))}<span class="blocked-action-detail">미리보기만</span></span>`).join("")}
               </div>
               <div class="work-surface-grid" aria-label="Context and skill route anchors">
-                ${workSignal("Context Anchor", contextCandidates[0]?.anchor || "none")}
-                ${workSignal("Skill Pack", selectedPacks[0]?.id || "none")}
-                ${workSignal("Model", surface.modelToolRoutePreview.selectedModelAdapter || "none")}
-                ${workSignal("Tools", `${surface.modelToolRoutePreview.toolAdapters.length}`)}
+                ${workSignal("맥락 근거", contextCandidates[0]?.anchor || "none")}
+                ${workSignal("스킬 경로", selectedPacks[0]?.title || selectedPacks[0]?.id || "none")}
+                ${workSignal("모델 후보", surface.modelToolRoutePreview.selectedModelAdapter || "none")}
+                ${workSignal("도구 후보", `${surface.modelToolRoutePreview.toolAdapters.length}`)}
               </div>
             </div>`;
 }
@@ -1150,11 +1368,11 @@ function coreWorkSurfaceInspectorRows(panel) {
   if (panel.id !== "core-work-surface" || !panel.data) return "";
   const surface = panel.data;
   return [
-    inspectorRow("Input State", surface.workspaceThread.composer.submission),
-    inspectorRow("Task State", `${surface.taskState.status} · ${surface.taskState.inputSignal}`),
-    inspectorRow("Context Preview", `${surface.contextPreview.status} · ${surface.contextPreview.retrievedCandidates.length} candidates`),
-    inspectorRow("Skill Route", (surface.skillRoutePreview.selectedPacks || []).map((pack) => pack.id).join(" · ") || "none"),
-    inspectorRow("Authority Summary", (surface.authoritySummary.closedActions || []).join(" · ")),
+    inspectorRow("입력 상태", uiLabel(surface.workspaceThread.composer.submission)),
+    inspectorRow("작업 상태", `${uiLabel(surface.taskState.status)} · ${uiLabel(surface.taskState.inputSignal)}`),
+    inspectorRow("맥락 미리보기", `${uiLabel(surface.contextPreview.status)} · 후보 ${surface.contextPreview.retrievedCandidates.length}`),
+    inspectorRow("스킬 경로", (surface.skillRoutePreview.selectedPacks || []).map((pack) => uiLabel(pack.title || pack.id)).join(" · ") || "없음"),
+    inspectorRow("권한 요약", (surface.authoritySummary.closedActions || []).map(uiLabel).join(" · ")),
   ].join("");
 }
 
@@ -1164,16 +1382,16 @@ function adapterInspectorRows(panel) {
   const policy = panel.data.modelRouterPolicy;
   if (!boundary) return "";
   return [
-    inspectorRow("Model Router", `${boundary.route.route} · ${boundary.route.adapterSelection.selected?.id || "none"}`),
-    inspectorRow("Provider Boundary", boundary.providerBoundary.externalProviderCall),
-    inspectorRow("Latency / Cost", `${boundary.latencyCostFallback.latencyBudget} · ${boundary.latencyCostFallback.costPolicy}`),
-    inspectorRow("Fallback", (boundary.latencyCostFallback.fallbackChain || []).map((item) => item.id).join(" · ") || "none"),
-    inspectorRow("Route Profiles", (policy?.routeProfiles || []).map((profile) => profile.id).join(" · ") || "none"),
-    inspectorRow("Failure States", (policy?.fallbackAndFailure?.failureStates || []).map((state) => state.id).join(" · ") || "none"),
-    inspectorRow("Task Packet Conditions", (policy?.contextMeshTaskPacket?.becomesModelInputWhen || []).map((condition) => condition.id).join(" · ") || "none"),
-    inspectorRow("Output Boundary", policy?.modelOutputBoundary?.toolCliMcpExecution || "none"),
-    inspectorRow("Replay Criteria", `${policy?.replayAudit?.requiredCriteria?.length || 0}`),
-    inspectorRow("Blocked Model Actions", (boundary.blockedActions || []).join(" · ")),
+    inspectorRow("모델 라우터", `${uiLabel(boundary.route.route)} · ${uiLabel(boundary.route.adapterSelection.selected?.id || "none")}`),
+    inspectorRow("제공자 경계", uiLabel(boundary.providerBoundary.externalProviderCall)),
+    inspectorRow("속도/비용", `${uiLabel(boundary.latencyCostFallback.latencyBudget)} · ${uiLabel(boundary.latencyCostFallback.costPolicy)}`),
+    inspectorRow("대체 경로", (boundary.latencyCostFallback.fallbackChain || []).map((item) => uiLabel(item.id)).join(" · ") || "none"),
+    inspectorRow("라우트 프로필", (policy?.routeProfiles || []).map((profile) => uiLabel(profile.id)).join(" · ") || "none"),
+    inspectorRow("실패 상태", (policy?.fallbackAndFailure?.failureStates || []).map((state) => uiLabel(state.id)).join(" · ") || "none"),
+    inspectorRow("입력 조건", (policy?.contextMeshTaskPacket?.becomesModelInputWhen || []).map((condition) => uiLabel(condition.id)).join(" · ") || "none"),
+    inspectorRow("출력 경계", uiLabel(policy?.modelOutputBoundary?.toolCliMcpExecution || "none")),
+    inspectorRow("재검토 기준", `${policy?.replayAudit?.requiredCriteria?.length || 0}`),
+    inspectorRow("잠긴 모델 행동", (boundary.blockedActions || []).map(uiLabel).join(" · ")),
   ].join("");
 }
 
@@ -1181,12 +1399,12 @@ function connectorInspectorRows(panel) {
   if (panel.id !== "connectors" || !panel.data?.toolGovernance) return "";
   const governance = panel.data.toolGovernance;
   return [
-    inspectorRow("Candidate Classes", (governance.candidateClasses || []).map((candidate) => candidate.id).join(" · ") || "none"),
-    inspectorRow("Authority Tiers", (governance.authorityTiers || []).map((tier) => `${tier.id}:${tier.status}`).join(" · ") || "none"),
-    inspectorRow("Model Output Boundary", governance.modelOutputToExecutionProposal.outputIsExecutionAuthority === false ? "proposal only" : "execution authority"),
-    inspectorRow("Approval Boundary", governance.modelOutputToExecutionProposal.blockedUntil),
-    inspectorRow("Audit / Replay / Rollback", `${governance.auditReplayRollback.auditReference} · ${governance.auditReplayRollback.replayReference} · ${governance.auditReplayRollback.rollbackReference}`),
-    inspectorRow("Blocked Execution", (governance.blockedActions || []).join(" · ")),
+    inspectorRow("실행 후보", (governance.candidateClasses || []).map((candidate) => uiLabel(candidate.id)).join(" · ") || "none"),
+    inspectorRow("권한 단계", (governance.authorityTiers || []).map((tier) => `${uiLabel(tier.id)}:${uiLabel(tier.status)}`).join(" · ") || "none"),
+    inspectorRow("모델 출력 경계", governance.modelOutputToExecutionProposal.outputIsExecutionAuthority === false ? "제안만 가능" : "실행 권한"),
+    inspectorRow("승인 경계", uiLabel(governance.modelOutputToExecutionProposal.blockedUntil)),
+    inspectorRow("감사/재검토/되돌리기", `${governance.auditReplayRollback.auditReference} · ${governance.auditReplayRollback.replayReference} · ${governance.auditReplayRollback.rollbackReference}`),
+    inspectorRow("잠긴 실행", (governance.blockedActions || []).map(uiLabel).join(" · ")),
   ].join("");
 }
 
@@ -1218,10 +1436,10 @@ function approvalPreviewHtml(panel) {
 function approvalInspectorRows(panel) {
   if (panel.id !== "approval-preview" || !panel.data) return "";
   return [
-    inspectorRow("Flow Mode", panel.data.flowMode),
-    inspectorRow("Preview State", panel.data.userUnderstanding),
-    inspectorRow("Stages", (panel.data.stages || []).map((stage) => `${stage.label}:${stage.status}`).join(" · ")),
-    inspectorRow("Still Blocked", (panel.data.blockedActions || []).join(" · ")),
+    inspectorRow("흐름 모드", panel.data.flowMode),
+    inspectorRow("미리보기 상태", panel.data.userUnderstanding),
+    inspectorRow("단계", (panel.data.stages || []).map((stage) => `${stage.label}:${uiLabel(stage.status)}`).join(" · ")),
+    inspectorRow("계속 잠김", (panel.data.blockedActions || []).map(uiLabel).join(" · ")),
   ].join("");
 }
 
@@ -1270,12 +1488,12 @@ function designReferenceInspectorRows(panel) {
   if (panel.id !== "design-reference" || !panel.data) return "";
   const data = panel.data;
   return [
-    inspectorRow("Mode", data.mode),
-    inspectorRow("Reference Axes", (data.referenceAxes || []).map((axis) => axis.label).join(" · ")),
-    inspectorRow("Evidence Requirements", `${(data.evidenceRequirements || []).length}`),
-    inspectorRow("Report Fields", (data.requiredReportFields || []).join(" · ")),
-    inspectorRow("Supported Surfaces", (data.supportedSurfaces || []).join(" · ")),
-    inspectorRow("Still Blocked", (data.blockedActions || []).join(" · ")),
+    inspectorRow("모드", data.mode),
+    inspectorRow("기준 축", (data.referenceAxes || []).map((axis) => axis.label).join(" · ")),
+    inspectorRow("필수 증거", `${(data.evidenceRequirements || []).length}`),
+    inspectorRow("보고 항목", (data.requiredReportFields || []).join(" · ")),
+    inspectorRow("적용 화면", (data.supportedSurfaces || []).join(" · ")),
+    inspectorRow("계속 잠김", (data.blockedActions || []).map(uiLabel).join(" · ")),
   ].join("");
 }
 
@@ -1291,19 +1509,21 @@ function executionApprovalHtml(panel) {
   const approvalRecordItems = approvalRecordWriteUx.recordItems || [];
   const localRecordSubstrate = data.localRecordSubstrate || {};
   return `
-            <div class="approval-flow" aria-label="Execution proposal confirmation" data-execution-proposal-confirmation="preview-only">
+            <div class="execution-review" aria-label="Execution proposal confirmation" data-execution-proposal-confirmation="preview-only">
               <p class="approval-safe-note" data-execution-no-write="true">${escapeHtml(data.uxContract.noExecutionNotice)} ${escapeHtml(data.uxContract.primaryQuestion)}</p>
-              <div class="approval-stage" data-execution-proposal="${escapeHtml(proposal.id || "unknown")}">
-                <span class="approval-stage-number" data-authority-icon="${escapeHtml(data.authorityDisplay.icon)}">${escapeHtml(iconSymbol(data.authorityDisplay.icon))}</span>
-                <strong>${escapeHtml(proposal.title || "실행 전 확인")}</strong>
-                <span class="approval-stage-status">${escapeHtml(data.authorityDisplay.label)}</span>
-                <small>${escapeHtml(proposal.userSummary || proposal.expectedEffect || "")}</small>
-              </div>
-              <div class="work-surface-grid" aria-label="Execution proposal fields">
-                ${workSignal("Tool", proposal.toolKind)}
-                ${workSignal("Action", proposal.actionType)}
-                ${workSignal("Risk", proposal.risk)}
-                ${workSignal("Rollback", proposal.rollbackReference)}
+              <div class="proposal-hero">
+                <div class="proposal-card" data-execution-proposal="${escapeHtml(proposal.id || "unknown")}">
+                  <span class="approval-stage-number" data-authority-icon="${escapeHtml(data.authorityDisplay.icon)}">${escapeHtml(iconSymbol(data.authorityDisplay.icon))}</span>
+                  <strong>${escapeHtml(proposal.title || "실행 전 확인")}</strong>
+                  <p>${escapeHtml(proposal.userSummary || proposal.expectedEffect || "")}</p>
+                  <p>${escapeHtml(proposal.risk || "위험 정보 없음")}</p>
+                </div>
+                <div class="proposal-meta" aria-label="Execution proposal summary">
+                  ${workSignal("행동 후보", proposal.actionType)}
+                  ${workSignal("권한 단계", data.authorityDisplay.label)}
+                  ${workSignal("예상 효과", proposal.expectedEffect)}
+                  ${workSignal("되돌리기 기준", proposal.rollbackReference)}
+                </div>
               </div>
               <div class="blocked-actions" aria-label="Korean authority levels" data-authority-levels="ko">
                 <strong>권한 단계</strong>
@@ -1321,27 +1541,27 @@ function executionApprovalHtml(panel) {
                   <span class="blocked-action-detail">검증 기준</span>
                 </span>`).join("")}
               </div>
-              <div class="blocked-actions" aria-label="Planned audit items" data-audit-preview="design-only">
+              <div class="compact-review-grid" aria-label="Planned audit items" data-audit-preview="design-only">
                 <strong>기록 예정 항목</strong>
-                ${plannedAuditItems.map((item) => `
+                ${plannedAuditItems.slice(0, 6).map((item) => `
                 <span class="blocked-action" data-audit-item="${escapeHtml(item.id)}">
-                  <span class="blocked-action-label">${escapeHtml(item.label)}</span>${escapeHtml(item.value)}
+                  <span class="blocked-action-label">${escapeHtml(item.label)}</span>${escapeHtml(uiLabel(item.value))}
                   <span class="blocked-action-detail">${escapeHtml(item.userMeaning)}</span>
                 </span>`).join("")}
               </div>
-              <div class="blocked-actions" aria-label="Approval record write UX design" data-approval-record-write-ux="design-only">
+              <div class="record-flow" aria-label="Approval record write UX design" data-approval-record-write-ux="design-only">
                 <strong>승인 기록 저장 전 확인</strong>
                 ${approvalRecordStages.map((stage) => `
-                <span class="blocked-action" data-approval-record-stage="${escapeHtml(stage.id)}">
-                  <span class="blocked-action-label">${escapeHtml(stage.step)} · ${escapeHtml(stage.label)}</span>${escapeHtml(stage.status)}
-                  <span class="blocked-action-detail">${escapeHtml(stage.userMeaning)}</span>
+                <span class="record-step" data-approval-record-stage="${escapeHtml(stage.id)}">
+                  <strong>${escapeHtml(stage.step)} · ${escapeHtml(stage.label)}</strong>
+                  <span>${escapeHtml(uiLabel(stage.status))} · ${escapeHtml(stage.userMeaning)}</span>
                 </span>`).join("")}
               </div>
-              <div class="blocked-actions" aria-label="Approval record preview items" data-approval-record-preview="no-write">
+              <div class="compact-review-grid" aria-label="Approval record preview items" data-approval-record-preview="no-write">
                 <strong>저장될 항목 미리보기</strong>
-                ${approvalRecordItems.map((item) => `
+                ${approvalRecordItems.slice(0, 6).map((item) => `
                 <span class="blocked-action" data-approval-record-item="${escapeHtml(item.id)}">
-                  <span class="blocked-action-label">${escapeHtml(item.label)}</span>${escapeHtml(item.value)}
+                  <span class="blocked-action-label">${escapeHtml(item.label)}</span>${escapeHtml(uiLabel(item.value))}
                   <span class="blocked-action-detail">${escapeHtml(item.userMeaning)}</span>
                 </span>`).join("")}
               </div>
@@ -1358,19 +1578,19 @@ function executionApprovalInspectorRows(panel) {
   if (panel.id !== "execution-approval" || !panel.data) return "";
   const data = panel.data;
   return [
-    inspectorRow("Proposal", `${data.proposal.toolKind} · ${data.proposal.actionType} · ${data.proposal.authorityLevel}`),
-    inspectorRow("Expected Effect", data.proposal.expectedEffect),
-    inspectorRow("Risk", data.proposal.risk),
-    inspectorRow("Rollback", data.proposal.rollbackReference),
-    inspectorRow("Approval Fields", `${data.approvalPacket.requiredFields.length}`),
-    inspectorRow("Validation Rules", `${data.validation.rules.length}`),
-    inspectorRow("Audit Items", `${data.auditWriteDesign.plannedAuditItems.length}`),
-    inspectorRow("Audit Write", data.localRecordSubstrate ? "로컬 JSONL 기록 가능" : "기록 설계만"),
-    inspectorRow("Approval Record UX", data.localRecordSubstrate ? "로컬 JSONL 기록 가능" : "저장 설계만"),
-    inspectorRow("Approval Record Items", `${data.approvalRecordWriteUx.recordItems.length}`),
-    inspectorRow("Local Records", `승인 ${data.localRecordSubstrate?.counts?.approvalRecords || 0} · 감사 ${data.localRecordSubstrate?.counts?.auditRecords || 0}`),
-    inspectorRow("Replay", data.localRecordSubstrate?.latest?.approvalRecord?.replayReference || "아직 없음"),
-    inspectorRow("UX Locale", data.uxContract.defaultLocale),
+    inspectorRow("제안", `${uiLabel(data.proposal.toolKind)} · ${uiLabel(data.proposal.actionType)} · ${uiLabel(data.proposal.authorityLevel)}`),
+    inspectorRow("예상 효과", data.proposal.expectedEffect),
+    inspectorRow("위험", data.proposal.risk),
+    inspectorRow("되돌리기", data.proposal.rollbackReference),
+    inspectorRow("승인 필드", `${data.approvalPacket.requiredFields.length}`),
+    inspectorRow("검증 규칙", `${data.validation.rules.length}`),
+    inspectorRow("감사 항목", `${data.auditWriteDesign.plannedAuditItems.length}`),
+    inspectorRow("감사 기록", data.localRecordSubstrate ? "로컬 JSONL 기록 가능" : "기록 설계만"),
+    inspectorRow("승인 기록", data.localRecordSubstrate ? "로컬 JSONL 기록 가능" : "저장 설계만"),
+    inspectorRow("저장 항목", `${data.approvalRecordWriteUx.recordItems.length}`),
+    inspectorRow("로컬 기록", `승인 ${data.localRecordSubstrate?.counts?.approvalRecords || 0} · 감사 ${data.localRecordSubstrate?.counts?.auditRecords || 0}`),
+    inspectorRow("리플레이", data.localRecordSubstrate?.latest?.approvalRecord?.replayReference || "아직 없음"),
+    inspectorRow("언어", data.uxContract.defaultLocale),
   ].join("");
 }
 
@@ -1389,8 +1609,8 @@ function localRecordSubstrateHtml(substrate = {}) {
                   <span class="blocked-action-detail">${escapeHtml(latest?.replayReference || "replay 대기")}</span>
                 </span>
                 <span class="blocked-action">
-                  <span class="blocked-action-label">잠김</span>${escapeHtml((substrate.blockedBoundaries || []).slice(0, 4).join(" · "))}
-                  <span class="blocked-action-detail">외부/비용/파괴/credential 차단</span>
+                  <span class="blocked-action-label">잠김</span>${escapeHtml((substrate.blockedBoundaries || []).slice(0, 4).map(uiLabel).join(" · "))}
+                  <span class="blocked-action-detail">외부/비용/파괴/인증 정보 차단</span>
                 </span>
               </div>`;
 }
@@ -1405,7 +1625,7 @@ function metric(label, value, hint) {
 
 function stateCard(label, value, hint) {
   return `
-          <div class="state-card" data-state-card="${escapeHtml(label.toLowerCase())}">
+          <div class="state-card" data-state-card="${escapeHtml(stableStateId(label))}">
             <strong>${escapeHtml(label)}</strong>
             <span>${escapeHtml(value)}</span>
             <small>${escapeHtml(hint)}</small>
@@ -1414,7 +1634,7 @@ function stateCard(label, value, hint) {
 
 function statePill(label, value) {
   return `
-              <div class="state-pill" data-state-pill="${escapeHtml(label.toLowerCase())}">
+              <div class="state-pill" data-state-pill="${escapeHtml(stableStateId(label))}">
                 <strong>${escapeHtml(label)}</strong>
                 <span>${escapeHtml(value)}</span>
               </div>`;
@@ -1427,6 +1647,20 @@ function statusChip(status) {
 
 function uiLabel(value) {
   return UI_LABELS[String(value)] || value;
+}
+
+function stableStateId(label) {
+  const ids = {
+    "작업 흐름": "workflow",
+    "작업": "workflow",
+    "복구 상태": "recovery",
+    "복구": "recovery",
+    "권한 경계": "authority",
+    "권한": "authority",
+    "다음 행동": "next",
+    "다음": "next",
+  };
+  return ids[label] || String(label).toLowerCase();
 }
 
 function iconSymbol(icon) {
@@ -1456,13 +1690,13 @@ function inspectorRow(label, value) {
 function inspectorLinks(panel) {
   return `
                 <div class="inspector-row">
-                  <strong>Return</strong>
+                  <strong>돌아가기</strong>
                   <span><a href="#panel-${escapeHtml(panel.id)}">패널</a> · <a href="#authority-boundary">권한 경계</a> · <a href="#next-safe-action">다음 행동</a></span>
                 </div>`;
 }
 
 function authorityLens(group) {
-  return group === "Authority"
+  return group === "권한"
     ? "권한 경계를 먼저 확인하고 외부 활성화는 차단한다."
     : "로컬 검사만 허용하고 외부 계정, 모델, 도구 호출은 열지 않는다.";
 }
@@ -1492,29 +1726,29 @@ function panelStateLens(panel, group) {
 
 function workflowState(snapshot) {
   if (snapshot.counts?.blocked) {
-    return `복구 우선 · blocked ${snapshot.counts.blocked}`;
+    return `복구 우선 · 잠김 ${snapshot.counts.blocked}`;
   }
   if (snapshot.counts?.review) {
-    return `검토 흐름 · review ${snapshot.counts.review}`;
+    return `검토 흐름 · 확인 ${snapshot.counts.review}`;
   }
-  return "진행 가능 · blocked 0";
+  return "진행 가능 · 잠김 없음";
 }
 
 function recoveryState(snapshot) {
   const evidence = snapshot.counts?.recoveryRecords ?? 0;
   if (snapshot.counts?.blocked) {
-    return `복구 필요 · evidence ${evidence}`;
+    return `복구 필요 · 근거 ${evidence}`;
   }
   if (snapshot.counts?.review) {
-    return `검토 필요 · evidence ${evidence}`;
+    return `검토 필요 · 근거 ${evidence}`;
   }
-  return `복구 대기 없음 · evidence ${evidence}`;
+  return `복구 대기 없음 · 근거 ${evidence}`;
 }
 
 function authorityState(snapshot) {
   const entries = Object.values(snapshot.authorityBoundary || {});
   const blocked = entries.filter((value) => String(value).includes("blocked")).length;
-  return blocked ? `외부 실행 차단 · blocked ${blocked}` : "로컬 preview 허용";
+  return blocked ? `외부 실행 차단 · 잠김 ${blocked}` : "로컬 미리보기 허용";
 }
 
 function nextActionState(snapshot) {

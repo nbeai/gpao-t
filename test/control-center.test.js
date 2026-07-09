@@ -116,6 +116,14 @@ const DESIGN_REALIZATION_PASS_001_QA_DOC = fileURLToPath(new URL(
   "../docs/03-verification/evidence/DESIGN-REALIZATION-PASS-001-QA-2026-07-09.md",
   import.meta.url,
 ));
+const DESIGN_REALIZATION_PASS_002_QA_JSON = fileURLToPath(new URL(
+  "../docs/03-verification/evidence/design-realization-pass-002-qa-2026-07-09.json",
+  import.meta.url,
+));
+const DESIGN_REALIZATION_PASS_002_QA_DOC = fileURLToPath(new URL(
+  "../docs/03-verification/evidence/DESIGN-REALIZATION-PASS-002-QA-2026-07-09.md",
+  import.meta.url,
+));
 const WORK_SURFACE_VISUAL_QA_JSON = fileURLToPath(new URL(
   "../docs/03-verification/evidence/work-surface-visual-qa-baseline-2026-07-09.json",
   import.meta.url,
@@ -345,7 +353,7 @@ describe("GPAO-T Local Control Center readiness", () => {
     assert.equal(summary.counts.growthApplicationGates, 0);
     assert.equal(summary.counts.blockedConnectors, 5);
     assert.ok(summary.panels.some((panel) => panel.id === "growth" && panel.status === "review"));
-    assert.match(summary.nextSafeAction, /Resolve blocked panel|Review panel/);
+    assert.match(summary.nextSafeAction, /먼저 막힌 패널을 해결한다|검토 패널/);
   });
 
   it("builds a UI snapshot contract between runtime data and static rendering", () => {
@@ -454,7 +462,7 @@ describe("GPAO-T Local Control Center readiness", () => {
     assert.match(html, /Codex급 시각\/대화 UX/);
     assert.match(html, /Claude Code급 운영\/권한 UX/);
     assert.match(html, /한국어 기본 UI/);
-    assert.match(html, /Approval \/ Preview/);
+    assert.match(html, /승인 \/ 미리보기/);
     assert.match(html, /data-approval-stage="plan"/);
     assert.match(html, /data-approval-stage="write-gate"/);
     assert.match(html, /data-approval-safe-note="preview-only"/);
@@ -468,7 +476,7 @@ describe("GPAO-T Local Control Center readiness", () => {
     assert.match(html, /외부 호출 없음/);
     assert.match(html, /blocked-action-label/);
     assert.match(html, /blocked-action-detail/);
-    assert.match(html, /data-group="Context"/);
+    assert.match(html, /data-group="맥락"/);
     assert.match(html, /href="#panel-memory"/);
     assert.match(html, /id="panel-memory"/);
     assert.match(html, /id="workflow-state-view"/);
@@ -483,7 +491,7 @@ describe("GPAO-T Local Control Center readiness", () => {
     assert.match(html, /data-panel-action="authority" href="#authority-boundary"/);
     assert.match(html, /data-panel-action="next" href="#next-safe-action"/);
     assert.match(html, /aria-label="Control Center panel inspector"/);
-    assert.match(html, /Interaction: no-script local inspection/);
+    assert.match(html, /상호작용: 스크립트 없는 로컬 검사/);
     assert.match(html, /status-blocked/);
     assert.doesNotMatch(html, /<script/i);
     assert.equal(render.schema, "gpao_t.local_control_center_render.v0_1");
@@ -521,8 +529,8 @@ describe("GPAO-T Local Control Center readiness", () => {
 
     assert.match(htmlOutput, /<html lang="ko">/);
     assert.match(htmlOutput, /data-core-work-surface="read-only"/);
-    assert.match(htmlOutput, /Operating Objects/);
-    assert.match(htmlOutput, /Panels/);
+    assert.match(htmlOutput, /운영 영역/);
+    assert.match(htmlOutput, /패널/);
     assert.match(htmlOutput, /운영 드릴다운/);
     assert.match(htmlOutput, /panel-actions/);
     assert.match(htmlOutput, /workflow-state-view/);
@@ -568,16 +576,16 @@ describe("GPAO-T Local Control Center readiness", () => {
     assert.match(html, /data-state-pill="recovery"/);
     assert.match(html, /data-state-pill="authority"/);
     assert.match(html, /data-state-pill="next"/);
-    assert.match(html, /<strong>Panel ID<\/strong>/);
-    assert.match(html, /<strong>Status<\/strong>/);
-    assert.match(html, /<strong>Next<\/strong>/);
-    assert.match(html, /<strong>Workflow State<\/strong>/);
-    assert.match(html, /<strong>Recovery State<\/strong>/);
-    assert.match(html, /<strong>Authority State<\/strong>/);
-    assert.match(html, /<strong>Next State<\/strong>/);
-    assert.match(html, /<strong>Authority<\/strong>/);
-    assert.match(html, /<strong>Evidence<\/strong>/);
-    assert.match(html, /<strong>Return<\/strong>/);
+    assert.match(html, /<strong>패널 ID<\/strong>/);
+    assert.match(html, /<strong>상태<\/strong>/);
+    assert.match(html, /<strong>다음 행동<\/strong>/);
+    assert.match(html, /<strong>작업 상태<\/strong>/);
+    assert.match(html, /<strong>복구 상태<\/strong>/);
+    assert.match(html, /<strong>권한 상태<\/strong>/);
+    assert.match(html, /<strong>다음 상태<\/strong>/);
+    assert.match(html, /<strong>권한 설명<\/strong>/);
+    assert.match(html, /<strong>근거<\/strong>/);
+    assert.match(html, /<strong>돌아가기<\/strong>/);
     assert.doesNotMatch(html, /onclick=/i);
     assert.doesNotMatch(html, /addEventListener/i);
     assert.doesNotMatch(html, /<script/i);
@@ -794,8 +802,8 @@ describe("GPAO-T Local Control Center readiness", () => {
     assert.match(html, /의도와 맞음/);
     assert.match(html, /수정 필요/);
     assert.match(html, /보류/);
-    assert.match(html, /preview 확인 체크리스트/);
-    assert.match(html, /draft content generated now: false/);
+    assert.match(html, /미리보기 확인 체크리스트/);
+    assert.match(html, /현재 상태: 초안 생성 없음/);
     assert.match(html, /data-execution-proposal-confirmation="preview-only"/);
     assert.match(html, /실행 전 확인/);
     assert.match(html, /읽기 전용/);
@@ -1690,6 +1698,59 @@ describe("GPAO-T Local Control Center readiness", () => {
     assert.match(qaDoc, /All required categories are 4\.0 or higher/);
     assert.match(verifyDoc, /design-realization-pass-001-qa-2026-07-09\.json/);
     assert.match(verifyDoc, /human visual QA 4\.2/);
+  });
+
+  it("keeps design realization pass 002 visual evidence and product thresholds replayable", () => {
+    const qa = JSON.parse(readFileSync(DESIGN_REALIZATION_PASS_002_QA_JSON, "utf8"));
+    const qaDoc = readFileSync(DESIGN_REALIZATION_PASS_002_QA_DOC, "utf8");
+    const verifyDoc = readFileSync(VERIFY_DOC_PATH, "utf8");
+    const evidencePaths = [
+      ...Object.values(qa.afterEvidence),
+      qa.openDesign.desktopScreenshot,
+      qa.openDesign.mobileScreenshot,
+    ];
+    const screenshots = evidencePaths.map((relativePath) => readFileSync(join(ROOT, relativePath)));
+
+    assert.equal(qa.schema, "gpao_t.design_realization_pass_002_visual_qa.v0_1");
+    assert.equal(qa.status, "ready");
+    assert.equal(qa.scope, "GPAO-T Design Realization Pass 002");
+    assert.equal(qa.openDesign.projectId, "gpao-t-design-realization-pass-002");
+    assert.match(qa.openDesign.previewUrl, /gpao-t-design-realization-pass-002/);
+    assert.equal(qa.appliedScreens.includes("Control Center Execution Approval panel"), true);
+    assert.equal(qa.appliedScreens.includes("Work Surface main task thread"), true);
+    assert.equal(qa.visualAdjustments.some((item) => item.includes("cli.dry_run")), true);
+    assert.equal(qa.visualAdjustments.some((item) => item.includes("Korean product language")), true);
+    assert.equal(qa.checks.length, 4);
+    assert.equal(qa.checks.every((check) => check.nonblankViewport), true);
+    assert.equal(qa.checks.every((check) => check.noHorizontalOverflow), true);
+    assert.equal(qa.checks.every((check) => !check.hasScript && !check.hasForm), true);
+    assert.equal(qa.checks.every((check) => check.externalLinks.length === 0), true);
+    assert.equal(qa.checks.every((check) => check.nextSafeActionVisible), true);
+    assert.equal(qa.checks.every((check) => check.authorityBoundaryVisible), true);
+    assert.equal(qa.checks.every((check) => check.koreanProductLanguageVisible), true);
+    assert.equal(qa.checks.every((check) => check.rawPrimaryLabelsVisible === false), true);
+    assert.ok(qa.scores.visualPolish >= qa.thresholds.visualPolish);
+    assert.ok(qa.scores.colorQuality >= qa.thresholds.colorQuality);
+    assert.ok(qa.scores.koreanTypography >= qa.thresholds.koreanTypography);
+    assert.ok(qa.scores.toneAndManner >= qa.thresholds.toneAndManner);
+    assert.ok(qa.scores.authorityClarity >= qa.thresholds.authorityClarity);
+    assert.ok(qa.scores.overallProductFeel >= qa.thresholds.overallProductFeel);
+    assert.equal(qa.invariants.noScript, true);
+    assert.equal(qa.invariants.noExternalActivation, true);
+    assert.equal(qa.invariants.noModelCall, true);
+    assert.equal(qa.invariants.noConnectorToolActivation, true);
+    assert.equal(qa.invariants.noApprovalWriteExpansion, true);
+    assert.equal(qa.blockedActionsRemainClosed.includes("dry-run invocation"), true);
+    assert.equal(qa.blockedActionsRemainClosed.includes("tool/CLI/MCP execution"), true);
+    assert.equal(qa.blockedActionsRemainClosed.includes("durable memory promotion"), true);
+    assert.equal(evidencePaths.every((relativePath) => existsSync(join(ROOT, relativePath))), true);
+    assert.equal(screenshots.every((bytes) => bytes[0] === 0x89 && bytes[1] === 0x50), true);
+    assert.match(qaDoc, /Design Realization Pass 002 QA/);
+    assert.match(qaDoc, /all requested thresholds passed/);
+    assert.match(qaDoc, /Open Design project/);
+    assert.match(verifyDoc, /design-realization-pass-002-qa-2026-07-09\.json/);
+    assert.match(verifyDoc, /visual polish >= 4\.4/);
+    assert.match(verifyDoc, /primary UI does not expose raw labels/);
   });
 
   it("keeps execution approval UX visual QA evidence replayable and execution-free", () => {

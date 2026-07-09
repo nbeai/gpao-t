@@ -55,11 +55,68 @@ const UI_LABELS = {
   "recurring automation": "반복 자동화",
   general_request: "일반 요청",
   cli: "로컬 명령 후보",
+  "cli.dry_run": "로컬 명령 미리보기",
+  "미리보기만 · dry_run": "미리보기만",
   dry_run: "미리보기 후보",
   confirmed_for_local_record_only: "로컬 기록만 확인",
   written_local_only: "로컬 저장됨",
   local_jsonl_record_write_read_replay: "로컬 기록/재생",
   local_record_only: "로컬 기록 한정",
+  blocked_in_this_slice: "이번 단계에서는 미전송",
+  visible_local_preview_structure: "로컬 미리보기",
+  local_structure_preview_only: "로컬 구조 미리보기",
+  local_reasoning_stub: "로컬 추론 후보",
+  "local.reasoning.stub": "로컬 추론 후보",
+  "gpao-core-thinking-pack": "GPAO Core Thinking Pack",
+  "GPAO Core Thinking Pack": "핵심 사고 정리 팩",
+  "GPAO Document Output Pack": "문서 결과물 정리 팩",
+  "GPAO Visual Design Pack": "시각 품질 점검 팩",
+  "Core thinking route": "핵심 사고 정리 경로",
+  "Recover the release-file active target and answer or draft only within local authority.":
+    "현재 릴리스 파일 흐름을 복구하고, 로컬 권한 안에서만 답변하거나 초안을 만듭니다.",
+  "release-file": "릴리스 파일",
+  "목표: Recover the release-file active target and answer or draft only within local authority.":
+    "목표: 현재 릴리스 파일 흐름을 복구하고 로컬 권한 안에서만 답변하거나 초안을 만듭니다.",
+  "입력 신호: general_request": "입력 신호: 일반 요청",
+  "현재 대상: release-file": "현재 대상: 릴리스 파일",
+  "주요 맥락: release-file": "주요 맥락: 릴리스 파일",
+  "주요 스킬: GPAO Core Thinking Pack": "주요 스킬: 핵심 사고 정리 팩",
+  "라우트 모드: local_execution_plan": "라우트 모드: 로컬 계획",
+  "입력 전송: blocked": "입력 전송: 잠김",
+  "외부 모델 호출: blocked": "외부 모델 호출: 잠김",
+  "도구 / 커넥터 실행: blocked": "도구 / 커넥터 실행: 잠김",
+  candidate: "후보",
+  "no candidate admitted": "아직 채택된 맥락 없음",
+  intent_recovery: "의도 복구",
+  supporting_skill: "보조 스킬",
+  quality_anchor: "품질 기준",
+  "Separates facts, assumptions, risks, and next action.": "사실, 가정, 위험, 다음 행동을 분리합니다.",
+  "Reader, purpose, and action are clear in the first screen.": "첫 화면에서 독자, 목적, 행동이 분명한지 봅니다.",
+  "Typography, spacing, contrast, responsive behavior, and visual hierarchy are checked.":
+    "글자, 여백, 대비, 반응형 흐름, 시각 위계를 점검합니다.",
+  "proposal.local_draft_preview": "로컬 초안 제안",
+  proposal_local_draft_preview: "로컬 초안 제안",
+  model_skill_user_request_preview: "모델/스킬/요청 미리보기",
+  "cli,dry_run": "로컬 명령 미리보기",
+  not_confirmed: "아직 확인 전",
+  not_invoked: "아직 실행 전",
+  preview_packet_not_written: "저장 전 승인 패킷",
+  local_preview_only: "로컬 미리보기 한정",
+  preview_only_not_scheduled: "만료 없음 · 미리보기",
+  "replay.reference.required_before_write": "기록 전 리플레이 기준 필요",
+  ".gpao-t/events/audit.jsonl": "로컬 감사 기록 위치",
+  true: "예",
+  false: "아니오",
+  none: "없음",
+  empty: "비어 있음",
+  held: "보류",
+  actual_tool_execution: "실제 도구 실행",
+  cli_command_execution: "명령 실행",
+  mcp_invocation: "MCP 호출",
+  external_network_or_send: "외부 전송",
+  credential_read_or_write: "인증 정보 접근",
+  paid_action: "비용 발생 행동",
+  destructive_action: "되돌리기 어려운 행동",
 };
 
 export function buildCoreWorkSurface({
@@ -239,7 +296,7 @@ export function buildCoreWorkSurface({
       understoodTask: turnPreview.taskPacket.objective,
       expectedOutputShape: {
         label: "예상 출력 형태",
-        value: "작업 요약, 선택된 맥락, 권한 경계, 다음 안전 행동을 포함한 local draft preview",
+        value: "작업 요약, 선택된 맥락, 권한 경계, 다음 안전 행동을 포함한 로컬 초안 미리보기",
         state: "preview_only",
       },
       contextToUse: {
@@ -254,7 +311,7 @@ export function buildCoreWorkSurface({
       },
       lockedExecutionState: {
         label: "실행 전 잠금",
-        value: "live submission, model call, tool execution, connector activation, external send는 모두 닫혀 있음",
+      value: "실제 제출, 모델 호출, 도구 실행, 커넥터 연결, 외부 전송은 모두 닫혀 있음",
         state: "locked_before_execution",
       },
       sections: [
@@ -267,7 +324,7 @@ export function buildCoreWorkSurface({
         {
           id: "expected-output",
           label: "예상 출력",
-          value: "local-only draft preview 구조",
+        value: "로컬 초안 미리보기 구조",
           state: "preview_only",
         },
         {
@@ -486,7 +543,7 @@ export function buildCoreWorkSurface({
       usesForm: false,
     },
     nextSafeAction:
-      "local draft preview가 의도와 맞음, 수정 필요, 보류 중 어디에 해당하는지 읽기 판단한다. 실제 제출/모델/도구/커넥터/외부 실행은 계속 열지 않는다.",
+      "로컬 초안 미리보기가 의도와 맞음, 수정 필요, 보류 중 어디에 해당하는지 읽기 판단한다. 실제 제출/모델/도구/커넥터/외부 실행은 계속 열지 않는다.",
   };
 }
 
@@ -602,7 +659,7 @@ export function verifyCoreWorkSurface({ surface = buildCoreWorkSurface(), html }
     if (!html.includes("data-preview-decision=\"intent-match\"")) findings.push("html_missing_intent_match_decision");
     if (!html.includes("data-preview-decision=\"needs-changes\"")) findings.push("html_missing_needs_changes_decision");
     if (!html.includes("data-preview-decision=\"hold\"")) findings.push("html_missing_hold_decision");
-    if (!html.includes("preview 확인 체크리스트")) findings.push("html_missing_preview_checklist");
+    if (!html.includes("미리보기 확인 체크리스트")) findings.push("html_missing_preview_checklist");
     if (!html.includes("아직 실행된 것은 없습니다")) findings.push("html_missing_no_execution_notice");
     if (!html.includes("data-composer-state=\"draft-not-sent\"")) findings.push("html_missing_composer_marker");
     if (!html.includes("data-authority-boundary=\"closed\"")) findings.push("html_missing_authority_marker");
@@ -735,10 +792,10 @@ export function buildCoreWorkSurfaceHtml({ surface } = {}) {
     }
     .layout {
       display: grid;
-      grid-template-columns: minmax(0, 1.1fr) minmax(280px, 0.9fr);
+      grid-template-columns: minmax(620px, 1.35fr) minmax(300px, 0.65fr);
       gap: 16px;
       padding: 18px;
-      max-width: 1320px;
+      max-width: 1360px;
       margin: 0 auto;
     }
     .thread, .panel, .composer, .message, .state-card {
@@ -880,7 +937,7 @@ export function buildCoreWorkSurfaceHtml({ surface } = {}) {
     }
     .confirmation-grid {
       display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
+      grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 8px;
       margin-top: 10px;
     }
@@ -935,7 +992,7 @@ export function buildCoreWorkSurfaceHtml({ surface } = {}) {
     }
     .draft-preview-grid {
       display: grid;
-      grid-template-columns: repeat(5, minmax(0, 1fr));
+      grid-template-columns: repeat(3, minmax(0, 1fr));
       gap: 8px;
       margin-top: 10px;
     }
@@ -1073,7 +1130,7 @@ export function buildCoreWorkSurfaceHtml({ surface } = {}) {
     }
     .execution-proposal {
       margin-top: 12px;
-      padding: 12px;
+      padding: 14px;
       border: 1px solid #d8c8f0;
       border-radius: 12px;
       background: var(--violet-soft);
@@ -1093,6 +1150,9 @@ export function buildCoreWorkSurfaceHtml({ surface } = {}) {
       background: var(--surface);
       overflow-wrap: anywhere;
     }
+    .execution-proposal-summary p + p {
+      margin-top: 5px;
+    }
     .authority-level-grid,
     .approval-packet-grid,
     .audit-preview-grid {
@@ -1105,7 +1165,7 @@ export function buildCoreWorkSurfaceHtml({ surface } = {}) {
     .approval-rule,
     .audit-item {
       min-width: 0;
-      min-height: 104px;
+      min-height: 96px;
       padding: 10px;
       border: 1px solid var(--line);
       border-radius: 10px;
@@ -1310,7 +1370,7 @@ export function buildCoreWorkSurfaceHtml({ surface } = {}) {
         ${understandingCards.map((card) => `
         <div class="understanding-card" data-understanding-card="${escapeHtml(card.id)}" data-tone="${escapeHtml(card.tone)}">
           <strong>${escapeHtml(card.label)}</strong>
-          <span>${escapeHtml(card.value)}</span>
+          <span>${escapeHtml(uiLabel(card.value))}</span>
         </div>`).join("")}
       </div>
       <div class="readability-panel" data-readability-interaction="native-details">
@@ -1319,7 +1379,7 @@ export function buildCoreWorkSurfaceHtml({ surface } = {}) {
           <summary>${escapeHtml(section.title)}</summary>
           <p>${escapeHtml(section.summary)}</p>
           <ul>
-            ${section.items.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}
+            ${section.items.map((item) => `<li>${escapeHtml(uiLabel(item))}</li>`).join("")}
           </ul>
         </details>`).join("")}
         <div class="checklist" aria-label="Read-only task handoff checklist">
@@ -1378,19 +1438,19 @@ export function buildCoreWorkSurfaceHtml({ surface } = {}) {
           </div>`).join("")}
         </div>
         <div class="preview-checklist" aria-label="Preview confirmation checklist">
-          <strong>preview 확인 체크리스트</strong>
+          <strong>미리보기 확인 체크리스트</strong>
           <ul>
             ${previewChecklist.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}
           </ul>
         </div>
         <p class="confirmation-note">${escapeHtml(workSurface.localDraftPreview.nextAfterPreview)}</p>
-        <p class="confirmation-note">draft content generated now: ${escapeHtml(workSurface.localDraftPreview.draftContentGeneratedNow)} · model: ${escapeHtml(workSurface.localDraftPreview.invokesModel)} · tools: ${escapeHtml(workSurface.localDraftPreview.executesTools)} · connectors: ${escapeHtml(workSurface.localDraftPreview.activatesConnectors)}</p>
+        <p class="confirmation-note">현재 상태: 초안 생성 없음 · 모델 호출 없음 · 도구 실행 없음 · 커넥터 연결 없음</p>
       </section>
       <div class="state-grid" aria-label="Current task state">
-        ${stateCard("Task", workSurface.taskState.status)}
-        ${stateCard("Signal", workSurface.taskState.inputSignal)}
-        ${stateCard("Target", workSurface.taskState.activeTargetId)}
-        ${stateCard("Skill Mode", workSurface.taskState.skillExecutionMode)}
+        ${stateCard("작업 상태", workSurface.taskState.status)}
+        ${stateCard("입력 신호", workSurface.taskState.inputSignal)}
+        ${stateCard("현재 대상", workSurface.taskState.activeTargetId)}
+        ${stateCard("스킬 모드", workSurface.taskState.skillExecutionMode)}
       </div>
       <section id="execution-proposal-confirmation" class="execution-proposal" data-execution-proposal-confirmation="preview-only" aria-label="Execution proposal confirmation">
         <div class="execution-proposal-head">
@@ -1403,8 +1463,8 @@ export function buildCoreWorkSurfaceHtml({ surface } = {}) {
         <div class="execution-proposal-summary">
           <strong>${escapeHtml(executionConfirmation.proposal.title)}</strong>
           <p>${escapeHtml(executionConfirmation.proposal.userSummary)}</p>
-          <p class="muted">도구: ${escapeHtml(uiLabel(executionConfirmation.proposal.toolKind))} · 행동: ${escapeHtml(uiLabel(executionConfirmation.proposal.actionType))} · 위험: ${escapeHtml(executionConfirmation.proposal.risk)}</p>
-          <p class="muted">rollback: ${escapeHtml(executionConfirmation.proposal.rollbackReference)}</p>
+          <p class="muted">행동 후보: ${escapeHtml(uiLabel(executionConfirmation.proposal.actionType))} · 위험: ${escapeHtml(executionConfirmation.proposal.risk)}</p>
+          <p class="muted">되돌리기 기준: ${escapeHtml(executionConfirmation.proposal.rollbackReference)}</p>
         </div>
         <div class="authority-level-grid" aria-label="Korean authority level display">
           ${authorityLegend.map((level) => `
@@ -1420,12 +1480,12 @@ export function buildCoreWorkSurfaceHtml({ surface } = {}) {
             <span>${escapeHtml(rule.userMessage)}</span>
           </div>`).join("")}
         </div>
-        <p class="confirmation-note" data-audit-write-design="local-record-only">감사 기록/승인 기록: 로컬 JSONL만 가능 · 실제 실행: ${escapeHtml(executionConfirmation.approvalPacket.opensInvocationNow)}</p>
+        <p class="confirmation-note" data-audit-write-design="local-record-only">감사 기록/승인 기록: 로컬 JSONL만 가능 · 실제 실행: ${escapeHtml(uiLabel(executionConfirmation.approvalPacket.opensInvocationNow))}</p>
         <div class="audit-preview-grid" data-audit-preview="design-only" aria-label="Planned audit items">
           ${plannedAuditItems.map((item) => `
           <div class="audit-item" data-audit-item="${escapeHtml(item.id)}">
             <strong>${escapeHtml(item.label)}</strong>
-            <span>${escapeHtml(item.value)}</span>
+            <span>${escapeHtml(uiLabel(item.value))}</span>
             <small>${escapeHtml(item.userMeaning)}</small>
           </div>`).join("")}
         </div>
@@ -1434,7 +1494,7 @@ export function buildCoreWorkSurfaceHtml({ surface } = {}) {
           ${approvalRecordStages.map((stage) => `
           <div class="audit-item" data-approval-record-stage="${escapeHtml(stage.id)}">
             <strong>${escapeHtml(stage.step)} · ${escapeHtml(stage.label)}</strong>
-            <span>${escapeHtml(stage.status)}</span>
+            <span>${escapeHtml(uiLabel(stage.status))}</span>
             <small>${escapeHtml(stage.userMeaning)}</small>
           </div>`).join("")}
         </div>
@@ -1443,7 +1503,7 @@ export function buildCoreWorkSurfaceHtml({ surface } = {}) {
           ${approvalRecordItems.map((item) => `
           <div class="audit-item" data-approval-record-item="${escapeHtml(item.id)}">
             <strong>${escapeHtml(item.label)}</strong>
-            <span>${escapeHtml(item.value)}</span>
+            <span>${escapeHtml(uiLabel(item.value))}</span>
             <small>${escapeHtml(item.userMeaning)}</small>
           </div>`).join("")}
         </div>
@@ -1454,28 +1514,28 @@ export function buildCoreWorkSurfaceHtml({ surface } = {}) {
     </section>
     <section>
       <article class="panel">
-        <h2>Context Mesh / Memory Wiki</h2>
-        <p class="muted">${escapeHtml(workSurface.contextPreview.boundary)}</p>
+        <h2>맥락 근거 / Memory Wiki</h2>
+        <p class="muted">Context Mesh 후보는 읽기 근거로만 사용되며 실행 권한이나 지속 기억 승격을 의미하지 않습니다.</p>
         <div class="state-grid">
-          ${stateCard("Memory", `${workSurface.contextPreview.memoryEntries}`)}
-          ${stateCard("T-cells", `${workSurface.contextPreview.tcellCandidates}`)}
+          ${stateCard("기억 항목", `${workSurface.contextPreview.memoryEntries}`)}
+          ${stateCard("T-cell 후보", `${workSurface.contextPreview.tcellCandidates}`)}
         </div>
         <div class="list">
           ${(contextCandidates.length ? contextCandidates : [{ id: "empty", anchor: "no candidate admitted", score: 0, lifecycle: "preview" }]).map((candidate) => `
           <div class="item" data-context-candidate="${escapeHtml(candidate.id)}">
-            <strong>${escapeHtml(candidate.anchor)}</strong>
-            <span>${escapeHtml(uiLabel(candidate.lifecycle))} · score ${escapeHtml(candidate.score)}</span>
+            <strong>${escapeHtml(uiLabel(candidate.anchor))}</strong>
+            <span>${escapeHtml(uiLabel(candidate.lifecycle))} · 적합도 ${escapeHtml(candidate.score)}</span>
           </div>`).join("")}
         </div>
       </article>
       <article class="panel">
-        <h2>Skill Pack Route</h2>
-        <p class="muted">${escapeHtml(workSurface.skillRoutePreview.executionMode)}</p>
+        <h2>스킬 경로</h2>
+        <p class="muted">${escapeHtml(uiLabel(workSurface.skillRoutePreview.executionMode))}</p>
         <div class="list">
           ${(selectedPacks.length ? selectedPacks : [{ id: "none", title: "No pack selected", routeRole: "review", firstQualityGate: "clarify request" }]).map((pack) => `
           <div class="item" data-skill-pack="${escapeHtml(pack.id)}">
-            <strong>${escapeHtml(pack.title)}</strong>
-            <span>${escapeHtml(uiLabel(pack.routeRole))} · ${escapeHtml(pack.firstQualityGate)}</span>
+            <strong>${escapeHtml(uiLabel(pack.title))}</strong>
+            <span>${escapeHtml(uiLabel(pack.routeRole))} · ${escapeHtml(uiLabel(pack.firstQualityGate))}</span>
           </div>`).join("")}
         </div>
       </article>
@@ -1513,8 +1573,8 @@ function localRecordSubstrateHtml(substrate = {}) {
           </div>
           <div class="audit-item">
             <strong>계속 잠김</strong>
-            <span>${escapeHtml((substrate.blockedBoundaries || []).slice(0, 4).join(" · "))}</span>
-            <small>외부 전송, 비용/파괴, credential, connector live는 열리지 않습니다.</small>
+            <span>${escapeHtml((substrate.blockedBoundaries || []).slice(0, 4).map(uiLabel).join(" · "))}</span>
+            <small>외부 전송, 비용/파괴, 인증 정보 접근, 커넥터 실행은 열리지 않습니다.</small>
           </div>
         </div>`;
 }

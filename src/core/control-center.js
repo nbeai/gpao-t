@@ -195,7 +195,7 @@ export function buildControlCenterSummary({ root } = {}) {
 function buildCoreWorkSurfacePanel({ coreWorkSurface }) {
   return {
     id: "core-work-surface",
-    label: "Work Surface",
+    label: "작업 표면",
     status: coreWorkSurface.status,
     headline: "GPAO-T에게 일을 맡기는 첫 작업 표면이다. 입력은 초안이고 실행은 아직 열리지 않는다.",
     data: coreWorkSurface,
@@ -220,13 +220,13 @@ function buildSkillPanel({
     : skillReadiness.status;
   return {
     id: "skill-ecosystem",
-    label: "Skill Ecosystem",
+    label: "스킬 생태계",
     status,
     headline: skillExecution.totalRuns
-      ? "Skill packs now produce local execution evidence and growth signals."
+      ? "스킬 팩이 로컬 실행 근거와 성장 신호를 남기고 있다."
       : skillReadiness.status === "ready"
-      ? "Research-grounded base skill packs are registered; execution evidence is waiting for first run."
-      : "Skill ecosystem manifest needs review before runtime attachment.",
+      ? "리서치 기반 기본 스킬 팩은 등록되어 있고, 첫 실행 근거를 기다리는 상태다."
+      : "런타임에 붙이기 전에 스킬 생태계 manifest 검토가 필요하다.",
     data: {
       totalPacks: skillPacks.total,
       totalCandidates: skillAtlas.allCandidates,
@@ -240,18 +240,18 @@ function buildSkillPanel({
     },
     nextSafeAction: skillExecution.totalRuns
       ? skillExecution.nextSafeAction
-      : "Run a local skill execution record to create inspectable artifact, quality, replay, and growth evidence.",
+      : "로컬 스킬 실행 기록을 남겨 산출물, 품질, 리플레이, 성장 근거를 확인한다.",
   };
 }
 
 function buildRuntimePanel({ doctor, runtimeState, auditEvents }) {
   return {
     id: "runtime",
-    label: "Runtime",
+    label: "로컬 런타임",
     status: doctor.status === "ready" ? "ready" : "blocked",
     headline: doctor.status === "ready"
-      ? "Local runtime skeleton files are present."
-      : "Required runtime skeleton files are missing.",
+      ? "로컬 런타임 골격 파일이 준비되어 있다."
+      : "필수 런타임 골격 파일이 빠져 있다.",
     data: {
       runtimeId: runtimeState.runtimeId,
       version: runtimeState.version,
@@ -261,19 +261,19 @@ function buildRuntimePanel({ doctor, runtimeState, auditEvents }) {
       missing: doctor.missing,
     },
     nextSafeAction: doctor.status === "ready"
-      ? "Use control center panels to inspect state before adding UI or connectors."
-      : "Restore missing runtime files before building UI or connector surfaces.",
+      ? "UI나 커넥터를 더하기 전에 Control Center 패널에서 상태를 확인한다."
+      : "UI나 커넥터 표면을 만들기 전에 빠진 런타임 파일을 복구한다.",
   };
 }
 
 function buildOpsPanel({ installHardening, operationsContract }) {
   return {
     id: "ops",
-    label: "Install / Update / Rollback",
+    label: "설치 / 업데이트 / 롤백",
     status: installHardening.status === "blocked" ? "blocked" : operationsContract.status,
     headline: installHardening.status === "blocked"
-      ? "Install/update/rollback readiness has blockers."
-      : "Local data and operations contracts are inspectable before real executors exist.",
+      ? "설치/업데이트/롤백 준비 상태에 막힌 지점이 있다."
+      : "실제 실행기가 생기기 전에 로컬 데이터와 운영 계약을 먼저 확인할 수 있다.",
     data: {
       installHardening,
       operationsContract,
@@ -411,7 +411,7 @@ function buildApprovalPreviewFlow() {
 function buildApprovalPreviewPanel({ approvalPreviewFlow }) {
   return {
     id: "approval-preview",
-    label: "Approval / Preview",
+    label: "승인 / 미리보기",
     status: approvalPreviewFlow.status,
     headline: "승인 전 프리뷰 단계다. 아직 실행된 것은 없고, dry-run/approval 흐름만 읽을 수 있다.",
     data: approvalPreviewFlow,
@@ -422,7 +422,7 @@ function buildApprovalPreviewPanel({ approvalPreviewFlow }) {
 function buildDesignReferencePanel({ designReferenceGate }) {
   return {
     id: "design-reference",
-    label: "Design Reference",
+    label: "디자인 기준",
     status: "review",
     headline: "모든 UI/UX slice는 Codex급 작업 리듬, Claude Code급 권한 UX, 한국어 제품감을 실제 화면 증거로 확인해야 한다.",
     data: designReferenceGate,
@@ -433,7 +433,7 @@ function buildDesignReferencePanel({ designReferenceGate }) {
 function buildExecutionApprovalPanel({ executionApprovalPreview, approvalAuditLocalRecordSubstrate }) {
   return {
     id: "execution-approval",
-    label: "Execution Approval",
+    label: "실행 전 확인",
     status: "review",
     headline: "실행 후보를 확인하고 승인/감사 기록만 로컬 JSONL에 남길 수 있다.",
     data: {
@@ -448,30 +448,30 @@ function buildMemoryPanel({ memoryWiki, tcellCandidates }) {
   const hasCandidates = tcellCandidates.length > 0;
   return {
     id: "memory",
-    label: "Memory Wiki / Context Mesh",
+    label: "기억 / Context Mesh",
     status: hasCandidates ? "ready" : "review",
     headline: hasCandidates
-      ? "Memory candidates are available for Context Mesh admission."
-      : "No T-cell candidates are available yet.",
+      ? "Context Mesh 선별에 쓸 기억 후보가 있다."
+      : "아직 사용할 T-cell 후보가 없다.",
     data: {
       entries: memoryWiki.entries.length,
       candidates: tcellCandidates.length,
       latestEntry: memoryWiki.entries.at(-1) || null,
     },
     nextSafeAction: hasCandidates
-      ? "Resolve current requests through Context Mesh before admission."
-      : "Capture a source-linked Memory Wiki entry before relying on memory continuity.",
+      ? "현재 요청은 admission 전에 Context Mesh로 먼저 선별한다."
+      : "기억 연속성에 기대기 전에 출처가 연결된 Memory Wiki 항목을 남긴다.",
   };
 }
 
 function buildRecoveryPanel({ recoveryHistory, recoverySummary }) {
   return {
     id: "recovery",
-    label: "Replay Recovery",
+    label: "리플레이 복구",
     status: recoveryHistory.length ? "ready" : "review",
     headline: recoveryHistory.length
-      ? "Replay recovery evidence is available."
-      : "No replay recovery evidence has been recorded yet.",
+      ? "리플레이 복구 근거가 있다."
+      : "아직 기록된 리플레이 복구 근거가 없다.",
     data: {
       totalRecords: recoveryHistory.length,
       repeatedTargets: recoverySummary.repeatedTargets,
@@ -485,13 +485,13 @@ function buildGrowthPanel({ growthProposals, growthApplicationGates }) {
   const hasGateReviews = growthApplicationGates.totalGates > 0;
   return {
     id: "growth",
-    label: "Self-Growth Proposals",
+    label: "자가성장 제안",
     status: growthProposals.length || hasGateReviews ? "review" : "ready",
     headline: hasGateReviews
-      ? "Growth application gates are waiting for review; live mutation is blocked."
+      ? "성장 적용 게이트가 검토를 기다리고 있으며 live mutation은 잠겨 있다."
       : growthProposals.length
-      ? "Review-only growth proposals are waiting for replay and approval gates."
-      : "No growth proposals are pending.",
+      ? "검토 전용 성장 제안이 리플레이와 승인 게이트를 기다리고 있다."
+      : "대기 중인 성장 제안은 없다.",
     data: {
       proposals: growthProposals.length,
       applicationGates: growthApplicationGates.totalGates,
@@ -502,8 +502,8 @@ function buildGrowthPanel({ growthProposals, growthApplicationGates }) {
     nextSafeAction: hasGateReviews
       ? growthApplicationGates.nextSafeAction
       : growthProposals.length
-      ? "Review proposals, add replay coverage, and keep application blocked until approval gates exist."
-      : "Generate proposals only from repeated replay recovery evidence.",
+      ? "제안을 검토하고 리플레이 근거를 더하되, 승인 게이트 전까지 적용은 잠근다."
+      : "반복된 리플레이 복구 근거에서만 제안을 만든다.",
   };
 }
 
@@ -515,9 +515,9 @@ function buildAdapterPanel({ modelAdapters, modelRouterBoundary, modelRouterPoli
 
   return {
     id: "adapters",
-    label: "Model / Tool Adapters",
+    label: "모델 / 도구 어댑터",
     status: "ready",
-    headline: "Local preview adapters are visible and external adapters are blocked.",
+    headline: "로컬 미리보기 어댑터는 보이고, 외부 어댑터는 잠겨 있다.",
     data: {
       modelAdapters: modelAdapters.adapters.length,
       modelRouterBoundary,
@@ -533,9 +533,9 @@ function buildAdapterPanel({ modelAdapters, modelRouterBoundary, modelRouterPoli
 function buildConnectorPanel({ connectorGovernance }) {
   return {
     id: "connectors",
-    label: "Connectors",
+    label: "커넥터",
     status: "review",
-    headline: "Tool, CLI, MCP, and connector candidates are visible, but execution stays blocked.",
+    headline: "도구, 명령, MCP, 커넥터 후보는 보이지만 실행은 잠겨 있다.",
     data: connectorGovernance,
     nextSafeAction: connectorGovernance.nextSafeAction,
   };
@@ -544,17 +544,17 @@ function buildConnectorPanel({ connectorGovernance }) {
 function buildAuthorityPanel({ runtimeState }) {
   return {
     id: "authority",
-    label: "Authority",
+    label: "권한",
     status: "ready",
-    headline: "Authority boundaries default to local preview only.",
+    headline: "권한 경계는 기본적으로 로컬 미리보기만 허용한다.",
     data: runtimeState.boundaries || {},
-    nextSafeAction: "Ask for explicit approval only at external, destructive, secret, deployment, or durable mutation boundaries.",
+    nextSafeAction: "외부 행동, 파괴적 변경, 인증 정보, 배포, 지속 변경 경계에서만 명시적 승인을 요청한다.",
   };
 }
 
 function buildNextSafeAction({ blockedPanels, reviewPanels }) {
   if (blockedPanels.length) {
-    return `Resolve blocked panel first: ${blockedPanels[0].label}.`;
+    return `먼저 막힌 패널을 해결한다: ${blockedPanels[0].label}.`;
   }
   const coreWorkSurfacePanel = reviewPanels.find((panel) => panel.id === "core-work-surface");
   if (coreWorkSurfacePanel) return coreWorkSurfacePanel.nextSafeAction;
