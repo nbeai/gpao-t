@@ -76,6 +76,14 @@ const CONTROL_APPROVAL_PREVIEW_QA_DOC = fileURLToPath(new URL(
   "../docs/03-verification/evidence/CONTROL-CENTER-APPROVAL-PREVIEW-UX-QA-2026-07-09.md",
   import.meta.url,
 ));
+const EXECUTION_APPROVAL_QA_JSON = fileURLToPath(new URL(
+  "../docs/03-verification/evidence/execution-approval-ux-qa-2026-07-09.json",
+  import.meta.url,
+));
+const EXECUTION_APPROVAL_QA_DOC = fileURLToPath(new URL(
+  "../docs/03-verification/evidence/EXECUTION-APPROVAL-UX-QA-2026-07-09.md",
+  import.meta.url,
+));
 const WORK_SURFACE_VISUAL_QA_JSON = fileURLToPath(new URL(
   "../docs/03-verification/evidence/work-surface-visual-qa-baseline-2026-07-09.json",
   import.meta.url,
@@ -133,6 +141,10 @@ describe("GPAO-T Local Control Center readiness", () => {
     assert.equal(snapshot.counts.growthApplicationGates, 0);
     assert.equal(snapshot.counts.approvalPreviewStages, 5);
     assert.equal(snapshot.counts.approvalPreviewBlockedActions, 10);
+    assert.equal(snapshot.counts.executionApprovalAuthorityLevels, 6);
+    assert.equal(snapshot.counts.executionApprovalRequiredFields, 15);
+    assert.equal(snapshot.counts.executionApprovalValidationRules, 6);
+    assert.equal(snapshot.counts.executionApprovalBlockedActions, 11);
     assert.equal(snapshot.counts.coreWorkSurfaceThreadMessages, 2);
     assert.equal(snapshot.counts.coreWorkSurfaceSelectedSkillPacks >= 1, true);
     assert.equal(snapshot.authorityBoundary.connectorActivation, "blocked_until_explicit_approval");
@@ -141,6 +153,7 @@ describe("GPAO-T Local Control Center readiness", () => {
     assert.equal(snapshot.authorityBoundary.growthApplication, "blocked_in_this_slice");
     assert.equal(snapshot.authorityBoundary.installExecution, "blocked_until_user_approval");
     assert.equal(snapshot.authorityBoundary.approvalPreviewFlow, "local_preview_only_no_write_no_invocation");
+    assert.equal(snapshot.authorityBoundary.executionApprovalPacket, "preview_validation_only_no_write_no_invocation");
     assert.equal(snapshot.authorityBoundary.approvalRecordWrite, "blocked");
     assert.equal(snapshot.authorityBoundary.dryRunInvocation, "blocked");
     assert.equal(snapshot.authorityBoundary.externalModelCall, "blocked_until_configured_and_approved");
@@ -168,6 +181,19 @@ describe("GPAO-T Local Control Center readiness", () => {
       && panel.data.stages.every((stage) => Number.isInteger(stage.step))
       && panel.data.safetyInvariants.writesApprovalRecord === false
       && panel.data.safetyInvariants.invokesDryRunExecutor === false
+    ));
+    assert.ok(snapshot.panels.some((panel) =>
+      panel.id === "execution-approval"
+      && panel.status === "review"
+      && panel.data.schema === "gpao_t.execution_approval_preview.v0_1"
+      && panel.data.proposal.toolKind === "cli"
+      && panel.data.proposal.actionType === "dry_run"
+      && panel.data.authorityLegend.some((level) => level.label === "읽기 전용")
+      && panel.data.authorityLegend.some((level) => level.label === "비용 발생 가능")
+      && panel.data.approvalPacket.writesPacketNow === false
+      && panel.data.auditWriteDesign.auditWriteNow === false
+      && panel.data.uxContract.defaultLocale === "ko-KR"
+      && panel.data.safetyInvariants.writesApprovalRecord === false
     ));
     assert.ok(snapshot.panels.some((panel) => panel.id === "connectors" && panel.status === "review"));
     assert.ok(snapshot.panels.some((panel) =>
@@ -618,6 +644,26 @@ describe("GPAO-T Local Control Center readiness", () => {
     assert.equal(surface.localDraftPreview.writesApprovalRecord, false);
     assert.equal(surface.localDraftPreview.installsUpdatesOrRollsBack, false);
     assert.equal(surface.localDraftPreview.promotesDurableMemory, false);
+    assert.equal(surface.executionProposalConfirmation.schema, "gpao_t.work_surface_execution_proposal_confirmation.v0_1");
+    assert.equal(surface.executionProposalConfirmation.status, "visible_preview_only");
+    assert.equal(surface.executionProposalConfirmation.proposal.toolKind, "cli");
+    assert.equal(surface.executionProposalConfirmation.proposal.actionType, "dry_run");
+    assert.equal(surface.executionProposalConfirmation.proposal.authorityLevel, "dry_run");
+    assert.ok(surface.executionProposalConfirmation.proposal.expectedEffect);
+    assert.ok(surface.executionProposalConfirmation.proposal.risk);
+    assert.ok(surface.executionProposalConfirmation.proposal.rollbackReference);
+    assert.equal(surface.executionProposalConfirmation.authorityLegend.length, 6);
+    assert.equal(surface.executionProposalConfirmation.authorityLegend.some((level) => level.label === "읽기 전용"), true);
+    assert.equal(surface.executionProposalConfirmation.authorityLegend.some((level) => level.label === "저장 전 확인"), true);
+    assert.equal(surface.executionProposalConfirmation.authorityLegend.some((level) => level.label === "외부 전송 전 확인"), true);
+    assert.equal(surface.executionProposalConfirmation.authorityLegend.some((level) => level.label === "되돌리기 어려움"), true);
+    assert.equal(surface.executionProposalConfirmation.authorityLegend.some((level) => level.label === "비용 발생 가능"), true);
+    assert.equal(surface.executionProposalConfirmation.approvalPacket.requiredFields.includes("rollback_reference"), true);
+    assert.equal(surface.executionProposalConfirmation.approvalPacket.writesPacketNow, false);
+    assert.equal(surface.executionProposalConfirmation.approvalPacket.opensInvocationNow, false);
+    assert.equal(surface.executionProposalConfirmation.validationRules.length, 6);
+    assert.equal(surface.executionProposalConfirmation.auditWriteDesign.auditWriteNow, false);
+    assert.equal(surface.executionProposalConfirmation.uxContract.defaultLocale, "ko-KR");
     assert.equal(surface.taskState.objective.includes("GPAO-T"), true);
     assert.equal(surface.contextPreview.boundary.includes("preview only"), true);
     assert.equal(surface.skillRoutePreview.selectedPacks.length >= 1, true);
@@ -666,6 +712,16 @@ describe("GPAO-T Local Control Center readiness", () => {
     assert.match(html, /보류/);
     assert.match(html, /preview 확인 체크리스트/);
     assert.match(html, /draft content generated now: false/);
+    assert.match(html, /data-execution-proposal-confirmation="preview-only"/);
+    assert.match(html, /실행 전 확인/);
+    assert.match(html, /읽기 전용/);
+    assert.match(html, /미리보기만/);
+    assert.match(html, /저장 전 확인/);
+    assert.match(html, /외부 전송 전 확인/);
+    assert.match(html, /되돌리기 어려움/);
+    assert.match(html, /비용 발생 가능/);
+    assert.match(html, /data-approval-packet-validation="design-only"/);
+    assert.match(html, /data-audit-write-design="no-write"/);
     assert.match(html, /data-composer-state="draft-not-sent"/);
     assert.match(html, /data-authority-boundary="closed"/);
     assert.doesNotMatch(html, /<script/i);
@@ -1439,6 +1495,64 @@ describe("GPAO-T Local Control Center readiness", () => {
     assert.match(verifyDoc, /control-center-approval-preview-ux-qa-2026-07-09\.json/);
     assert.match(verifyDoc, /아직 실행된 것은 없음/);
     assert.match(verifyDoc, /mobile fixed topbar action line/);
+  });
+
+  it("keeps execution approval UX visual QA evidence replayable and execution-free", () => {
+    const qa = JSON.parse(readFileSync(EXECUTION_APPROVAL_QA_JSON, "utf8"));
+    const qaDoc = readFileSync(EXECUTION_APPROVAL_QA_DOC, "utf8");
+    const verifyDoc = readFileSync(VERIFY_DOC_PATH, "utf8");
+    const screenshotPaths = Object.values(qa.evidenceFiles);
+    const screenshots = screenshotPaths.map((relativePath) => readFileSync(join(ROOT, relativePath)));
+
+    assert.equal(qa.schema, "gpao_t.execution_approval_ux_qa.v0_1");
+    assert.equal(qa.status, "ready");
+    assert.equal(qa.fileFormat, "png");
+    assert.equal(qa.invariants.executionProposalVisible, true);
+    assert.equal(qa.invariants.approvalPacketValidationVisible, true);
+    assert.equal(qa.invariants.auditWriteDesignOnly, true);
+    assert.equal(qa.invariants.koreanDefaultStatusLanguage, true);
+    assert.equal(qa.invariants.authorityLevelsHaveIconColorLabelDescription, true);
+    assert.equal(qa.invariants.noActualToolCliMcpExecution, true);
+    assert.equal(qa.invariants.noConnectorActivation, true);
+    assert.equal(qa.invariants.noExternalNetworkSend, true);
+    assert.equal(qa.invariants.noCredentialReadWrite, true);
+    assert.equal(qa.invariants.noPaidAction, true);
+    assert.equal(qa.invariants.noDestructiveAction, true);
+    assert.equal(qa.invariants.noApprovalRecordWrite, true);
+    assert.equal(qa.invariants.noDurableMemoryPromotion, true);
+    assert.equal(qa.invariants.noScript, true);
+    assert.equal(qa.invariants.noForm, true);
+    assert.equal(qa.invariants.noHorizontalOverflow, true);
+    assert.equal(qa.invariants.mobileTopbarActionLineVisible, true);
+    assert.deepEqual(qa.authorityLabels, [
+      "읽기 전용",
+      "미리보기만",
+      "저장 전 확인",
+      "외부 전송 전 확인",
+      "되돌리기 어려움",
+      "비용 발생 가능",
+    ]);
+    assert.equal(qa.checks.length, 4);
+    assert.equal(qa.checks.every((check) => check.nonblankViewport), true);
+    assert.equal(qa.checks.every((check) => check.noHorizontalOverflow), true);
+    assert.equal(qa.checks.every((check) => !check.hasScript && !check.hasForm), true);
+    assert.equal(qa.checks.every((check) => check.externalLinks.length === 0), true);
+    assert.equal(qa.checks.some((check) => check.id === "work-surface-mobile"
+      && check.topbarActionUsesShortKoreanProductLanguage
+      && check.composerLockUsesShortKoreanProductLanguage), true);
+    assert.equal(qa.blockedActionsRemainClosed.includes("approval record write"), true);
+    assert.equal(qa.blockedActionsRemainClosed.includes("audit write"), true);
+    assert.equal(qa.blockedActionsRemainClosed.includes("actual tool execution"), true);
+    assert.equal(qa.blockedActionsRemainClosed.includes("credential read/write"), true);
+    assert.equal(screenshotPaths.every((relativePath) => existsSync(join(ROOT, relativePath))), true);
+    assert.equal(screenshots.every((bytes) => bytes[0] === 0x89 && bytes[1] === 0x50), true);
+    assert.match(qaDoc, /Execution Approval UX QA/);
+    assert.match(qaDoc, /의도 확인 · 수정\/보류 선택 · 실행 없음/);
+    assert.match(qaDoc, /외부 행동 없음 · 도구 실행 없음 · 모델 연결 실행 없음/);
+    assert.match(qaDoc, /execution-approval-ux-2026-07-09-work-surface-mobile-390x844\.png/);
+    assert.match(verifyDoc, /execution-approval-ux-qa-2026-07-09\.json/);
+    assert.match(verifyDoc, /읽기 전용/);
+    assert.match(verifyDoc, /비용 발생 가능/);
   });
 
   it("serves the static Control Center over loopback and verifies page content", async () => {

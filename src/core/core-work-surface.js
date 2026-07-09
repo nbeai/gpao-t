@@ -1,4 +1,5 @@
 import { buildConnectorGovernanceSummary } from "./connector-governance.js";
+import { buildExecutionApprovalPreview } from "./execution-approval.js";
 import { readMemoryWiki, readTCellCandidates, resolveContextMesh } from "./memory-wiki.js";
 import { routeModel } from "./model-router.js";
 import { routeSkillPacks, buildSkillExecutionPlan } from "./skill-ecosystem.js";
@@ -38,6 +39,7 @@ export function buildCoreWorkSurface({
     authorityDecision: turnPreview.authorityDecision,
   });
   const connectorGovernance = buildConnectorGovernanceSummary();
+  const executionApprovalPreview = buildExecutionApprovalPreview({ request: draftRequest });
   const primaryContext = contextPreview.retrievedCandidates[0];
   const primarySkillPack = skillRoute.selectedPacks[0];
 
@@ -56,6 +58,7 @@ export function buildCoreWorkSurface({
         placeholder: "GPAO-T에게 맡길 일을 적는 자리",
         draftRequest,
         submission: "blocked_in_this_slice",
+        submissionLabel: "미전송",
       },
       threadPreview: [
         {
@@ -331,6 +334,27 @@ export function buildCoreWorkSurface({
       installsUpdatesOrRollsBack: false,
       promotesDurableMemory: false,
     },
+    executionProposalConfirmation: {
+      schema: "gpao_t.work_surface_execution_proposal_confirmation.v0_1",
+      status: "visible_preview_only",
+      headline: "실행 전 확인",
+      userMessage: "무엇이 실행될 예정인지 먼저 확인합니다. 아직 실행된 것은 없습니다.",
+      proposal: executionApprovalPreview.proposal,
+      authorityDisplay: executionApprovalPreview.authorityDisplay,
+      authorityLegend: executionApprovalPreview.authorityLegend,
+      approvalPacket: {
+        mode: executionApprovalPreview.approvalPacket.mode,
+        requiredFields: executionApprovalPreview.approvalPacket.requiredFields,
+        writesPacketNow: false,
+        opensInvocationNow: false,
+      },
+      validationRules: executionApprovalPreview.validation.rules,
+      auditWriteDesign: executionApprovalPreview.auditWriteDesign,
+      confirmationChoices: executionApprovalPreview.workSurfaceView.confirmationChoices,
+      uxContract: executionApprovalPreview.uxContract,
+      blockedActions: executionApprovalPreview.blockedActions,
+      nextSafeAction: executionApprovalPreview.nextSafeAction,
+    },
     taskState: {
       id: turnPreview.taskPacket.id,
       status: turnPreview.status,
@@ -444,6 +468,18 @@ export function verifyCoreWorkSurface({ surface = buildCoreWorkSurface(), html }
   if (surface.localDraftPreview?.confirmationFlow?.closesCoreWorkSurfaceSubstrateAfterThisPass !== true) findings.push("substrate_close_marker_missing");
   if (surface.localDraftPreview?.confirmationFlow?.opensLiveSubmission !== false) findings.push("confirmation_flow_submission_open");
   if (surface.localDraftPreview?.confirmationFlow?.invokesModel !== false) findings.push("confirmation_flow_model_open");
+  if (surface.executionProposalConfirmation?.status !== "visible_preview_only") findings.push("missing_execution_proposal_confirmation");
+  if (!surface.executionProposalConfirmation?.proposal?.toolKind) findings.push("execution_proposal_missing_tool_kind");
+  if (!surface.executionProposalConfirmation?.proposal?.actionType) findings.push("execution_proposal_missing_action_type");
+  if (!surface.executionProposalConfirmation?.proposal?.authorityLevel) findings.push("execution_proposal_missing_authority_level");
+  if (!surface.executionProposalConfirmation?.proposal?.expectedEffect) findings.push("execution_proposal_missing_expected_effect");
+  if (!surface.executionProposalConfirmation?.proposal?.risk) findings.push("execution_proposal_missing_risk");
+  if (!surface.executionProposalConfirmation?.proposal?.rollbackReference) findings.push("execution_proposal_missing_rollback_reference");
+  if ((surface.executionProposalConfirmation?.authorityLegend || []).length !== 6) findings.push("execution_authority_legend_incomplete");
+  if (!surface.executionProposalConfirmation?.authorityLegend?.some((level) => level.label === "읽기 전용")) findings.push("execution_missing_readonly_label");
+  if (surface.executionProposalConfirmation?.approvalPacket?.writesPacketNow !== false) findings.push("execution_approval_packet_write_open");
+  if (surface.executionProposalConfirmation?.approvalPacket?.opensInvocationNow !== false) findings.push("execution_invocation_open");
+  if (surface.executionProposalConfirmation?.auditWriteDesign?.auditWriteNow !== false) findings.push("execution_audit_write_open");
   if (surface.localDraftPreview?.opensLiveSubmission !== false) findings.push("local_draft_submission_open");
   if (surface.localDraftPreview?.invokesModel !== false) findings.push("local_draft_model_open");
   if (surface.localDraftPreview?.executesTools !== false) findings.push("local_draft_tools_open");
@@ -474,6 +510,11 @@ export function verifyCoreWorkSurface({ surface = buildCoreWorkSurface(), html }
     if (!html.includes("data-local-draft-state=\"blocked\"")) findings.push("html_missing_local_draft_blocked_state");
     if (!html.includes("data-local-draft-state=\"review-needed\"")) findings.push("html_missing_local_draft_review_state");
     if (!html.includes("data-preview-confirmation-flow=\"read-only\"")) findings.push("html_missing_preview_confirmation_flow");
+    if (!html.includes("data-execution-proposal-confirmation=\"preview-only\"")) findings.push("html_missing_execution_proposal_confirmation");
+    if (!html.includes("읽기 전용")) findings.push("html_missing_korean_readonly_label");
+    if (!html.includes("외부 전송 전 확인")) findings.push("html_missing_korean_external_send_label");
+    if (!html.includes("data-approval-packet-validation=\"design-only\"")) findings.push("html_missing_approval_packet_validation");
+    if (!html.includes("data-audit-write-design=\"no-write\"")) findings.push("html_missing_audit_write_design");
     if (!html.includes("data-preview-decision=\"intent-match\"")) findings.push("html_missing_intent_match_decision");
     if (!html.includes("data-preview-decision=\"needs-changes\"")) findings.push("html_missing_needs_changes_decision");
     if (!html.includes("data-preview-decision=\"hold\"")) findings.push("html_missing_hold_decision");
@@ -509,6 +550,9 @@ export function buildCoreWorkSurfaceHtml({ surface } = {}) {
   const draftProductStates = workSurface.localDraftPreview.productStates || [];
   const previewDecisions = workSurface.localDraftPreview.confirmationFlow?.decisions || [];
   const previewChecklist = workSurface.localDraftPreview.confirmationFlow?.checkBeforeProceeding || [];
+  const executionConfirmation = workSurface.executionProposalConfirmation;
+  const authorityLegend = executionConfirmation.authorityLegend || [];
+  const validationRules = executionConfirmation.validationRules || [];
 
   return `<!doctype html>
 <html lang="ko">
@@ -554,6 +598,7 @@ export function buildCoreWorkSurfaceHtml({ surface } = {}) {
     }
     .topbar-main {
       min-width: 0;
+      max-width: 100%;
     }
     .topbar-action {
       margin-top: 4px;
@@ -561,6 +606,7 @@ export function buildCoreWorkSurfaceHtml({ surface } = {}) {
       font-size: 12px;
       font-weight: 800;
       overflow-wrap: anywhere;
+      word-break: keep-all;
     }
     h1, h2, h3, p { margin: 0; letter-spacing: 0; }
     h1 { font-size: 19px; line-height: 1.2; }
@@ -607,6 +653,10 @@ export function buildCoreWorkSurfaceHtml({ surface } = {}) {
       color: var(--muted);
       font-size: 12px;
       font-weight: 800;
+    }
+    .composer-label span {
+      min-width: 0;
+      overflow-wrap: anywhere;
     }
     .composer-body {
       margin-top: 8px;
@@ -895,6 +945,77 @@ export function buildCoreWorkSurfaceHtml({ surface } = {}) {
       font-size: 12px;
       overflow-wrap: anywhere;
     }
+    .execution-proposal {
+      margin-top: 12px;
+      padding: 12px;
+      border: 1px solid #d8c8f0;
+      border-radius: 8px;
+      background: #fbf8ff;
+    }
+    .execution-proposal-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: flex-start;
+      flex-wrap: wrap;
+    }
+    .execution-proposal-summary {
+      margin-top: 10px;
+      padding: 10px;
+      border: 1px solid #d8c8f0;
+      border-radius: 8px;
+      background: var(--surface);
+      overflow-wrap: anywhere;
+    }
+    .authority-level-grid,
+    .approval-packet-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .authority-level,
+    .approval-rule {
+      min-width: 0;
+      min-height: 104px;
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--surface);
+    }
+    .authority-level[data-tone="ready"] {
+      border-color: #b7d7c6;
+      background: #f8fcfa;
+    }
+    .authority-level[data-tone="review"] {
+      border-color: #e0cc8f;
+      background: #fffdf3;
+    }
+    .authority-level[data-tone="approval_required"] {
+      border-color: #c9d8ee;
+      background: #f8fbff;
+    }
+    .authority-level[data-tone="blocked"] {
+      border-color: #e7b3ad;
+      background: #fff7f6;
+    }
+    .authority-level strong,
+    .authority-level span,
+    .approval-rule strong,
+    .approval-rule span {
+      display: block;
+      overflow-wrap: anywhere;
+    }
+    .authority-level strong,
+    .approval-rule strong {
+      font-size: 12px;
+    }
+    .authority-level span,
+    .approval-rule span {
+      margin-top: 5px;
+      color: var(--muted);
+      font-size: 12px;
+    }
     .checklist strong {
       display: block;
       color: var(--ready);
@@ -983,7 +1104,7 @@ export function buildCoreWorkSurfaceHtml({ surface } = {}) {
       .topbar { flex-direction: column; gap: 8px; }
       .understanding-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .confirmation-grid, .draft-preview-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-      .draft-state-strip, .preview-decision-strip { grid-template-columns: 1fr; }
+      .draft-state-strip, .preview-decision-strip, .authority-level-grid, .approval-packet-grid { grid-template-columns: 1fr; }
       h1 { font-size: 17px; }
     }
     @media (max-width: 520px) {
@@ -991,9 +1112,13 @@ export function buildCoreWorkSurfaceHtml({ surface } = {}) {
         position: fixed;
         width: 100%;
         padding: 12px 14px;
+        align-items: stretch;
       }
-      .layout { padding-top: 146px; }
+      .topbar-main { width: 100%; }
+      .topbar-action { max-width: 100%; }
+      .layout { padding-top: 160px; }
       .state-grid, .authority-strip, .understanding-strip, .confirmation-grid, .draft-preview-grid, .preview-decision-strip { grid-template-columns: 1fr; }
+      .authority-level-grid, .approval-packet-grid { grid-template-columns: 1fr; }
       .thread, .panel { padding: 12px; }
     }
   </style>
@@ -1003,7 +1128,7 @@ export function buildCoreWorkSurfaceHtml({ surface } = {}) {
     <div class="topbar-main">
       <h1>GPAO-T Work Surface</h1>
       <p class="subtitle">작업 초안 · 맥락 프리뷰 · 권한 경계</p>
-      <p class="topbar-action">다음 안전 행동: preview 의도 확인 · 맞음/수정 필요/보류 · 실제 전송/모델/도구 실행 없음</p>
+      <p class="topbar-action">다음 안전 행동: 의도 확인 · 수정/보류 선택 · 실행 없음</p>
     </div>
     <span class="status">${escapeHtml(workSurface.status)}</span>
   </header>
@@ -1014,10 +1139,10 @@ export function buildCoreWorkSurfaceHtml({ surface } = {}) {
       <div class="composer" role="textbox" aria-readonly="true" data-composer-state="draft-not-sent" tabindex="0">
         <div class="composer-label">
           <span>${escapeHtml(workSurface.workspaceThread.composer.label)}</span>
-          <span>${escapeHtml(workSurface.workspaceThread.composer.submission)}</span>
+          <span>${escapeHtml(workSurface.workspaceThread.composer.submissionLabel || workSurface.workspaceThread.composer.submission)}</span>
         </div>
         <div class="composer-body">${escapeHtml(workSurface.workspaceThread.composer.draftRequest)}</div>
-        <div class="composer-lock">no external action · no tool activation · no live model connector execution</div>
+        <div class="composer-lock">외부 행동 없음 · 도구 실행 없음 · 모델 연결 실행 없음</div>
       </div>
       <div class="message-list">
         ${workSurface.workspaceThread.threadPreview.map((message) => `
@@ -1112,6 +1237,36 @@ export function buildCoreWorkSurfaceHtml({ surface } = {}) {
         ${stateCard("Target", workSurface.taskState.activeTargetId)}
         ${stateCard("Skill Mode", workSurface.taskState.skillExecutionMode)}
       </div>
+      <section class="execution-proposal" data-execution-proposal-confirmation="preview-only" aria-label="Execution proposal confirmation">
+        <div class="execution-proposal-head">
+          <div>
+            <h2>${escapeHtml(executionConfirmation.headline)}</h2>
+            <p class="muted">${escapeHtml(executionConfirmation.userMessage)}</p>
+          </div>
+          <span class="status">${escapeHtml(executionConfirmation.authorityDisplay.label)}</span>
+        </div>
+        <div class="execution-proposal-summary">
+          <strong>${escapeHtml(executionConfirmation.proposal.title)}</strong>
+          <p>${escapeHtml(executionConfirmation.proposal.userSummary)}</p>
+          <p class="muted">tool kind: ${escapeHtml(executionConfirmation.proposal.toolKind)} · action: ${escapeHtml(executionConfirmation.proposal.actionType)} · risk: ${escapeHtml(executionConfirmation.proposal.risk)}</p>
+          <p class="muted">rollback: ${escapeHtml(executionConfirmation.proposal.rollbackReference)}</p>
+        </div>
+        <div class="authority-level-grid" aria-label="Korean authority level display">
+          ${authorityLegend.map((level) => `
+          <div class="authority-level" data-authority-level="${escapeHtml(level.id)}" data-tone="${escapeHtml(level.tone)}">
+            <strong>${escapeHtml(level.icon)} · ${escapeHtml(level.label)}</strong>
+            <span>${escapeHtml(level.description)}</span>
+          </div>`).join("")}
+        </div>
+        <div class="approval-packet-grid" data-approval-packet-validation="design-only" aria-label="Approval packet validation rules">
+          ${validationRules.slice(0, 6).map((rule) => `
+          <div class="approval-rule" data-validation-rule="${escapeHtml(rule.id)}">
+            <strong>${escapeHtml(rule.label)}</strong>
+            <span>${escapeHtml(rule.userMessage)}</span>
+          </div>`).join("")}
+        </div>
+        <p class="confirmation-note" data-audit-write-design="no-write">audit write: ${escapeHtml(executionConfirmation.auditWriteDesign.auditWriteNow)} · approval record write: ${escapeHtml(executionConfirmation.approvalPacket.writesPacketNow)} · invocation: ${escapeHtml(executionConfirmation.approvalPacket.opensInvocationNow)}</p>
+      </section>
       <p class="next">${escapeHtml(workSurface.nextSafeAction)}</p>
     </section>
     <section>

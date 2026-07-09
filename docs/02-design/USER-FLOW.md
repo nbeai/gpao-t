@@ -15,7 +15,9 @@ The user opens the GPAO-T core work surface and sees a draft task input area rat
 5. GPAO-T previews Context Mesh / Memory Wiki / T-cell candidates for the request.
 6. GPAO-T previews Skill Pack routing and model/tool route intent.
 7. GPAO-T shows authority/approval status and the closed execution boundary.
-8. GPAO-T gives the next safe action.
+8. GPAO-T shows an execution proposal confirmation card before any future execution.
+9. The card explains the proposed tool kind, action type, authority level, expected effect, risk, rollback reference, and required approval packet checks.
+10. GPAO-T gives the next safe action.
 
 ## Current Result
 
@@ -23,6 +25,8 @@ The first slice is read-only and no-script. It now includes a compact task under
 
 ## Next Action
 
-The core work surface substrate is closed for the current read-only preview phase. The user can see the understood task, expected output, context to use, skill route, locked execution state, and whether the preview is `의도와 맞음`, `수정 필요`, or `보류`.
+The core work surface substrate is closed for the current read-only preview phase. The user can see the understood task, expected output, context to use, skill route, locked execution state, whether the preview is `의도와 맞음`, `수정 필요`, or `보류`, and what execution proposal would need confirmation before anything can run.
 
-The current major axis is Connector / Tool Governance. The user should be able to inspect which tool, CLI, MCP, or connector execution candidate a model output would become, which authority tier it belongs to, which approval boundary applies, and which audit/replay/rollback reference must exist before future invocation. Model output remains proposal material only. Actual tool/CLI/MCP execution, connector activation, external network/send, credential read/write, paid action, destructive action, approval writes, install/update/rollback, and durable memory promotion remain blocked.
+The current major axis is Execution Proposal Confirmation / Approval Packet Validation. The user should be able to inspect which model/skill/user-request output became an execution proposal, which product-language authority tier it belongs to, which approval packet fields are required, which validation rules would reject unsafe packets, and which audit/replay/rollback references must exist before future invocation. Authority levels use short Korean default labels: `읽기 전용`, `미리보기만`, `저장 전 확인`, `외부 전송 전 확인`, `되돌리기 어려움`, and `비용 발생 가능`.
+
+Model output remains proposal material only. Actual tool/CLI/MCP execution, connector activation, external network/send, credential read/write, paid action, destructive action, approval record write, install/update/rollback, and durable memory promotion remain blocked.

@@ -24,6 +24,10 @@ The work-surface submission decision gate is documented in `docs/03-engineering/
 
 Work surface visual QA evidence is maintained in `docs/03-verification/evidence/work-surface-visual-qa-baseline-2026-07-09.json`, `docs/03-verification/evidence/WORK-SURFACE-VISUAL-QA-BASELINE-2026-07-09.md`, `docs/03-verification/evidence/work-surface-local-draft-preview-qa-2026-07-09.json`, and `docs/03-verification/evidence/WORK-SURFACE-LOCAL-DRAFT-PREVIEW-QA-2026-07-09.md`. The `/work-surface` baseline must preserve nonblank desktop/mobile viewports, visible draft input, read-only task understanding summary, native readability details, confirmation card, first local draft preview, intent-match / needs-changes / hold confirmation flow, empty/blocked/review-needed preview states, visible task state, Context Mesh / Memory Wiki preview, Skill Pack route preview, authority boundary, closed action text, next safe action, mobile topbar action line, no horizontal overflow, no script/form, and no external activation as read-only task interaction improves.
 
+Execution proposal confirmation is now exposed as the next pre-execution authority surface. It combines execution proposal preview, approval packet validation, and audit write design into one user-visible axis. The Control Center `Execution Approval` panel and the core work surface must show the proposed tool kind, action type, authority level, expected effect, risk, rollback reference, required approval packet fields, validation rules, and audit/replay reference without opening any actual execution. Korean product-language authority labels are the default: `읽기 전용`, `미리보기만`, `저장 전 확인`, `외부 전송 전 확인`, `되돌리기 어려움`, and `비용 발생 가능`.
+
+Execution approval UX evidence is maintained in `docs/03-verification/evidence/execution-approval-ux-qa-2026-07-09.json` and `docs/03-verification/evidence/EXECUTION-APPROVAL-UX-QA-2026-07-09.md`. This evidence keeps the design.md-based Korean status language, authority labels, icon/color/description pairing, mobile wrapping, no-overflow behavior, and no-write/no-invocation/no-external-activation boundary explicit before any future approval record write or execution invocation is considered.
+
 Skill ecosystem guidance is maintained in `docs/04-skill-ecosystem/GPAO-T-SKILL-ECOSYSTEM-MASTER-PLAN-ko.md`. GPAO-T skills must be research-grounded, practical, T-cell-shaped operating units, not prompt decorations or copied marketplace catalogs.
 
 ## First Slice
@@ -39,6 +43,7 @@ The first slice implements a local, dependency-free runtime skeleton:
 - `GpaoToolRuntime`: local-preview tool admission
 - `Adapter Boundary`: local model/tool adapter registry and execution boundary
 - `Connector / Tool Governance`: local connector registry plus tool / CLI / MCP / connector execution-candidate boundary
+- `Execution Approval Preview`: execution proposal confirmation, Korean authority-level labels, approval packet validation, and audit write design without actual writes or invocation
 - `Install / Update / Rollback Hardening`: local operational readiness and recovery contract
 - `Local Control Center Contract`: one snapshot for runtime, ops, memory, recovery, growth, adapters, connectors, and authority
 - `Local Control Center Design Recipe`: BEAI design doctrine adapted to GPAO-T UI implementation
@@ -124,6 +129,8 @@ node bin/gpao-t.js connectors governance
 node bin/gpao-t.js connectors tool-governance
 node bin/gpao-t.js connectors tool-governance-check
 node bin/gpao-t.js connectors review github.oauth read
+node bin/gpao-t.js approval execution-proposal "로컬 미리보기 실행 후보를 확인해줘"
+node bin/gpao-t.js approval execution-proposal-check
 node bin/gpao-t.js ops hardening
 node bin/gpao-t.js ops hardening-record
 node bin/gpao-t.js ops hardening-history

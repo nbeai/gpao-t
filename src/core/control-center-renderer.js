@@ -24,6 +24,7 @@ const PANEL_GROUPS = {
   runtime: "Work",
   "skill-ecosystem": "Work",
   "approval-preview": "Authority",
+  "execution-approval": "Authority",
   memory: "Context",
   recovery: "Evidence",
   growth: "Growth",
@@ -958,6 +959,7 @@ function panelHtml(panel) {
             </div>
             ${coreWorkSurfaceHtml(panel)}
             ${approvalPreviewHtml(panel)}
+            ${executionApprovalHtml(panel)}
             <div class="panel-actions" aria-label="${escapeHtml(panel.label)} local drilldown actions">
               <a class="panel-action" data-panel-action="inspect" href="#inspect-${escapeHtml(panel.id)}">인스펙터</a>
               <a class="panel-action" data-panel-action="authority" href="#authority-boundary">권한</a>
@@ -976,6 +978,7 @@ function panelHtml(panel) {
                 ${inspectorRow("Authority State", states.authority)}
                 ${inspectorRow("Next State", states.next)}
                 ${approvalInspectorRows(panel)}
+                ${executionApprovalInspectorRows(panel)}
                 ${coreWorkSurfaceInspectorRows(panel)}
                 ${adapterInspectorRows(panel)}
                 ${connectorInspectorRows(panel)}
@@ -1111,6 +1114,66 @@ function approvalInspectorRows(panel) {
     inspectorRow("Preview State", panel.data.userUnderstanding),
     inspectorRow("Stages", (panel.data.stages || []).map((stage) => `${stage.label}:${stage.status}`).join(" · ")),
     inspectorRow("Still Blocked", (panel.data.blockedActions || []).join(" · ")),
+  ].join("");
+}
+
+function executionApprovalHtml(panel) {
+  if (panel.id !== "execution-approval" || !panel.data) return "";
+  const data = panel.data;
+  const proposal = data.proposal || {};
+  const authorityLegend = data.authorityLegend || [];
+  const validationRules = data.validation?.rules || [];
+  return `
+            <div class="approval-flow" aria-label="Execution proposal confirmation" data-execution-proposal-confirmation="preview-only">
+              <p class="approval-safe-note" data-execution-no-write="true">${escapeHtml(data.uxContract.noExecutionNotice)} ${escapeHtml(data.uxContract.primaryQuestion)}</p>
+              <div class="approval-stage" data-execution-proposal="${escapeHtml(proposal.id || "unknown")}">
+                <span class="approval-stage-number" data-authority-icon="${escapeHtml(data.authorityDisplay.icon)}">${escapeHtml(data.authorityDisplay.shortLabel)}</span>
+                <strong>${escapeHtml(proposal.title || "실행 전 확인")}</strong>
+                <span class="approval-stage-status">${escapeHtml(data.authorityDisplay.label)}</span>
+                <small>${escapeHtml(proposal.userSummary || proposal.expectedEffect || "")}</small>
+              </div>
+              <div class="work-surface-grid" aria-label="Execution proposal fields">
+                ${workSignal("Tool", proposal.toolKind)}
+                ${workSignal("Action", proposal.actionType)}
+                ${workSignal("Risk", proposal.risk)}
+                ${workSignal("Rollback", proposal.rollbackReference)}
+              </div>
+              <div class="blocked-actions" aria-label="Korean authority levels" data-authority-levels="ko">
+                <strong>권한 단계</strong>
+                ${authorityLegend.map((level) => `
+                <span class="blocked-action" data-authority-level="${escapeHtml(level.id)}" data-authority-tone="${escapeHtml(level.tone)}">
+                  <span class="blocked-action-label">${escapeHtml(level.icon)}</span>${escapeHtml(level.label)}
+                  <span class="blocked-action-detail">${escapeHtml(level.description)}</span>
+                </span>`).join("")}
+              </div>
+              <div class="blocked-actions" aria-label="Approval packet validation" data-approval-packet-validation="design-only">
+                <strong>승인 패킷 검증</strong>
+                ${validationRules.slice(0, 4).map((rule) => `
+                <span class="blocked-action">
+                  <span class="blocked-action-label">${escapeHtml(rule.label)}</span>${escapeHtml(rule.userMessage)}
+                  <span class="blocked-action-detail">design only</span>
+                </span>`).join("")}
+              </div>
+              <div class="blocked-actions" aria-label="Execution approval blocked actions" data-audit-write-design="no-write">
+                <strong>아직 열지 않음</strong>
+                ${data.blockedActions.slice(0, 8).map((action) => `
+                <span class="blocked-action"><span class="blocked-action-label">잠김</span>${escapeHtml(action)}<span class="blocked-action-detail">no write · no execution</span></span>`).join("")}
+              </div>
+            </div>`;
+}
+
+function executionApprovalInspectorRows(panel) {
+  if (panel.id !== "execution-approval" || !panel.data) return "";
+  const data = panel.data;
+  return [
+    inspectorRow("Proposal", `${data.proposal.toolKind} · ${data.proposal.actionType} · ${data.proposal.authorityLevel}`),
+    inspectorRow("Expected Effect", data.proposal.expectedEffect),
+    inspectorRow("Risk", data.proposal.risk),
+    inspectorRow("Rollback", data.proposal.rollbackReference),
+    inspectorRow("Approval Fields", `${data.approvalPacket.requiredFields.length}`),
+    inspectorRow("Validation Rules", `${data.validation.rules.length}`),
+    inspectorRow("Audit Write", data.auditWriteDesign.auditWriteNow === false ? "design only · no write" : "write open"),
+    inspectorRow("UX Locale", data.uxContract.defaultLocale),
   ].join("");
 }
 

@@ -231,6 +231,36 @@ Required fields:
 
 Do not ask for broad approval when a narrow approval is enough.
 
+### ExecutionProposalCard
+
+Use when model output, a skill route, or a user request becomes an execution candidate.
+
+Required fields:
+
+- proposal source
+- tool kind
+- action type
+- authority level
+- expected effect
+- risk
+- rollback reference
+- approval packet validation state
+- audit/replay reference
+- next safe action
+
+Korean default authority labels:
+
+| Level | Product label | Design rule |
+| --- | --- | --- |
+| `read_only` | `읽기 전용` | Calm ready state. Make it clear no mutation happens. |
+| `dry_run` | `미리보기만` | Review state. Explain that it previews an effect without applying it. |
+| `write` | `저장 전 확인` | Approval-required state. Avoid implying the user already approved. |
+| `external_send` | `외부 전송 전 확인` | Approval-required state. Make recipient/network risk explicit. |
+| `destructive` | `되돌리기 어려움` | Blocked state. State rollback limits plainly without dramatic language. |
+| `paid_action` | `비용 발생 가능` | Blocked or approval-required state. Make cost visibility mandatory. |
+
+Each level must show label, icon, tone/color, and one short explanation. Long Korean sentences must wrap cleanly on mobile. The card must state that nothing has executed yet.
+
 ### GrowthProposalCard
 
 Required fields:

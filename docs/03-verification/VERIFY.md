@@ -68,6 +68,20 @@ Connector / Tool Governance:
 - Required invariant: the governance proof may classify tool, CLI, MCP, and connector candidates, map them to `read_only`, `dry_run`, `write`, `external_send`, `destructive`, and `paid_action` tiers, and describe OpenClaw-inspired gateway/adapter/tool substrate under GPAO-T authority precedence.
 - Required blocked boundary: it must not execute tools, run CLI commands, invoke MCP, activate connectors, send external network requests, read or write credentials, spend money, perform destructive actions, write approval records, invoke replay/rollback, or promote durable memory.
 
+Execution proposal confirmation / approval packet validation:
+
+- CLI surface: `node bin/gpao-t.js approval execution-proposal [text]`
+- CLI check: `node bin/gpao-t.js approval execution-proposal-check`
+- Gateway routes: `GET /approval/execution-proposal` and `GET /approval/execution-proposal/verify`
+- Control Center integration: `control snapshot`, `control summary`, and `control html` must expose the `Execution Approval` panel with proposal, authority legend, approval packet validation, audit write design, blocked actions, and next safe action.
+- Work surface integration: `control work-surface`, `control work-surface-html`, and `control work-surface-check` must expose execution proposal confirmation after the local draft preview and before any execution action.
+- Required proposal invariant: proposal source, tool kind, action type, authority level, expected effect, risk, and rollback reference must be visible before any future invocation.
+- Required Korean UX invariant: authority tiers must use product-language labels `읽기 전용`, `미리보기만`, `저장 전 확인`, `외부 전송 전 확인`, `되돌리기 어려움`, and `비용 발생 가능`; each tier must pair label, icon, color/tone role, and short explanation.
+- Required validation invariant: approval packet validation must list required fields, missing-field rejection, authority-level rejection, risk visibility, rollback requirement, confirmation-before-invocation, and design-only audit write rule.
+- Required audit design invariant: audit write remains a design/proof surface only. It may name audit, replay, and rollback references, but it must not write an approval record, write an audit event, invoke a dry-run, execute a command, mutate files, activate connectors, read credentials, send externally, spend money, or promote durable memory.
+- Visual QA evidence: `docs/03-verification/evidence/execution-approval-ux-qa-2026-07-09.json` and `docs/03-verification/evidence/EXECUTION-APPROVAL-UX-QA-2026-07-09.md`.
+- Required visual invariant: desktop and mobile must preserve readable Korean wrapping, compact but calm card density, no horizontal overflow, visible authority boundary, visible next safe action, and no script/form/external activation. Mobile checks must keep the fixed topbar action line and authority cards readable.
+
 Work surface submission decision gate:
 
 - Gate document: `docs/03-engineering/WORK-SURFACE-SUBMISSION-DECISION-GATE.md`

@@ -20,6 +20,7 @@ import {
   buildConnectorToolGovernance,
   buildCoreWorkSurface,
   buildCoreWorkSurfaceHtml,
+  buildExecutionApprovalPreview,
   buildWorkSurfaceSubmissionDecisionGate,
   buildWorkSurfaceSubmissionValidationGate,
   buildGrowthApplicationGate,
@@ -87,6 +88,7 @@ import {
   verifyControlCenterPreviewServing,
   verifyConnectorToolGovernance,
   verifyCoreWorkSurface,
+  verifyExecutionApprovalPreview,
   verifyModelRouterBoundary,
   verifyModelRouterPolicy,
   verifyWorkSurfaceSubmissionDecisionGate,
@@ -147,6 +149,8 @@ function usage() {
     "  gpao-t connectors tool-governance",
     "  gpao-t connectors tool-governance-check",
     "  gpao-t connectors review <connector-id> [action]",
+    "  gpao-t approval execution-proposal [text]",
+    "  gpao-t approval execution-proposal-check",
     "  gpao-t ops hardening",
     "  gpao-t ops contract",
     "  gpao-t ops data",
@@ -393,6 +397,16 @@ try {
       printJson(reviewConnectorPermission({ connectorId, action }));
     } else {
       throw new Error("connectors command requires list, governance, tool-governance, tool-governance-check, or review");
+    }
+  } else if (command === "approval") {
+    const [subcommand, ...textParts] = args;
+    if (subcommand === "execution-proposal") {
+      const request = textParts.join(" ").trim();
+      printJson(buildExecutionApprovalPreview(request ? { request } : undefined));
+    } else if (subcommand === "execution-proposal-check") {
+      printJson(verifyExecutionApprovalPreview());
+    } else {
+      throw new Error("approval command requires execution-proposal or execution-proposal-check");
     }
   } else if (command === "ops") {
     const [subcommand] = args;

@@ -5,10 +5,12 @@ import { describe, it } from "node:test";
 import {
   buildConnectorGovernanceSummary,
   buildConnectorToolGovernance,
+  buildExecutionApprovalPreview,
   handleGatewayRequest,
   listConnectors,
   reviewConnectorPermission,
   verifyConnectorToolGovernance,
+  verifyExecutionApprovalPreview,
 } from "../src/index.js";
 
 const CLI = fileURLToPath(new URL("../bin/gpao-t.js", import.meta.url));
@@ -59,6 +61,36 @@ describe("GPAO-T connector governance", () => {
     assert.equal(governance.safetyInvariants.runsCli, false);
     assert.equal(governance.safetyInvariants.activatesConnector, false);
     assert.equal(governance.safetyInvariants.promotesDurableMemory, false);
+    assert.equal(verification.status, "ready");
+    assert.deepEqual(verification.findings, []);
+  });
+
+  it("builds execution proposal confirmation and approval packet validation without writes", () => {
+    const preview = buildExecutionApprovalPreview({
+      request: "로컬 검증 계획을 preview로 보여줘.",
+    });
+    const verification = verifyExecutionApprovalPreview({ preview });
+
+    assert.equal(preview.schema, "gpao_t.execution_approval_preview.v0_1");
+    assert.equal(preview.language, "ko");
+    assert.equal(preview.proposal.toolKind, "cli");
+    assert.equal(preview.proposal.actionType, "dry_run");
+    assert.equal(preview.proposal.executionState, "not_invoked");
+    assert.ok(preview.proposal.expectedEffect);
+    assert.ok(preview.proposal.risk);
+    assert.ok(preview.proposal.rollbackReference);
+    assert.ok(preview.authorityLegend.some((level) => level.label === "읽기 전용" && level.icon));
+    assert.ok(preview.authorityLegend.some((level) => level.label === "외부 전송 전 확인" && level.description));
+    assert.ok(preview.authorityLegend.some((level) => level.label === "되돌리기 어려움" && level.colorRole));
+    assert.ok(preview.approvalPacket.requiredFields.includes("rollback_reference"));
+    assert.equal(preview.approvalPacket.writesPacketNow, false);
+    assert.equal(preview.approvalPacket.opensInvocationNow, false);
+    assert.equal(preview.auditWriteDesign.auditWriteNow, false);
+    assert.equal(preview.auditWriteDesign.storagePathNow, "not_created");
+    assert.equal(preview.uxContract.defaultLocale, "ko-KR");
+    assert.ok(preview.uxContract.mobileRules.some((rule) => rule.includes("overflow")));
+    assert.equal(preview.safetyInvariants.writesApprovalRecord, false);
+    assert.equal(preview.safetyInvariants.writesAudit, false);
     assert.equal(verification.status, "ready");
     assert.deepEqual(verification.findings, []);
   });
@@ -118,13 +150,25 @@ describe("GPAO-T connector governance", () => {
       cwd: ROOT,
       encoding: "utf8",
     });
+    const cliApprovalOutput = execFileSync(process.execPath, [CLI, "approval", "execution-proposal", "로컬 검증을 미리보기로 보여줘"], {
+      cwd: ROOT,
+      encoding: "utf8",
+    });
+    const cliApprovalCheckOutput = execFileSync(process.execPath, [CLI, "approval", "execution-proposal-check"], {
+      cwd: ROOT,
+      encoding: "utf8",
+    });
     const cliReview = JSON.parse(cliOutput);
     const cliGovernance = JSON.parse(cliGovernanceOutput);
     const cliGovernanceCheck = JSON.parse(cliGovernanceCheckOutput);
+    const cliApproval = JSON.parse(cliApprovalOutput);
+    const cliApprovalCheck = JSON.parse(cliApprovalCheckOutput);
     const registry = handleGatewayRequest({ method: "GET", path: "/connectors" });
     const summary = handleGatewayRequest({ method: "GET", path: "/connectors/governance" });
     const toolGovernance = handleGatewayRequest({ method: "GET", path: "/connectors/tool-governance" });
     const toolGovernanceCheck = handleGatewayRequest({ method: "GET", path: "/connectors/tool-governance/verify" });
+    const approval = handleGatewayRequest({ method: "GET", path: "/approval/execution-proposal" });
+    const approvalCheck = handleGatewayRequest({ method: "GET", path: "/approval/execution-proposal/verify" });
     const review = handleGatewayRequest({
       method: "POST",
       path: "/connectors/review",
@@ -135,12 +179,19 @@ describe("GPAO-T connector governance", () => {
     assert.equal(cliGovernance.schema, "gpao_t.connector_tool_governance.v0_1");
     assert.equal(cliGovernance.safetyInvariants.executesTool, false);
     assert.equal(cliGovernanceCheck.status, "ready");
+    assert.equal(cliApproval.schema, "gpao_t.execution_approval_preview.v0_1");
+    assert.equal(cliApproval.approvalPacket.writesPacketNow, false);
+    assert.equal(cliApprovalCheck.status, "ready");
     assert.equal(registry.status, 200);
     assert.equal(summary.status, 200);
     assert.equal(toolGovernance.status, 200);
     assert.equal(toolGovernance.body.modelOutputToExecutionProposal.outputIsExecutionAuthority, false);
     assert.equal(toolGovernanceCheck.status, 200);
     assert.equal(toolGovernanceCheck.body.status, "ready");
+    assert.equal(approval.status, 200);
+    assert.equal(approval.body.auditWriteDesign.auditWriteNow, false);
+    assert.equal(approvalCheck.status, 200);
+    assert.equal(approvalCheck.body.status, "ready");
     assert.equal(review.status, 200);
     assert.equal(review.body.status, "blocked");
   });

@@ -5,7 +5,6 @@
 - large rewrite
 - unapproved deployment
 - unrelated refactor
-- technical deep-dive before the first workflow is approved
 - actual tool execution
 - CLI command execution
 - MCP invocation
@@ -15,13 +14,15 @@
 - paid action
 - destructive action
 - approval record write
+- audit write
+- dry-run invocation
 - durable memory promotion
 
 ## Current Completion Boundary
 
 - Do not call this complete unless verification evidence and completion language guard pass.
 - Do not ask the user to test before AI/developer scenario verification covers success, empty, and failure states when applicable.
-- Current status: Connector / Tool Governance read-only proof verified; live invocation remains blocked.
+- Current status: Execution Approval UX / approval packet validation proof is verified as preview-only; live invocation remains blocked.
 
 ## Blockers
 
@@ -29,4 +30,4 @@
 
 ## Next Product Gap
 
-- Future live invocation design still needs approval packet validation, audit write, replay invocation, rollback/compensation proof, and user-visible confirmation before any execution-capable surface opens.
+- Future live invocation still needs a separate approval record write implementation gate, dry-run invocation gate, audit write gate, replay invocation, rollback/compensation proof, and explicit user confirmation before any execution-capable surface opens.

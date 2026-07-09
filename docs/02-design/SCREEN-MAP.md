@@ -5,7 +5,7 @@ List screens or command surfaces and what each one must make obvious.
 ## Core Work Surface
 
 - Purpose: the first place where a user can feel "I can ask GPAO-T to work from here."
-- Must show: draft task input, preview thread, compact read-only task understanding summary, native no-script task readability details, confirmation card, first local draft preview, intent-match / needs-changes / hold confirmation flow, empty/blocked/review-needed preview states, current task state, Context Mesh / Memory Wiki / T-cell preview, Skill Pack route preview, authority/approval summary, closed execution boundary, and next safe action.
+- Must show: draft task input, preview thread, compact read-only task understanding summary, native no-script task readability details, confirmation card, first local draft preview, intent-match / needs-changes / hold confirmation flow, empty/blocked/review-needed preview states, execution proposal confirmation, approval packet validation summary, audit write design boundary, current task state, Context Mesh / Memory Wiki / T-cell preview, Skill Pack route preview, authority/approval summary, closed execution boundary, and next safe action.
 - Must not show as available: live send, external model call, tool execution, connector activation, approval-record write, dry-run invocation, durable memory promotion, self-growth apply, deployment, messenger send, or recurring automation.
 
 ## Local Control Center
@@ -24,6 +24,14 @@ List screens or command surfaces and what each one must make obvious.
 - Purpose: show how model output can become a tool, CLI, MCP, or connector execution proposal before any invocation exists.
 - Must show: execution candidate classes, selected candidate class, read-only / dry-run / write / external-send / destructive / paid authority tiers, proposal conditions, approval boundary, audit/replay/rollback references, OpenClaw-inspired substrate, GPAO-T authority precedence, blocked actions, and safety invariants.
 - Must not show as available: actual tool execution, CLI command execution, MCP invocation, connector activation, external network/send, credential read/write, paid action, destructive action, approval record write, or durable memory promotion.
+
+## Execution Approval
+
+- Purpose: let the user confirm what is being proposed before any model/skill/tool output can become execution.
+- Must show: proposal source, tool kind, action type, authority level, expected effect, risk, rollback reference, required approval packet fields, validation rules, audit/replay reference, blocked actions, and next safe action.
+- Must show authority levels in Korean product language with icon, color, label, and short explanation: `읽기 전용`, `미리보기만`, `저장 전 확인`, `외부 전송 전 확인`, `되돌리기 어려움`, and `비용 발생 가능`.
+- Must keep language calm and direct: risk is visible, but warnings should not read like a threat when the action is still only a preview.
+- Must not show as available: actual tool execution, CLI/MCP invocation, connector activation, external network/send, credential read/write, paid action, destructive action, approval record write, audit write, durable memory promotion, or execution from model output.
 
 ## Browser-Local App Shell
 

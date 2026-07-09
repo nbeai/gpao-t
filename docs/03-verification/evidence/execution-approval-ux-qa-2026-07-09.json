@@ -1,0 +1,123 @@
+{
+  "schema": "gpao_t.execution_approval_ux_qa.v0_1",
+  "status": "ready",
+  "target": "Control Center Execution Approval panel and /work-surface execution proposal confirmation",
+  "capturedAt": "2026-07-09T04:10:43Z",
+  "fileFormat": "png",
+  "evidenceFiles": {
+    "controlCenterDesktop": "docs/03-verification/evidence/execution-approval-ux-2026-07-09-control-center-desktop-1440x960.png",
+    "controlCenterMobile": "docs/03-verification/evidence/execution-approval-ux-2026-07-09-control-center-mobile-390x844.png",
+    "workSurfaceDesktop": "docs/03-verification/evidence/execution-approval-ux-2026-07-09-work-surface-desktop-1440x960.png",
+    "workSurfaceMobile": "docs/03-verification/evidence/execution-approval-ux-2026-07-09-work-surface-mobile-390x844.png"
+  },
+  "invariants": {
+    "executionProposalVisible": true,
+    "approvalPacketValidationVisible": true,
+    "auditWriteDesignOnly": true,
+    "koreanDefaultStatusLanguage": true,
+    "authorityLevelsHaveIconColorLabelDescription": true,
+    "noActualToolCliMcpExecution": true,
+    "noConnectorActivation": true,
+    "noExternalNetworkSend": true,
+    "noCredentialReadWrite": true,
+    "noPaidAction": true,
+    "noDestructiveAction": true,
+    "noApprovalRecordWrite": true,
+    "noDurableMemoryPromotion": true,
+    "noScript": true,
+    "noForm": true,
+    "noExternalActivation": true,
+    "noHorizontalOverflow": true,
+    "authorityBoundaryVisible": true,
+    "nextSafeActionVisible": true,
+    "mobileTopbarActionLineVisible": true
+  },
+  "authorityLabels": [
+    "읽기 전용",
+    "미리보기만",
+    "저장 전 확인",
+    "외부 전송 전 확인",
+    "되돌리기 어려움",
+    "비용 발생 가능"
+  ],
+  "checks": [
+    {
+      "id": "control-center-desktop",
+      "viewport": {
+        "width": 1440,
+        "height": 960
+      },
+      "nonblankViewport": true,
+      "executionApprovalPanelVisible": true,
+      "authorityBoundaryVisible": true,
+      "nextSafeActionVisible": true,
+      "noHorizontalOverflow": true,
+      "hasScript": false,
+      "hasForm": false,
+      "externalLinks": []
+    },
+    {
+      "id": "control-center-mobile",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "nonblankViewport": true,
+      "executionApprovalPanelAvailable": true,
+      "mobileTopbarActionLineVisible": true,
+      "authorityBoundaryVisible": true,
+      "nextSafeActionVisible": true,
+      "noHorizontalOverflow": true,
+      "hasScript": false,
+      "hasForm": false,
+      "externalLinks": []
+    },
+    {
+      "id": "work-surface-desktop",
+      "viewport": {
+        "width": 1440,
+        "height": 960
+      },
+      "nonblankViewport": true,
+      "executionProposalConfirmationVisible": true,
+      "approvalPacketValidationVisible": true,
+      "auditWriteDesignOnlyVisible": true,
+      "authorityLabelsVisible": true,
+      "noExecutionLanguageVisible": true,
+      "noHorizontalOverflow": true,
+      "hasScript": false,
+      "hasForm": false,
+      "externalLinks": []
+    },
+    {
+      "id": "work-surface-mobile",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "nonblankViewport": true,
+      "executionProposalConfirmationAvailable": true,
+      "topbarActionUsesShortKoreanProductLanguage": true,
+      "composerLockUsesShortKoreanProductLanguage": true,
+      "authorityLabelsWrapCleanly": true,
+      "noHorizontalOverflow": true,
+      "hasScript": false,
+      "hasForm": false,
+      "externalLinks": []
+    }
+  ],
+  "blockedActionsRemainClosed": [
+    "actual tool execution",
+    "CLI command execution",
+    "MCP invocation",
+    "connector activation",
+    "external network/send",
+    "credential read/write",
+    "paid action",
+    "destructive action",
+    "approval record write",
+    "audit write",
+    "durable memory promotion"
+  ],
+  "nextSafeAction": "Use this execution approval UX baseline before opening any approval record write, dry-run invocation, tool execution, connector activation, external send, paid action, destructive action, or durable memory promotion."
+}

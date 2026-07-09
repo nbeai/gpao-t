@@ -1,6 +1,7 @@
 import { listModelAdapters, listToolAdapters } from "./adapter-boundary.js";
 import { buildConnectorGovernanceSummary } from "./connector-governance.js";
 import { buildCoreWorkSurface } from "./core-work-surface.js";
+import { buildExecutionApprovalPreview } from "./execution-approval.js";
 import { runDoctor } from "./doctor.js";
 import { buildGrowthApplicationGateSummary } from "./growth-application-gates.js";
 import { readSelfGrowthProposals } from "./growth-proposals.js";
@@ -34,6 +35,7 @@ export function buildControlCenterSnapshot({ root } = {}) {
   const modelRouterPolicy = buildModelRouterPolicy();
   const toolAdapters = listToolAdapters();
   const connectorGovernance = buildConnectorGovernanceSummary();
+  const executionApprovalPreview = buildExecutionApprovalPreview();
   const installHardening = buildInstallHardeningSummary({ root });
   const operationsContract = buildOperationsContractSummary();
   const skillPacks = listSkillPacks();
@@ -50,6 +52,7 @@ export function buildControlCenterSnapshot({ root } = {}) {
     buildRuntimePanel({ doctor, runtimeState, auditEvents }),
     buildOpsPanel({ installHardening, operationsContract }),
     buildApprovalPreviewPanel({ approvalPreviewFlow }),
+    buildExecutionApprovalPanel({ executionApprovalPreview }),
     buildSkillPanel({
       skillPacks,
       skillReadiness,
@@ -95,6 +98,10 @@ export function buildControlCenterSnapshot({ root } = {}) {
       approvalPreviewStages: approvalPreviewFlow.stages.length,
       approvalPreviewBlockedActions: approvalPreviewFlow.blockedActions.length,
       approvalPreviewReadyStages: approvalPreviewFlow.stages.filter((stage) => stage.status === "ready").length,
+      executionApprovalAuthorityLevels: executionApprovalPreview.authorityLegend.length,
+      executionApprovalRequiredFields: executionApprovalPreview.approvalPacket.requiredFields.length,
+      executionApprovalValidationRules: executionApprovalPreview.validation.rules.length,
+      executionApprovalBlockedActions: executionApprovalPreview.blockedActions.length,
       coreWorkSurfaceThreadMessages: coreWorkSurface.workspaceThread.threadPreview.length,
       coreWorkSurfaceSelectedSkillPacks: coreWorkSurface.skillRoutePreview.selectedPacks.length,
       coreWorkSurfaceContextCandidates: coreWorkSurface.contextPreview.retrievedCandidates.length,
@@ -121,6 +128,7 @@ export function buildControlCenterSnapshot({ root } = {}) {
       updateExecution: installHardening.authorityBoundary.updateExecution,
       destructiveRollback: installHardening.authorityBoundary.destructiveRollback,
       approvalPreviewFlow: "local_preview_only_no_write_no_invocation",
+      executionApprovalPacket: "preview_validation_only_no_write_no_invocation",
       approvalRecordWrite: "blocked",
       dryRunInvocation: "blocked",
       tauriBuild: "blocked",
@@ -383,6 +391,17 @@ function buildApprovalPreviewPanel({ approvalPreviewFlow }) {
     headline: "승인 전 프리뷰 단계다. 아직 실행된 것은 없고, dry-run/approval 흐름만 읽을 수 있다.",
     data: approvalPreviewFlow,
     nextSafeAction: approvalPreviewFlow.nextSafeAction,
+  };
+}
+
+function buildExecutionApprovalPanel({ executionApprovalPreview }) {
+  return {
+    id: "execution-approval",
+    label: "Execution Approval",
+    status: "review",
+    headline: "실행 전 확인 패킷이다. 무엇이 실행될 예정인지 보여주지만 아직 실행하거나 기록하지 않는다.",
+    data: executionApprovalPreview,
+    nextSafeAction: executionApprovalPreview.nextSafeAction,
   };
 }
 
