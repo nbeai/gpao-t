@@ -8,11 +8,13 @@ import {
   buildModelRouterPolicy,
   buildModelProviderRegistry,
   invokeModelLocally,
+  invokeModelProvider,
   listModelAdapters,
   listToolAdapters,
   runTurn,
   selectModelAdapter,
   verifyModelInvocation,
+  verifyProviderInvocationRuntime,
   verifyModelRouterBoundary,
   verifyModelRouterPolicy,
 } from "../src/index.js";
@@ -273,5 +275,48 @@ describe("GPAO-T model and tool adapter boundary", () => {
     assert.equal(gatewayLocal.body.output.modelOutputBoundary, "draft_only_not_action_authority");
     assert.equal(gatewayCheck.status, 200);
     assert.equal(gatewayCheck.body.status, "ready");
+  });
+
+  it("runs a provider invocation through an approved transport while keeping output as draft only", async () => {
+    const approval = {
+      confirmed: true,
+      allowNetwork: true,
+      allowPaidUsage: true,
+      granted: [
+        "provider_connection_visible",
+        "credential_source_visible",
+        "budget_or_account_plan_visible",
+        "task_packet_visible",
+        "user_invocation_confirmation",
+        "audit_replay_reference_visible",
+      ],
+    };
+    const result = await invokeModelProvider({
+      providerId: "openai.api_key",
+      request: "실제 provider transport 계약을 검증해줘.",
+      env: { OPENAI_API_KEY: "test-key" },
+      approval,
+      transport: async ({ request }) => ({
+        id: "test-provider",
+        text: `provider draft: ${request}`,
+        usage: { testTransport: true },
+      }),
+    });
+    const verification = await verifyProviderInvocationRuntime();
+    const cliRuntimeCheck = JSON.parse(execFileSync(process.execPath, [
+      CLI,
+      "adapters",
+      "model-provider-runtime-check",
+    ], {
+      cwd: ROOT,
+      encoding: "utf8",
+    }));
+
+    assert.equal(result.status, "completed_provider_invocation");
+    assert.equal(result.output.modelOutputBoundary, "draft_only_not_action_authority");
+    assert.equal(result.safetyInvariants.executesToolFromOutput, false);
+    assert.equal(result.safetyInvariants.activatesConnector, false);
+    assert.equal(verification.status, "ready");
+    assert.equal(cliRuntimeCheck.status, "ready");
   });
 });

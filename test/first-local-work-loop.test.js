@@ -48,6 +48,10 @@ describe("First Local Work Loop v1", () => {
     assert.equal(loop.executionRuntime.schema, "gpao_t.execution_runtime_plan.v1");
     assert.equal(loop.executionRuntime.dryRunPreview.invokesNow, false);
     assert.equal(loop.executionRuntime.safetyInvariants.runsCliCommand, false);
+    assert.equal(loop.executionDryRunInvocation.status, "completed_dry_run_invocation");
+    assert.equal(loop.executionDryRunInvocation.safetyInvariants.writeMutationExpected, false);
+    assert.equal(loop.readOnlyConnectorInspection.status, "ready");
+    assert.equal(loop.readOnlyConnectorInspection.safetyInvariants.writesFiles, false);
     assert.equal(loop.boundaryState.localJsonlRecordWrite, true);
     assert.equal(loop.boundaryState.modelCall, false);
     assert.equal(loop.boundaryState.toolCliMcpExecution, false);

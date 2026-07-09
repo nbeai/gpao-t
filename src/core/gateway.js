@@ -121,6 +121,9 @@ import {
 } from "./model-invocation.js";
 import {
   buildExecutionRuntimePlan,
+  inspectReadOnlyConnector,
+  invokeExecutionRuntimeDryRun,
+  verifyExecutionRuntimeInvocation,
   verifyExecutionRuntimePlan,
 } from "./execution-runtime.js";
 import {
@@ -699,6 +702,43 @@ export function handleGatewayRequest({ method = "GET", path = "/", body = {}, ro
       schema: "gpao_t.gateway_response.v0_1",
       status: 200,
       body: verifyExecutionRuntimePlan({ plan }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/connectors/execution-runtime/invoke-dry-run") {
+    const commandId = body.commandId || "model-invocation-check";
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: invokeExecutionRuntimeDryRun({
+        root,
+        commandId,
+        approval: {
+          confirmed: true,
+          commandId,
+          authorityTier: "dry_run",
+          allowMutation: false,
+        },
+      }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/connectors/execution-runtime/invocation/verify") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: verifyExecutionRuntimeInvocation({ root }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/connectors/read-only-inspect") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: inspectReadOnlyConnector({
+        root,
+        connectorId: body.connectorId || "local.filesystem",
+      }),
     };
   }
 

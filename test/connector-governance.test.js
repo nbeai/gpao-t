@@ -6,12 +6,15 @@ import {
   buildConnectorGovernanceSummary,
   buildConnectorToolGovernance,
   buildExecutionRuntimePlan,
+  inspectReadOnlyConnector,
+  invokeExecutionRuntimeDryRun,
   buildApprovalRecordWriteUxDesign,
   buildAuditWriteDesignProof,
   buildExecutionApprovalPreview,
   handleGatewayRequest,
   listConnectors,
   reviewConnectorPermission,
+  verifyExecutionRuntimeInvocation,
   verifyExecutionRuntimePlan,
   verifyApprovalRecordWriteUxDesign,
   verifyAuditWriteDesignProof,
@@ -93,6 +96,33 @@ describe("GPAO-T connector governance", () => {
     assert.equal(plan.safetyInvariants.runsCliCommand, false);
     assert.equal(plan.safetyInvariants.invokesMcp, false);
     assert.equal(plan.safetyInvariants.activatesConnector, false);
+    assert.equal(verification.status, "ready");
+    assert.deepEqual(verification.findings, []);
+  });
+
+  it("invokes a whitelisted dry-run command and inspects a read-only connector", () => {
+    const invocation = invokeExecutionRuntimeDryRun({
+      root: ROOT,
+      commandId: "model-invocation-check",
+      approval: {
+        confirmed: true,
+        commandId: "model-invocation-check",
+        authorityTier: "dry_run",
+        allowMutation: false,
+      },
+    });
+    const inspection = inspectReadOnlyConnector({ root: ROOT });
+    const verification = verifyExecutionRuntimeInvocation({ root: ROOT });
+
+    assert.equal(invocation.schema, "gpao_t.execution_runtime_invocation.v1");
+    assert.equal(invocation.status, "completed_dry_run_invocation");
+    assert.equal(invocation.safetyInvariants.writeMutationExpected, false);
+    assert.equal(invocation.safetyInvariants.connectorActivation, false);
+    assert.equal(inspection.schema, "gpao_t.read_only_connector_inspection.v1");
+    assert.equal(inspection.status, "ready");
+    assert.equal(inspection.evidence.packageName, "gpao-t");
+    assert.equal(inspection.safetyInvariants.writesFiles, false);
+    assert.equal(inspection.safetyInvariants.sendsExternalNetworkRequest, false);
     assert.equal(verification.status, "ready");
     assert.deepEqual(verification.findings, []);
   });
@@ -273,6 +303,18 @@ describe("GPAO-T connector governance", () => {
       cwd: ROOT,
       encoding: "utf8",
     });
+    const cliExecutionDryRunOutput = execFileSync(process.execPath, [CLI, "connectors", "execution-dry-run"], {
+      cwd: ROOT,
+      encoding: "utf8",
+    });
+    const cliExecutionInvocationCheckOutput = execFileSync(process.execPath, [CLI, "connectors", "execution-invocation-check"], {
+      cwd: ROOT,
+      encoding: "utf8",
+    });
+    const cliReadOnlyInspectOutput = execFileSync(process.execPath, [CLI, "connectors", "read-only-inspect"], {
+      cwd: ROOT,
+      encoding: "utf8",
+    });
     const cliApprovalOutput = execFileSync(process.execPath, [CLI, "approval", "execution-proposal", "로컬 검증을 미리보기로 보여줘"], {
       cwd: ROOT,
       encoding: "utf8",
@@ -302,6 +344,9 @@ describe("GPAO-T connector governance", () => {
     const cliGovernanceCheck = JSON.parse(cliGovernanceCheckOutput);
     const cliExecutionRuntime = JSON.parse(cliExecutionRuntimeOutput);
     const cliExecutionRuntimeCheck = JSON.parse(cliExecutionRuntimeCheckOutput);
+    const cliExecutionDryRun = JSON.parse(cliExecutionDryRunOutput);
+    const cliExecutionInvocationCheck = JSON.parse(cliExecutionInvocationCheckOutput);
+    const cliReadOnlyInspect = JSON.parse(cliReadOnlyInspectOutput);
     const cliApproval = JSON.parse(cliApprovalOutput);
     const cliApprovalCheck = JSON.parse(cliApprovalCheckOutput);
     const cliAuditDesign = JSON.parse(cliAuditDesignOutput);
@@ -314,6 +359,9 @@ describe("GPAO-T connector governance", () => {
     const toolGovernanceCheck = handleGatewayRequest({ method: "GET", path: "/connectors/tool-governance/verify" });
     const executionRuntime = handleGatewayRequest({ method: "GET", path: "/connectors/execution-runtime" });
     const executionRuntimeCheck = handleGatewayRequest({ method: "GET", path: "/connectors/execution-runtime/verify" });
+    const executionRuntimeInvocation = handleGatewayRequest({ method: "GET", path: "/connectors/execution-runtime/invoke-dry-run" });
+    const executionRuntimeInvocationCheck = handleGatewayRequest({ method: "GET", path: "/connectors/execution-runtime/invocation/verify" });
+    const readOnlyInspect = handleGatewayRequest({ method: "GET", path: "/connectors/read-only-inspect" });
     const approval = handleGatewayRequest({ method: "GET", path: "/approval/execution-proposal" });
     const approvalCheck = handleGatewayRequest({ method: "GET", path: "/approval/execution-proposal/verify" });
     const auditDesign = handleGatewayRequest({ method: "GET", path: "/approval/audit-write-design" });
@@ -333,6 +381,9 @@ describe("GPAO-T connector governance", () => {
     assert.equal(cliExecutionRuntime.schema, "gpao_t.execution_runtime_plan.v1");
     assert.equal(cliExecutionRuntime.dryRunPreview.invokesNow, false);
     assert.equal(cliExecutionRuntimeCheck.status, "ready");
+    assert.equal(cliExecutionDryRun.status, "completed_dry_run_invocation");
+    assert.equal(cliExecutionInvocationCheck.status, "ready");
+    assert.equal(cliReadOnlyInspect.status, "ready");
     assert.equal(cliApproval.schema, "gpao_t.execution_approval_preview.v0_1");
     assert.equal(cliApproval.approvalPacket.writesPacketNow, false);
     assert.equal(cliApprovalCheck.status, "ready");
@@ -353,6 +404,12 @@ describe("GPAO-T connector governance", () => {
     assert.equal(executionRuntime.body.dryRunPreview.invokesNow, false);
     assert.equal(executionRuntimeCheck.status, 200);
     assert.equal(executionRuntimeCheck.body.status, "ready");
+    assert.equal(executionRuntimeInvocation.status, 200);
+    assert.equal(executionRuntimeInvocation.body.status, "completed_dry_run_invocation");
+    assert.equal(executionRuntimeInvocationCheck.status, 200);
+    assert.equal(executionRuntimeInvocationCheck.body.status, "ready");
+    assert.equal(readOnlyInspect.status, 200);
+    assert.equal(readOnlyInspect.body.status, "ready");
     assert.equal(approval.status, 200);
     assert.equal(approval.body.auditWriteDesign.auditWriteNow, false);
     assert.equal(approvalCheck.status, 200);

@@ -87,6 +87,9 @@ import {
 } from "./model-invocation.js";
 import {
   buildExecutionRuntimePlan,
+  inspectReadOnlyConnector,
+  invokeExecutionRuntimeDryRun,
+  verifyExecutionRuntimeInvocation,
   verifyExecutionRuntimePlan,
 } from "./execution-runtime.js";
 
@@ -168,6 +171,9 @@ export function buildControlCenterServingContract({
       { path: "/adapters/model-invocation/verify", content: "model_invocation_verification" },
       { path: "/connectors/execution-runtime", content: "execution_runtime_plan" },
       { path: "/connectors/execution-runtime/verify", content: "execution_runtime_verification" },
+      { path: "/connectors/execution-runtime/invoke-dry-run", content: "execution_runtime_dry_run_invocation" },
+      { path: "/connectors/execution-runtime/invocation/verify", content: "execution_runtime_invocation_verification" },
+      { path: "/connectors/read-only-inspect", content: "read_only_connector_inspection" },
     ],
     defaultRoute: route,
     renderBeforeServe: true,
@@ -363,6 +369,34 @@ export async function startControlCenterPreviewServer({
     if (url.pathname === "/connectors/execution-runtime/verify") {
       const plan = buildExecutionRuntimePlan({ root });
       respondJson(response, 200, verifyExecutionRuntimePlan({ plan }));
+      return;
+    }
+
+    if (url.pathname === "/connectors/execution-runtime/invoke-dry-run") {
+      const commandId = url.searchParams.get("commandId") || "model-invocation-check";
+      respondJson(response, 200, invokeExecutionRuntimeDryRun({
+        root,
+        commandId,
+        approval: {
+          confirmed: true,
+          commandId,
+          authorityTier: "dry_run",
+          allowMutation: false,
+        },
+      }));
+      return;
+    }
+
+    if (url.pathname === "/connectors/execution-runtime/invocation/verify") {
+      respondJson(response, 200, verifyExecutionRuntimeInvocation({ root }));
+      return;
+    }
+
+    if (url.pathname === "/connectors/read-only-inspect") {
+      respondJson(response, 200, inspectReadOnlyConnector({
+        root,
+        connectorId: url.searchParams.get("connectorId") || "local.filesystem",
+      }));
       return;
     }
 
@@ -734,6 +768,9 @@ export async function verifyControlCenterPreviewServing({
     const modelInvocationVerify = await fetchJson(`http://${host}:${preview.port}/adapters/model-invocation/verify`);
     const executionRuntime = await fetchJson(`http://${host}:${preview.port}/connectors/execution-runtime`);
     const executionRuntimeVerify = await fetchJson(`http://${host}:${preview.port}/connectors/execution-runtime/verify`);
+    const executionDryRunInvocation = await fetchJson(`http://${host}:${preview.port}/connectors/execution-runtime/invoke-dry-run`);
+    const executionRuntimeInvocationVerify = await fetchJson(`http://${host}:${preview.port}/connectors/execution-runtime/invocation/verify`);
+    const readOnlyInspection = await fetchJson(`http://${host}:${preview.port}/connectors/read-only-inspect`);
     const blockedPost = await fetchJson(`http://${host}:${preview.port}/app-shell`, { method: "POST" });
     const findings = [];
 
@@ -983,6 +1020,15 @@ export async function verifyControlCenterPreviewServing({
     if (executionRuntimeVerify.status !== 200 || executionRuntimeVerify.body.status !== "ready") {
       findings.push("execution_runtime_verify_not_ready");
     }
+    if (executionDryRunInvocation.status !== 200 || executionDryRunInvocation.body.status !== "completed_dry_run_invocation") {
+      findings.push("execution_dry_run_invocation_not_ready");
+    }
+    if (executionRuntimeInvocationVerify.status !== 200 || executionRuntimeInvocationVerify.body.status !== "ready") {
+      findings.push("execution_runtime_invocation_verify_not_ready");
+    }
+    if (readOnlyInspection.status !== 200 || readOnlyInspection.body.status !== "ready") {
+      findings.push("read_only_connector_inspection_not_ready");
+    }
     if (blockedPost.status !== 405 || blockedPost.body.status !== "blocked") {
       findings.push("app_shell_post_not_blocked");
     }
@@ -1012,6 +1058,8 @@ export async function verifyControlCenterPreviewServing({
       modelProvidersUrl: `http://${host}:${preview.port}/adapters/model-providers`,
       modelInvocationLocalUrl: `http://${host}:${preview.port}/adapters/model-invocation/local`,
       executionRuntimeUrl: `http://${host}:${preview.port}/connectors/execution-runtime`,
+      executionDryRunInvocationUrl: `http://${host}:${preview.port}/connectors/execution-runtime/invoke-dry-run`,
+      readOnlyInspectionUrl: `http://${host}:${preview.port}/connectors/read-only-inspect`,
       healthStatus: health.status,
       workSurfaceStatus: workSurface.status,
       workSurfaceStateStatus: workSurfaceState.status,
@@ -1046,6 +1094,9 @@ export async function verifyControlCenterPreviewServing({
       modelInvocationVerifyStatus: modelInvocationVerify.status,
       executionRuntimeStatus: executionRuntime.status,
       executionRuntimeVerifyStatus: executionRuntimeVerify.status,
+      executionDryRunInvocationStatus: executionDryRunInvocation.status,
+      executionRuntimeInvocationVerifyStatus: executionRuntimeInvocationVerify.status,
+      readOnlyInspectionStatus: readOnlyInspection.status,
       blockedPostStatus: blockedPost.status,
       contentLength: page.body.length,
       requiredVisibleText: preview.contract.screenshotVerification.requiredVisibleText,

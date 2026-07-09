@@ -74,6 +74,7 @@ import {
   buildTauriReadOnlyShellHtml,
   buildTauriReadOnlyShellSlice,
   buildExecutionRuntimePlan,
+  inspectReadOnlyConnector,
   captureMemoryEntry,
   buildReplayRecoveryView,
   appendReplayRecoveryRecord,
@@ -116,7 +117,9 @@ import {
   verifyModelRouterBoundary,
   verifyModelRouterPolicy,
   verifyModelInvocation,
+  verifyProviderInvocationRuntime,
   verifyExecutionRuntimePlan,
+  verifyExecutionRuntimeInvocation,
   verifyWorkSurfaceSubmissionDecisionGate,
   verifyWorkSurfaceSubmissionValidationGate,
   verifyWorkSurfaceExecutionFlow,
@@ -136,6 +139,8 @@ import {
   writeApprovalAuditLocalRecords,
   recordWorkSurfaceExecutionFlow,
   invokeModelLocally,
+  invokeModelProvider,
+  invokeExecutionRuntimeDryRun,
 } from "../src/index.js";
 
 function usage() {
@@ -180,6 +185,9 @@ function usage() {
     "  gpao-t connectors tool-governance-check",
     "  gpao-t connectors execution-runtime",
     "  gpao-t connectors execution-runtime-check",
+    "  gpao-t connectors execution-dry-run [command-id]",
+    "  gpao-t connectors execution-invocation-check",
+    "  gpao-t connectors read-only-inspect [connector-id]",
     "  gpao-t connectors review <connector-id> [action]",
     "  gpao-t approval execution-proposal [text]",
     "  gpao-t approval execution-proposal-check",
@@ -211,6 +219,7 @@ function usage() {
     "  gpao-t adapters model-invocation [provider-id] [text]",
     "  gpao-t adapters model-invocation-local [text]",
     "  gpao-t adapters model-invocation-check",
+    "  gpao-t adapters model-provider-runtime-check",
     "  gpao-t adapters plan <text>",
     "  gpao-t control snapshot",
     "  gpao-t control summary",
@@ -457,13 +466,32 @@ try {
       printJson(verifyExecutionRuntimePlan({
         plan: buildExecutionRuntimePlan({ root: process.cwd() }),
       }));
+    } else if (subcommand === "execution-dry-run") {
+      const commandId = connectorId || "model-invocation-check";
+      printJson(invokeExecutionRuntimeDryRun({
+        root: process.cwd(),
+        commandId,
+        approval: {
+          confirmed: true,
+          commandId,
+          authorityTier: "dry_run",
+          allowMutation: false,
+        },
+      }));
+    } else if (subcommand === "execution-invocation-check") {
+      printJson(verifyExecutionRuntimeInvocation({ root: process.cwd() }));
+    } else if (subcommand === "read-only-inspect") {
+      printJson(inspectReadOnlyConnector({
+        root: process.cwd(),
+        connectorId: connectorId || "local.filesystem",
+      }));
     } else if (subcommand === "review") {
       if (!connectorId) {
         throw new Error("connectors review requires connector id");
       }
       printJson(reviewConnectorPermission({ connectorId, action }));
     } else {
-      throw new Error("connectors command requires list, governance, tool-governance, tool-governance-check, execution-runtime, execution-runtime-check, or review");
+      throw new Error("connectors command requires list, governance, tool-governance, tool-governance-check, execution-runtime, execution-runtime-check, execution-dry-run, execution-invocation-check, read-only-inspect, or review");
     }
   } else if (command === "approval") {
     const [subcommand, ...textParts] = args;
@@ -549,6 +577,8 @@ try {
       }));
     } else if (subcommand === "model-invocation-check") {
       printJson(verifyModelInvocation());
+    } else if (subcommand === "model-provider-runtime-check") {
+      printJson(await verifyProviderInvocationRuntime());
     } else if (subcommand === "plan") {
       const text = textParts.join(" ").trim();
       if (!text) {
@@ -556,7 +586,7 @@ try {
       }
       printJson(runRuntimeTurn({ input: { text } }).adapterPlan);
     } else {
-      throw new Error("adapters command requires models, tools, model-router-boundary, model-router-boundary-check, model-router-policy, model-router-policy-check, model-providers, model-invocation, model-invocation-local, model-invocation-check, or plan");
+      throw new Error("adapters command requires models, tools, model-router-boundary, model-router-boundary-check, model-router-policy, model-router-policy-check, model-providers, model-invocation, model-invocation-local, model-invocation-check, model-provider-runtime-check, or plan");
     }
   } else if (command === "control") {
     const [subcommand] = args;

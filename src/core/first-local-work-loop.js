@@ -3,7 +3,11 @@ import { buildExecutionApprovalPreview } from "./execution-approval.js";
 import { resolveContextMesh } from "./memory-wiki.js";
 import { invokeModelLocally } from "./model-invocation.js";
 import { routeModel } from "./model-router.js";
-import { buildExecutionRuntimePlan } from "./execution-runtime.js";
+import {
+  buildExecutionRuntimePlan,
+  inspectReadOnlyConnector,
+  invokeExecutionRuntimeDryRun,
+} from "./execution-runtime.js";
 import { buildSkillExecutionPlan, routeSkillPacks } from "./skill-ecosystem.js";
 import { readRuntimeState } from "./storage.js";
 import { runTurn } from "./turn-kernel.js";
@@ -74,6 +78,18 @@ export function buildFirstLocalWorkLoop({
     requestedSurface: "cli",
     requestedTier: "dry_run",
   });
+  const executionDryRunInvocation = invokeExecutionRuntimeDryRun({
+    root,
+    commandId: "model-invocation-check",
+    approval: {
+      confirmed: true,
+      commandId: "model-invocation-check",
+      authorityTier: "dry_run",
+      allowMutation: false,
+    },
+    now,
+  });
+  const readOnlyConnectorInspection = inspectReadOnlyConnector({ root, now });
   const executionPreview = buildExecutionApprovalPreview({
     request: packet.userInput.text,
     proposal: buildLocalPreviewProposal({ packet, turnPreview }),
@@ -144,6 +160,8 @@ export function buildFirstLocalWorkLoop({
     },
     modelInvocation,
     executionRuntime,
+    executionDryRunInvocation,
+    readOnlyConnectorInspection,
     localDraftPreview: buildLocalDraftPreview({ packet, turnPreview, contextMesh, skillRoute }),
     approvalAudit: {
       proposal: executionPreview.proposal,
@@ -180,6 +198,9 @@ export function verifyFirstLocalWorkLoop({ loop = buildFirstLocalWorkLoop({ writ
   if (loop.modelInvocation?.packet?.provider?.lane !== "local_private") findings.push("local_model_invocation_wrong_lane");
   if (loop.executionRuntime?.status !== "ready") findings.push("execution_runtime_plan_missing");
   if (loop.executionRuntime?.safetyInvariants?.runsCliCommand !== false) findings.push("execution_runtime_cli_open");
+  if (loop.executionDryRunInvocation?.status !== "completed_dry_run_invocation") findings.push("execution_dry_run_invocation_missing");
+  if (loop.executionDryRunInvocation?.safetyInvariants?.writeMutationExpected !== false) findings.push("execution_dry_run_mutation_open");
+  if (loop.readOnlyConnectorInspection?.status !== "ready") findings.push("read_only_connector_inspection_missing");
   if (loop.boundaryState?.toolCliMcpExecution !== false) findings.push("tool_cli_mcp_execution_open");
   if (loop.boundaryState?.connectorActivation !== false) findings.push("connector_activation_open");
   if (loop.boundaryState?.externalSend !== false) findings.push("external_send_open");

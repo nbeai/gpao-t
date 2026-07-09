@@ -61,6 +61,15 @@ const INVOCATION_BLOCKED_ACTIONS = [
   "durable memory promotion",
 ];
 
+const LIVE_INVOCATION_REQUIRED_APPROVALS = [
+  "provider_connection_visible",
+  "credential_source_visible",
+  "budget_or_account_plan_visible",
+  "task_packet_visible",
+  "user_invocation_confirmation",
+  "audit_replay_reference_visible",
+];
+
 export function buildModelProviderRegistry({ env = process.env } = {}) {
   const providers = PROVIDER_LANES.map((provider) => {
     const configured = inferProviderConfigured({ provider, env });
@@ -203,6 +212,119 @@ export function invokeModelLocally({
   };
 }
 
+export async function invokeModelProvider({
+  request = "GPAO-T 작업을 실제 provider 호출 후보로 처리한다.",
+  providerId = "local.deterministic",
+  approval = {},
+  env = process.env,
+  transport,
+  now = new Date().toISOString(),
+} = {}) {
+  const packet = buildModelInvocationPacket({ request, providerId, env });
+  const external = packet.provider.invokesExternally === true;
+
+  if (!external) {
+    return invokeModelLocally({ request, providerId, now });
+  }
+
+  const approvalCheck = verifyProviderInvocationApproval({ packet, approval });
+  if (approvalCheck.status !== "ready") {
+    return {
+      schema: "gpao_t.model_provider_invocation_result.v1",
+      status: "blocked",
+      generatedAt: now,
+      packet,
+      approvalCheck,
+      invokedProvider: false,
+      output: null,
+      userVisibleSummary:
+        "실제 provider 호출은 준비됐지만, 연결/비용/승인 조건이 아직 충족되지 않아 실행하지 않았습니다.",
+      nextSafeAction: approvalCheck.nextSafeAction,
+    };
+  }
+
+  if (typeof transport !== "function") {
+    return {
+      schema: "gpao_t.model_provider_invocation_result.v1",
+      status: "transport_required",
+      generatedAt: now,
+      packet,
+      approvalCheck,
+      invokedProvider: false,
+      output: null,
+      userVisibleSummary:
+        "승인 조건은 충족됐지만, 실제 provider transport가 연결되지 않아 외부 호출을 실행하지 않았습니다.",
+      nextSafeAction: "OAuth/session 또는 API provider transport를 연결한 뒤 같은 승인 패킷으로 호출합니다.",
+    };
+  }
+
+  const transportResult = await transport({
+    provider: packet.provider,
+    request,
+    packet,
+    approval,
+  });
+
+  return {
+    schema: "gpao_t.model_provider_invocation_result.v1",
+    status: "completed_provider_invocation",
+    generatedAt: now,
+    packet,
+    approvalCheck,
+    invokedProvider: packet.provider.id,
+    output: {
+      role: "assistant",
+      type: "provider_draft",
+      text: String(transportResult?.text || transportResult?.output || ""),
+      modelOutputBoundary: "draft_only_not_action_authority",
+      providerReceipt: {
+        id: transportResult?.id || null,
+        usage: transportResult?.usage || null,
+      },
+    },
+    safetyInvariants: {
+      executesToolFromOutput: false,
+      activatesConnector: false,
+      sendsExternalMessage: false,
+      promotesDurableMemory: false,
+    },
+    userVisibleSummary:
+      "실제 provider 호출 결과를 초안으로 받았습니다. 이 출력은 도구 실행 권한이 아니며 Work Surface에서 검토되어야 합니다.",
+    nextSafeAction: "초안을 Work Surface에 표시하고, 도구/커넥터 실행은 별도 approval flow로 넘깁니다.",
+  };
+}
+
+export function verifyProviderInvocationApproval({
+  packet = buildModelInvocationPacket({ providerId: "openai.api_key" }),
+  approval = {},
+} = {}) {
+  const findings = [];
+  const required = LIVE_INVOCATION_REQUIRED_APPROVALS;
+  const granted = Array.isArray(approval.granted) ? approval.granted : [];
+
+  if (packet.provider?.invokesExternally !== true) findings.push("provider_is_not_external");
+  if (packet.provider?.configured !== true) findings.push("provider_not_configured");
+  if (approval.confirmed !== true) findings.push("user_invocation_confirmation_missing");
+  if (approval.allowNetwork !== true) findings.push("network_approval_missing");
+  if (approval.allowPaidUsage !== true && packet.provider?.costMode !== "account_plan_or_provider_policy") {
+    findings.push("paid_usage_policy_missing");
+  }
+  for (const item of required) {
+    if (!granted.includes(item)) findings.push(`missing_${item}`);
+  }
+
+  return {
+    schema: "gpao_t.model_provider_invocation_approval_check.v1",
+    status: findings.length ? "blocked" : "ready",
+    findings,
+    requiredApprovals: required,
+    grantedApprovals: granted,
+    nextSafeAction: findings.length
+      ? "연결 상태, 비용/계정 정책, task packet, 사용자 확인, audit/replay reference를 먼저 채웁니다."
+      : "Provider transport를 호출해도 되지만, 출력은 초안이며 도구 실행 권한이 아닙니다.",
+  };
+}
+
 export function verifyModelInvocation({
   registry = buildModelProviderRegistry(),
   localResult = invokeModelLocally(),
@@ -234,6 +356,47 @@ export function verifyModelInvocation({
     nextSafeAction: findings.length
       ? "Repair model invocation lane findings before exposing provider calls."
       : "Wire OAuth/API connection setup later; keep local deterministic invocation as the safe proof lane.",
+  };
+}
+
+export async function verifyProviderInvocationRuntime({
+  env = {
+    OPENAI_API_KEY: "test-key",
+  },
+} = {}) {
+  const approval = {
+    confirmed: true,
+    allowNetwork: true,
+    allowPaidUsage: true,
+    granted: LIVE_INVOCATION_REQUIRED_APPROVALS,
+  };
+  const result = await invokeModelProvider({
+    providerId: "openai.api_key",
+    request: "테스트 provider transport로 초안을 생성한다.",
+    env,
+    approval,
+    transport: async ({ request }) => ({
+      id: "test-provider-receipt",
+      text: `provider draft: ${request}`,
+      usage: { promptTokens: 0, completionTokens: 0, testTransport: true },
+    }),
+  });
+  const findings = [];
+
+  if (result.status !== "completed_provider_invocation") findings.push("provider_invocation_not_completed");
+  if (result.output?.modelOutputBoundary !== "draft_only_not_action_authority") findings.push("output_boundary_missing");
+  if (result.safetyInvariants?.executesToolFromOutput !== false) findings.push("tool_execution_open");
+  if (result.safetyInvariants?.activatesConnector !== false) findings.push("connector_activation_open");
+
+  return {
+    schema: "gpao_t.model_provider_invocation_runtime_verification.v1",
+    status: findings.length ? "blocked" : "ready",
+    findings,
+    checkedProvider: result.invokedProvider,
+    checkedReceipt: result.output?.providerReceipt?.id || null,
+    nextSafeAction: findings.length
+      ? "Repair provider invocation runtime before opening live provider setup."
+      : "Connect real OAuth/session and API transports under the same approval contract.",
   };
 }
 
