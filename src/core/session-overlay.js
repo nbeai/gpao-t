@@ -1,10 +1,12 @@
 import { classifyRequestTarget, hasFollowUpSignal } from "./context-admission-policy.js";
+import { buildSessionContinuityHandoff, hasReferentFollowUpSignal } from "./session-continuity.js";
 
 export function buildSessionOverlay({ input, priorFlow, inputSignal = { kind: "general_request" } } = {}) {
   const text = input?.text || "";
-  const followUp = inputSignal.kind === "follow_up" || hasFollowUpSignal(text);
+  const followUp = inputSignal.kind === "follow_up" || hasFollowUpSignal(text) || hasReferentFollowUpSignal(text);
   const requestPolicy = classifyRequestTarget({ text, inputSignal, priorFlow });
   const activeTargetId = requestPolicy.activeTargetId;
+  const continuityHandoff = buildSessionContinuityHandoff({ input, priorFlow, inputSignal });
 
   return {
     schema: "gpao_t.session_overlay.v0_1",
@@ -13,7 +15,11 @@ export function buildSessionOverlay({ input, priorFlow, inputSignal = { kind: "g
     activeTargetLabel: labelActiveTarget(activeTargetId),
     requestType: requestPolicy.requestType,
     targetSource: requestPolicy.targetSource,
-    continuityState: followUp && requestPolicy.carryPriorTarget ? "recovered" : "fresh",
+    continuityState: continuityHandoff.decision === "auto_carry"
+      ? "handoff_recovered"
+      : followUp && requestPolicy.carryPriorTarget ? "recovered" : "fresh",
+    continuityHandoff,
+    activeReferent: continuityHandoff.activeReferent,
     stalePriorTarget: requestPolicy.stalePriorTarget,
     staleReason: requestPolicy.staleReason || null,
     lastUserCorrection: priorFlow?.lastUserCorrection,

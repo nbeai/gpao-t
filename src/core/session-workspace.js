@@ -19,6 +19,7 @@ const MUTATING_ACTIONS = new Set([
   "new_session",
   "select_session",
   "rename",
+  "toggle_pin",
   "archive",
   "restore",
   "mark_delete_pending",
@@ -129,7 +130,15 @@ export function applySessionWorkspaceAction({
       });
     }
     state.sessions = state.sessions.map((session) => (
-      session.id === target.id ? { ...session, title: String(title).trim(), updatedAt: now } : session
+      session.id === target.id
+        ? { ...session, title: String(title).trim(), titleMode: "manual", updatedAt: now }
+        : session
+    ));
+  }
+
+  if (action === "toggle_pin") {
+    state.sessions = state.sessions.map((session) => (
+      session.id === target.id ? { ...session, pinned: !session.pinned, updatedAt: now } : session
     ));
   }
 
@@ -183,10 +192,22 @@ export function verifySessionWorkspaceBehavior({ root = PACKAGE_ROOT } = {}) {
   if (state.schema !== "gpao_t.session_workspace_state.v1") findings.push("invalid_schema");
   if (!Array.isArray(state.sessions) || state.sessions.length === 0) findings.push("missing_sessions");
   if (!state.sessions.some((session) => session.state === "active")) findings.push("missing_active_session");
+  if (!state.workspace?.id) findings.push("missing_workspace_id");
+  if (state.sessions.some((session) => !session.threadId || !session.sessionId)) findings.push("missing_thread_session_identity");
+  if (state.sessions.some((session) => !session.contextPacket?.scope)) findings.push("missing_session_context_packet");
+  if (state.sessions.some((session) => !session.memoryScope?.thread)) findings.push("missing_session_memory_scope");
+  if (state.sessions.some((session) => session.memoryScope?.durablePromotion !== "blocked")) {
+    findings.push("durable_memory_promotion_open");
+  }
+  if (state.sessions.some((session) => session.authorityGate?.permanentDelete !== "blocked")) {
+    findings.push("permanent_delete_gate_open");
+  }
   if (state.sessions.some((session) => session.state === "permanent_delete")) findings.push("permanent_delete_open");
   if (state.allowedActions.includes("permanent_delete")) findings.push("permanent_delete_allowed");
   if (state.boundaries.permanentDelete !== "blocked") findings.push("permanent_delete_boundary_open");
   if (state.boundaries.externalActivation !== "blocked") findings.push("external_activation_open");
+  if (state.boundaries.compatibilityMemoryWrite !== "blocked") findings.push("openclaw_memory_write_open");
+  if (state.boundaries.automaticAdmission !== "blocked") findings.push("automatic_admission_open");
   return {
     schema: "gpao_t.session_workspace_behavior_verification.v1",
     status: findings.length ? "review" : "ready",
@@ -196,11 +217,51 @@ export function verifySessionWorkspaceBehavior({ root = PACKAGE_ROOT } = {}) {
   };
 }
 
+export function deriveSessionTitleFromRequest(request, {
+  fallback = "새 작업 세션",
+  maxLength = 28,
+} = {}) {
+  const normalized = String(request || "")
+    .replace(/\[[^\]]+\]/g, " ")
+    .replace(/https?:\/\/\S+/gi, " ")
+    .replace(/[`*_#>~|{}[\]()]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  if (!normalized) return fallback;
+
+  const firstSentence = normalized
+    .split(/(?<=[.!?。！？])\s+|[\r\n]+/)
+    .map((sentence) => sentence.trim())
+    .find((sentence) => sentence && !/^(좋아|자|그럼|이제|일단|그리고|그러면|음|흠)[.!?\s]*$/i.test(sentence)) ||
+    normalized;
+  const commandTrimmed = firstSentence
+    .replace(/^(좋아|자|그럼|이제|일단|그리고|그러면|음|흠)[,.\s]+/i, "")
+    .replace(/(해줘|해봐|진행해|진행하자|부탁해|알려줘|만들어줘)[.!?\s]*$/i, "")
+    .trim() || firstSentence;
+  if (commandTrimmed.length <= maxLength) return commandTrimmed;
+
+  const words = commandTrimmed.split(/\s+/);
+  let title = "";
+  for (const word of words) {
+    const candidate = title ? `${title} ${word}` : word;
+    if (candidate.length > maxLength) break;
+    title = candidate;
+  }
+  if (title.length >= 6) return title;
+  return `${commandTrimmed.slice(0, Math.max(6, maxLength - 1)).trim()}…`;
+}
+
 export function defaultSessionWorkspaceState({ now = new Date().toISOString() } = {}) {
   return normalizeSessionWorkspaceState({
     schema: "gpao_t.session_workspace_state.v1",
     status: "ready",
     activeSessionId: "session.current",
+    workspace: {
+      id: "workspace.gpao-t.local",
+      title: "nBeAI. GPAO-T",
+      authorityPolicyId: "gpao-t.local.preview-authority",
+      memoryPolicyId: "gpao-t.review-only-memory",
+    },
     createdAt: now,
     updatedAt: now,
     allowedActions: [...MUTATING_ACTIONS],
@@ -211,6 +272,8 @@ export function defaultSessionWorkspaceState({ now = new Date().toISOString() } 
       connectorActivation: "blocked",
       externalActivation: "blocked",
       durableMemoryPromotion: "blocked",
+      compatibilityMemoryWrite: "blocked",
+      automaticAdmission: "blocked",
     },
     sessions: [
       sessionRecord({
@@ -280,9 +343,15 @@ function normalizeSessionWorkspaceState(state, { now }) {
     schema: "gpao_t.session_workspace_state.v1",
     status: state.status || "ready",
     activeSessionId,
+    workspace: {
+      id: state.workspace?.id || "workspace.gpao-t.local",
+      title: state.workspace?.title || "nBeAI. GPAO-T",
+      authorityPolicyId: state.workspace?.authorityPolicyId || "gpao-t.local.preview-authority",
+      memoryPolicyId: state.workspace?.memoryPolicyId || "gpao-t.review-only-memory",
+    },
     createdAt: state.createdAt || now,
     updatedAt: state.updatedAt || now,
-    allowedActions: state.allowedActions || [...MUTATING_ACTIONS],
+    allowedActions: [...new Set([...(state.allowedActions || []), ...MUTATING_ACTIONS])],
     boundaries: {
       permanentDelete: "blocked",
       modelCall: "blocked",
@@ -290,6 +359,8 @@ function normalizeSessionWorkspaceState(state, { now }) {
       connectorActivation: "blocked",
       externalActivation: "blocked",
       durableMemoryPromotion: "blocked",
+      compatibilityMemoryWrite: "blocked",
+      automaticAdmission: "blocked",
       ...(state.boundaries || {}),
     },
     sessions,
@@ -300,26 +371,64 @@ function normalizeSessionWorkspaceState(state, { now }) {
 }
 
 function sessionRecord(session) {
+  const id = session.id;
+  const threadId = session.threadId || idToThreadId(id);
+  const sessionId = session.sessionId || id;
+  const state = SESSION_STATE_LABELS[session.state] ? session.state : "draft";
+  const title = session.title || "새 작업";
+  const lastActivity = session.lastActivity || session.updatedAt || session.createdAt || new Date().toISOString();
   return {
-    id: session.id,
-    title: session.title || "새 작업",
-    state: SESSION_STATE_LABELS[session.state] ? session.state : "draft",
-    stateLabel: SESSION_STATE_LABELS[SESSION_STATE_LABELS[session.state] ? session.state : "draft"],
-    lastActivity: session.lastActivity || session.updatedAt || session.createdAt || new Date().toISOString(),
+    id,
+    threadId,
+    sessionId,
+    workspaceId: session.workspaceId || "workspace.gpao-t.local",
+    title,
+    titleMode: session.titleMode || "manual",
+    state,
+    stateLabel: SESSION_STATE_LABELS[state],
+    pinned: Boolean(session.pinned),
+    groupId: session.groupId || "group.ungrouped",
+    lifecycle: {
+      status: stateToLifecycleStatus(state),
+      canArchive: !["archived", "delete_pending"].includes(state),
+      canRestore: ["archived", "delete_pending"].includes(state),
+      canMarkDeletePending: state !== "delete_pending",
+      permanentDelete: "blocked",
+      restoreRequiredBeforeSelect: ["archived", "delete_pending"].includes(state),
+      ...(session.lifecycle || {}),
+    },
+    lastActivity,
+    lastOpenedAt: session.lastOpenedAt || lastActivity,
+    lastUserActivityAt: session.lastUserActivityAt || lastActivity,
+    lastAgentActivityAt: session.lastAgentActivityAt || lastActivity,
     project: session.project || "GPAO-T",
     hint: session.hint || "로컬 작업",
     request: session.request || "",
+    activeTargetId: session.activeTargetId || "general-runtime",
+    contextPacket: normalizeContextPacket({
+      packet: session.contextPacket,
+      sessionId,
+      threadId,
+      request: session.request,
+      activeTargetId: session.activeTargetId,
+    }),
+    memoryScope: normalizeMemoryScope({ memoryScope: session.memoryScope, threadId }),
+    replayState: normalizeReplayState(session.replayState),
+    authorityGate: normalizeAuthorityGate(session.authorityGate),
+    activitySummary: normalizeActivitySummary({ activitySummary: session.activitySummary, state, lastActivity }),
     createdAt: session.createdAt || session.lastActivity || new Date().toISOString(),
     updatedAt: session.updatedAt || session.lastActivity || new Date().toISOString(),
   };
 }
 
 function buildNewSession({ title, request, now }) {
-  const safeTitle = String(title || "").trim() || "새 작업 세션";
+  const manualTitle = String(title || "").trim();
+  const safeTitle = manualTitle || deriveSessionTitleFromRequest(request);
   const id = `session.local.${Date.parse(now) || Date.now()}`;
   return sessionRecord({
     id,
     title: safeTitle,
+    titleMode: manualTitle ? "manual" : "auto_from_first_input",
     state: "active",
     lastActivity: now,
     project: "GPAO-T",
@@ -387,9 +496,94 @@ function userMessageForAction(action) {
     new_session: "새 세션을 만들었습니다.",
     select_session: "활성 세션을 전환했습니다.",
     rename: "세션 이름을 바꿨습니다.",
+    toggle_pin: "세션 고정을 전환했습니다.",
     archive: "세션을 보관했습니다.",
     restore: "세션을 복구했습니다.",
     mark_delete_pending: "세션을 삭제 대기로 옮겼습니다. 아직 영구 삭제는 아닙니다.",
     cancel_delete_pending: "삭제 대기를 취소했습니다.",
   }[action] || "세션 작업을 적용했습니다.";
+}
+
+function idToThreadId(id) {
+  if (!id) return "thread.local.unknown";
+  return String(id).replace(/^session[.:]/, "thread.");
+}
+
+function stateToLifecycleStatus(state) {
+  return {
+    active: "running",
+    draft: "idle",
+    waiting_approval: "waiting_for_user",
+    blocked: "blocked",
+    archived: "archived",
+    delete_pending: "delete_pending",
+  }[state] || "idle";
+}
+
+function normalizeContextPacket({ packet = {}, sessionId, threadId, request = "", activeTargetId = "general-runtime" } = {}) {
+  return {
+    id: packet.id || `context.${sessionId}`,
+    sessionId,
+    threadId,
+    scope: packet.scope || "thread",
+    activeTargetId: packet.activeTargetId || activeTargetId || "general-runtime",
+    sourceSummary: packet.sourceSummary || request || "세션 내부 맥락",
+    admittedMemoryRefs: Array.isArray(packet.admittedMemoryRefs) ? packet.admittedMemoryRefs : [],
+    excludedMemoryRefs: Array.isArray(packet.excludedMemoryRefs) ? packet.excludedMemoryRefs : [],
+    ephemeralRefs: Array.isArray(packet.ephemeralRefs) ? packet.ephemeralRefs : [`session:${sessionId}`],
+    globalMemoryRefs: Array.isArray(packet.globalMemoryRefs) ? packet.globalMemoryRefs : [],
+    workspaceMemoryRefs: Array.isArray(packet.workspaceMemoryRefs) ? packet.workspaceMemoryRefs : [],
+    authorityStatus: packet.authorityStatus || "admission_required_before_answer_anchor",
+    freshness: packet.freshness || "current_session",
+  };
+}
+
+function normalizeMemoryScope({ memoryScope = {}, threadId } = {}) {
+  return {
+    global: memoryScope.global || "candidate_only",
+    workspace: memoryScope.workspace || "candidate_only",
+    group: memoryScope.group || "candidate_only",
+    thread: memoryScope.thread || threadId,
+    ephemeral: memoryScope.ephemeral || "turn_context_only",
+    durablePromotion: "blocked",
+    compatibilityMemoryWrite: "blocked",
+    automaticAdmission: "blocked",
+  };
+}
+
+function normalizeReplayState(replayState = {}) {
+  return {
+    status: replayState.status || "not_run",
+    requiredBeforeAdmission: replayState.requiredBeforeAdmission !== false,
+    beforeAfterEvidence: replayState.beforeAfterEvidence || "required_before_memory_anchor",
+    lastReplayId: replayState.lastReplayId || null,
+  };
+}
+
+function normalizeAuthorityGate(authorityGate = {}) {
+  return {
+    status: authorityGate.status || "locked",
+    localSessionStateWrite: "allowed",
+    rename: "allowed",
+    archive: "allowed",
+    restore: "allowed",
+    deletePending: "allowed",
+    permanentDelete: "blocked",
+    durableMemoryPromotion: "blocked",
+    compatibilityMemoryWrite: "blocked",
+    externalSend: "blocked",
+    connectorActivation: "blocked",
+    modelProviderCall: "blocked",
+  };
+}
+
+function normalizeActivitySummary({ activitySummary = {}, state, lastActivity } = {}) {
+  return {
+    status: activitySummary.status || "local_summary_ready",
+    lastEventAt: activitySummary.lastEventAt || lastActivity,
+    visibleEvents: Array.isArray(activitySummary.visibleEvents)
+      ? activitySummary.visibleEvents
+      : [`session_state:${state}`],
+    rawEventRef: activitySummary.rawEventRef || ".gpao-t/events/audit.jsonl",
+  };
 }

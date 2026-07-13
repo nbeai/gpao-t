@@ -10,6 +10,44 @@ GPAO-T is now treated as an independent local product repository. Local git is t
 
 Development guidance is maintained in `docs/DEVELOPMENT-PRINCIPLES.md`: GPAO-T should absorb OpenClaw-grade local runtime stability, Codex-grade work rhythm, and prove its originality through concrete T-cell / Context Mesh / Memory Wiki / Self-Growth runtime behavior.
 
+The OpenClaw absorption constitution is maintained in `docs/00-canon/GPAO-T-OPENCLAW-ABSORPTION-CONSTITUTION-v0.1-ko.md`. It fixes the main line: use the nbeai GitHub repositories as the source library, discard hidden previous-work result storage as active truth, avoid final sidecar/plugin-only integration, and transform OpenClaw into GPAO-T through internal absorption, replacement, modification, and verified strengthening. The Ferrari rule applies: GPAO-T must understand OpenClaw and the wider AI operating-system engineering field deeply before changing the live body.
+
+OpenClaw absorption Pass 001 is maintained in `docs/03-engineering/GPAO-T-OPENCLAW-ABSORPTION-PASS-001-v0.1-ko.md`. It completes the current one-stop planning slice through step 4: nbeai source inventory, OpenClaw circuit-to-absorption map, Codex GPAO / T-cell kernel extraction, and Gateway Dashboard -> GPAO-T Control Center design direction. Step 5, live OpenClaw mutation, remains a controlled discussion boundary.
+
+Test-team release completion is governed by `docs/03-engineering/GPAO-T-TEST-TEAM-RELEASE-COMPLETION-PLAN-v0.1-ko.md`. It fixes the next completion standard: GPAO-T cannot be called test-team release complete until the live OpenClaw/Telegram turn path is closed through GPAO-T preflight/admission/LLM-ready packet, post-answer replay, auto memory/self-growth, Control Center trace, and package evidence. The release/QA appendix is `docs/03-verification/GPAO-T-TEST-TEAM-RELEASE-COMPLETION-PLAN-v0.1-ko.md`.
+
+Pre-release candidate work is governed by `docs/03-engineering/GPAO-T-PRE-RELEASE-CANDIDATE-WORK-PLAN-v0.1-ko.md`. It fixes the target as the supervised test-team candidate immediately before distribution, not public release: release scope seal, fresh verification, live hook preview diff / rollback manifest, package/archive/checksum/readback, sealed visual QA, tester guide, feedback ledger, and owner decision lane must close before any live apply or distribution language is used.
+
+Research-first OS strategy is maintained in `docs/01-product/GPAO-T-RESEARCH-FIRST-OS-STRATEGY-v0.1-ko.md`. It resets the project away from MVP-first or OpenClaw-patch-first work and requires comparative study of OpenClaw, Codex, Claude, local AI tools, agent runtimes, UI/UX, and user-perceived performance before narrowing implementation. The current Runtime / Substrate Lab is the live OpenClaw body plus the pure OpenClaw lab copy, not `gpao-t-hardware-engine`.
+
+Comparative UX and operating-principle research is maintained in `docs/01-product/GPAO-T-COMPARATIVE-UX-OPERATING-PRINCIPLE-MATRIX-v0.1-ko.md`. It translates source-grounded evidence from Codex, Claude Code, OpenClaw, OpenHands, Open Interpreter, Khoj, Letta, LangGraph, CrewAI, and AutoGPT into GPAO-T OS pillars: Work Surface, Context / Memory Kernel, Authority Center, Model / Tool Router, Replay / Growth Loop, and Runtime / Substrate.
+
+Deep ecosystem, OpenClaw absorption, and T-cell application research is maintained in `docs/01-product/GPAO-T-DEEP-ECOSYSTEM-OPENCLAW-TCELL-APPLICATION-RESEARCH-v0.1-ko.md`. It extends the research map to GitHub Copilot cloud agent, Cline, Aider, Roo Code, Microsoft Agent Framework, AutoGen, Mem0, Zep, AIOS, OS-Copilot, Agent libOS, MemX, MCP/tool-layer research, and coding-agent configuration studies. Any previous Hardware Engine references are retired for this project unless 윤 explicitly reopens that lane.
+
+First real OS flow guidance is maintained in `docs/01-product/GPAO-T-FIRST-REAL-OS-FLOW-v0.1-ko.md`. It turns the research matrix into the first user-perceived operating flow: request intake, intent restoration, context selection, authority check, route selection, preview/result/proposal, verification, growth candidate, and next safe action. Future Pass 010 prompt narrowing and live OpenClaw work must preserve this flow.
+
+First real OS flow scenario guidance is maintained in `docs/01-product/GPAO-T-FIRST-REAL-OS-FLOW-SCENARIO-SPEC-v0.1-ko.md`. It makes the first flow replayable through direction-request, follow-up recovery, live-execution boundary, growth-candidate, and user-result-review scenarios, with acceptance criteria, UI state, authority boundaries, fixture shapes, and recommended next implementation order.
+
+Owner-side operation guidance is maintained in `docs/01-product/GPAO-T-OWNER-OPERATING-GUIDE-v0.1-ko.md`. It defines how 윤 participates as product owner and direction judge while Codex handles local inspection, documentation, implementation, verification, research, and technical translation. The guide preserves the beginner-facing rule: 윤 should not have to operate the project as a professional developer.
+
+Multi-agent operating guidance is maintained in `docs/02-workflow/GPAO-T-MULTI-AGENT-OPERATING-PROTOCOL-v0.1-ko.md`. Codex may propose, configure, and lead role-based agents for research, architecture, runtime, implementation, QA, security/authority, UX, and synthesis when that improves GPAO-T quality. The protocol also records that completed projects in the GitHub `nbeai` account are an important source-of-truth reference, while the current request and GPAO-T OS purpose remain the active target.
+
+Program control and the immediate work sequence are maintained in `docs/02-workflow/GPAO-T-PROGRAM-CONTROL-AND-WORK-SEQUENCE-v0.1-ko.md`. It establishes the `GPAO-T Flow Keeper` role as a drift / blocker / evidence / authority / next-action monitor, and fixes the next work order as Memory and Knowledge Control Architecture -> Source Call-Path Pass -> Dashboard Fork Map -> Lab/Fork UI Slice -> Replay and Visual QA -> Live Diff Review Package -> Explicit Live Apply.
+
+The first one-stop execution of that sequence is recorded in `docs/03-verification/evidence/GPAO-T-OPENCLAW-ABSORPTION-ONE-STOP-2026-07-11.md`. Phase 1 through Phase 4 are locally closed as architecture, source call-path, dashboard fork map, lab UI patch package, and testable runtime control contract. The detailed documents are `docs/03-engineering/GPAO-T-MEMORY-KNOWLEDGE-CONTROL-ARCHITECTURE-v0.1-ko.md`, `docs/03-engineering/GPAO-T-OPENCLAW-SOURCE-CALL-PATH-PASS-001-v0.1-ko.md`, and `docs/03-engineering/GPAO-T-DASHBOARD-FORK-MAP-AND-LAB-UI-SLICE-001-v0.1-ko.md`; the review patch package is `docs/03-engineering/patches/openclaw-dashboard-gpao-workpane-slice-001.patch`.
+
+Competitive and field research is maintained in `docs/01-product/GPAO-T-COMPETITIVE-RESEARCH-v0.1-ko.md`. It maps AutoGPT, OpenInterpreter, Khoj, Letta/MemGPT, MemoryOS, OpenHands, ChatDev, MetaGPT, CrewAI, LangGraph, OS-Copilot, OpenJarvis, AgentOS, AOHP, and local-first memory research into GPAO-T's product opportunity: a local-first, authority-bounded, self-growing personal AI OS rather than another raw agent framework.
+
+GPAO-T self-growth governance is maintained in `docs/00-canon/GPAO-T-SELF-GROWTH-LOOP-CONTRACT-v0.1-ko.md`. The official loop is `Observe -> Diagnose -> Extract -> Propose -> Replay -> Apply Gate -> Observe Again -> Stabilize or Rollback`; hidden durable memory promotion, hidden live rule mutation, external sends, connector writes, recurring automation, account/secret changes, public release, and other authority actions remain approval-gated.
+
+GPAO-T OpenClaw absorption is governed by `docs/00-canon/GPAO-T-OPENCLAW-ABSORPTION-CONSTITUTION-v0.1-ko.md`. This is the current constitutional directive for the project: live OpenClaw is the primary material, the pure OpenClaw lab copy is the research object, nbeai GitHub repositories are the source library, and GPAO-T must be built by analyzing OpenClaw down to file/module/route/prompt/UI circuits, preserving strengths, improving weaknesses, and absorbing GPAO/T-cell/BEAI research into that body. Separate Workspace Shell work is now auxiliary evidence, not the main product path.
+
+OpenClaw conversion Stage 1 is governed by `docs/03-engineering/OPENCLAW-CONVERSION-STAGE-1-WORK-ORDER-v0.1-ko.md`. The next safe conversion step is live inventory, prompt-path packet checking, controlled OpenClaw smoke, search route observation, and a pass/patch-required/hold decision before any broader OpenClaw mutation or UI redesign.
+
+OpenClaw Gateway Dashboard fork and chat condition work is governed by `docs/03-engineering/OPENCLAW-GATEWAY-DASHBOARD-FORK-AND-CHAT-CONDITION-WORK-ORDER-v0.1-ko.md`. It treats OpenClaw Control Dashboard as the local runtime shell reference, Codex as the multi-chat work rhythm reference, and GPAO-T Work Surface as the product-owned user environment. The first separate GPAO-T Workspace Shell slice is exposed through `gpao-t control workspace-shell`, `gpao-t control workspace-shell-html`, `gpao-t control workspace-shell-check`, `GET /gpao-t-workspace`, `GET /gpao-t-workspace/state`, and `GET /gpao-t-workspace/verify`; it shows session rail, active work session, right inspector, and chat condition status without live OpenClaw mutation. Its baseline desktop/mobile visual QA evidence is captured in `docs/03-verification/evidence/WORKSPACE-SHELL-VISUAL-QA-2026-07-10.md`, OS Pass 001 evidence is captured in `docs/03-verification/evidence/WORKSPACE-SHELL-OS-PASS-001-2026-07-10.md`, and OS Pass 002 evidence is captured in `docs/03-verification/evidence/WORKSPACE-SHELL-OS-PASS-002-2026-07-10.md`. The next visual passes must not harden this into a box/card dashboard; the primary OS surface should favor workspace planes, status strips, progress lanes, command/composer bars, tabs, drawers, sheets, and inspectors.
+
+Hardware Engine material has been retired from the current GPAO-T project scope. The archived notes are under `docs/99-out-of-scope/retired-hardware-engine/` and must not be used as a source, dependency, blocker, or completion gate for the current OpenClaw absorption/test-team candidate path.
+
 Local Control Center design guidance is maintained in `docs/LOCAL-CONTROL-CENTER-DESIGN-RECIPE.md`. It adapts BEAI Harness `design.md` into the GPAO-T visual UI contract before any desktop/web surface is built.
 
 GPAO-T design reference gating is now a required UI/UX contract. `gpao-t control design-reference-gate`, `gpao-t control design-reference-gate-check`, `GET /control-center/design-reference-gate`, and `GET /control-center/design-reference-gate/verify` expose the Codex-level visual/conversation UX, Claude-Code-level operating/authority UX, Korean-first UI, visual system, and tone-unity requirements that every future UI/UX slice must prove with desktop/mobile screenshot evidence and human visual review. The Control Center `Design Reference` panel shows this gate without opening approval writes, audit writes, dry-run invocation, tool/CLI/MCP execution, connector activation, credential access, external send, paid/destructive action, or durable memory promotion.
@@ -45,6 +83,8 @@ Approval record write UX evidence is maintained in `docs/03-verification/evidenc
 Design reference gate evidence is maintained in `docs/03-verification/evidence/design-reference-gate-qa-2026-07-09.json` and `docs/03-verification/evidence/DESIGN-REFERENCE-GATE-QA-2026-07-09.md`. It records the actual Control Center `Design Reference` desktop/mobile viewport and full-page screenshots, visual polish review, color quality, layout rhythm, icon alignment, Korean typography/line-break review, tone consistency, and user-perceived product quality risk.
 
 Skill ecosystem guidance is maintained in `docs/04-skill-ecosystem/GPAO-T-SKILL-ECOSYSTEM-MASTER-PLAN-ko.md`. GPAO-T skills must be research-grounded, practical, T-cell-shaped operating units, not prompt decorations or copied marketplace catalogs.
+
+Owner Ops Pack guidance is maintained in `docs/04-skill-ecosystem/GPAO-T-OWNER-OPS-PACK-DEVELOPMENT-PLAN-ko.md`, `docs/04-skill-ecosystem/OWNER-OPS-FIELD-CASEBOOK-ko.md`, `docs/04-skill-ecosystem/OWNER-OPS-AUTHORITY-MATRIX-ko.md`, `docs/04-skill-ecosystem/OWNER-OPS-FIRST-SCENARIOS-ko.md`, `docs/04-skill-ecosystem/OWNER-OPS-MCP-CONNECTOR-PLAN-ko.md`, `docs/04-skill-ecosystem/OWNER-OPS-FIRST-OWNER-SCENARIO-ko.md`, `docs/04-skill-ecosystem/OWNER-OPS-PLUGIN-PACKAGE-v0.1-ko.md`, `docs/04-skill-ecosystem/OWNER-OPS-TEAM-ALPHA-GUIDE-v0.1-ko.md`, `docs/04-skill-ecosystem/OWNER-OPS-HOST-REGISTRATION-AND-FEEDBACK-v0.1-ko.md`, `docs/04-skill-ecosystem/OWNER-OPS-FIRST-OWNER-BETA-GUIDE-v0.1-ko.md`, `docs/04-skill-ecosystem/OWNER-OPS-FIRST-OWNER-BETA-OPERATIONAL-TEST-PACKAGE-v0.1-ko.md`, `docs/04-skill-ecosystem/OWNER-OPS-BETA-FEEDBACK-ACTION-QUEUE-v0.1-ko.md`, `docs/04-skill-ecosystem/OWNER-OPS-MARKET-READINESS-GATE-v0.1-ko.md`, `docs/04-skill-ecosystem/OWNER-OPS-MARKET-EVIDENCE-BUNDLE-v0.1-ko.md`, `docs/04-skill-ecosystem/OWNER-OPS-PRE-PUBLIC-PACKAGE-REVIEW-v0.1-ko.md`, `docs/04-skill-ecosystem/OWNER-OPS-PRE-PUBLIC-EVIDENCE-BRIDGE-v0.1-ko.md`, `docs/04-skill-ecosystem/OWNER-OPS-PRE-PUBLIC-REPAIR-BACKLOG-v0.1-ko.md`, `docs/04-skill-ecosystem/OWNER-OPS-PRE-PUBLIC-REPAIR-COMPLETION-EVIDENCE-v0.1-ko.md`, `docs/04-skill-ecosystem/OWNER-OPS-DISTRIBUTION-EVIDENCE-v0.1-ko.md`, `docs/04-skill-ecosystem/OWNER-OPS-RELEASE-READINESS-EVIDENCE-v0.1-ko.md`, `docs/04-skill-ecosystem/OWNER-OPS-HUMAN-REVIEW-APPROVAL-PACKET-v0.1-ko.md`, `docs/04-skill-ecosystem/OWNER-OPS-SIGNED-PACKAGE-EVIDENCE-v0.1-ko.md`, `docs/04-skill-ecosystem/OWNER-OPS-INSTALL-UPDATE-ROLLBACK-PROOF-v0.1-ko.md`, `docs/04-skill-ecosystem/OWNER-OPS-DEPLOYMENT-DRY-RUN-PLAN-v0.1-ko.md`, `docs/04-skill-ecosystem/OWNER-OPS-DRY-RUN-EXECUTOR-PROOF-v0.1-ko.md`, `docs/04-skill-ecosystem/OWNER-OPS-DRY-RUN-APPROVAL-RECORD-DESIGN-v0.1-ko.md`, `docs/04-skill-ecosystem/OWNER-OPS-DRY-RUN-APPROVAL-RECORD-WRITE-LANE-v0.1-ko.md`, `docs/04-skill-ecosystem/OWNER-OPS-CONTROLLED-DRY-RUN-INVOCATION-v0.1-ko.md`, and `docs/04-skill-ecosystem/OWNER-OPS-DRY-RUN-RESULT-REVIEW-HANDOFF-v0.1-ko.md`. The first implementation exposes `gpao-t owner-ops ...` commands for Korean owner-operator no-API workflows: review reply, shopping inquiry classification, reservation inquiry drafts, local records, effect replay, MCP readiness, read-only connector planning, first owner-facing scenario smoke, local plugin/market package manifest, team alpha guidance, local host registration, alpha feedback collection, sample data, first-owner beta guidance, first-owner beta operational package, beta feedback action queue, beta feedback synthesis, industry template catalog, pre-market readiness gate, first-owner beta result review, market evidence bundle, template replay fixtures, privacy copy, pre-public package review, pre-public evidence bridge, pre-public repair backlog, pre-public repair completion evidence, local distribution evidence, release readiness evidence, human review approval packet, signed-package evidence prerequisites, install/update/rollback proof requirements, deployment dry-run planning, dry-run executor proof, dry-run approval record design, owner-token-gated local approval record write lane, controlled local dry-run simulation, and dry-run result review handoff. It is skill-pack-first: MCP/connectors and plugin/market packaging come after replay-proven local workflows.
 
 ## First Slice
 
@@ -142,6 +182,105 @@ node bin/gpao-t.js skill execute-record "디자인 좋은 웹앱을 만들어줘
 node bin/gpao-t.js skill execution-history
 node bin/gpao-t.js skill execution-summary
 node bin/gpao-t.js skill readiness
+node bin/gpao-t.js owner-ops skill-pack
+node bin/gpao-t.js owner-ops candidates "스마트스토어 배송 문의와 교환 문의가 많아요"
+node bin/gpao-t.js owner-ops workflow review_reply "음식은 맛있었는데 대기 시간이 너무 길었어요"
+node bin/gpao-t.js owner-ops record reservation_inquiry "이번 주 토요일 오후 3시에 예약 가능한가요?"
+node bin/gpao-t.js owner-ops replay
+node bin/gpao-t.js owner-ops check
+node bin/gpao-t.js owner-ops mcp-plan
+node bin/gpao-t.js owner-ops connector-catalog
+node bin/gpao-t.js owner-ops mcp-tools
+node bin/gpao-t.js owner-ops mcp-check
+node bin/gpao-t.js owner-ops mcp-server
+node bin/gpao-t.js owner-ops mcp-server-check
+node bin/gpao-t.js owner-ops intake-plan
+node bin/gpao-t.js owner-ops intake-paste review_reply "음식은 맛있었는데 대기 시간이 길었어요"
+node bin/gpao-t.js owner-ops intake-table shopping_inquiry smartstore.csv "문의,상태
+배송 언제 되나요?,신규"
+node bin/gpao-t.js owner-ops intake-file ./smartstore.csv shopping_inquiry
+node bin/gpao-t.js owner-ops intake-folder ./owner-data
+node bin/gpao-t.js owner-ops intake-check
+node bin/gpao-t.js owner-ops first-owner-scenario
+node bin/gpao-t.js owner-ops run-first-owner-scenario
+node bin/gpao-t.js owner-ops first-owner-scenario-check
+node bin/gpao-t.js owner-ops plugin-package
+node bin/gpao-t.js owner-ops market-listing
+node bin/gpao-t.js owner-ops plugin-package-check
+node bin/gpao-t.js owner-ops team-alpha-guide
+node bin/gpao-t.js owner-ops owner-ux-copy
+node bin/gpao-t.js owner-ops team-alpha-check
+node bin/gpao-t.js owner-ops host-registration-guide
+node bin/gpao-t.js owner-ops host-integration-matrix
+node bin/gpao-t.js owner-ops host-integration-matrix-check
+node bin/gpao-t.js owner-ops alpha-feedback-form
+node bin/gpao-t.js owner-ops host-alpha-check
+node bin/gpao-t.js owner-ops sample-data-kit
+node bin/gpao-t.js owner-ops first-owner-beta-guide
+node bin/gpao-t.js owner-ops first-owner-beta-check
+node bin/gpao-t.js owner-ops beta-feedback-synthesis
+node bin/gpao-t.js owner-ops industry-template-catalog
+node bin/gpao-t.js owner-ops market-readiness-gate
+node bin/gpao-t.js owner-ops market-readiness-check
+node bin/gpao-t.js owner-ops template-replay-fixtures
+node bin/gpao-t.js owner-ops privacy-copy-pack
+node bin/gpao-t.js owner-ops pre-public-package-review
+node bin/gpao-t.js owner-ops pre-public-package-check
+node bin/gpao-t.js owner-ops pre-public-evidence-bridge
+node bin/gpao-t.js owner-ops pre-public-evidence-bridge-check
+node bin/gpao-t.js owner-ops distribution-evidence
+node bin/gpao-t.js owner-ops distribution-readme
+node bin/gpao-t.js owner-ops distribution-evidence-check
+node bin/gpao-t.js owner-ops archive-checksum-dry-run
+node bin/gpao-t.js owner-ops archive-checksum-dry-run-check
+node bin/gpao-t.js owner-ops release-readiness-evidence
+node bin/gpao-t.js owner-ops release-readiness-write
+node bin/gpao-t.js owner-ops release-readiness-check
+node bin/gpao-t.js owner-ops human-review-approval-packet
+node bin/gpao-t.js owner-ops human-review-approval-write
+node bin/gpao-t.js owner-ops human-review-approval-check
+node bin/gpao-t.js owner-ops signed-package-evidence
+node bin/gpao-t.js owner-ops signed-package-evidence-write
+node bin/gpao-t.js owner-ops signed-package-evidence-check
+node bin/gpao-t.js owner-ops install-update-rollback-proof
+node bin/gpao-t.js owner-ops install-update-rollback-proof-write
+node bin/gpao-t.js owner-ops install-update-rollback-proof-check
+node bin/gpao-t.js owner-ops deployment-dry-run-plan
+node bin/gpao-t.js owner-ops deployment-dry-run-write
+node bin/gpao-t.js owner-ops deployment-dry-run-check
+node bin/gpao-t.js owner-ops dry-run-executor-proof install
+node bin/gpao-t.js owner-ops dry-run-executor-write install
+node bin/gpao-t.js owner-ops dry-run-executor-check install
+node bin/gpao-t.js owner-ops dry-run-approval-record-design install
+node bin/gpao-t.js owner-ops dry-run-approval-record-write install
+node bin/gpao-t.js owner-ops dry-run-approval-record-check install
+node bin/gpao-t.js owner-ops dry-run-approval-record-lane install
+node bin/gpao-t.js owner-ops dry-run-approval-record-append install approve-owner-ops-install-dry-run
+node bin/gpao-t.js owner-ops dry-run-approval-records
+node bin/gpao-t.js owner-ops dry-run-approval-record-lane-check install
+node bin/gpao-t.js owner-ops controlled-dry-run-gate install
+node bin/gpao-t.js owner-ops controlled-dry-run-invoke install
+node bin/gpao-t.js owner-ops controlled-dry-run-records
+node bin/gpao-t.js owner-ops controlled-dry-run-check install
+node bin/gpao-t.js owner-ops dry-run-result-handoff install
+node bin/gpao-t.js owner-ops dry-run-result-handoff-write install
+node bin/gpao-t.js owner-ops dry-run-result-handoff-check install
+node bin/gpao-t.js owner-ops local-package-candidate-check
+node bin/gpao-t.js owner-ops local-package-candidate-readback
+node bin/gpao-t.js owner-ops local-package-candidate-readback-check
+node bin/gpao-t.js owner-ops team-alpha-handoff-bundle
+node bin/gpao-t.js owner-ops team-alpha-handoff-write
+node bin/gpao-t.js owner-ops team-alpha-handoff-check
+node bin/gpao-t.js owner-ops first-owner-beta-handoff-bundle
+node bin/gpao-t.js owner-ops first-owner-beta-handoff-write
+node bin/gpao-t.js owner-ops first-owner-beta-handoff-check
+node bin/gpao-t.js owner-ops first-owner-beta-result-review
+node bin/gpao-t.js owner-ops first-owner-beta-result-write
+node bin/gpao-t.js owner-ops first-owner-beta-result-check
+node bin/gpao-t.js owner-ops market-evidence-bundle
+node bin/gpao-t.js owner-ops market-evidence-write
+node bin/gpao-t.js owner-ops market-evidence-check
+node bin/gpao-t-owner-ops-mcp.js
 node bin/gpao-t.js connectors list
 node bin/gpao-t.js connectors governance
 node bin/gpao-t.js connectors tool-governance

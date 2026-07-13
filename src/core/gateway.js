@@ -1,3 +1,4 @@
+import { fileURLToPath } from "node:url";
 import { listModelAdapters, listToolAdapters } from "./adapter-boundary.js";
 import {
   buildConnectorGovernanceSummary,
@@ -24,6 +25,11 @@ import {
   recordWorkSurfaceExecutionFlow,
   verifyWorkSurfaceExecutionFlow,
 } from "./work-surface-execution-flow.js";
+import {
+  buildGpaoTWorkspaceShell,
+  buildGpaoTWorkspaceShellHtml,
+  verifyGpaoTWorkspaceShell,
+} from "./workspace-shell.js";
 import { buildControlCenterSnapshot, buildControlCenterSummary } from "./control-center.js";
 import {
   buildControlCenterUiContract,
@@ -88,6 +94,17 @@ import {
   buildFirstLocalWorkLoop,
   verifyFirstLocalWorkLoop,
 } from "./first-local-work-loop.js";
+import {
+  buildGpaoTFirstCompletionAudit,
+  verifyGpaoTFirstCompletionAudit,
+  writeGpaoTFirstCompletionEvidence,
+} from "./first-completion.js";
+import {
+  buildAppliedReplayInspectorState,
+  buildAppliedContextMeshReplay,
+  verifyAppliedReplayInspectorState,
+  verifyAppliedContextMeshReplay,
+} from "./context-mesh-replay.js";
 import { runDoctor } from "./doctor.js";
 import {
   appendSelfGrowthProposal,
@@ -107,12 +124,255 @@ import {
   readInstallHardeningReports,
 } from "./install-hardening.js";
 import {
+  buildOwnerOpsAutomationCandidates,
+  buildOwnerOpsAuthorityMatrix,
+  buildOwnerOpsEffectReplay,
+  buildOwnerOpsFieldCasebook,
+  buildOwnerOpsFirstScenarios,
+  buildOwnerOpsSkillPack,
+  buildOwnerOpsWorkflowPreview,
+  readOwnerOpsRecords,
+  verifyOwnerOpsPack,
+  writeOwnerOpsLocalRecord,
+} from "./owner-ops.js";
+import {
+  buildOwnerOpsConnectorCatalog,
+  buildOwnerOpsMcpPlan,
+  buildOwnerOpsMcpToolManifest,
+  verifyOwnerOpsMcpReadiness,
+} from "./owner-ops-connectors.js";
+import {
+  buildOwnerOpsMcpServerDescriptor,
+  verifyOwnerOpsMcpServer,
+} from "./owner-ops-mcp-server.js";
+import {
+  buildOwnerOpsReadOnlyIntakePlan,
+  previewOwnerOpsFolderIntake,
+  previewOwnerOpsLocalFileIntake,
+  previewOwnerOpsPasteIntake,
+  previewOwnerOpsTableTextIntake,
+  verifyOwnerOpsReadOnlyIntakeConnectors,
+} from "./owner-ops-intake-connectors.js";
+import {
+  buildOwnerOpsFirstOwnerScenarioFixture,
+  runOwnerOpsFirstOwnerScenario,
+  verifyOwnerOpsFirstOwnerScenario,
+} from "./owner-ops-scenarios.js";
+import {
+  buildOwnerOpsMarketListingDraft,
+  buildOwnerOpsPluginPackageManifest,
+  verifyOwnerOpsPluginPackage,
+} from "./owner-ops-package.js";
+import {
+  buildOwnerOpsOwnerFacingUxCopy,
+  buildOwnerOpsTeamAlphaGuide,
+  verifyOwnerOpsTeamAlphaReadiness,
+} from "./owner-ops-alpha.js";
+import {
+  buildOwnerOpsAlphaFeedbackForm,
+  buildOwnerOpsHostIntegrationMatrix,
+  buildOwnerOpsHostRegistrationGuide,
+  verifyOwnerOpsHostAlphaHandoff,
+  verifyOwnerOpsHostIntegrationMatrix,
+} from "./owner-ops-alpha-handoff.js";
+import {
+  buildOwnerOpsFirstOwnerBetaHandoffBundle,
+  buildOwnerOpsFirstOwnerBetaOperationalTestPackage,
+  buildOwnerOpsTeamAlphaHandoffBundle,
+  verifyOwnerOpsFirstOwnerBetaHandoffBundle,
+  verifyOwnerOpsFirstOwnerBetaOperationalTestPackage,
+  verifyOwnerOpsTeamAlphaHandoffBundle,
+  writeOwnerOpsFirstOwnerBetaHandoffBundle,
+  writeOwnerOpsFirstOwnerBetaOperationalTestPackage,
+  writeOwnerOpsTeamAlphaHandoffBundle,
+} from "./owner-ops-team-alpha-package.js";
+import {
+  buildOwnerOpsFirstOwnerBetaGuide,
+  buildOwnerOpsSampleDataKit,
+  verifyOwnerOpsFirstOwnerBetaReadiness,
+} from "./owner-ops-beta.js";
+import {
+  buildOwnerOpsBetaFeedbackActionQueue,
+  buildOwnerOpsBetaFeedbackSynthesis,
+  buildOwnerOpsFieldTestActionQueue,
+  buildOwnerOpsFieldTestLedger,
+  buildOwnerOpsFieldTestRepairCompletionEvidence,
+  buildOwnerOpsFirstOwnerBetaResultReview,
+  buildOwnerOpsIndustryTemplateCatalog,
+  buildOwnerOpsMarketEvidenceBundle,
+  buildOwnerOpsMarketReadinessGate,
+  appendOwnerOpsFieldTestRecord,
+  readOwnerOpsFieldTestRecords,
+  verifyOwnerOpsBetaFeedbackActionQueue,
+  verifyOwnerOpsFieldTestActionQueue,
+  verifyOwnerOpsFieldTestLedger,
+  verifyOwnerOpsFieldTestRepairCompletionEvidence,
+  verifyOwnerOpsFirstOwnerBetaResultReview,
+  verifyOwnerOpsMarketEvidenceBundle,
+  verifyOwnerOpsMarketReadiness,
+  writeOwnerOpsBetaFeedbackActionQueue,
+  writeOwnerOpsFieldTestActionQueue,
+  writeOwnerOpsFieldTestRepairCompletionEvidence,
+  writeOwnerOpsFirstOwnerBetaResultReview,
+  writeOwnerOpsMarketEvidenceBundle,
+} from "./owner-ops-market-readiness.js";
+import {
+  buildOwnerOpsPrePublicEvidenceBridge,
+  buildOwnerOpsPrePublicPackageReview,
+  buildOwnerOpsPrePublicRepairBacklog,
+  buildOwnerOpsPrePublicRepairCompletionEvidence,
+  buildOwnerOpsPrivacyCopyPack,
+  buildOwnerOpsTemplateReplayFixtures,
+  verifyOwnerOpsPrePublicEvidenceBridge,
+  verifyOwnerOpsPrePublicPackage,
+  verifyOwnerOpsPrePublicRepairBacklog,
+  verifyOwnerOpsPrePublicRepairCompletionEvidence,
+  writeOwnerOpsPrePublicRepairBacklog,
+  writeOwnerOpsPrePublicRepairCompletionEvidence,
+} from "./owner-ops-public-package.js";
+import {
+  buildOwnerOpsArchiveChecksumDryRun,
+  buildOwnerOpsBroaderOwnerTestingHandoff,
+  buildOwnerOpsBroaderOwnerTestingResultLedger,
+  buildOwnerOpsBroaderOwnerTestingRepairCompletionEvidence,
+  buildOwnerOpsBroaderOwnerTestingRepairQueue,
+  buildOwnerOpsDeploymentDryRunPlan,
+  buildOwnerOpsDistributionEvidence,
+  buildOwnerOpsDistributionReadme,
+  buildOwnerOpsControlledDryRunInvocationGate,
+  buildOwnerOpsDryRunResultReviewHandoff,
+  buildOwnerOpsDryRunApprovalRecordDesign,
+  buildOwnerOpsDryRunApprovalRecordWriteLane,
+  buildOwnerOpsDryRunExecutorProof,
+  buildOwnerOpsHumanReviewDecisionLane,
+  buildOwnerOpsHumanReviewApprovalPacket,
+  buildOwnerOpsInstallUpdateRollbackProof,
+  buildOwnerOpsNextOwnerTestingLoop,
+  buildOwnerOpsFinalLocalReleaseCandidateDecisionPacket,
+  buildOwnerOpsFinalCandidateOwnerDecisionLane,
+  buildOwnerOpsFinalCandidateNextActionPacket,
+  buildOwnerOpsPublicReleaseAuthorityGate,
+  buildOwnerOpsPublicReleaseReadbackSnapshot,
+  buildOwnerOpsApprovedSigningLane,
+  buildOwnerOpsMarketplaceUploadApprovalGate,
+  buildOwnerOpsMarketplaceUploadDecisionLane,
+  buildOwnerOpsReleaseReadinessEvidence,
+  buildOwnerOpsSignedPackageEvidence,
+  appendOwnerOpsDryRunApprovalRecord,
+  appendOwnerOpsBroaderOwnerTestingResult,
+  appendOwnerOpsFinalCandidateOwnerDecisionRecord,
+  appendOwnerOpsHumanReviewDecisionRecord,
+  appendOwnerOpsMarketplaceUploadDecisionRecord,
+  invokeOwnerOpsControlledDryRun,
+  readOwnerOpsControlledDryRunInvocations,
+  readOwnerOpsBroaderOwnerTestingResults,
+  readOwnerOpsDryRunApprovalRecords,
+  readOwnerOpsFinalCandidateOwnerDecisionRecords,
+  readOwnerOpsHumanReviewDecisionRecords,
+  readOwnerOpsMarketplaceUploadDecisionRecords,
+  readOwnerOpsLocalPackageCandidate,
+  writeOwnerOpsHumanReviewApprovalPacket,
+  writeOwnerOpsBroaderOwnerTestingHandoff,
+  writeOwnerOpsBroaderOwnerTestingRepairCompletionEvidence,
+  writeOwnerOpsBroaderOwnerTestingRepairQueue,
+  writeOwnerOpsInstallUpdateRollbackProof,
+  writeOwnerOpsDeploymentDryRunPlan,
+  writeOwnerOpsDryRunApprovalRecordDesign,
+  writeOwnerOpsDryRunResultReviewHandoff,
+  writeOwnerOpsDryRunExecutorProof,
+  writeOwnerOpsLocalPackageCandidate,
+  writeOwnerOpsNextOwnerTestingLoop,
+  writeOwnerOpsFinalLocalReleaseCandidateDecisionPacket,
+  writeOwnerOpsReleaseReadinessEvidence,
+  writeOwnerOpsSignedPackageEvidence,
+  verifyOwnerOpsArchiveChecksumDryRun,
+  verifyOwnerOpsBroaderOwnerTestingHandoff,
+  verifyOwnerOpsBroaderOwnerTestingResultLedger,
+  verifyOwnerOpsBroaderOwnerTestingRepairCompletionEvidence,
+  verifyOwnerOpsBroaderOwnerTestingRepairQueue,
+  verifyOwnerOpsDeploymentDryRunPlan,
+  verifyOwnerOpsDryRunApprovalRecordDesign,
+  verifyOwnerOpsDryRunApprovalRecordWriteLane,
+  verifyOwnerOpsControlledDryRunInvocationGate,
+  verifyOwnerOpsDryRunResultReviewHandoff,
+  verifyOwnerOpsDryRunExecutorProof,
+  verifyOwnerOpsDistributionEvidence,
+  verifyOwnerOpsHumanReviewDecisionLane,
+  verifyOwnerOpsHumanReviewApprovalPacket,
+  verifyOwnerOpsInstallUpdateRollbackProof,
+  verifyOwnerOpsPublicReleaseAuthorityGate,
+  verifyOwnerOpsPublicReleaseReadbackSnapshot,
+  verifyOwnerOpsApprovedSigningLane,
+  verifyOwnerOpsMarketplaceUploadApprovalGate,
+  verifyOwnerOpsMarketplaceUploadDecisionLane,
+  verifyOwnerOpsLocalPackageCandidateReadback,
+  verifyOwnerOpsLocalPackageCandidateWriter,
+  verifyOwnerOpsNextOwnerTestingLoop,
+  verifyOwnerOpsFinalLocalReleaseCandidateDecisionPacket,
+  verifyOwnerOpsFinalCandidateOwnerDecisionLane,
+  verifyOwnerOpsFinalCandidateNextActionPacket,
+  verifyOwnerOpsReleaseReadinessEvidence,
+  verifyOwnerOpsSignedPackageEvidence,
+} from "./owner-ops-distribution.js";
+import {
+  buildOwnerOpsProductionCompletionAudit,
+  buildOwnerOpsProductAxisReadinessMatrix,
+  buildOwnerOpsSupervisedTestingReadinessPacket,
+  verifyOwnerOpsProductionCompletionAudit,
+  verifyOwnerOpsProductAxisReadinessMatrix,
+  verifyOwnerOpsSupervisedTestingReadinessPacket,
+} from "./owner-ops-product-readiness.js";
+import {
   buildStages5To8Completion,
   verifyStages5To8Completion,
   verifyTeamAlphaPackage,
   writeTeamAlphaPackage,
 } from "./production-completion.js";
 import { captureMemoryEntry, readMemoryWiki, readTCellCandidates, resolveContextMesh } from "./memory-wiki.js";
+import {
+  appendMemoryApplyApprovalAuditBridge,
+  appendMemoryApplyRequest,
+  appendMemoryReplayEvidence,
+  appendMemoryReviewCandidate,
+  buildMemoryApplyApprovalAuditBridge,
+  buildMemoryApplyGateState,
+  buildMemoryApplyRequest,
+  buildMemoryLocalApplyInvocationContract,
+  buildMemoryReversibleApply,
+  buildMemoryReviewQueueSummary,
+  buildMemorySelfGrowthApprovalUx,
+  buildReadOnlyMemoryReplay,
+  invokeMemoryLocalContextMeshApply,
+  invokeMemoryLocalContextMeshRollback,
+  readMemoryReviewQueue,
+  verifyMemoryApplyGateState,
+  verifyMemoryLocalApplyInvocationContract,
+  verifyMemoryReviewQueue,
+  verifyMemorySelfGrowthApprovalUx,
+} from "./memory-candidate-review-queue.js";
+import {
+  buildAutoMemoryGrowthPolicy,
+  buildAutoMemoryGrowthSummary,
+  classifyAutoMemoryGrowthAuthority,
+  readAutoMemoryGrowthRuns,
+  runAutoMemoryGrowthLoop,
+  verifyAutoMemoryGrowthLoop,
+} from "./auto-memory-growth-loop.js";
+import {
+  appendToolProgressEvent,
+  buildConversationProgressLane,
+  buildLiveTurnAbsorptionPolicy,
+  buildLiveTurnAbsorptionSummary,
+  classifyLiveTurnSource,
+  readConversationProgressEvents,
+  readLiveTurnAbsorptionRuns,
+  runLiveTurnAbsorptionBridge,
+  verifyLiveTurnAbsorptionBridge,
+} from "./live-turn-absorption-bridge.js";
+import {
+  buildOpenClawLiveTurnHookReadinessGate,
+  verifyOpenClawLiveTurnHookReadinessGate,
+} from "./openclaw-absorption-control.js";
 import {
   buildModelRouterBoundary,
   buildModelRouterPolicy,
@@ -126,6 +386,23 @@ import {
   verifyModelInvocation,
 } from "./model-invocation.js";
 import {
+  buildLlmReadyPacketSurfaceState,
+  buildLlmReadyTaskContextPacket,
+  verifyLlmReadyTaskContextPacket,
+} from "./llm-ready-task-context-packet.js";
+import {
+  appendAnswerReplayEvaluation,
+  appendChatPreflightPacket,
+  appendPostAnswerReplayRecord,
+  buildAnswerReplayEvaluation,
+  buildAnswerReplayMemoryCandidate,
+  buildChatPreflightPacket,
+  readAnswerReplayEvaluations,
+  readChatPreflightPackets,
+  readPostAnswerReplayRecords,
+  verifyChatPreflightReplay,
+} from "./chat-preflight-replay.js";
+import {
   buildExecutionRuntimePlan,
   inspectReadOnlyConnector,
   invokeExecutionRuntimeDryRun,
@@ -138,11 +415,26 @@ import {
   verifySessionWorkspaceBehavior,
 } from "./session-workspace.js";
 import {
+  buildCodexStyleMultiChatWorkspace,
+  verifyCodexStyleMultiChatWorkspace,
+} from "./multi-chat-workspace.js";
+import {
+  buildMultiChatStageSixCompletion,
+  buildThreadScopedMemoryReviewQueue,
+  verifyMultiChatStageSixCompletion,
+} from "./multi-chat-stage-six.js";
+import {
   appendReplayRecoveryRecord,
   buildRecoveryHistorySummary,
   readReplayRecoveryHistory,
 } from "./replay-history.js";
 import { buildReplayRecoveryView } from "./replay-recovery.js";
+import {
+  applyRuntimeWorkspaceWelcomeSettings,
+  buildRuntimeWorkspaceWelcome,
+  buildRuntimeWorkspaceWelcomeDraft,
+  verifyRuntimeWorkspaceWelcome,
+} from "./runtime-workspace-welcome.js";
 import {
   buildStage4ProductionHardening,
   verifyStage4ProductionHardening,
@@ -161,6 +453,8 @@ import {
   buildSkillProductionStatus,
 } from "./skill-ecosystem.js";
 import { initializeRuntimeState, readAuditEvents, readRuntimeState } from "./storage.js";
+
+const DEFAULT_RUNTIME_WORKSPACE_SOURCE_PACK = fileURLToPath(new URL("../../runtime-workspace/gpao-t", import.meta.url));
 
 export function handleGatewayRequest({ method = "GET", path = "/", body = {}, root } = {}) {
   const normalizedMethod = method.toUpperCase();
@@ -213,6 +507,1517 @@ export function handleGatewayRequest({ method = "GET", path = "/", body = {}, ro
     };
   }
 
+  if (normalizedMethod === "GET" && path === "/owner-ops/skill-pack") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: buildOwnerOpsSkillPack(),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/owner-ops/field-casebook") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: buildOwnerOpsFieldCasebook(),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/owner-ops/authority-matrix") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: buildOwnerOpsAuthorityMatrix(),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/owner-ops/scenarios") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: buildOwnerOpsFirstScenarios(),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/owner-ops/candidates") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: buildOwnerOpsAutomationCandidates({ request: body.request }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/owner-ops/workflow") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: buildOwnerOpsWorkflowPreview({
+        workflowType: body.workflowType,
+        inputText: body.inputText,
+        businessType: body.businessType,
+      }),
+    };
+  }
+
+  if (normalizedMethod === "POST" && path === "/owner-ops/record") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: writeOwnerOpsLocalRecord({
+        root,
+        workflowType: body.workflowType,
+        inputText: body.inputText,
+        businessType: body.businessType,
+        userDecision: body.userDecision,
+      }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/owner-ops/records") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: readOwnerOpsRecords({ root }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/owner-ops/replay") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: buildOwnerOpsEffectReplay({ root }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/owner-ops/verify") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: verifyOwnerOpsPack({ root }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/owner-ops/product-axis-readiness") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: buildOwnerOpsProductAxisReadinessMatrix({ root }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/owner-ops/product-axis-readiness/verify") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: verifyOwnerOpsProductAxisReadinessMatrix({ root }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/owner-ops/production-completion-audit") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: buildOwnerOpsProductionCompletionAudit({ root }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/owner-ops/production-completion-audit/verify") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: verifyOwnerOpsProductionCompletionAudit({ root }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/owner-ops/supervised-testing-readiness") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: buildOwnerOpsSupervisedTestingReadinessPacket({ root }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/owner-ops/supervised-testing-readiness/verify") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: verifyOwnerOpsSupervisedTestingReadinessPacket({ root }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/owner-ops/mcp-plan") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: buildOwnerOpsMcpPlan(),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/owner-ops/connector-catalog") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: buildOwnerOpsConnectorCatalog(),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/owner-ops/mcp-tools") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: buildOwnerOpsMcpToolManifest(),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/owner-ops/mcp-check") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: verifyOwnerOpsMcpReadiness(),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/owner-ops/mcp-server") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: buildOwnerOpsMcpServerDescriptor(),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/owner-ops/mcp-server/verify") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: verifyOwnerOpsMcpServer(),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/owner-ops/intake-plan") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: buildOwnerOpsReadOnlyIntakePlan(),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/owner-ops/intake-paste") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: previewOwnerOpsPasteIntake({
+        inputText: body.inputText,
+        workflowType: body.workflowType,
+        businessType: body.businessType,
+      }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/owner-ops/intake-table") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: previewOwnerOpsTableTextIntake({
+        content: body.content,
+        filename: body.filename,
+        workflowType: body.workflowType,
+        businessType: body.businessType,
+      }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/owner-ops/intake-file") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: previewOwnerOpsLocalFileIntake({
+        root,
+        filePath: body.filePath,
+        workflowType: body.workflowType,
+        businessType: body.businessType,
+      }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/owner-ops/intake-folder") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: previewOwnerOpsFolderIntake({
+        root,
+        folderPath: body.folderPath,
+      }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/owner-ops/intake-check") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: verifyOwnerOpsReadOnlyIntakeConnectors({ root }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/owner-ops/first-owner-scenario") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: buildOwnerOpsFirstOwnerScenarioFixture(),
+    };
+  }
+
+  if (normalizedMethod === "POST" && path === "/owner-ops/first-owner-scenario/run") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: runOwnerOpsFirstOwnerScenario({ root }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/owner-ops/first-owner-scenario/verify") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: verifyOwnerOpsFirstOwnerScenario({ root }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/owner-ops/plugin-package") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: buildOwnerOpsPluginPackageManifest(),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/owner-ops/market-listing") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: buildOwnerOpsMarketListingDraft(),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/owner-ops/plugin-package/verify") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: verifyOwnerOpsPluginPackage({ root }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/owner-ops/team-alpha-guide") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: buildOwnerOpsTeamAlphaGuide(),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/owner-ops/owner-ux-copy") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: buildOwnerOpsOwnerFacingUxCopy(),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/owner-ops/team-alpha/verify") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: verifyOwnerOpsTeamAlphaReadiness({ root }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/owner-ops/host-registration-guide") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: buildOwnerOpsHostRegistrationGuide(),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/owner-ops/host-integration-matrix") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: buildOwnerOpsHostIntegrationMatrix(),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/owner-ops/host-integration-matrix/verify") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: verifyOwnerOpsHostIntegrationMatrix(),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/owner-ops/alpha-feedback-form") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: buildOwnerOpsAlphaFeedbackForm(),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/owner-ops/host-alpha/verify") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: verifyOwnerOpsHostAlphaHandoff({ root }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/owner-ops/sample-data-kit") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: buildOwnerOpsSampleDataKit(),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/owner-ops/first-owner-beta-guide") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: buildOwnerOpsFirstOwnerBetaGuide(),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/owner-ops/first-owner-beta/verify") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: verifyOwnerOpsFirstOwnerBetaReadiness({ root }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/owner-ops/beta-feedback-synthesis") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: buildOwnerOpsBetaFeedbackSynthesis(),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/owner-ops/industry-template-catalog") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: buildOwnerOpsIndustryTemplateCatalog(),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/owner-ops/market-readiness-gate") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: buildOwnerOpsMarketReadinessGate({ root }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/owner-ops/market-readiness/verify") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: verifyOwnerOpsMarketReadiness({ root }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/owner-ops/template-replay-fixtures") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: buildOwnerOpsTemplateReplayFixtures({ root }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/owner-ops/privacy-copy-pack") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: buildOwnerOpsPrivacyCopyPack(),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/owner-ops/pre-public-package-review") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: buildOwnerOpsPrePublicPackageReview({ root }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/owner-ops/pre-public-package/verify") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: verifyOwnerOpsPrePublicPackage({ root }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/owner-ops/pre-public-evidence-bridge") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: buildOwnerOpsPrePublicEvidenceBridge({ root }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/owner-ops/pre-public-evidence-bridge/verify") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: verifyOwnerOpsPrePublicEvidenceBridge({ root }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/owner-ops/pre-public-repair-backlog") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: buildOwnerOpsPrePublicRepairBacklog({ root }),
+    };
+  }
+
+  if (normalizedMethod === "POST" && path === "/owner-ops/pre-public-repair-backlog") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: writeOwnerOpsPrePublicRepairBacklog({ root }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/owner-ops/pre-public-repair-backlog/verify") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: verifyOwnerOpsPrePublicRepairBacklog({ root }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/owner-ops/pre-public-repair-completion") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: buildOwnerOpsPrePublicRepairCompletionEvidence({ root }),
+    };
+  }
+
+  if (normalizedMethod === "POST" && path === "/owner-ops/pre-public-repair-completion") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: writeOwnerOpsPrePublicRepairCompletionEvidence({ root }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/owner-ops/pre-public-repair-completion/verify") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: verifyOwnerOpsPrePublicRepairCompletionEvidence({ root }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/owner-ops/distribution-evidence") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: buildOwnerOpsDistributionEvidence({ root }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/owner-ops/distribution-readme") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: buildOwnerOpsDistributionReadme({ root }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/owner-ops/distribution-evidence/verify") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: verifyOwnerOpsDistributionEvidence({ root }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/owner-ops/archive-checksum-dry-run") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: buildOwnerOpsArchiveChecksumDryRun({ root }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/owner-ops/archive-checksum-dry-run/verify") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: verifyOwnerOpsArchiveChecksumDryRun({ root }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/owner-ops/release-readiness-evidence") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: buildOwnerOpsReleaseReadinessEvidence({ root }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/owner-ops/release-readiness-evidence/verify") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: verifyOwnerOpsReleaseReadinessEvidence({ root }),
+    };
+  }
+
+  if (normalizedMethod === "POST" && path === "/owner-ops/release-readiness-evidence") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: writeOwnerOpsReleaseReadinessEvidence({ root }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/owner-ops/human-review-approval-packet") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: buildOwnerOpsHumanReviewApprovalPacket({ root }),
+    };
+  }
+
+  if (normalizedMethod === "POST" && path === "/owner-ops/human-review-approval-packet") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: writeOwnerOpsHumanReviewApprovalPacket({ root }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/owner-ops/human-review-approval-packet/verify") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: verifyOwnerOpsHumanReviewApprovalPacket({ root }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/owner-ops/human-review-decision-lane") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: buildOwnerOpsHumanReviewDecisionLane({
+        root,
+        decision: body.decision || "hold",
+      }),
+    };
+  }
+
+  if (normalizedMethod === "POST" && path === "/owner-ops/human-review-decision-append") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: appendOwnerOpsHumanReviewDecisionRecord({
+        root,
+        decision: body.decision || "hold",
+        approvalToken: body.approvalToken,
+      }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/owner-ops/human-review-decision-records") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: readOwnerOpsHumanReviewDecisionRecords({ root }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/owner-ops/human-review-decision-lane/verify") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: verifyOwnerOpsHumanReviewDecisionLane({ root }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/owner-ops/public-release-gate") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: buildOwnerOpsPublicReleaseAuthorityGate({ root }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/owner-ops/public-release-gate/verify") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: verifyOwnerOpsPublicReleaseAuthorityGate({ root }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/owner-ops/public-release-readback") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: buildOwnerOpsPublicReleaseReadbackSnapshot({ root }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/owner-ops/public-release-readback/verify") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: verifyOwnerOpsPublicReleaseReadbackSnapshot({ root }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/owner-ops/approved-signing-lane") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: buildOwnerOpsApprovedSigningLane({ root }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/owner-ops/approved-signing-lane/verify") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: verifyOwnerOpsApprovedSigningLane({ root }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/owner-ops/marketplace-upload-approval-gate") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: buildOwnerOpsMarketplaceUploadApprovalGate({ root }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/owner-ops/marketplace-upload-approval-gate/verify") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: verifyOwnerOpsMarketplaceUploadApprovalGate({ root }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/owner-ops/marketplace-upload-decision-lane") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: buildOwnerOpsMarketplaceUploadDecisionLane({
+        root,
+        decision: query.decision || "hold",
+      }),
+    };
+  }
+
+  if (normalizedMethod === "POST" && path === "/owner-ops/marketplace-upload-decision-append") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: appendOwnerOpsMarketplaceUploadDecisionRecord({
+        root,
+        decision: body.decision || "hold",
+        approvalToken: body.approvalToken,
+      }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/owner-ops/marketplace-upload-decision-records") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: readOwnerOpsMarketplaceUploadDecisionRecords({ root }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/owner-ops/marketplace-upload-decision-lane/verify") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: verifyOwnerOpsMarketplaceUploadDecisionLane({ root }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/owner-ops/signed-package-evidence") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: buildOwnerOpsSignedPackageEvidence({ root }),
+    };
+  }
+
+  if (normalizedMethod === "POST" && path === "/owner-ops/signed-package-evidence") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: writeOwnerOpsSignedPackageEvidence({ root }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/owner-ops/signed-package-evidence/verify") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: verifyOwnerOpsSignedPackageEvidence({ root }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/owner-ops/install-update-rollback-proof") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: buildOwnerOpsInstallUpdateRollbackProof({ root }),
+    };
+  }
+
+  if (normalizedMethod === "POST" && path === "/owner-ops/install-update-rollback-proof") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: writeOwnerOpsInstallUpdateRollbackProof({ root }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/owner-ops/install-update-rollback-proof/verify") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: verifyOwnerOpsInstallUpdateRollbackProof({ root }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/owner-ops/deployment-dry-run-plan") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: buildOwnerOpsDeploymentDryRunPlan({ root }),
+    };
+  }
+
+  if (normalizedMethod === "POST" && path === "/owner-ops/deployment-dry-run-plan") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: writeOwnerOpsDeploymentDryRunPlan({ root }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/owner-ops/deployment-dry-run-plan/verify") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: verifyOwnerOpsDeploymentDryRunPlan({ root }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/owner-ops/dry-run-executor-proof") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: buildOwnerOpsDryRunExecutorProof({
+        root,
+        requestedLane: body.requestedLane || "install",
+      }),
+    };
+  }
+
+  if (normalizedMethod === "POST" && path === "/owner-ops/dry-run-executor-proof") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: writeOwnerOpsDryRunExecutorProof({
+        root,
+        requestedLane: body.requestedLane || "install",
+      }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/owner-ops/dry-run-executor-proof/verify") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: verifyOwnerOpsDryRunExecutorProof({
+        root,
+        requestedLane: body.requestedLane || "install",
+      }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/owner-ops/dry-run-approval-record-design") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: buildOwnerOpsDryRunApprovalRecordDesign({
+        root,
+        requestedLane: body.requestedLane || "install",
+      }),
+    };
+  }
+
+  if (normalizedMethod === "POST" && path === "/owner-ops/dry-run-approval-record-design") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: writeOwnerOpsDryRunApprovalRecordDesign({
+        root,
+        requestedLane: body.requestedLane || "install",
+      }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/owner-ops/dry-run-approval-record-design/verify") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: verifyOwnerOpsDryRunApprovalRecordDesign({
+        root,
+        requestedLane: body.requestedLane || "install",
+      }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/owner-ops/dry-run-approval-record-lane") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: buildOwnerOpsDryRunApprovalRecordWriteLane({
+        root,
+        requestedLane: body.requestedLane || "install",
+      }),
+    };
+  }
+
+  if (normalizedMethod === "POST" && path === "/owner-ops/dry-run-approval-record-append") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: appendOwnerOpsDryRunApprovalRecord({
+        root,
+        requestedLane: body.requestedLane || "install",
+        approvalToken: body.approvalToken,
+        decision: body.approvalToken ? "approve_dry_run_invocation" : "hold",
+        reviewer: body.reviewer || "owner",
+      }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/owner-ops/dry-run-approval-records") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: readOwnerOpsDryRunApprovalRecords({ root }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/owner-ops/dry-run-approval-record-lane/verify") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: verifyOwnerOpsDryRunApprovalRecordWriteLane({
+        root,
+        requestedLane: body.requestedLane || "install",
+      }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/owner-ops/controlled-dry-run-gate") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: buildOwnerOpsControlledDryRunInvocationGate({
+        root,
+        requestedLane: body.requestedLane || "install",
+      }),
+    };
+  }
+
+  if (normalizedMethod === "POST" && path === "/owner-ops/controlled-dry-run-invoke") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: invokeOwnerOpsControlledDryRun({
+        root,
+        requestedLane: body.requestedLane || "install",
+      }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/owner-ops/controlled-dry-run-records") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: readOwnerOpsControlledDryRunInvocations({ root }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/owner-ops/controlled-dry-run/verify") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: verifyOwnerOpsControlledDryRunInvocationGate({
+        root,
+        requestedLane: body.requestedLane || "install",
+      }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/owner-ops/dry-run-result-handoff") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: buildOwnerOpsDryRunResultReviewHandoff({
+        root,
+        requestedLane: body.requestedLane || "install",
+      }),
+    };
+  }
+
+  if (normalizedMethod === "POST" && path === "/owner-ops/dry-run-result-handoff") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: writeOwnerOpsDryRunResultReviewHandoff({
+        root,
+        requestedLane: body.requestedLane || "install",
+      }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/owner-ops/dry-run-result-handoff/verify") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: verifyOwnerOpsDryRunResultReviewHandoff({
+        root,
+        requestedLane: body.requestedLane || "install",
+      }),
+    };
+  }
+
+  if (normalizedMethod === "POST" && path === "/owner-ops/local-package-candidate") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: writeOwnerOpsLocalPackageCandidate({
+        root,
+        confirmationToken: body.confirmationToken,
+      }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/owner-ops/local-package-candidate/verify") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: verifyOwnerOpsLocalPackageCandidateWriter({ root }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/owner-ops/local-package-candidate/readback") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: readOwnerOpsLocalPackageCandidate({
+        root,
+        archiveName: body.archiveName,
+      }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/owner-ops/local-package-candidate/readback/verify") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: verifyOwnerOpsLocalPackageCandidateReadback({
+        root,
+        archiveName: body.archiveName,
+      }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/owner-ops/team-alpha-handoff-bundle") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: buildOwnerOpsTeamAlphaHandoffBundle({
+        root,
+        archiveName: body.archiveName,
+      }),
+    };
+  }
+
+  if (normalizedMethod === "POST" && path === "/owner-ops/team-alpha-handoff-bundle") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: writeOwnerOpsTeamAlphaHandoffBundle({
+        root,
+        archiveName: body.archiveName,
+      }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/owner-ops/team-alpha-handoff-bundle/verify") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: verifyOwnerOpsTeamAlphaHandoffBundle({
+        root,
+        archiveName: body.archiveName,
+      }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/owner-ops/first-owner-beta-handoff-bundle") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: buildOwnerOpsFirstOwnerBetaHandoffBundle({
+        root,
+        archiveName: body.archiveName,
+      }),
+    };
+  }
+
+  if (normalizedMethod === "POST" && path === "/owner-ops/first-owner-beta-handoff-bundle") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: writeOwnerOpsFirstOwnerBetaHandoffBundle({
+        root,
+        archiveName: body.archiveName,
+      }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/owner-ops/first-owner-beta-handoff-bundle/verify") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: verifyOwnerOpsFirstOwnerBetaHandoffBundle({
+        root,
+        archiveName: body.archiveName,
+      }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/owner-ops/first-owner-beta-operational-package") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: buildOwnerOpsFirstOwnerBetaOperationalTestPackage({
+        root,
+        archiveName: body.archiveName,
+      }),
+    };
+  }
+
+  if (normalizedMethod === "POST" && path === "/owner-ops/first-owner-beta-operational-package") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: writeOwnerOpsFirstOwnerBetaOperationalTestPackage({
+        root,
+        archiveName: body.archiveName,
+      }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/owner-ops/first-owner-beta-operational-package/verify") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: verifyOwnerOpsFirstOwnerBetaOperationalTestPackage({
+        root,
+        archiveName: body.archiveName,
+      }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/owner-ops/first-owner-beta-result-review") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: buildOwnerOpsFirstOwnerBetaResultReview({ root }),
+    };
+  }
+
+  if (normalizedMethod === "POST" && path === "/owner-ops/first-owner-beta-result-review") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: writeOwnerOpsFirstOwnerBetaResultReview({ root }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/owner-ops/first-owner-beta-result-review/verify") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: verifyOwnerOpsFirstOwnerBetaResultReview({ root }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/owner-ops/field-test-ledger") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: buildOwnerOpsFieldTestLedger({ root }),
+    };
+  }
+
+  if (normalizedMethod === "POST" && path === "/owner-ops/field-test-records") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: appendOwnerOpsFieldTestRecord({
+        root,
+        approvalToken: body.approvalToken,
+        record: body.record,
+      }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/owner-ops/field-test-records") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: readOwnerOpsFieldTestRecords({ root, limit: body.limit }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/owner-ops/field-test-ledger/verify") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: verifyOwnerOpsFieldTestLedger({ root }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/owner-ops/field-test-action-queue") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: buildOwnerOpsFieldTestActionQueue({ root }),
+    };
+  }
+
+  if (normalizedMethod === "POST" && path === "/owner-ops/field-test-action-queue") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: writeOwnerOpsFieldTestActionQueue({ root }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/owner-ops/field-test-action-queue/verify") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: verifyOwnerOpsFieldTestActionQueue({ root }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/owner-ops/field-test-repair-completion") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: buildOwnerOpsFieldTestRepairCompletionEvidence({ root }),
+    };
+  }
+
+  if (normalizedMethod === "POST" && path === "/owner-ops/field-test-repair-completion") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: writeOwnerOpsFieldTestRepairCompletionEvidence({ root }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/owner-ops/field-test-repair-completion/verify") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: verifyOwnerOpsFieldTestRepairCompletionEvidence({ root }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/owner-ops/broader-owner-testing-handoff") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: buildOwnerOpsBroaderOwnerTestingHandoff({ root }),
+    };
+  }
+
+  if (normalizedMethod === "POST" && path === "/owner-ops/broader-owner-testing-handoff") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: writeOwnerOpsBroaderOwnerTestingHandoff({ root }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/owner-ops/broader-owner-testing-handoff/verify") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: verifyOwnerOpsBroaderOwnerTestingHandoff({ root }),
+    };
+  }
+
+  if (normalizedMethod === "POST" && path === "/owner-ops/broader-owner-testing-results") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: appendOwnerOpsBroaderOwnerTestingResult({
+        root,
+        approvalToken: body.approvalToken,
+        result: body.result,
+      }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/owner-ops/broader-owner-testing-results") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: readOwnerOpsBroaderOwnerTestingResults({ root, limit: body.limit }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/owner-ops/broader-owner-testing-result-ledger") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: buildOwnerOpsBroaderOwnerTestingResultLedger({ root }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/owner-ops/broader-owner-testing-result-ledger/verify") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: verifyOwnerOpsBroaderOwnerTestingResultLedger({ root }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/owner-ops/broader-owner-testing-repair-queue") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: buildOwnerOpsBroaderOwnerTestingRepairQueue({ root }),
+    };
+  }
+
+  if (normalizedMethod === "POST" && path === "/owner-ops/broader-owner-testing-repair-queue") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: writeOwnerOpsBroaderOwnerTestingRepairQueue({ root }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/owner-ops/broader-owner-testing-repair-queue/verify") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: verifyOwnerOpsBroaderOwnerTestingRepairQueue({ root }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/owner-ops/broader-owner-testing-repair-completion") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: buildOwnerOpsBroaderOwnerTestingRepairCompletionEvidence({ root }),
+    };
+  }
+
+  if (normalizedMethod === "POST" && path === "/owner-ops/broader-owner-testing-repair-completion") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: writeOwnerOpsBroaderOwnerTestingRepairCompletionEvidence({ root }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/owner-ops/broader-owner-testing-repair-completion/verify") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: verifyOwnerOpsBroaderOwnerTestingRepairCompletionEvidence({ root }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/owner-ops/next-owner-testing-loop") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: buildOwnerOpsNextOwnerTestingLoop({ root }),
+    };
+  }
+
+  if (normalizedMethod === "POST" && path === "/owner-ops/next-owner-testing-loop") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: writeOwnerOpsNextOwnerTestingLoop({ root }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/owner-ops/next-owner-testing-loop/verify") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: verifyOwnerOpsNextOwnerTestingLoop({ root }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/owner-ops/final-local-release-candidate") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: buildOwnerOpsFinalLocalReleaseCandidateDecisionPacket({ root }),
+    };
+  }
+
+  if (normalizedMethod === "POST" && path === "/owner-ops/final-local-release-candidate") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: writeOwnerOpsFinalLocalReleaseCandidateDecisionPacket({ root }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/owner-ops/final-local-release-candidate/verify") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: verifyOwnerOpsFinalLocalReleaseCandidateDecisionPacket({ root }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/owner-ops/final-candidate-owner-decision-lane") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: buildOwnerOpsFinalCandidateOwnerDecisionLane({
+        root,
+        decision: body.decision || "continue_supervised_testing",
+      }),
+    };
+  }
+
+  if (normalizedMethod === "POST" && path === "/owner-ops/final-candidate-owner-decision-records") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: appendOwnerOpsFinalCandidateOwnerDecisionRecord({
+        root,
+        decision: body.decision || "continue_supervised_testing",
+        approvalToken: body.approvalToken,
+      }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/owner-ops/final-candidate-owner-decision-records") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: readOwnerOpsFinalCandidateOwnerDecisionRecords({ root }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/owner-ops/final-candidate-owner-decision-lane/verify") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: verifyOwnerOpsFinalCandidateOwnerDecisionLane({ root }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/owner-ops/final-candidate-next-action") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: buildOwnerOpsFinalCandidateNextActionPacket({
+        root,
+        decision: body.decision || "continue_supervised_testing",
+      }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/owner-ops/final-candidate-next-action/verify") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: verifyOwnerOpsFinalCandidateNextActionPacket({ root }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/owner-ops/beta-feedback-action-queue") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: buildOwnerOpsBetaFeedbackActionQueue({ root }),
+    };
+  }
+
+  if (normalizedMethod === "POST" && path === "/owner-ops/beta-feedback-action-queue") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: writeOwnerOpsBetaFeedbackActionQueue({ root }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/owner-ops/beta-feedback-action-queue/verify") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: verifyOwnerOpsBetaFeedbackActionQueue({ root }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/owner-ops/market-evidence-bundle") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: buildOwnerOpsMarketEvidenceBundle({ root }),
+    };
+  }
+
+  if (normalizedMethod === "POST" && path === "/owner-ops/market-evidence-bundle") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: writeOwnerOpsMarketEvidenceBundle({ root }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/owner-ops/market-evidence-bundle/verify") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: verifyOwnerOpsMarketEvidenceBundle({ root }),
+    };
+  }
+
   if (normalizedMethod === "GET" && path === "/control-center") {
     return {
       schema: "gpao_t.gateway_response.v0_1",
@@ -229,11 +2034,94 @@ export function handleGatewayRequest({ method = "GET", path = "/", body = {}, ro
     };
   }
 
+  if (normalizedMethod === "GET" && path === "/workspace/welcome") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: buildRuntimeWorkspaceWelcome({
+        workspaceRoot: body.workspaceRoot || DEFAULT_RUNTIME_WORKSPACE_SOURCE_PACK,
+      }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/workspace/welcome/check") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: verifyRuntimeWorkspaceWelcome({
+        workspaceRoot: body.workspaceRoot || DEFAULT_RUNTIME_WORKSPACE_SOURCE_PACK,
+      }),
+    };
+  }
+
+  if (normalizedMethod === "POST" && path === "/workspace/welcome/draft") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: buildRuntimeWorkspaceWelcomeDraft({
+        workspaceRoot: body.workspaceRoot,
+        answers: body.answers || body,
+      }),
+    };
+  }
+
+  if (normalizedMethod === "POST" && path === "/workspace/welcome/apply") {
+    let result;
+    try {
+      result = applyRuntimeWorkspaceWelcomeSettings({
+        workspaceRoot: body.workspaceRoot,
+        answers: body.answers || body,
+        approvalToken: body.approvalToken || "",
+      });
+    } catch (error) {
+      result = {
+        schema: "gpao_t.runtime_workspace_welcome_apply_error.v0_1",
+        status: "blocked",
+        applied: false,
+        error: error instanceof Error ? error.message : String(error),
+      };
+    }
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: result.status === "applied" ? 200 : 409,
+      body: result,
+    };
+  }
+
   if (normalizedMethod === "GET" && path === "/work-surface/state") {
     return {
       schema: "gpao_t.gateway_response.v0_1",
       status: 200,
       body: buildCoreWorkSurface({ root }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/gpao-t-workspace/state") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: buildGpaoTWorkspaceShell({ root, request: body.request }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && (path === "/gpao-t-workspace" || path === "/gpao-t-workspace.html")) {
+    const shell = buildGpaoTWorkspaceShell({ root, request: body.request });
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: buildGpaoTWorkspaceShellHtml({ root, shell, request: body.request }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/gpao-t-workspace/verify") {
+    const shell = buildGpaoTWorkspaceShell({ root, request: body.request });
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: verifyGpaoTWorkspaceShell({
+        shell,
+        html: buildGpaoTWorkspaceShellHtml({ root, shell, request: body.request }),
+      }),
     };
   }
 
@@ -259,6 +2147,48 @@ export function handleGatewayRequest({ method = "GET", path = "/", body = {}, ro
       schema: "gpao_t.gateway_response.v0_1",
       status: 200,
       body: verifySessionWorkspaceBehavior({ root }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/multi-chat-workspace") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: buildCodexStyleMultiChatWorkspace({ root }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/multi-chat-workspace/verify") {
+    const workspace = buildCodexStyleMultiChatWorkspace({ root });
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: verifyCodexStyleMultiChatWorkspace({ workspace }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/multi-chat-workspace/stages-1-6") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: buildMultiChatStageSixCompletion({ root }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/multi-chat-workspace/stages-1-6/verify") {
+    const completion = buildMultiChatStageSixCompletion({ root });
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: verifyMultiChatStageSixCompletion({ root, completion }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/multi-chat-workspace/memory-review-queue") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: buildThreadScopedMemoryReviewQueue({ root }),
     };
   }
 
@@ -991,6 +2921,356 @@ export function handleGatewayRequest({ method = "GET", path = "/", body = {}, ro
     };
   }
 
+  if (normalizedMethod === "GET" && path === "/memory/review-queue") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: readMemoryReviewQueue({ root }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/memory/review-summary") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: buildMemoryReviewQueueSummary({ root }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/memory/review-queue/verify") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: verifyMemoryReviewQueue({ root }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/memory/apply-gate") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: buildMemoryApplyGateState({ root }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/memory/apply-gate/verify") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: verifyMemoryApplyGateState({ root }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/memory/local-apply-invocation") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: buildMemoryLocalApplyInvocationContract({ ...body, root }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/memory/local-apply-invocation/verify") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: verifyMemoryLocalApplyInvocationContract({ root }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/memory/self-growth-approval-ux") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: buildMemorySelfGrowthApprovalUx({ root }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/memory/self-growth-approval-ux/verify") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: verifyMemorySelfGrowthApprovalUx({ root }),
+    };
+  }
+
+  if (normalizedMethod === "POST" && path === "/memory/review-candidate") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: appendMemoryReviewCandidate({ ...body, root }),
+    };
+  }
+
+  if (normalizedMethod === "POST" && path === "/memory/replay-preview") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: buildReadOnlyMemoryReplay({ ...body }),
+    };
+  }
+
+  if (normalizedMethod === "POST" && path === "/memory/replay-record") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: appendMemoryReplayEvidence({ ...body, root }),
+    };
+  }
+
+  if (normalizedMethod === "POST" && path === "/memory/apply-preview") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: buildMemoryApplyRequest({ ...body }),
+    };
+  }
+
+  if (normalizedMethod === "POST" && path === "/memory/apply-request") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: appendMemoryApplyRequest({ ...body, root }),
+    };
+  }
+
+  if (normalizedMethod === "POST" && path === "/memory/apply-approval-preview") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: buildMemoryApplyApprovalAuditBridge({ ...body }),
+    };
+  }
+
+  if (normalizedMethod === "POST" && path === "/memory/apply-approval-record") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: appendMemoryApplyApprovalAuditBridge({ ...body, root }),
+    };
+  }
+
+  if (normalizedMethod === "POST" && path === "/memory/apply-engine/preview") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: buildMemoryReversibleApply({ ...body }),
+    };
+  }
+
+  if (normalizedMethod === "POST" && path === "/memory/apply-engine/apply") {
+    const preview = buildMemoryReversibleApply({ ...body });
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: {
+        ...preview,
+        status: "blocked",
+        findings: [
+          ...(preview.findings || []),
+          "raw_apply_engine_write_disabled_use_tokened_local_apply",
+        ],
+        authority: {
+          ...(preview.authority || {}),
+          mutationAllowedNow: false,
+          allowedMutation: "blocked",
+          durableMemoryPromotion: "blocked",
+          compatibilityMemoryWrite: "blocked",
+          sessionMetaWrite: "blocked",
+          externalSend: "blocked",
+          automaticAdmission: "blocked",
+        },
+        preview,
+        nextSafeAction:
+          "Use /memory/local-apply/invoke with the exact local Context Mesh apply token after reviewing the preview and rollback receipt.",
+      },
+    };
+  }
+
+  if (normalizedMethod === "POST" && path === "/memory/apply-engine/rollback") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: {
+        schema: "gpao_t.memory_raw_apply_engine_rollback_refusal.v0_1",
+        status: "blocked",
+        findings: ["raw_apply_engine_rollback_disabled_use_tokened_local_rollback"],
+        authority: {
+          mutationAllowedNow: false,
+          durableMemoryPromotion: "blocked",
+          compatibilityMemoryWrite: "blocked",
+          sessionMetaWrite: "blocked",
+          externalSend: "blocked",
+          automaticAdmission: "blocked",
+        },
+        nextSafeAction:
+          "Use /memory/local-apply/rollback with the exact local Context Mesh rollback token after reviewing the recorded rollback receipt.",
+      },
+    };
+  }
+
+  if (normalizedMethod === "POST" && path === "/memory/local-apply/invoke") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: invokeMemoryLocalContextMeshApply({ ...body, root }),
+    };
+  }
+
+  if (normalizedMethod === "POST" && path === "/memory/local-apply/rollback") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: invokeMemoryLocalContextMeshRollback({ ...body, root }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/auto-memory-growth/policy") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: buildAutoMemoryGrowthPolicy(),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/auto-memory-growth/summary") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: buildAutoMemoryGrowthSummary({ root }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/auto-memory-growth/runs") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: readAutoMemoryGrowthRuns({ root }),
+    };
+  }
+
+  if (normalizedMethod === "POST" && path === "/auto-memory-growth/classify") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: classifyAutoMemoryGrowthAuthority(body),
+    };
+  }
+
+  if (normalizedMethod === "POST" && path === "/auto-memory-growth/run") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: runAutoMemoryGrowthLoop({ ...body, root }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/auto-memory-growth/verify") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: verifyAutoMemoryGrowthLoop({ root }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/live-turn/absorption/policy") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: buildLiveTurnAbsorptionPolicy(),
+    };
+  }
+
+  if (normalizedMethod === "POST" && path === "/live-turn/absorption/source") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: classifyLiveTurnSource(body),
+    };
+  }
+
+  if (normalizedMethod === "POST" && path === "/live-turn/absorption/run") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: runLiveTurnAbsorptionBridge({ ...body, root }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/live-turn/absorption/runs") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: readLiveTurnAbsorptionRuns({ root, limit: body.limit }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/live-turn/absorption/summary") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: buildLiveTurnAbsorptionSummary({ root }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/live-turn/progress/events") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: readConversationProgressEvents({
+        root,
+        limit: body.limit,
+        sessionKey: body.sessionKey,
+        runId: body.runId,
+      }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/live-turn/progress/lane") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: buildConversationProgressLane({ root, limit: body.limit }),
+    };
+  }
+
+  if (normalizedMethod === "POST" && path === "/live-turn/progress/tool") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: appendToolProgressEvent({ ...body, root }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/live-turn/absorption/verify") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: verifyLiveTurnAbsorptionBridge({ root }),
+    };
+  }
+
+  if (
+    normalizedMethod === "GET"
+    && (path === "/gpao-t/live-turn-hook/readiness" || path === "/openclaw/live-turn-hook/readiness")
+  ) {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: buildOpenClawLiveTurnHookReadinessGate({ root }),
+    };
+  }
+
+  if (
+    normalizedMethod === "GET"
+    && (path === "/gpao-t/live-turn-hook/readiness/verify" || path === "/openclaw/live-turn-hook/readiness/verify")
+  ) {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: verifyOpenClawLiveTurnHookReadinessGate({ root }),
+    };
+  }
+
   if (normalizedMethod === "POST" && path === "/mesh/resolve") {
     return {
       schema: "gpao_t.gateway_response.v0_1",
@@ -999,11 +3279,147 @@ export function handleGatewayRequest({ method = "GET", path = "/", body = {}, ro
     };
   }
 
+  if (normalizedMethod === "POST" && path === "/mesh/applied-candidate-replay") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: buildAppliedContextMeshReplay({ ...body, root }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/mesh/applied-candidate-replay/verify") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: verifyAppliedContextMeshReplay({ root }),
+    };
+  }
+
+  if (normalizedMethod === "POST" && path === "/surface/applied-replay-inspector") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: buildAppliedReplayInspectorState({ ...body, root }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/surface/applied-replay-inspector/verify") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: verifyAppliedReplayInspectorState({ root }),
+    };
+  }
+
   if (normalizedMethod === "POST" && path === "/turn") {
     return {
       schema: "gpao_t.gateway_response.v0_1",
       status: 200,
       body: runRuntimeTurn({ ...body, root }),
+    };
+  }
+
+  if (normalizedMethod === "POST" && path === "/turn/llm-ready-packet") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: buildLlmReadyTaskContextPacket({ ...body, root }),
+    };
+  }
+
+  if (normalizedMethod === "POST" && path === "/surface/llm-ready-packet") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: buildLlmReadyPacketSurfaceState({ ...body, root }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/turn/llm-ready-packet/verify") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: verifyLlmReadyTaskContextPacket({ root }),
+    };
+  }
+
+  if (normalizedMethod === "POST" && path === "/chat/preflight-packet") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: buildChatPreflightPacket({ ...body, root }),
+    };
+  }
+
+  if (normalizedMethod === "POST" && path === "/chat/preflight-record") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: appendChatPreflightPacket({ ...body, root }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/chat/preflight-records") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: readChatPreflightPackets({ root, limit: body.limit }),
+    };
+  }
+
+  if (normalizedMethod === "POST" && path === "/chat/post-answer-replay-record") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: appendPostAnswerReplayRecord({ ...body, root }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/chat/post-answer-replay-records") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: readPostAnswerReplayRecords({ root, limit: body.limit }),
+    };
+  }
+
+  if (normalizedMethod === "POST" && path === "/chat/answer-replay-evaluation") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: buildAnswerReplayEvaluation({ ...body, root }),
+    };
+  }
+
+  if (normalizedMethod === "POST" && path === "/chat/answer-replay-evaluation-record") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: appendAnswerReplayEvaluation({ ...body, root }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/chat/answer-replay-evaluations") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: readAnswerReplayEvaluations({ root, limit: body.limit }),
+    };
+  }
+
+  if (normalizedMethod === "POST" && path === "/chat/answer-replay-memory-candidate") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: buildAnswerReplayMemoryCandidate({ ...body, root }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/chat/preflight-replay/verify") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: verifyChatPreflightReplay({ root }),
     };
   }
 
@@ -1156,6 +3572,30 @@ export function handleGatewayRequest({ method = "GET", path = "/", body = {}, ro
       schema: "gpao_t.gateway_response.v0_1",
       status: 200,
       body: buildGrowthApplicationGateSummary({ root }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/first-completion") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: buildGpaoTFirstCompletionAudit({ root }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/first-completion/verify") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: verifyGpaoTFirstCompletionAudit({ root }),
+    };
+  }
+
+  if (normalizedMethod === "POST" && path === "/first-completion/evidence") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: writeGpaoTFirstCompletionEvidence({ root }),
     };
   }
 

@@ -1,0 +1,485 @@
+{
+  "schema": "gpao_t.live_surface_seal_patch_manifest.v0_1",
+  "generatedAt": "2026-07-12T09:02:49.476Z",
+  "liveRoot": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist",
+  "controlUiRoot": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui",
+  "mode": "apply",
+  "changedFileCount": 26,
+  "changedFiles": [
+    {
+      "file": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui/index.html",
+      "relativePath": "index.html",
+      "beforeSha256": "5129698df3122528f193028ea6e861eafc54ef3b7d9324c4eb73e01ed49c3558",
+      "afterSha256": "70d3477a7a86bbbca79f4ff7328e842d2ae82906b1d1f16b34452665c7f987bc",
+      "replacements": [
+        {
+          "from": "Gateway 대시보드",
+          "to": "GPAO-T 연결 화면",
+          "count": 1
+        },
+        {
+          "from": "Gateway 토큰",
+          "to": "런타임 토큰",
+          "count": 1
+        },
+        {
+          "from": "Gateway 연결",
+          "to": "로컬 런타임 연결",
+          "count": 1
+        },
+        {
+          "from": "WebSocket URL",
+          "to": "연결 주소",
+          "count": 1
+        },
+        {
+          "from": "OPENCLAW_GATEWAY_TOKEN (선택 사항)",
+          "to": "연결키 (필요할 때만)",
+          "count": 1
+        },
+        {
+          "from": "OPENCLAW_GATEWAY_TOKEN",
+          "to": "GPAO-T 연결키",
+          "count": 1
+        },
+        {
+          "from": "비밀번호(저장되지 않음)",
+          "to": "로컬 연결 비밀번호 (저장되지 않음)",
+          "count": 1
+        },
+        {
+          "from": "연결할 수 없음",
+          "to": "GPAO-T 로컬 런타임에 연결하지 못했습니다",
+          "count": 1
+        },
+        {
+          "from": "브라우저가 로컬 런타임 연결을 완료할 수 없습니다.",
+          "to": "브라우저가 GPAO-T 로컬 런타임과 연결하지 못했습니다.",
+          "count": 1
+        },
+        {
+          "from": "자격 증명을 다시 시도하기 전에",
+          "to": "다시 연결하기 전에",
+          "count": 1
+        },
+        {
+          "from": "대상과 전송 방식을 확인하세요.",
+          "to": "로컬 런타임 상태와 연결키를 확인하세요.",
+          "count": 1
+        },
+        {
+          "from": "gpao-t status 또는 gpao-t gateway run으로 GPAO-T 런타임이 실행 중인지 확인하세요.",
+          "to": "GPAO-T 런타임이 켜져 있는지 확인하세요.",
+          "count": 1
+        },
+        {
+          "from": "gpao-t runtime run으로 GPAO-T 런타임이 실행 중인지 확인하세요.",
+          "to": "GPAO-T 런타임이 켜져 있는지 확인하세요.",
+          "count": 1
+        },
+        {
+          "from": "연결 주소를 확인하고 GPAO-T 런타임이 HTTPS/Tailscale Serve 뒤에 있으면 ws://를 사용하세요.",
+          "to": "연결 주소는 보통 ws://127.0.0.1:18789 입니다.",
+          "count": 1
+        },
+        {
+          "from": "gpao-t dashboard --no-open으로 dashboard를 다시 열어 현재 URL과 인증 세부 정보를 다시 복사하세요.",
+          "to": "문제가 계속되면 GPAO-T 연결 도움말에서 현재 연결 정보를 확인하세요.",
+          "count": 1
+        },
+        {
+          "from": "gpao-t dashboard --no-open",
+          "to": "GPAO-T 연결 도움말",
+          "count": 1
+        },
+        {
+          "from": "GPAO-T 화면 인증 문서",
+          "to": "GPAO-T 연결 도움말",
+          "count": 1
+        },
+        {
+          "from": "원시 오류",
+          "to": "상세 오류",
+          "count": 1
+        },
+        {
+          "from": "연결 방법",
+          "to": "연결 도움말",
+          "count": 1
+        },
+        {
+          "from": "연결 주소을",
+          "to": "연결 주소를",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui/assets/ar-BPpmD0AO.js",
+      "relativePath": "assets/ar-BPpmD0AO.js",
+      "beforeSha256": "87b8ac58d432b7b78e91678ee0d312f5f9fea52a275e03a8618298b81bad0a3f",
+      "afterSha256": "e145857d611466a6e54dfc62282298965909a43710e54ca622a05bcfbf950031",
+      "replacements": [
+        {
+          "from": "gpao-t dashboard --no-open",
+          "to": "GPAO-T 연결 도움말",
+          "count": 4
+        }
+      ]
+    },
+    {
+      "file": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui/assets/de-CBZzX3jX.js",
+      "relativePath": "assets/de-CBZzX3jX.js",
+      "beforeSha256": "3fe96197d18de8ac2e7f6040e4e416aced9ad85f625110439ed3ca75ab79ba58",
+      "afterSha256": "c7f6f701fd76cf9cb6d3484795b418fecb7892281a565b075a014d04fa2c4f3b",
+      "replacements": [
+        {
+          "from": "gpao-t dashboard --no-open",
+          "to": "GPAO-T 연결 도움말",
+          "count": 4
+        }
+      ]
+    },
+    {
+      "file": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui/assets/es-CkKtMFg8.js",
+      "relativePath": "assets/es-CkKtMFg8.js",
+      "beforeSha256": "1a3c14b66c78af0276fb73f6959646349db93bc706d5609cd981ed5963c1c33e",
+      "afterSha256": "a9d213b72cf888a42a4562314ebba5b0be75e7b08d3595271f762de4edfa6e9b",
+      "replacements": [
+        {
+          "from": "gpao-t dashboard --no-open",
+          "to": "GPAO-T 연결 도움말",
+          "count": 4
+        }
+      ]
+    },
+    {
+      "file": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui/assets/fa-Jo3cCIlj.js",
+      "relativePath": "assets/fa-Jo3cCIlj.js",
+      "beforeSha256": "3e96e1b04667f9d4651df0c727f8006ebf37f3845bdd3edc97b328f0445a8ccf",
+      "afterSha256": "15e11847fd2644ed45f6cae52a5758c85347e38eba2ab79e8fefe3def014e2a2",
+      "replacements": [
+        {
+          "from": "gpao-t dashboard --no-open",
+          "to": "GPAO-T 연결 도움말",
+          "count": 4
+        }
+      ]
+    },
+    {
+      "file": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui/assets/fr--LF3eTR0.js",
+      "relativePath": "assets/fr--LF3eTR0.js",
+      "beforeSha256": "8fefac6c569406e4839ba673494d3eb4ec8c78109d9e23cab1b904f371ab2977",
+      "afterSha256": "ac470634f22157d1a28a277b7406ddf87e2b60a45c6f2240386a4f21a951bfc5",
+      "replacements": [
+        {
+          "from": "gpao-t dashboard --no-open",
+          "to": "GPAO-T 연결 도움말",
+          "count": 4
+        }
+      ]
+    },
+    {
+      "file": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui/assets/hi-D2MuYJJg.js",
+      "relativePath": "assets/hi-D2MuYJJg.js",
+      "beforeSha256": "e06cef047def43e4787229255b3e1eac258d8de90ea6544cc19659393b8239aa",
+      "afterSha256": "f691e6330053ddbdb256bac9fb5ce9b5ec086506aec85e4d00b9d1455579e1d3",
+      "replacements": [
+        {
+          "from": "gpao-t dashboard --no-open",
+          "to": "GPAO-T 연결 도움말",
+          "count": 4
+        }
+      ]
+    },
+    {
+      "file": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui/assets/i18n-w6mKCrXO.js",
+      "relativePath": "assets/i18n-w6mKCrXO.js",
+      "beforeSha256": "17c14a3d5b40265145193b9294c09ca66bafc598064ffd73551ddf81c68adb2a",
+      "afterSha256": "03e0445331992e067852fa79b3e4ca1a20f95dae5efb5a4c24a3abfdccd9edc6",
+      "replacements": [
+        {
+          "from": "gpao-t dashboard --no-open",
+          "to": "GPAO-T 연결 도움말",
+          "count": 4
+        }
+      ]
+    },
+    {
+      "file": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui/assets/id-D_U7i3Od.js",
+      "relativePath": "assets/id-D_U7i3Od.js",
+      "beforeSha256": "60c30a4964720a41277c70a0d56ae443ddece669d623d4a7dd3af4f04b887979",
+      "afterSha256": "a632a8395c69377a0d9b7b853a6e27a0d9cb5c346d6c10dea2ae96c205a9f79e",
+      "replacements": [
+        {
+          "from": "gpao-t dashboard --no-open",
+          "to": "GPAO-T 연결 도움말",
+          "count": 4
+        }
+      ]
+    },
+    {
+      "file": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui/assets/index-B-5yEkJA.js",
+      "relativePath": "assets/index-B-5yEkJA.js",
+      "beforeSha256": "b18e45a38fb7f48ff7c23eaa432659b2a6f69fe60a602ce2796f1c8bb0c90ba4",
+      "afterSha256": "1bcc113a3beadb31d9d5c4ec4ddbead4bedfd154d895a52c4053d4133691bd13",
+      "replacements": [
+        {
+          "from": "OPENCLAW_GATEWAY_TOKEN",
+          "to": "GPAO-T 연결키",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui/assets/index-C30DXdRd.js",
+      "relativePath": "assets/index-C30DXdRd.js",
+      "beforeSha256": "77b6bcf5a3e7ba7cfc66c36902e26d3232f3473a1ea6a76b7a29ae3bd074be02",
+      "afterSha256": "b6f7779997c9eaef22a987f55ffb857402c9b3f28ccfe9ef23d3d0e8d7dbba85",
+      "replacements": [
+        {
+          "from": "OPENCLAW_GATEWAY_TOKEN",
+          "to": "GPAO-T 연결키",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui/assets/it-D3DBLC6P.js",
+      "relativePath": "assets/it-D3DBLC6P.js",
+      "beforeSha256": "009ad8451424a13e4e55a6f779a34508337ba13d23e497cac88ca46ebc14a1a9",
+      "afterSha256": "76d4cff0ff12d006f14bad955b126ec04c5cc36205d33dfbeae162eca32a2514",
+      "replacements": [
+        {
+          "from": "gpao-t dashboard --no-open",
+          "to": "GPAO-T 연결 도움말",
+          "count": 4
+        }
+      ]
+    },
+    {
+      "file": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui/assets/ja-JP-CE6pPzuo.js",
+      "relativePath": "assets/ja-JP-CE6pPzuo.js",
+      "beforeSha256": "bcb8f7eb1f19708ac87ffd58f4727192dab50cffb277a0076133fd54a4d89bad",
+      "afterSha256": "7305c752eee7bbdfc3131573b1018fa4b484a65b318ceda80e75806a4acb81b4",
+      "replacements": [
+        {
+          "from": "gpao-t dashboard --no-open",
+          "to": "GPAO-T 연결 도움말",
+          "count": 4
+        }
+      ]
+    },
+    {
+      "file": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui/assets/ko-Bwa7b6_h.js",
+      "relativePath": "assets/ko-Bwa7b6_h.js",
+      "beforeSha256": "605d7e5cb7245e81c85f73a0fcb69b67b5c205e32f803027fadae44cbc22065e",
+      "afterSha256": "76aede424c23ccb7ad40c839a6f865877728d4d5c09106b630ccb887f63e6f4f",
+      "replacements": [
+        {
+          "from": "비밀번호(저장되지 않음)",
+          "to": "로컬 연결 비밀번호 (저장되지 않음)",
+          "count": 1
+        },
+        {
+          "from": "연결할 수 없음",
+          "to": "GPAO-T 로컬 런타임에 연결하지 못했습니다",
+          "count": 1
+        },
+        {
+          "from": "브라우저가 로컬 런타임 연결을 완료할 수 없습니다.",
+          "to": "브라우저가 GPAO-T 로컬 런타임과 연결하지 못했습니다.",
+          "count": 1
+        },
+        {
+          "from": "자격 증명을 다시 시도하기 전에",
+          "to": "다시 연결하기 전에",
+          "count": 1
+        },
+        {
+          "from": "대상과 전송 방식을 확인하세요.",
+          "to": "로컬 런타임 상태와 연결키를 확인하세요.",
+          "count": 1
+        },
+        {
+          "from": "gpao-t dashboard --no-open으로 dashboard를 다시 열어 현재 URL과 인증 세부 정보를 다시 복사하세요.",
+          "to": "문제가 계속되면 GPAO-T 연결 도움말에서 현재 연결 정보를 확인하세요.",
+          "count": 1
+        },
+        {
+          "from": "gpao-t dashboard --no-open",
+          "to": "GPAO-T 연결 도움말",
+          "count": 3
+        },
+        {
+          "from": "원시 오류",
+          "to": "상세 오류",
+          "count": 1
+        },
+        {
+          "from": "연결 방법",
+          "to": "연결 도움말",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui/assets/nl-Dx-9_sUY.js",
+      "relativePath": "assets/nl-Dx-9_sUY.js",
+      "beforeSha256": "d83afbc8d13f890d870b3c520fe56b4d747ed7ecbaf5ae5d44dd37612c7189fb",
+      "afterSha256": "daf0e22140a4fbc42b94157c58a35ec9a8bc86b30910862b37f17bf8935f20bb",
+      "replacements": [
+        {
+          "from": "gpao-t dashboard --no-open",
+          "to": "GPAO-T 연결 도움말",
+          "count": 4
+        }
+      ]
+    },
+    {
+      "file": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui/assets/overview-page-B8WA7jyd.js",
+      "relativePath": "assets/overview-page-B8WA7jyd.js",
+      "beforeSha256": "7aed6438eb07fe9c4a2dc977bb2b5b622c5cfc3461ca698477d6ea9342cc0972",
+      "afterSha256": "84bf695ac739440adffa2d845cf905df415dc8d50dc8c0154d876378ec8c7d9b",
+      "replacements": [
+        {
+          "from": "OPENCLAW_GATEWAY_TOKEN",
+          "to": "GPAO-T 연결키",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui/assets/overview-page-DSk2LTh_.js",
+      "relativePath": "assets/overview-page-DSk2LTh_.js",
+      "beforeSha256": "42430ae883d24c838f53d2c9ede7cf8403083e9c8c3c74deb03fb1aae91f8726",
+      "afterSha256": "a78ff6b63fdc3b635f3cc2cb80c639a833a9ee903c7f2e6c5e396a5a1b974c18",
+      "replacements": [
+        {
+          "from": "OPENCLAW_GATEWAY_TOKEN",
+          "to": "GPAO-T 연결키",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui/assets/pl-BlFXF5cU.js",
+      "relativePath": "assets/pl-BlFXF5cU.js",
+      "beforeSha256": "a567d27f72ca6051c7bb3396788021ac4f40497a091892abaf66380ef4cf2651",
+      "afterSha256": "d2fc5ae817f85df7d1afe8e302dd3b4dc7b67994bb94dd58f3f528c206bc2226",
+      "replacements": [
+        {
+          "from": "gpao-t dashboard --no-open",
+          "to": "GPAO-T 연결 도움말",
+          "count": 4
+        }
+      ]
+    },
+    {
+      "file": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui/assets/pt-BR-D5M86xM9.js",
+      "relativePath": "assets/pt-BR-D5M86xM9.js",
+      "beforeSha256": "b01c0b90206df5782ea9bac856e2361458a4de91ae70c56a5e139aa7aeebcb66",
+      "afterSha256": "052ebd52a3466517a5334dd569b4859f740467449231e1c28662d44f02e4f630",
+      "replacements": [
+        {
+          "from": "gpao-t dashboard --no-open",
+          "to": "GPAO-T 연결 도움말",
+          "count": 4
+        }
+      ]
+    },
+    {
+      "file": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui/assets/ru-CfCkqNPW.js",
+      "relativePath": "assets/ru-CfCkqNPW.js",
+      "beforeSha256": "26f03a9a6e7c3833969400f10f7822f01d36804d13ac40323290c152e18d242a",
+      "afterSha256": "15807706bb36f1e2118454cdbc3180439c24a13fb54b9e4e1ee7adfec9112325",
+      "replacements": [
+        {
+          "from": "gpao-t dashboard --no-open",
+          "to": "GPAO-T 연결 도움말",
+          "count": 4
+        }
+      ]
+    },
+    {
+      "file": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui/assets/th--4vpNHHw.js",
+      "relativePath": "assets/th--4vpNHHw.js",
+      "beforeSha256": "0cc6666de0671d800ea381f6eb00a9bd51f2d53490d2372bf08c1bd6694cca2c",
+      "afterSha256": "a7e940932eb00e1930dbf5baefb405d811e4027863b936c2cc3bf5cbd222c365",
+      "replacements": [
+        {
+          "from": "gpao-t dashboard --no-open",
+          "to": "GPAO-T 연결 도움말",
+          "count": 4
+        }
+      ]
+    },
+    {
+      "file": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui/assets/tr-DkDqHYXm.js",
+      "relativePath": "assets/tr-DkDqHYXm.js",
+      "beforeSha256": "813c702810e7df1a37da07c7ca7b4779ae4ded7e9692406e0ddc0c67990fd0ae",
+      "afterSha256": "474a49703b2f6541c9dc293ba6c4296201a905174981636befb3d9b3f6eb7d7a",
+      "replacements": [
+        {
+          "from": "gpao-t dashboard --no-open",
+          "to": "GPAO-T 연결 도움말",
+          "count": 4
+        }
+      ]
+    },
+    {
+      "file": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui/assets/uk-BqLIdqKQ.js",
+      "relativePath": "assets/uk-BqLIdqKQ.js",
+      "beforeSha256": "970f40ddd8d5ee21d451e7246cfd2e1069c86e75019923b53b0bac3180765b57",
+      "afterSha256": "b4923a88bf4746bf3b5adaca352249bff971bcb6710a2021a42f3481591c5daa",
+      "replacements": [
+        {
+          "from": "gpao-t dashboard --no-open",
+          "to": "GPAO-T 연결 도움말",
+          "count": 4
+        }
+      ]
+    },
+    {
+      "file": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui/assets/vi-irLKEUwF.js",
+      "relativePath": "assets/vi-irLKEUwF.js",
+      "beforeSha256": "d5220e1742ee4f7510643caf3144fcad0b1b24a56d0dfe656f5f4ff1ad56f122",
+      "afterSha256": "54708da2ec55598c8331f2cd03545f2b2bbe13d5edb64a8e93ea50676ec4a5b6",
+      "replacements": [
+        {
+          "from": "gpao-t dashboard --no-open",
+          "to": "GPAO-T 연결 도움말",
+          "count": 4
+        }
+      ]
+    },
+    {
+      "file": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui/assets/zh-CN-Crsl1YnI.js",
+      "relativePath": "assets/zh-CN-Crsl1YnI.js",
+      "beforeSha256": "e422c20d67f01a8f9332ef0d4ebfce556572c9cab96b1ab6ccd8fcde38435f6e",
+      "afterSha256": "c9e499ff69d829e0e39a8d8b5d8d278eb1ecd8e26852c2044838bd18d51f0599",
+      "replacements": [
+        {
+          "from": "gpao-t dashboard --no-open",
+          "to": "GPAO-T 연결 도움말",
+          "count": 4
+        }
+      ]
+    },
+    {
+      "file": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui/assets/zh-TW-C9v3OH89.js",
+      "relativePath": "assets/zh-TW-C9v3OH89.js",
+      "beforeSha256": "bee0c77144656ce5f5cd351331bcbab21b73a64bbd031e963be0284e09d527ce",
+      "afterSha256": "802a9d119039b3b99473ad435fe4b8e9381d905bcfb26c98313a10abd11b409b",
+      "replacements": [
+        {
+          "from": "gpao-t dashboard --no-open",
+          "to": "GPAO-T 연결 도움말",
+          "count": 4
+        }
+      ]
+    }
+  ],
+  "backupDir": "/Users/jyp/Documents/Playground 2/gpao-t/docs/03-verification/evidence/live-surface-seal-patch/2026-07-12T09-02-49-248Z-before-surface-seal",
+  "applyTokenRequired": "apply-gpao-t-surface-seal-live"
+}

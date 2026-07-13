@@ -1,4 +1,5 @@
 import { resolveContextMesh } from "./memory-wiki.js";
+import { buildSessionContinuityTCell } from "./session-continuity.js";
 
 export function buildContextRuntime({ input, sessionOverlay, inputSignal = { kind: "general_request" }, root } = {}) {
   const rememberedTarget = sessionOverlay.activeTargetId || "unknown";
@@ -8,7 +9,9 @@ export function buildContextRuntime({ input, sessionOverlay, inputSignal = { kin
     activeTargetId: rememberedTarget,
     root,
   });
+  const continuityTCell = buildSessionContinuityTCell({ handoff: sessionOverlay.continuityHandoff });
   const retrievedCells = [
+    ...(continuityTCell ? [continuityTCell] : []),
     buildCoreTCell({
       id: "tcell.active-target.release-file",
       pi: "When the user uses a short follow-up phrase, recover the active target before answering.",

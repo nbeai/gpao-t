@@ -1,0 +1,31 @@
+- generic [active] [ref=f1e1] [box=0,0,390,2237]:
+  - banner [ref=f1e2] [box=0,0,390,139]:
+    - generic [ref=f1e3] [box=18,14,194,110]:
+      - heading "GPAO-T Workspace Shell" [level=1] [ref=f1e4] [box=18,14,194,45]
+      - paragraph [ref=f1e5] [box=18,63,194,61]: OpenClaw 대시보드 질서를 빌리되, GPAO-T의 멀티 작업 세션으로 다시 구성합니다.
+    - generic "workspace shell state" [ref=f1e6] [box=228,14,144,110]:
+      - generic [ref=f1e7] [box=228,14,53,31]: review
+      - generic [ref=f1e8] [box=228,53,139,31]: live OpenClaw 변경 없음
+      - generic [ref=f1e9] [box=228,93,110,31]: Codex식 멀티 세션
+  - generic [ref=f1e10] [box=0,139,390,2098]:
+    - complementary [ref=f1e11] [box=0,139,390,254]:
+      - heading "작업 세션" [level=2] [ref=f1e12] [box=16,155,358,18]
+      - generic [ref=f1e13] [box=16,182,358,65]
+      - generic [ref=f1e16] [box=16,247,358,65]
+      - generic [ref=f1e19] [box=16,311,358,65]
+    - main [ref=f1e22] [box=0,393,390,1396]:
+      - generic [ref=f1e23] [box=0,393,390,294]
+      - generic [ref=f1e36] [box=0,687,390,41]
+      - generic [ref=f1e38] [box=0,728,390,154]
+      - generic [ref=f1e48] [box=0,882,390,132]
+      - region "active work session" [ref=f1e51] [box=0,1014,390,567]
+      - generic [ref=f1e76] [box=20,1606,350,84]
+      - group [ref=f1e79] [box=20,1731,350,44]
+    - complementary [ref=f1e81] [box=0,1789,390,448]:
+      - heading "맥락 / 권한 / 성장" [level=2] [ref=f1e82] [box=16,1805,358,18]
+      - generic [ref=f1e83] [box=16,1832,358,65]
+      - generic [ref=f1e86] [box=16,1897,358,65]
+      - generic [ref=f1e89] [box=16,1961,358,65]
+      - generic [ref=f1e92] [box=16,2026,358,65]
+      - generic [ref=f1e95] [box=16,2091,358,65]
+      - generic [ref=f1e98] [box=16,2155,358,65]

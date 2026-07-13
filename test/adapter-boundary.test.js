@@ -227,7 +227,7 @@ describe("GPAO-T model and tool adapter boundary", () => {
     const verification = verifyModelInvocation({ registry, localResult });
 
     assert.equal(registry.schema, "gpao_t.model_provider_registry.v1");
-    assert.ok(registry.providers.some((provider) => provider.id === "openclaw.oauth" && provider.lane === "oauth_session"));
+    assert.ok(registry.providers.some((provider) => provider.id === "gpao_t.account_session" && provider.lane === "oauth_session"));
     assert.ok(registry.providers.some((provider) => provider.id === "openai.api_key" && provider.lane === "api_key"));
     assert.ok(registry.providers.some((provider) => provider.id === "local.deterministic" && provider.defaultExecutableNow));
     assert.equal(registry.invariants.chatgptPlanIsNotApiCredit, true);

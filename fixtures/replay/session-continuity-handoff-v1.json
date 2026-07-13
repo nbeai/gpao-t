@@ -1,0 +1,62 @@
+{
+  "schema": "gpao_t.session_continuity_handoff_replay.v0_1",
+  "status": "ready",
+  "cases": [
+    {
+      "id": "restaurant_new_session_review_followup",
+      "priorEvents": [
+        {
+          "sessionId": "telegram.restaurant.previous",
+          "text": "청담동 팔식당은 숙성 한돈 돼지고기 구이집이에요. 주소와 영업시간, 대표 메뉴를 요약했습니다.",
+          "intent": "장소 정보 확인",
+          "assistantAction": "장소 정보 요약",
+          "confidence": 0.88
+        }
+      ],
+      "newSession": true,
+      "input": "거기 후기는 어때?",
+      "expectedDecision": "auto_carry",
+      "expectedEntity": "청담동 팔식당"
+    },
+    {
+      "id": "restaurant_new_session_reservation_followup",
+      "priorEvents": [
+        {
+          "sessionId": "telegram.restaurant.previous",
+          "text": "청담동 팔식당은 숙성 한돈 돼지고기 구이집이에요.",
+          "intent": "장소 정보 확인",
+          "assistantAction": "장소 정보 요약",
+          "confidence": 0.84
+        }
+      ],
+      "newSession": true,
+      "input": "거기 예약돼?",
+      "expectedDecision": "auto_carry",
+      "expectedEntity": "청담동 팔식당"
+    },
+    {
+      "id": "unrelated_new_topic_overrides_prior",
+      "priorEvents": [
+        {
+          "sessionId": "telegram.restaurant.previous",
+          "text": "청담동 팔식당은 숙성 한돈 돼지고기 구이집이에요.",
+          "intent": "장소 정보 확인",
+          "assistantAction": "장소 정보 요약",
+          "confidence": 0.9
+        }
+      ],
+      "newSession": true,
+      "input": "테슬라 주가 알려줘",
+      "expectedDecision": "current_request_override",
+      "expectedEntity": null
+    },
+    {
+      "id": "unknown_referent_requires_target",
+      "priorEvents": [],
+      "newSession": true,
+      "input": "그거 계속해",
+      "expectedDecision": "ask_target",
+      "expectedEntity": null
+    }
+  ]
+}

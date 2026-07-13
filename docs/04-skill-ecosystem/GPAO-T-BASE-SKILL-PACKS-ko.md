@@ -8,9 +8,21 @@ Date: 2026-07-08
 
 이 문서는 GPAO-T에 기본 탑재할 1차 스킬팩을 정리한다. 실제 실행 데이터 계약은 `src/core/skill-ecosystem.js`가 단일 진실 원천이다. 이 문서는 사용자가 읽을 수 있는 제품 설명과 개발 기준이다.
 
-현재 Phase 1 production baseline은 9개 스킬팩이다. 전체 registry에는 Phase 2/도메인용 seed pack까지 포함해 11개 기본 pack이 존재한다.
+현재 Phase 1 production baseline은 9개 스킬팩이다. 전체 registry에는 Phase 2/도메인용 seed/production pack과 Human Response Kernel까지 포함해 13개 기본 pack이 존재한다.
 
 ## 2. 기본 스킬팩
+
+### gpao-human-response-kernel-pack
+
+사용자의 현재 입력, 요청 형식, 판단권, 확실성 경계, 산출물 우선 원칙, 질문 최소화, 자연스러운 마무리를 보존한다.
+
+핵심 품질:
+
+- 현재 사용자 입력을 최우선 앵커로 보존
+- 사실, 미확인, 가정, 판단 분리
+- 산출물 요청은 바로 쓸 결과 먼저 제공
+- 질문은 답의 방향을 바꿀 때만 최소로 사용
+- 긴 맥락은 현재 요청을 돕는 범위에서만 사용
 
 ### gpao-core-thinking-pack
 
@@ -71,6 +83,17 @@ Date: 2026-07-08
 - 공식 한국 source 우선
 - 법률, 세무, 금융 경계 분리
 - 실무 action plan 제공
+
+### gpao-owner-ops-pack
+
+한국 자영업자와 1인/소규모 사업자가 리뷰, 예약, 쇼핑몰 문의 같은 반복 업무를 쉽게 초안/기록/자동화 후보로 바꾸도록 돕는다.
+
+핵심 품질:
+
+- API 연결 없이 붙여넣기/CSV/Excel 기반 첫 가치 제공
+- 리뷰 답변, 쇼핑몰 문의 분류, 예약 문의 초안 workflow
+- 외부 발송, 리뷰 게시, 환불, 결제, 삭제, 대량 발송 기본 잠금
+- 로컬 기록과 효과 replay를 통한 다음 자동화 후보 생성
 
 ### gpao-data-insight-pack
 

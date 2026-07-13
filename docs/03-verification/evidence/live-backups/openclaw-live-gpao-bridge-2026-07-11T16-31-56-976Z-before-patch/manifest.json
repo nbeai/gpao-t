@@ -1,0 +1,58 @@
+{
+  "schema": "gpao_t.openclaw_live_gpao_bridge_patch_manifest.v0_1",
+  "status": "applied",
+  "createdAt": "2026-07-11T16:31:57.254Z",
+  "liveDist": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist",
+  "labDist": "/Users/jyp/Documents/Playground 2/openclaw-clean-lab/gpao-t-openclaw-dashboard-lab/dist",
+  "backupDir": "/Users/jyp/Documents/Playground 2/gpao-t/docs/03-verification/evidence/live-backups/openclaw-live-gpao-bridge-2026-07-11T16-31-56-976Z-before-patch",
+  "patchedFiles": {
+    "serverMethods": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/server-methods-B64pXQ-G.js",
+    "coreDescriptors": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/core-descriptors-B2lASufG.js",
+    "gpaoBridge": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/gpao-t-B6WiwufB.js",
+    "controlUi": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui"
+  },
+  "hashes": {
+    "serverMethods": "d2a8b645b07b5ffa821cf8394b46d702987f8f374616e6cbb08eb146189fc403",
+    "coreDescriptors": "0b879af37c734615af19cb28f415eb07540c724d64758e099525b200051c3147",
+    "gpaoBridge": "aa87c15fea2819c282a6e82d77a72c60b39adfd806d941030c85acce0f524e25",
+    "controlUiIndex": "ebb004d799df15ba4656ae21eaed8753c9bf2d7ce03aae205d580b7c7e2929b9"
+  },
+  "controlUiCopyStatus": "skipped_lab_control_ui_missing",
+  "staleBridgeChunksRemoved": [
+    "gpao-t-CkviVFR2.js"
+  ],
+  "readback": {
+    "status": "applied_readback_recorded",
+    "requiredNeedles": {
+      "serverMethods": [
+        "const loadGpaoTHandlers = lazyHandlerModule",
+        "\"gpao.appliedReplayInspector.get\"",
+        "\"gpao.chatPreflight.prepare\"",
+        "\"gpao.chatPostAnswerReplay.record\"",
+        "\"gpao.chatAnswerReplay.evaluate\""
+      ],
+      "coreDescriptors": [
+        "name: \"gpao.appliedReplayInspector.get\"",
+        "name: \"gpao.chatPreflight.prepare\"",
+        "name: \"gpao.chatPostAnswerReplay.record\"",
+        "name: \"gpao.chatAnswerReplay.evaluate\""
+      ],
+      "gpaoBridge": [
+        "gpaoTHandlers"
+      ]
+    }
+  },
+  "rollback": {
+    "restoreServerMethodsFrom": "/Users/jyp/Documents/Playground 2/gpao-t/docs/03-verification/evidence/live-backups/openclaw-live-gpao-bridge-2026-07-11T16-31-56-976Z-before-patch/server-methods-B64pXQ-G.js",
+    "restoreCoreDescriptorsFrom": "/Users/jyp/Documents/Playground 2/gpao-t/docs/03-verification/evidence/live-backups/openclaw-live-gpao-bridge-2026-07-11T16-31-56-976Z-before-patch/core-descriptors-B2lASufG.js",
+    "restoreControlUiFrom": "/Users/jyp/Documents/Playground 2/gpao-t/docs/03-verification/evidence/live-backups/openclaw-live-gpao-bridge-2026-07-11T16-31-56-976Z-before-patch/control-ui",
+    "removeGpaoBridge": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/gpao-t-B6WiwufB.js"
+  },
+  "authority": {
+    "durableMemoryPromotion": "blocked",
+    "openClawMemoryWrite": "blocked",
+    "sessionMetaWrite": "blocked",
+    "externalSend": "blocked",
+    "automaticAdmission": "blocked"
+  }
+}

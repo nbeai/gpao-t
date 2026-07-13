@@ -1,0 +1,87 @@
+{
+  "schema": "gpao_t.workspace_shell_visual_qa.v0_1",
+  "status": "ready_with_review_targets",
+  "date": "2026-07-10",
+  "surface": "GPAO-T Workspace Shell",
+  "route": "/gpao-t-workspace",
+  "sourceStrategy": {
+    "openClaw": "runtime_dashboard_shell_reference",
+    "codex": "multi_chat_work_rhythm_reference",
+    "gpaoT": "product_owned_user_environment",
+    "liveOpenClawMutation": false
+  },
+  "loopbackPreview": {
+    "url": "http://127.0.0.1:55459/gpao-t-workspace",
+    "stateRouteStatus": 200,
+    "verifyRouteStatus": 200,
+    "serveCheckStatus": "ready",
+    "blockedPostStatus": 405,
+    "faviconStatusAfterPatch": 204
+  },
+  "browserEvidence": {
+    "desktop": {
+      "viewport": {
+        "width": 1440,
+        "height": 960
+      },
+      "screenshot": "docs/03-verification/evidence/gpao-t-workspace-shell-desktop-2026-07-10.png",
+      "visibleMarkers": [
+        "GPAO-T Workspace Shell",
+        "작업 세션",
+        "현재 작업",
+        "채팅 컨디션",
+        "맥락 / 권한 / 성장"
+      ]
+    },
+    "mobile": {
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "screenshot": "docs/03-verification/evidence/gpao-t-workspace-shell-mobile-390x844-2026-07-10.png",
+      "visibleMarkers": [
+        "GPAO-T Workspace Shell",
+        "작업 세션",
+        "현재 작업"
+      ]
+    },
+    "accessibilitySnapshot": ".playwright-mcp/page-2026-07-10T11-43-41-343Z.yml",
+    "consoleLog": ".playwright-mcp/console-2026-07-10T11-43-41-083Z.log",
+    "consoleFinding": "Only favicon.ico 404 was observed before adding the quiet /favicon.ico route."
+  },
+  "chatConditionReviewNarrowing": [
+    {
+      "id": "active_target_recovery",
+      "status": "review",
+      "currentEvidence": "activeTarget and Context Mesh candidates exist in state.",
+      "nextProof": "The active target must appear in a top visible strip before answer drafting.",
+      "nextImplementation": "Bind turn-start active target recovery into Workspace Shell state and replay evidence."
+    },
+    {
+      "id": "streaming_progress_feel",
+      "status": "review",
+      "currentEvidence": "The shell shows next safe action and visible chat condition review state.",
+      "nextProof": "Understanding, plan, authority boundary, and verification progress must be visible before raw logs.",
+      "nextImplementation": "Add a compact progress lane and keep detailed tool/runtime logs behind inspector disclosure."
+    },
+    {
+      "id": "speed_perception",
+      "status": "review",
+      "currentEvidence": "The shell renders immediately from local state without model or tool execution.",
+      "nextProof": "Slow runtime work must still provide instant readable state and latency budget signals.",
+      "nextImplementation": "Add route-state placeholders and local-first latency budget indicators."
+    }
+  ],
+  "authorityBoundary": {
+    "liveOpenClawUiOverwrite": false,
+    "gatewayRestart": false,
+    "liveTurnExecution": false,
+    "modelProviderCall": false,
+    "toolExecution": false,
+    "connectorActivation": false,
+    "externalSend": false,
+    "durableMemoryPromotion": false,
+    "publicRelease": false
+  },
+  "nextSafeAction": "Implement the three review targets as runtime-visible signals before mutating the live OpenClaw UI."
+}

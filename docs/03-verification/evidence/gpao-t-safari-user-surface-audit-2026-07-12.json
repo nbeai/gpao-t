@@ -1,0 +1,211 @@
+{
+  "schema": "gpao_t.safari_user_surface_audit.v0_1",
+  "status": "ready",
+  "createdAt": "2026-07-12T08:37:38.454Z",
+  "startUrl": "http://127.0.0.1:18789/chat?session=agent%3Amain%3Atelegram%3Adirect%3A8601204821",
+  "routes": [
+    "/chat",
+    "/sessions",
+    "/settings",
+    "/agents",
+    "/skills",
+    "/nodes",
+    "/dreaming",
+    "/documents"
+  ],
+  "forbidden": [
+    "OpenClaw",
+    "Gateway",
+    "ClawHub",
+    "Control UI",
+    "openclaw",
+    "Gateway 상태",
+    "Open session menu",
+    "Skills",
+    "Skill Workshop",
+    "openclaw-absorption",
+    "admission",
+    "replay",
+    "Replay",
+    "rollback",
+    "OpenClaw session row"
+  ],
+  "results": [
+    {
+      "route": "/chat",
+      "target": "http://127.0.0.1:18789/chat",
+      "title": "nBeAI. GPAO-T",
+      "url": "http://127.0.0.1:18789/chat?session=agent%3Amain%3Atelegram%3Adirect%3A8601204821",
+      "visibleHitCount": 0,
+      "visibleHits": [],
+      "hiddenHitCount": 0,
+      "hiddenHits": [],
+      "sample": [
+        "nBeAI. GPAO-T\n\n\n개요\n\n더 보기\n\nNew session\n\n소통\n전용\nTelegram\n17h\n\n\n세션\n\n\n\n내마음\n0\n\n\n그룹 없음\n3\n작업 대화\n3h\n\n\nMain Session\n37h\n\n\n\n\n\n\n아이기스\n\nPark Jongyoon (8601204821)\n2026년 7월 11일 오후 1:57\n\nMessage\nT",
+        "nBeAI. GPAO-T",
+        "nBeAI. GPAO-T\n\n\n개요\n\n더 보기\n\nNew session\n\n소통\n전용\nTelegram\n17h\n\n\n세션\n\n\n\n내마음\n0\n\n\n그룹 없음\n3\n작업 대화\n3h\n\n\nMain Session\n37h\n\n\n\n\n\n\n아이기스\n\nPark Jongyoon (8601204821)\n2026년 7월 11일 오후 1:57\n\nMessage\nT",
+        "nBeAI. GPAO-T\n\n\n개요\n\n더 보기\n\nNew session\n\n소통\n전용\nTelegram\n17h\n\n\n세션\n\n\n\n내마음\n0\n\n\n그룹 없음\n3\n작업 대화\n3h\n\n\nMain Session\n37h\n\n\n\n\n\n\n아이기스\n\nPark Jongyoon (8601204821)\n2026년 7월 11일 오후 1:57\n\nMessage\nT",
+        "nBeAI. GPAO-T\n            \n          \n          \n            \n              \n                \n    \n      \n      \n    \n  \n              \n            \n          \n        \n      \n    ",
+        "nBeAI. GPAO-T\n            \n          \n          \n            \n              \n                \n    \n      \n      \n    \n  \n              \n            \n          \n        \n      \n    ",
+        "nBeAI. GPAO-T\n\n\n개요\n\n더 보기\n\nNew session\n\n소통\n전용\nTelegram\n17h\n\n\n세션\n\n\n\n내마음\n0\n\n\n그룹 없음\n3\n작업 대화\n3h\n\n\nMain Session\n37h\n\n\n\n\n\n\n아이기스\n\nPark Jongyoon (8601204821)\n2026년 7월 11일 오후 1:57\n\nMessage\nT",
+        "nBeAI. GPAO-T\n\n\n개요\n\n더 보기\n\nNew session\n\n소통\n전용\nTelegram\n17h\n\n\n세션\n\n\n\n내마음\n0\n\n\n그룹 없음\n3\n작업 대화\n3h\n\n\nMain Session\n37h\n\n\n\n\n\n\n아이기스\n\nPark Jongyoon (8601204821)\n2026년 7월 11일 오후 1:57\n\nMessage\nT",
+        "nBeAI. GPAO-T",
+        "nBeAI. GPAO-T"
+      ]
+    },
+    {
+      "route": "/sessions",
+      "target": "http://127.0.0.1:18789/sessions",
+      "title": "nBeAI. GPAO-T",
+      "url": "http://127.0.0.1:18789/sessions",
+      "visibleHitCount": 0,
+      "visibleHits": [],
+      "hiddenHitCount": 0,
+      "hiddenHits": [],
+      "sample": [
+        "nBeAI. GPAO-T\n\n\n개요\n\n더 보기\n\nNew session\n\n소통\n전용\nTelegram\n17h\n\n\n세션\n\n\n\n내마음\n0\n\n\n그룹 없음\n3\n작업 대화\n3h\n\n\nMain Session\n37h\n\n\n\n\n\n세션\n활성 세션 및 기본값.\n세션\n0\n활성 세션 키 및 세션별 재정의.\n새로고침\n0\n세션\n0\n실시간\n0\nUNREAD\n",
+        "nBeAI. GPAO-T",
+        "nBeAI. GPAO-T\n\n\n개요\n\n더 보기\n\nNew session\n\n소통\n전용\nTelegram\n17h\n\n\n세션\n\n\n\n내마음\n0\n\n\n그룹 없음\n3\n작업 대화\n3h\n\n\nMain Session\n37h\n\n\n\n\n\n세션\n활성 세션 및 기본값.\n세션\n0\n활성 세션 키 및 세션별 재정의.\n새로고침\n0\n세션\n0\n실시간\n0\nUNREAD\n",
+        "nBeAI. GPAO-T\n\n\n개요\n\n더 보기\n\nNew session\n\n소통\n전용\nTelegram\n17h\n\n\n세션\n\n\n\n내마음\n0\n\n\n그룹 없음\n3\n작업 대화\n3h\n\n\nMain Session\n37h\n\n\n\n\n\n세션\n활성 세션 및 기본값.\n세션\n0\n활성 세션 키 및 세션별 재정의.\n새로고침\n0\n세션\n0\n실시간\n0\nUNREAD\n",
+        "nBeAI. GPAO-T\n            \n          \n          \n            \n              \n                \n    \n      \n      \n    \n  \n              \n            \n          \n        \n      \n    ",
+        "nBeAI. GPAO-T\n            \n          \n          \n            \n              \n                \n    \n      \n      \n    \n  \n              \n            \n          \n        \n      \n    ",
+        "nBeAI. GPAO-T\n\n\n개요\n\n더 보기\n\nNew session\n\n소통\n전용\nTelegram\n17h\n\n\n세션\n\n\n\n내마음\n0\n\n\n그룹 없음\n3\n작업 대화\n3h\n\n\nMain Session\n37h\n\n\n\n\n\n세션\n활성 세션 및 기본값.\n세션\n0\n활성 세션 키 및 세션별 재정의.\n새로고침\n0\n세션\n0\n실시간\n0\nUNREAD\n",
+        "nBeAI. GPAO-T\n\n\n개요\n\n더 보기\n\nNew session\n\n소통\n전용\nTelegram\n17h\n\n\n세션\n\n\n\n내마음\n0\n\n\n그룹 없음\n3\n작업 대화\n3h\n\n\nMain Session\n37h\n\n\n\n\n\n세션\n활성 세션 및 기본값.\n세션\n0\n활성 세션 키 및 세션별 재정의.\n새로고침\n0\n세션\n0\n실시간\n0\nUNREAD\n",
+        "nBeAI. GPAO-T",
+        "nBeAI. GPAO-T"
+      ]
+    },
+    {
+      "route": "/settings",
+      "target": "http://127.0.0.1:18789/settings",
+      "title": "nBeAI. GPAO-T",
+      "url": "http://127.0.0.1:18789/chat?session=agent%3Amain%3Atelegram%3Adirect%3A8601204821",
+      "visibleHitCount": 0,
+      "visibleHits": [],
+      "hiddenHitCount": 0,
+      "hiddenHits": [],
+      "sample": [
+        "nBeAI. GPAO-T\n\n\n개요\n\n더 보기\n\nNew session\n\n소통\n전용\nTelegram\n17h\n\n\n세션\n\n\n\n내마음\n0\n\n\n그룹 없음\n3\n작업 대화\n3h\n\n\nMain Session\n37h\n\n\n\n\n\n\n아이기스\n\nPark Jongyoon (8601204821)\n2026년 7월 11일 오후 1:57\n\nMessage\nT",
+        "nBeAI. GPAO-T",
+        "nBeAI. GPAO-T\n\n\n개요\n\n더 보기\n\nNew session\n\n소통\n전용\nTelegram\n17h\n\n\n세션\n\n\n\n내마음\n0\n\n\n그룹 없음\n3\n작업 대화\n3h\n\n\nMain Session\n37h\n\n\n\n\n\n\n아이기스\n\nPark Jongyoon (8601204821)\n2026년 7월 11일 오후 1:57\n\nMessage\nT",
+        "nBeAI. GPAO-T\n\n\n개요\n\n더 보기\n\nNew session\n\n소통\n전용\nTelegram\n17h\n\n\n세션\n\n\n\n내마음\n0\n\n\n그룹 없음\n3\n작업 대화\n3h\n\n\nMain Session\n37h\n\n\n\n\n\n\n아이기스\n\nPark Jongyoon (8601204821)\n2026년 7월 11일 오후 1:57\n\nMessage\nT",
+        "nBeAI. GPAO-T\n            \n          \n          \n            \n              \n                \n    \n      \n      \n    \n  \n              \n            \n          \n        \n      \n    ",
+        "nBeAI. GPAO-T\n            \n          \n          \n            \n              \n                \n    \n      \n      \n    \n  \n              \n            \n          \n        \n      \n    ",
+        "nBeAI. GPAO-T\n\n\n개요\n\n더 보기\n\nNew session\n\n소통\n전용\nTelegram\n17h\n\n\n세션\n\n\n\n내마음\n0\n\n\n그룹 없음\n3\n작업 대화\n3h\n\n\nMain Session\n37h\n\n\n\n\n\n\n아이기스\n\nPark Jongyoon (8601204821)\n2026년 7월 11일 오후 1:57\n\nMessage\nT",
+        "nBeAI. GPAO-T\n\n\n개요\n\n더 보기\n\nNew session\n\n소통\n전용\nTelegram\n17h\n\n\n세션\n\n\n\n내마음\n0\n\n\n그룹 없음\n3\n작업 대화\n3h\n\n\nMain Session\n37h\n\n\n\n\n\n\n아이기스\n\nPark Jongyoon (8601204821)\n2026년 7월 11일 오후 1:57\n\nMessage\nT",
+        "nBeAI. GPAO-T",
+        "nBeAI. GPAO-T"
+      ]
+    },
+    {
+      "route": "/agents",
+      "target": "http://127.0.0.1:18789/agents",
+      "title": "nBeAI. GPAO-T",
+      "url": "http://127.0.0.1:18789/agents",
+      "visibleHitCount": 0,
+      "visibleHits": [],
+      "hiddenHitCount": 0,
+      "hiddenHits": [],
+      "sample": [
+        "nBeAI. GPAO-T\n\n\n개요\n\n더 보기\n\nNew session\n\n소통\n전용\nTelegram\n17h\n\n\n세션\n\n\n\n내마음\n0\n\n\n그룹 없음\n3\n작업 대화\n3h\n\n\nMain Session\n37h\n\n\n\n\n\n에이전트\n워크스페이스, 도구, 정체성.\n \nM\nmain\nDEFAULT\n Copy ID\nDefault\n새로고침\n개요\n파",
+        "nBeAI. GPAO-T",
+        "nBeAI. GPAO-T\n\n\n개요\n\n더 보기\n\nNew session\n\n소통\n전용\nTelegram\n17h\n\n\n세션\n\n\n\n내마음\n0\n\n\n그룹 없음\n3\n작업 대화\n3h\n\n\nMain Session\n37h\n\n\n\n\n\n에이전트\n워크스페이스, 도구, 정체성.\n \nM\nmain\nDEFAULT\n Copy ID\nDefault\n새로고침\n개요\n파",
+        "nBeAI. GPAO-T\n\n\n개요\n\n더 보기\n\nNew session\n\n소통\n전용\nTelegram\n17h\n\n\n세션\n\n\n\n내마음\n0\n\n\n그룹 없음\n3\n작업 대화\n3h\n\n\nMain Session\n37h\n\n\n\n\n\n에이전트\n워크스페이스, 도구, 정체성.\n \nM\nmain\nDEFAULT\n Copy ID\nDefault\n새로고침\n개요\n파",
+        "nBeAI. GPAO-T\n            \n          \n          \n            \n              \n                \n    \n      \n      \n    \n  \n              \n            \n          \n        \n      \n    ",
+        "nBeAI. GPAO-T\n            \n          \n          \n            \n              \n                \n    \n      \n      \n    \n  \n              \n            \n          \n        \n      \n    ",
+        "nBeAI. GPAO-T\n\n\n개요\n\n더 보기\n\nNew session\n\n소통\n전용\nTelegram\n17h\n\n\n세션\n\n\n\n내마음\n0\n\n\n그룹 없음\n3\n작업 대화\n3h\n\n\nMain Session\n37h\n\n\n\n\n\n에이전트\n워크스페이스, 도구, 정체성.\n \nM\nmain\nDEFAULT\n Copy ID\nDefault\n새로고침\n개요\n파",
+        "nBeAI. GPAO-T\n\n\n개요\n\n더 보기\n\nNew session\n\n소통\n전용\nTelegram\n17h\n\n\n세션\n\n\n\n내마음\n0\n\n\n그룹 없음\n3\n작업 대화\n3h\n\n\nMain Session\n37h\n\n\n\n\n\n에이전트\n워크스페이스, 도구, 정체성.\n \nM\nmain\nDEFAULT\n Copy ID\nDefault\n새로고침\n개요\n파",
+        "nBeAI. GPAO-T",
+        "nBeAI. GPAO-T"
+      ]
+    },
+    {
+      "route": "/skills",
+      "target": "http://127.0.0.1:18789/skills",
+      "title": "nBeAI. GPAO-T",
+      "url": "http://127.0.0.1:18789/skills",
+      "visibleHitCount": 0,
+      "visibleHits": [],
+      "hiddenHitCount": 0,
+      "hiddenHits": [],
+      "sample": [
+        "nBeAI. GPAO-T\n\n\n개요\n\n더 보기\n\nNew session\n\n소통\n전용\nTelegram\n17h\n\n\n세션\n\n\n\n내마음\n0\n\n\n그룹 없음\n3\n작업 대화\n3h\n\n\nMain Session\n38h\n\n\n\n\n\n기능\n기능 및 API 키.\n기능\n설치된 기능과 상태입니다.\n새로고침\nAll52\nReady15\nNeeds Setup37",
+        "nBeAI. GPAO-T",
+        "nBeAI. GPAO-T\n\n\n개요\n\n더 보기\n\nNew session\n\n소통\n전용\nTelegram\n17h\n\n\n세션\n\n\n\n내마음\n0\n\n\n그룹 없음\n3\n작업 대화\n3h\n\n\nMain Session\n38h\n\n\n\n\n\n기능\n기능 및 API 키.\n기능\n설치된 기능과 상태입니다.\n새로고침\nAll52\nReady15\nNeeds Setup37",
+        "nBeAI. GPAO-T\n\n\n개요\n\n더 보기\n\nNew session\n\n소통\n전용\nTelegram\n17h\n\n\n세션\n\n\n\n내마음\n0\n\n\n그룹 없음\n3\n작업 대화\n3h\n\n\nMain Session\n38h\n\n\n\n\n\n기능\n기능 및 API 키.\n기능\n설치된 기능과 상태입니다.\n새로고침\nAll52\nReady15\nNeeds Setup37",
+        "nBeAI. GPAO-T\n            \n          \n          \n            \n              \n                \n    \n      \n      \n    \n  \n              \n            \n          \n        \n      \n    ",
+        "nBeAI. GPAO-T\n            \n          \n          \n            \n              \n                \n    \n      \n      \n    \n  \n              \n            \n          \n        \n      \n    ",
+        "nBeAI. GPAO-T\n\n\n개요\n\n더 보기\n\nNew session\n\n소통\n전용\nTelegram\n17h\n\n\n세션\n\n\n\n내마음\n0\n\n\n그룹 없음\n3\n작업 대화\n3h\n\n\nMain Session\n38h\n\n\n\n\n\n기능\n기능 및 API 키.\n기능\n설치된 기능과 상태입니다.\n새로고침\nAll52\nReady15\nNeeds Setup37",
+        "nBeAI. GPAO-T\n\n\n개요\n\n더 보기\n\nNew session\n\n소통\n전용\nTelegram\n17h\n\n\n세션\n\n\n\n내마음\n0\n\n\n그룹 없음\n3\n작업 대화\n3h\n\n\nMain Session\n38h\n\n\n\n\n\n기능\n기능 및 API 키.\n기능\n설치된 기능과 상태입니다.\n새로고침\nAll52\nReady15\nNeeds Setup37",
+        "nBeAI. GPAO-T",
+        "nBeAI. GPAO-T"
+      ]
+    },
+    {
+      "route": "/nodes",
+      "target": "http://127.0.0.1:18789/nodes",
+      "title": "nBeAI. GPAO-T",
+      "url": "http://127.0.0.1:18789/nodes",
+      "visibleHitCount": 0,
+      "visibleHits": [],
+      "hiddenHitCount": 0,
+      "hiddenHits": [],
+      "sample": [
+        "nBeAI. GPAO-T\n\n\n개요\n\n더 보기\n\nNew session\n\n소통\n전용\nTelegram\n17h\n\n\n세션\n\n\n\n내마음\n0\n\n\n그룹 없음\n3\n작업 대화\n3h\n\n\nMain Session\n38h\n\n\n\n\n\n노드\n페어링된 디바이스 및 명령.\nNodes & devices\nOne entry per paired client: r",
+        "nBeAI. GPAO-T",
+        "nBeAI. GPAO-T\n\n\n개요\n\n더 보기\n\nNew session\n\n소통\n전용\nTelegram\n17h\n\n\n세션\n\n\n\n내마음\n0\n\n\n그룹 없음\n3\n작업 대화\n3h\n\n\nMain Session\n38h\n\n\n\n\n\n노드\n페어링된 디바이스 및 명령.\nNodes & devices\nOne entry per paired client: r",
+        "nBeAI. GPAO-T\n\n\n개요\n\n더 보기\n\nNew session\n\n소통\n전용\nTelegram\n17h\n\n\n세션\n\n\n\n내마음\n0\n\n\n그룹 없음\n3\n작업 대화\n3h\n\n\nMain Session\n38h\n\n\n\n\n\n노드\n페어링된 디바이스 및 명령.\nNodes & devices\nOne entry per paired client: r",
+        "nBeAI. GPAO-T\n            \n          \n          \n            \n              \n                \n    \n      \n      \n    \n  \n              \n            \n          \n        \n      \n    ",
+        "nBeAI. GPAO-T\n            \n          \n          \n            \n              \n                \n    \n      \n      \n    \n  \n              \n            \n          \n        \n      \n    ",
+        "nBeAI. GPAO-T\n\n\n개요\n\n더 보기\n\nNew session\n\n소통\n전용\nTelegram\n17h\n\n\n세션\n\n\n\n내마음\n0\n\n\n그룹 없음\n3\n작업 대화\n3h\n\n\nMain Session\n38h\n\n\n\n\n\n노드\n페어링된 디바이스 및 명령.\nNodes & devices\nOne entry per paired client: r",
+        "nBeAI. GPAO-T\n\n\n개요\n\n더 보기\n\nNew session\n\n소통\n전용\nTelegram\n17h\n\n\n세션\n\n\n\n내마음\n0\n\n\n그룹 없음\n3\n작업 대화\n3h\n\n\nMain Session\n38h\n\n\n\n\n\n노드\n페어링된 디바이스 및 명령.\nNodes & devices\nOne entry per paired client: r",
+        "nBeAI. GPAO-T",
+        "nBeAI. GPAO-T"
+      ]
+    },
+    {
+      "route": "/dreaming",
+      "target": "http://127.0.0.1:18789/dreaming",
+      "title": "nBeAI. GPAO-T",
+      "url": "http://127.0.0.1:18789/dreaming",
+      "visibleHitCount": 0,
+      "visibleHits": [],
+      "hiddenHitCount": 0,
+      "hiddenHits": [],
+      "sample": [
+        "nBeAI. GPAO-T\n\n\n개요\n\n더 보기\n\nNew session\n\n소통\n전용\nTelegram\n17h\n\n\n세션\n\n\n\n내마음\n0\n\n\n그룹 없음\n3\n작업 대화\n3h\n\n\nMain Session\n38h\n\n\n\n\n\n드리밍\n수면 중 메모리 통합.\n새로고침\n\n드리밍 꺼짐\n장면\n일지\n고급\nzzZ\n드리밍 유휴\n0 승격됨\n얕음\n꺼짐\n깊음\n",
+        "nBeAI. GPAO-T",
+        "nBeAI. GPAO-T\n\n\n개요\n\n더 보기\n\nNew session\n\n소통\n전용\nTelegram\n17h\n\n\n세션\n\n\n\n내마음\n0\n\n\n그룹 없음\n3\n작업 대화\n3h\n\n\nMain Session\n38h\n\n\n\n\n\n드리밍\n수면 중 메모리 통합.\n새로고침\n\n드리밍 꺼짐\n장면\n일지\n고급\nzzZ\n드리밍 유휴\n0 승격됨\n얕음\n꺼짐\n깊음\n",
+        "nBeAI. GPAO-T\n\n\n개요\n\n더 보기\n\nNew session\n\n소통\n전용\nTelegram\n17h\n\n\n세션\n\n\n\n내마음\n0\n\n\n그룹 없음\n3\n작업 대화\n3h\n\n\nMain Session\n38h\n\n\n\n\n\n드리밍\n수면 중 메모리 통합.\n새로고침\n\n드리밍 꺼짐\n장면\n일지\n고급\nzzZ\n드리밍 유휴\n0 승격됨\n얕음\n꺼짐\n깊음\n",
+        "nBeAI. GPAO-T\n            \n          \n          \n            \n              \n                \n    \n      \n      \n    \n  \n              \n            \n          \n        \n      \n    ",
+        "nBeAI. GPAO-T\n            \n          \n          \n            \n              \n                \n    \n      \n      \n    \n  \n              \n            \n          \n        \n      \n    ",
+        "nBeAI. GPAO-T\n\n\n개요\n\n더 보기\n\nNew session\n\n소통\n전용\nTelegram\n17h\n\n\n세션\n\n\n\n내마음\n0\n\n\n그룹 없음\n3\n작업 대화\n3h\n\n\nMain Session\n38h\n\n\n\n\n\n드리밍\n수면 중 메모리 통합.\n새로고침\n\n드리밍 꺼짐\n장면\n일지\n고급\nzzZ\n드리밍 유휴\n0 승격됨\n얕음\n꺼짐\n깊음\n",
+        "nBeAI. GPAO-T\n\n\n개요\n\n더 보기\n\nNew session\n\n소통\n전용\nTelegram\n17h\n\n\n세션\n\n\n\n내마음\n0\n\n\n그룹 없음\n3\n작업 대화\n3h\n\n\nMain Session\n38h\n\n\n\n\n\n드리밍\n수면 중 메모리 통합.\n새로고침\n\n드리밍 꺼짐\n장면\n일지\n고급\nzzZ\n드리밍 유휴\n0 승격됨\n얕음\n꺼짐\n깊음\n",
+        "nBeAI. GPAO-T",
+        "nBeAI. GPAO-T"
+      ]
+    },
+    {
+      "route": "/documents",
+      "target": "http://127.0.0.1:18789/documents",
+      "title": "nBeAI. GPAO-T",
+      "url": "http://127.0.0.1:18789/chat?session=agent%3Amain%3Atelegram%3Adirect%3A8601204821",
+      "visibleHitCount": 0,
+      "visibleHits": [],
+      "hiddenHitCount": 0,
+      "hiddenHits": [],
+      "sample": [
+        "nBeAI. GPAO-T\n\n\n개요\n\n더 보기\n\nNew session\n\n소통\n전용\nTelegram\n17h\n\n\n세션\n\n\n\n내마음\n0\n\n\n그룹 없음\n3\n작업 대화\n3h\n\n\nMain Session\n38h\n\n\n\n\n\n\n아이기스\n\nPark Jongyoon (8601204821)\n2026년 7월 11일 오후 1:57\n\nMessage\nT",
+        "nBeAI. GPAO-T",
+        "nBeAI. GPAO-T\n\n\n개요\n\n더 보기\n\nNew session\n\n소통\n전용\nTelegram\n17h\n\n\n세션\n\n\n\n내마음\n0\n\n\n그룹 없음\n3\n작업 대화\n3h\n\n\nMain Session\n38h\n\n\n\n\n\n\n아이기스\n\nPark Jongyoon (8601204821)\n2026년 7월 11일 오후 1:57\n\nMessage\nT",
+        "nBeAI. GPAO-T\n\n\n개요\n\n더 보기\n\nNew session\n\n소통\n전용\nTelegram\n17h\n\n\n세션\n\n\n\n내마음\n0\n\n\n그룹 없음\n3\n작업 대화\n3h\n\n\nMain Session\n38h\n\n\n\n\n\n\n아이기스\n\nPark Jongyoon (8601204821)\n2026년 7월 11일 오후 1:57\n\nMessage\nT",
+        "nBeAI. GPAO-T\n            \n          \n          \n            \n              \n                \n    \n      \n      \n    \n  \n              \n            \n          \n        \n      \n    ",
+        "nBeAI. GPAO-T\n            \n          \n          \n            \n              \n                \n    \n      \n      \n    \n  \n              \n            \n          \n        \n      \n    ",
+        "nBeAI. GPAO-T\n\n\n개요\n\n더 보기\n\nNew session\n\n소통\n전용\nTelegram\n17h\n\n\n세션\n\n\n\n내마음\n0\n\n\n그룹 없음\n3\n작업 대화\n3h\n\n\nMain Session\n38h\n\n\n\n\n\n\n아이기스\n\nPark Jongyoon (8601204821)\n2026년 7월 11일 오후 1:57\n\nMessage\nT",
+        "nBeAI. GPAO-T\n\n\n개요\n\n더 보기\n\nNew session\n\n소통\n전용\nTelegram\n17h\n\n\n세션\n\n\n\n내마음\n0\n\n\n그룹 없음\n3\n작업 대화\n3h\n\n\nMain Session\n38h\n\n\n\n\n\n\n아이기스\n\nPark Jongyoon (8601204821)\n2026년 7월 11일 오후 1:57\n\nMessage\nT",
+        "nBeAI. GPAO-T",
+        "nBeAI. GPAO-T"
+      ]
+    }
+  ]
+}

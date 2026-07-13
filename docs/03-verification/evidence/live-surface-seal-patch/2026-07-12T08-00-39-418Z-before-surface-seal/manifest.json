@@ -1,0 +1,224 @@
+{
+  "schema": "gpao_t.live_surface_seal_patch_manifest.v0_1",
+  "generatedAt": "2026-07-12T08:00:39.608Z",
+  "liveRoot": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist",
+  "controlUiRoot": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui",
+  "mode": "apply",
+  "changedFileCount": 14,
+  "changedFiles": [
+    {
+      "file": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui/assets/chat-page-3ZW4OQeE.js",
+      "relativePath": "assets/chat-page-3ZW4OQeE.js",
+      "beforeSha256": "a772825b4426fa95c8e1fe9253252890ff842cd171cadcc54dccb3014faa02b1",
+      "afterSha256": "7ae907c569c254963481ef527f4f92c2ed79bfbdaf8c69300274326e01cfcc10",
+      "replacements": [
+        {
+          "from": "WebSocket URL",
+          "to": "연결 주소",
+          "count": 3
+        }
+      ]
+    },
+    {
+      "file": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui/assets/chat-page-BSHc822R.js",
+      "relativePath": "assets/chat-page-BSHc822R.js",
+      "beforeSha256": "e2ba2e614d3467736ca7b30f845f03cd4871b2463423c0e0a4670573669a062c",
+      "afterSha256": "1db118f59a411726ffd5d5184cf82671280cb22a75b043559f18150ef4c74bde",
+      "replacements": [
+        {
+          "from": "WebSocket URL",
+          "to": "연결 주소",
+          "count": 3
+        }
+      ]
+    },
+    {
+      "file": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui/assets/gateway-DSQ-QU-U.js",
+      "relativePath": "assets/gateway-DSQ-QU-U.js",
+      "beforeSha256": "49db47fd4e4110b8fce0c6ce70fde2d6e87d5dd7fad033e73998c63f81901be8",
+      "afterSha256": "1e295f911058f732f544804ba51cc88f7bcebd709720eeccce4c7622b4658c62",
+      "replacements": [
+        {
+          "from": "WebSocket URL",
+          "to": "연결 주소",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui/assets/hi-D2MuYJJg.js",
+      "relativePath": "assets/hi-D2MuYJJg.js",
+      "beforeSha256": "f31ef433a34b5c638d126f076e3c4997c1b7771fd154211614be720b29f0d736",
+      "afterSha256": "e06cef047def43e4787229255b3e1eac258d8de90ea6544cc19659393b8239aa",
+      "replacements": [
+        {
+          "from": "WebSocket URL",
+          "to": "연결 주소",
+          "count": 3
+        }
+      ]
+    },
+    {
+      "file": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui/assets/i18n-w6mKCrXO.js",
+      "relativePath": "assets/i18n-w6mKCrXO.js",
+      "beforeSha256": "adadee595d7fe3e420c6a1e0fc074f5726c0b9455d3d2681341dbdec71993242",
+      "afterSha256": "17c14a3d5b40265145193b9294c09ca66bafc598064ffd73551ddf81c68adb2a",
+      "replacements": [
+        {
+          "from": "WebSocket URL",
+          "to": "연결 주소",
+          "count": 3
+        }
+      ]
+    },
+    {
+      "file": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui/assets/ja-JP-CE6pPzuo.js",
+      "relativePath": "assets/ja-JP-CE6pPzuo.js",
+      "beforeSha256": "dc2640025d6c57b7a1c08dadbb8e58ad47273246f907d92670c56d9ccae090e3",
+      "afterSha256": "bcb8f7eb1f19708ac87ffd58f4727192dab50cffb277a0076133fd54a4d89bad",
+      "replacements": [
+        {
+          "from": "WebSocket URL",
+          "to": "연결 주소",
+          "count": 3
+        }
+      ]
+    },
+    {
+      "file": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui/assets/ko-Bwa7b6_h.js",
+      "relativePath": "assets/ko-Bwa7b6_h.js",
+      "beforeSha256": "503b47e7fe52d027e2a00fceafc8466b6ebd6ad9f676e0ce83e91981b08d04a6",
+      "afterSha256": "cb02e7cf9936fdc106892e1b26ae570ed9ae7d17a1b3ef28c142347577ab78a8",
+      "replacements": [
+        {
+          "from": "Gateway 대시보드",
+          "to": "GPAO-T 연결 화면",
+          "count": 1
+        },
+        {
+          "from": "Gateway 토큰",
+          "to": "런타임 토큰",
+          "count": 1
+        },
+        {
+          "from": "Gateway 연결",
+          "to": "로컬 런타임 연결",
+          "count": 3
+        },
+        {
+          "from": "Gateway가 실행 중인지",
+          "to": "GPAO-T 로컬 런타임이 실행 중인지",
+          "count": 1
+        },
+        {
+          "from": "Gateway가 HTTPS/Tailscale Serve 뒤에 있으면",
+          "to": "GPAO-T 로컬 런타임이 HTTPS/Tailscale Serve 뒤에 있으면",
+          "count": 1
+        },
+        {
+          "from": "Control UI 인증 문서",
+          "to": "GPAO-T 연결 도움말",
+          "count": 2
+        },
+        {
+          "from": "WebSocket URL",
+          "to": "연결 주소",
+          "count": 3
+        }
+      ]
+    },
+    {
+      "file": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui/assets/ru-CfCkqNPW.js",
+      "relativePath": "assets/ru-CfCkqNPW.js",
+      "beforeSha256": "bd765fa96976d3995d59aa4e994726eee9dff98e86206bcd78197758ffaa2cdf",
+      "afterSha256": "26f03a9a6e7c3833969400f10f7822f01d36804d13ac40323290c152e18d242a",
+      "replacements": [
+        {
+          "from": "WebSocket URL",
+          "to": "연결 주소",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui/assets/th--4vpNHHw.js",
+      "relativePath": "assets/th--4vpNHHw.js",
+      "beforeSha256": "ac005d1ac405c68f25f026e75add6093f0b6e102d664be8e31571d2d5ee64ab9",
+      "afterSha256": "0cc6666de0671d800ea381f6eb00a9bd51f2d53490d2372bf08c1bd6694cca2c",
+      "replacements": [
+        {
+          "from": "WebSocket URL",
+          "to": "연결 주소",
+          "count": 3
+        }
+      ]
+    },
+    {
+      "file": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui/assets/tr-DkDqHYXm.js",
+      "relativePath": "assets/tr-DkDqHYXm.js",
+      "beforeSha256": "b862d720a9dc8f6644ff48a33b6edb3e8409913729c3aabade01da227ee98685",
+      "afterSha256": "813c702810e7df1a37da07c7ca7b4779ae4ded7e9692406e0ddc0c67990fd0ae",
+      "replacements": [
+        {
+          "from": "WebSocket URL",
+          "to": "연결 주소",
+          "count": 3
+        }
+      ]
+    },
+    {
+      "file": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui/assets/uk-BqLIdqKQ.js",
+      "relativePath": "assets/uk-BqLIdqKQ.js",
+      "beforeSha256": "8475aa5ea17250e9ad7c501f50e5d0310880902be1510bcd9eaa17b177ed40d0",
+      "afterSha256": "970f40ddd8d5ee21d451e7246cfd2e1069c86e75019923b53b0bac3180765b57",
+      "replacements": [
+        {
+          "from": "WebSocket URL",
+          "to": "연결 주소",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui/assets/vi-irLKEUwF.js",
+      "relativePath": "assets/vi-irLKEUwF.js",
+      "beforeSha256": "10985994baa95d44aaa1194dd87af30f616c5348dcaa9937c03f544c0fe90aad",
+      "afterSha256": "d5220e1742ee4f7510643caf3144fcad0b1b24a56d0dfe656f5f4ff1ad56f122",
+      "replacements": [
+        {
+          "from": "WebSocket URL",
+          "to": "연결 주소",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui/assets/zh-CN-Crsl1YnI.js",
+      "relativePath": "assets/zh-CN-Crsl1YnI.js",
+      "beforeSha256": "1402032d72d8e2616ebb01c4ad6709dc22bab57c2a5b382ba6ce78b935e7ecd9",
+      "afterSha256": "e422c20d67f01a8f9332ef0d4ebfce556572c9cab96b1ab6ccd8fcde38435f6e",
+      "replacements": [
+        {
+          "from": "WebSocket URL",
+          "to": "연결 주소",
+          "count": 3
+        }
+      ]
+    },
+    {
+      "file": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui/assets/zh-TW-C9v3OH89.js",
+      "relativePath": "assets/zh-TW-C9v3OH89.js",
+      "beforeSha256": "0064fec2b5d7eeedd0ba06463214cbb6a56fe3f69fc94c7a84d5111a6426a47b",
+      "afterSha256": "bee0c77144656ce5f5cd351331bcbab21b73a64bbd031e963be0284e09d527ce",
+      "replacements": [
+        {
+          "from": "WebSocket URL",
+          "to": "연결 주소",
+          "count": 3
+        }
+      ]
+    }
+  ],
+  "backupDir": "/Users/jyp/Documents/Playground 2/gpao-t/docs/03-verification/evidence/live-surface-seal-patch/2026-07-12T08-00-39-418Z-before-surface-seal",
+  "applyTokenRequired": "apply-gpao-t-surface-seal-live"
+}

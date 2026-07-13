@@ -88,6 +88,14 @@ left session rail
 -> right context / authority / execution inspector
 ```
 
+Hard visual rule:
+
+```text
+GPAO-T must not harden into a box/card dashboard.
+```
+
+Cards may be used only for repeated items, confirmation units, or compact evidence chunks. The primary OS feel should come from workspace planes, status strips, progress lanes, command/composer bars, tabs, drawers, sheets, and inspectors. If a screen starts to feel like stacked admin cards, redesign the information architecture before polishing the cards.
+
 ## 2. Product Surface Model
 
 ### Primary Surface: Work Session
@@ -444,6 +452,8 @@ Remove from primary Work Session:
 - repeated audit fields
 - long technical pack descriptions
 - excessive nested cards
+- card-first dashboard layout
+- box walls around every idea
 - admin-dashboard density
 - warning-heavy blocked copy
 - feature explanation paragraphs
@@ -472,7 +482,8 @@ Move to inspector:
 2. Normalize surfaces, borders, radius, shadow, text sizes.
 3. Replace raw icon names with real icons or stable symbolic fallbacks.
 4. Reduce card nesting.
-5. Make status colors semantic and restrained.
+5. Convert box/card-heavy sections into status strips, lanes, drawers, sheets, or inspector rows where that better fits the OS workspace.
+6. Make status colors semantic and restrained.
 
 ### Pass C: Korean Product Language
 

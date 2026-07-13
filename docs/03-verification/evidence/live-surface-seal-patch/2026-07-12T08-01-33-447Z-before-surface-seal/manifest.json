@@ -1,0 +1,38 @@
+{
+  "schema": "gpao_t.live_surface_seal_patch_manifest.v0_1",
+  "generatedAt": "2026-07-12T08:01:33.625Z",
+  "liveRoot": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist",
+  "controlUiRoot": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui",
+  "mode": "apply",
+  "changedFileCount": 2,
+  "changedFiles": [
+    {
+      "file": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui/assets/gateway-DSQ-QU-U.js",
+      "relativePath": "assets/gateway-DSQ-QU-U.js",
+      "beforeSha256": "1e295f911058f732f544804ba51cc88f7bcebd709720eeccce4c7622b4658c62",
+      "afterSha256": "724efbd9eb84fde6e76e1de836e26f308127ac51d032c1e75386d5e0809c5ecb",
+      "replacements": [
+        {
+          "from": "Gateway 연결",
+          "to": "로컬 런타임 연결",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui/assets/ko-Bwa7b6_h.js",
+      "relativePath": "assets/ko-Bwa7b6_h.js",
+      "beforeSha256": "cb02e7cf9936fdc106892e1b26ae570ed9ae7d17a1b3ef28c142347577ab78a8",
+      "afterSha256": "605d7e5cb7245e81c85f73a0fcb69b67b5c205e32f803027fadae44cbc22065e",
+      "replacements": [
+        {
+          "from": "연결 주소을",
+          "to": "연결 주소를",
+          "count": 1
+        }
+      ]
+    }
+  ],
+  "backupDir": "/Users/jyp/Documents/Playground 2/gpao-t/docs/03-verification/evidence/live-surface-seal-patch/2026-07-12T08-01-33-447Z-before-surface-seal",
+  "applyTokenRequired": "apply-gpao-t-surface-seal-live"
+}

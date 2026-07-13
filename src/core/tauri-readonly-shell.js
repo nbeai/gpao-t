@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { buildBrowserLocalAppShellState, verifyBrowserLocalAppShell } from "./browser-local-app-shell.js";
@@ -422,7 +422,9 @@ export function verifyTauriReadOnlyShellSlice({
   sourceRoot = PROJECT_ROOT,
   slice = buildTauriReadOnlyShellSlice({ root, sourceRoot }),
   html = buildTauriReadOnlyShellHtml({ state: slice }),
-  appShellVerification = verifyBrowserLocalAppShell(),
+  appShellVerification = verifyBrowserLocalAppShell({
+    state: buildBrowserLocalAppShellState({ root }),
+  }),
 } = {}) {
   const findings = [];
 
@@ -481,12 +483,7 @@ export function verifyTauriReadOnlyShellSlice({
 }
 
 function fileExists({ root, path }) {
-  try {
-    readFileSync(join(root, path), "utf8");
-    return true;
-  } catch {
-    return false;
-  }
+  return existsSync(join(root, path));
 }
 
 function escapeHtml(value) {

@@ -1,0 +1,639 @@
+{
+  "schema": "gpao_t.live_surface_seal_patch_manifest.v0_1",
+  "generatedAt": "2026-07-12T09:18:30.330Z",
+  "liveRoot": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist",
+  "controlUiRoot": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui",
+  "mode": "apply",
+  "changedFileCount": 24,
+  "changedFiles": [
+    {
+      "file": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui/index.html",
+      "relativePath": "index.html",
+      "beforeSha256": "b7f418913238f0839fa41a3d21bb22cee8b9c48c51f1e6e5fffb56ed9782e619",
+      "afterSha256": "7959b28ff2137e2eb187a1a52df0001653f437fe4e7765495ffc5de6449d2c99",
+      "replacements": [
+        {
+          "from": "Gateway 대시보드",
+          "to": "GPAO-T 연결 화면",
+          "count": 1
+        },
+        {
+          "from": "Gateway 토큰",
+          "to": "연결키",
+          "count": 1
+        },
+        {
+          "from": "Gateway 연결",
+          "to": "로컬 런타임 연결",
+          "count": 1
+        },
+        {
+          "from": "연결할 수 없음",
+          "to": "GPAO-T 로컬 런타임에 연결하지 못했습니다",
+          "count": 1
+        },
+        {
+          "from": "원시 오류",
+          "to": "상세 오류",
+          "count": 1
+        },
+        {
+          "from": "연결 방법",
+          "to": "연결 도움말",
+          "count": 1
+        },
+        {
+          "from": "연결 주소을",
+          "to": "연결 주소를",
+          "count": 1
+        },
+        {
+          "from": "GPAO-T runtime config 편집.",
+          "to": "GPAO-T 실행 설정을 조정합니다.",
+          "count": 1
+        },
+        {
+          "from": "Model & Thinking",
+          "to": "모델과 사고",
+          "count": 1
+        },
+        {
+          "from": "Fast mode",
+          "to": "응답 모드",
+          "count": 1
+        },
+        {
+          "from": "Tool profile",
+          "to": "도구 범위",
+          "count": 1
+        },
+        {
+          "from": "Exec policy",
+          "to": "실행 승인",
+          "count": 1
+        },
+        {
+          "from": "Device auth",
+          "to": "기기 승인",
+          "count": 1
+        },
+        {
+          "from": "Browser enabled",
+          "to": "브라우저 도구",
+          "count": 1
+        },
+        {
+          "from": "Text size",
+          "to": "글자 크기",
+          "count": 1
+        },
+        {
+          "from": "AVATAR TEXT / EMOJI",
+          "to": "표시 이름 / 아이콘",
+          "count": 1
+        },
+        {
+          "from": "Choose image",
+          "to": "이미지 선택",
+          "count": 1
+        },
+        {
+          "from": "Clear avatar",
+          "to": "이미지 지우기",
+          "count": 1
+        },
+        {
+          "from": "Stored in this browser only.",
+          "to": "이 브라우저에만 저장됩니다.",
+          "count": 1
+        },
+        {
+          "from": "Fallback logo",
+          "to": "기본 로고",
+          "count": 1
+        },
+        {
+          "from": "scheduled tasks",
+          "to": "예약 작업",
+          "count": 1
+        },
+        {
+          "from": "기능s installed",
+          "to": "기능 설치됨",
+          "count": 1
+        },
+        {
+          "from": "MCP servers",
+          "to": "MCP 서버",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui/assets/ar-BPpmD0AO.js",
+      "relativePath": "assets/ar-BPpmD0AO.js",
+      "beforeSha256": "e145857d611466a6e54dfc62282298965909a43710e54ca622a05bcfbf950031",
+      "afterSha256": "50d698644549276b2e017ce18c4cae84622e895a0c1779f14f2c4a20504bef09",
+      "replacements": [
+        {
+          "from": "Tool profile",
+          "to": "도구 범위",
+          "count": 1
+        },
+        {
+          "from": "Browser enabled",
+          "to": "브라우저 도구",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui/assets/chat-page-3ZW4OQeE.js",
+      "relativePath": "assets/chat-page-3ZW4OQeE.js",
+      "beforeSha256": "7ae907c569c254963481ef527f4f92c2ed79bfbdaf8c69300274326e01cfcc10",
+      "afterSha256": "41df63c2b129fd77b5a97bb58eea069829cefd0ea641f864034d222f85dc8584",
+      "replacements": [
+        {
+          "from": "Fast mode",
+          "to": "응답 모드",
+          "count": 3
+        },
+        {
+          "from": "MCP servers",
+          "to": "MCP 서버",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui/assets/chat-page-BSHc822R.js",
+      "relativePath": "assets/chat-page-BSHc822R.js",
+      "beforeSha256": "1db118f59a411726ffd5d5184cf82671280cb22a75b043559f18150ef4c74bde",
+      "afterSha256": "5048a5b89eb33035b91e60262215cd7a66dac5e670e90da47a20fe5333f0fc61",
+      "replacements": [
+        {
+          "from": "Fast mode",
+          "to": "응답 모드",
+          "count": 3
+        },
+        {
+          "from": "MCP servers",
+          "to": "MCP 서버",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui/assets/config-page-C_rgM_a-.js",
+      "relativePath": "assets/config-page-C_rgM_a-.js",
+      "beforeSha256": "f73633843e7b1387b09037b2ce4595acccba14c3a4f9d780dead495c7e4ede6d",
+      "afterSha256": "97f631694eaf22d3b0e03cbbbfbd55f5a720291802df3f587f2878b7b7f83f41",
+      "replacements": [
+        {
+          "from": "Model & Thinking",
+          "to": "모델과 사고",
+          "count": 1
+        },
+        {
+          "from": "Fast mode",
+          "to": "응답 모드",
+          "count": 1
+        },
+        {
+          "from": "Exec policy",
+          "to": "실행 승인",
+          "count": 1
+        },
+        {
+          "from": "Device auth",
+          "to": "기기 승인",
+          "count": 1
+        },
+        {
+          "from": "Text size",
+          "to": "글자 크기",
+          "count": 2
+        },
+        {
+          "from": "Choose image",
+          "to": "이미지 선택",
+          "count": 2
+        },
+        {
+          "from": "Clear avatar",
+          "to": "이미지 지우기",
+          "count": 1
+        },
+        {
+          "from": "Stored in this browser only.",
+          "to": "이 브라우저에만 저장됩니다.",
+          "count": 1
+        },
+        {
+          "from": "Fallback logo",
+          "to": "기본 로고",
+          "count": 1
+        },
+        {
+          "from": "MCP servers",
+          "to": "MCP 서버",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui/assets/config-page-DUvcVqaX.js",
+      "relativePath": "assets/config-page-DUvcVqaX.js",
+      "beforeSha256": "30adbe00e9b31afb52dab12ef7c8fe623685a935ad53c968e8b46172ee955e38",
+      "afterSha256": "c23870f18458e7b41b870d3f0f2f1ddee6e52d99539ee683b2ae80230f5c7c9e",
+      "replacements": [
+        {
+          "from": "Model & Thinking",
+          "to": "모델과 사고",
+          "count": 1
+        },
+        {
+          "from": "Fast mode",
+          "to": "응답 모드",
+          "count": 1
+        },
+        {
+          "from": "Exec policy",
+          "to": "실행 승인",
+          "count": 1
+        },
+        {
+          "from": "Device auth",
+          "to": "기기 승인",
+          "count": 1
+        },
+        {
+          "from": "Text size",
+          "to": "글자 크기",
+          "count": 2
+        },
+        {
+          "from": "Choose image",
+          "to": "이미지 선택",
+          "count": 2
+        },
+        {
+          "from": "Clear avatar",
+          "to": "이미지 지우기",
+          "count": 1
+        },
+        {
+          "from": "Stored in this browser only.",
+          "to": "이 브라우저에만 저장됩니다.",
+          "count": 1
+        },
+        {
+          "from": "Fallback logo",
+          "to": "기본 로고",
+          "count": 1
+        },
+        {
+          "from": "MCP servers",
+          "to": "MCP 서버",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui/assets/de-CBZzX3jX.js",
+      "relativePath": "assets/de-CBZzX3jX.js",
+      "beforeSha256": "c7f6f701fd76cf9cb6d3484795b418fecb7892281a565b075a014d04fa2c4f3b",
+      "afterSha256": "35b93ce4ca04d13ba86ea68a95b593bd2b55f8d86c1166490b29f9c467dbcaac",
+      "replacements": [
+        {
+          "from": "Tool profile",
+          "to": "도구 범위",
+          "count": 1
+        },
+        {
+          "from": "Browser enabled",
+          "to": "브라우저 도구",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui/assets/es-CkKtMFg8.js",
+      "relativePath": "assets/es-CkKtMFg8.js",
+      "beforeSha256": "a9d213b72cf888a42a4562314ebba5b0be75e7b08d3595271f762de4edfa6e9b",
+      "afterSha256": "7a9cfbb8d4e538e1ac1e003b823843cc7c9f664afdadd36e989324b6fa00292e",
+      "replacements": [
+        {
+          "from": "Tool profile",
+          "to": "도구 범위",
+          "count": 1
+        },
+        {
+          "from": "Browser enabled",
+          "to": "브라우저 도구",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui/assets/fa-Jo3cCIlj.js",
+      "relativePath": "assets/fa-Jo3cCIlj.js",
+      "beforeSha256": "15e11847fd2644ed45f6cae52a5758c85347e38eba2ab79e8fefe3def014e2a2",
+      "afterSha256": "53e61f446f73342e8eebb2d2d0ee409c980ec06bc3fad1338da6063e0bc58c20",
+      "replacements": [
+        {
+          "from": "Tool profile",
+          "to": "도구 범위",
+          "count": 1
+        },
+        {
+          "from": "Browser enabled",
+          "to": "브라우저 도구",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui/assets/fr--LF3eTR0.js",
+      "relativePath": "assets/fr--LF3eTR0.js",
+      "beforeSha256": "ac470634f22157d1a28a277b7406ddf87e2b60a45c6f2240386a4f21a951bfc5",
+      "afterSha256": "b910d25173bdd3e66e68d688030a4622b87cbe652905806af751427f4e23cfa9",
+      "replacements": [
+        {
+          "from": "Tool profile",
+          "to": "도구 범위",
+          "count": 1
+        },
+        {
+          "from": "Browser enabled",
+          "to": "브라우저 도구",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui/assets/i18n-w6mKCrXO.js",
+      "relativePath": "assets/i18n-w6mKCrXO.js",
+      "beforeSha256": "03e0445331992e067852fa79b3e4ca1a20f95dae5efb5a4c24a3abfdccd9edc6",
+      "afterSha256": "4d7d2b10833904f6d8ccf51b2daa7e18eb5fb0eab258bf7497c3438aac8dbe07",
+      "replacements": [
+        {
+          "from": "Tool profile",
+          "to": "도구 범위",
+          "count": 1
+        },
+        {
+          "from": "Browser enabled",
+          "to": "브라우저 도구",
+          "count": 1
+        },
+        {
+          "from": "MCP servers",
+          "to": "MCP 서버",
+          "count": 3
+        }
+      ]
+    },
+    {
+      "file": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui/assets/id-D_U7i3Od.js",
+      "relativePath": "assets/id-D_U7i3Od.js",
+      "beforeSha256": "a632a8395c69377a0d9b7b853a6e27a0d9cb5c346d6c10dea2ae96c205a9f79e",
+      "afterSha256": "a2474003d50ad1b8732e18bbfdba67069c361f766ed1d5e5083b66600447a900",
+      "replacements": [
+        {
+          "from": "Tool profile",
+          "to": "도구 범위",
+          "count": 1
+        },
+        {
+          "from": "Browser enabled",
+          "to": "브라우저 도구",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui/assets/it-D3DBLC6P.js",
+      "relativePath": "assets/it-D3DBLC6P.js",
+      "beforeSha256": "76d4cff0ff12d006f14bad955b126ec04c5cc36205d33dfbeae162eca32a2514",
+      "afterSha256": "982e7e368c1628825020a287ce078945117c041f5d4491ae30529f5f1e582346",
+      "replacements": [
+        {
+          "from": "Tool profile",
+          "to": "도구 범위",
+          "count": 1
+        },
+        {
+          "from": "Browser enabled",
+          "to": "브라우저 도구",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui/assets/ja-JP-CE6pPzuo.js",
+      "relativePath": "assets/ja-JP-CE6pPzuo.js",
+      "beforeSha256": "7305c752eee7bbdfc3131573b1018fa4b484a65b318ceda80e75806a4acb81b4",
+      "afterSha256": "8e4c601555214956ba2dcab9c52cfdbfda25a014d71136ada5eaef6a6d3f3516",
+      "replacements": [
+        {
+          "from": "Tool profile",
+          "to": "도구 범위",
+          "count": 1
+        },
+        {
+          "from": "Browser enabled",
+          "to": "브라우저 도구",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui/assets/ko-Bwa7b6_h.js",
+      "relativePath": "assets/ko-Bwa7b6_h.js",
+      "beforeSha256": "226115eaba99709901c7badf34164df8f4a56800bf5348be906e640ee24d3b9b",
+      "afterSha256": "b97ff7da1a4a1682958fb0301a742a1439ec54c60cb8d43659ab1ef7dee1f515",
+      "replacements": [
+        {
+          "from": "GPAO-T runtime config 편집.",
+          "to": "GPAO-T 실행 설정을 조정합니다.",
+          "count": 1
+        },
+        {
+          "from": "Tool profile",
+          "to": "도구 범위",
+          "count": 1
+        },
+        {
+          "from": "Browser enabled",
+          "to": "브라우저 도구",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui/assets/nl-Dx-9_sUY.js",
+      "relativePath": "assets/nl-Dx-9_sUY.js",
+      "beforeSha256": "daf0e22140a4fbc42b94157c58a35ec9a8bc86b30910862b37f17bf8935f20bb",
+      "afterSha256": "2d4fdd4e2c3bd572e5f1e39786cca6d2ccdc6625e9f2f204691e3b2066325d5e",
+      "replacements": [
+        {
+          "from": "Tool profile",
+          "to": "도구 범위",
+          "count": 1
+        },
+        {
+          "from": "Browser enabled",
+          "to": "브라우저 도구",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui/assets/pl-BlFXF5cU.js",
+      "relativePath": "assets/pl-BlFXF5cU.js",
+      "beforeSha256": "d2fc5ae817f85df7d1afe8e302dd3b4dc7b67994bb94dd58f3f528c206bc2226",
+      "afterSha256": "fe5f986d52483f05ef06e576ceb54ace2a99084ef16653a0900519d7172a5a73",
+      "replacements": [
+        {
+          "from": "Tool profile",
+          "to": "도구 범위",
+          "count": 1
+        },
+        {
+          "from": "Browser enabled",
+          "to": "브라우저 도구",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui/assets/pt-BR-D5M86xM9.js",
+      "relativePath": "assets/pt-BR-D5M86xM9.js",
+      "beforeSha256": "052ebd52a3466517a5334dd569b4859f740467449231e1c28662d44f02e4f630",
+      "afterSha256": "066a034d632fe03453bef1ba7e88f608c364fc41672a89ecb8886c3e0feaf3a4",
+      "replacements": [
+        {
+          "from": "Tool profile",
+          "to": "도구 범위",
+          "count": 1
+        },
+        {
+          "from": "Browser enabled",
+          "to": "브라우저 도구",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui/assets/th--4vpNHHw.js",
+      "relativePath": "assets/th--4vpNHHw.js",
+      "beforeSha256": "a7e940932eb00e1930dbf5baefb405d811e4027863b936c2cc3bf5cbd222c365",
+      "afterSha256": "69bd373608dba84a4419c2d3431fe6d356523fbb7f99a53c983955eecbf103ba",
+      "replacements": [
+        {
+          "from": "Tool profile",
+          "to": "도구 범위",
+          "count": 1
+        },
+        {
+          "from": "Browser enabled",
+          "to": "브라우저 도구",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui/assets/tr-DkDqHYXm.js",
+      "relativePath": "assets/tr-DkDqHYXm.js",
+      "beforeSha256": "474a49703b2f6541c9dc293ba6c4296201a905174981636befb3d9b3f6eb7d7a",
+      "afterSha256": "3a4fcafa69b6038ca7537d1be6e97b5baef40c3049d2402cf10ddc86ee803d7c",
+      "replacements": [
+        {
+          "from": "Tool profile",
+          "to": "도구 범위",
+          "count": 1
+        },
+        {
+          "from": "Browser enabled",
+          "to": "브라우저 도구",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui/assets/uk-BqLIdqKQ.js",
+      "relativePath": "assets/uk-BqLIdqKQ.js",
+      "beforeSha256": "b4923a88bf4746bf3b5adaca352249bff971bcb6710a2021a42f3481591c5daa",
+      "afterSha256": "9cf1a063306db4420f557952cf0d09585aa3147e709775999d35eacb8a5a9b32",
+      "replacements": [
+        {
+          "from": "Tool profile",
+          "to": "도구 범위",
+          "count": 1
+        },
+        {
+          "from": "Browser enabled",
+          "to": "브라우저 도구",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui/assets/vi-irLKEUwF.js",
+      "relativePath": "assets/vi-irLKEUwF.js",
+      "beforeSha256": "54708da2ec55598c8331f2cd03545f2b2bbe13d5edb64a8e93ea50676ec4a5b6",
+      "afterSha256": "b6311268df5f0cf364d516c6a36dda0b39d6846473e5153f61182bdfc03bb37c",
+      "replacements": [
+        {
+          "from": "Tool profile",
+          "to": "도구 범위",
+          "count": 1
+        },
+        {
+          "from": "Browser enabled",
+          "to": "브라우저 도구",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui/assets/zh-CN-Crsl1YnI.js",
+      "relativePath": "assets/zh-CN-Crsl1YnI.js",
+      "beforeSha256": "c9e499ff69d829e0e39a8d8b5d8d278eb1ecd8e26852c2044838bd18d51f0599",
+      "afterSha256": "85d08ac89e5170956508794553ea1cdc400478c7b2764669897ad6a4a1bff6a5",
+      "replacements": [
+        {
+          "from": "Tool profile",
+          "to": "도구 범위",
+          "count": 1
+        },
+        {
+          "from": "Browser enabled",
+          "to": "브라우저 도구",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui/assets/zh-TW-C9v3OH89.js",
+      "relativePath": "assets/zh-TW-C9v3OH89.js",
+      "beforeSha256": "802a9d119039b3b99473ad435fe4b8e9381d905bcfb26c98313a10abd11b409b",
+      "afterSha256": "c2ff84c39b6304c0894a6d18f58c960785c6fa7bd41038ec1cccd4beb4719482",
+      "replacements": [
+        {
+          "from": "Tool profile",
+          "to": "도구 범위",
+          "count": 1
+        },
+        {
+          "from": "Browser enabled",
+          "to": "브라우저 도구",
+          "count": 1
+        }
+      ]
+    }
+  ],
+  "backupDir": "/Users/jyp/Documents/Playground 2/gpao-t/docs/03-verification/evidence/live-surface-seal-patch/2026-07-12T09-18-30-029Z-before-surface-seal",
+  "applyTokenRequired": "apply-gpao-t-surface-seal-live"
+}

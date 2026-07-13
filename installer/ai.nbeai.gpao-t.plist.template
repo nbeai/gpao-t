@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>@@LABEL@@</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>@@NODE_PATH@@</string>
+    <string>@@ENTRYPOINT@@</string>
+    <string>gateway</string>
+    <string>run</string>
+    <string>--port</string>
+    <string>@@PORT@@</string>
+  </array>
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>GPAO_T_STATE_DIR</key>
+    <string>@@STATE_HOME@@</string>
+    <key>GPAO_T_CONFIG_PATH</key>
+    <string>@@CONFIG_PATH@@</string>
+    <key>OPENCLAW_DISABLE_PERSISTED_PLUGIN_REGISTRY</key>
+    <string>1</string>
+    <key>OPENCLAW_DISABLE_PLUGIN_REGISTRY_MIGRATION</key>
+    <string>1</string>
+  </dict>
+  <key>WorkingDirectory</key>
+  <string>@@WORKING_DIRECTORY@@</string>
+  <key>RunAtLoad</key>
+  <true/>
+  <key>KeepAlive</key>
+  <dict>
+    <key>SuccessfulExit</key>
+    <false/>
+  </dict>
+  <key>ProcessType</key>
+  <string>Interactive</string>
+  <key>ThrottleInterval</key>
+  <integer>10</integer>
+  <key>ExitTimeOut</key>
+  <integer>20</integer>
+  <key>Umask</key>
+  <integer>63</integer>
+  <key>StandardOutPath</key>
+  <string>@@STDOUT_PATH@@</string>
+  <key>StandardErrorPath</key>
+  <string>@@STDERR_PATH@@</string>
+  <key>StandardInPath</key>
+  <string>/dev/null</string>
+</dict>
+</plist>

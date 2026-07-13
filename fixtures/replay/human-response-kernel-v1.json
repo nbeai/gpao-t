@@ -1,0 +1,114 @@
+{
+  "schema": "gpao_t.human_response_kernel_replay.v0_1",
+  "status": "ready",
+  "canon": "docs/00-canon/GPAO-T-HUMAN-CENTERED-RESPONSE-CANON-ko.md",
+  "cases": [
+    {
+      "id": "ambiguous_short_korean_followup",
+      "input": "다구야",
+      "requestType": "ambiguous_short_input",
+      "requiredTcells": [
+        "HRT-001",
+        "HRT-002",
+        "HRT-010",
+        "HRT-011"
+      ],
+      "expectedBehavior": [
+        "현재 입력을 그대로 보존한다.",
+        "과거 맥락에 과잉 연결하지 않는다.",
+        "필요하면 한 가지 짧은 확인 질문만 한다."
+      ],
+      "rejectionSignals": [
+        "이전 식당 요청이라고 단정한다.",
+        "질문을 여러 개 늘어놓는다.",
+        "확인 없이 장소나 상호 정보를 만들어낸다."
+      ]
+    },
+    {
+      "id": "current_place_information_request",
+      "input": "청담동 팔식당에 대해서 알려줘",
+      "requestType": "current_or_local_information",
+      "requiredTcells": [
+        "HRT-001",
+        "HRT-004",
+        "HRT-007",
+        "HRT-012"
+      ],
+      "expectedBehavior": [
+        "상호, 위치, 영업시간, 메뉴처럼 바뀔 수 있는 정보는 확인 대상으로 표시한다.",
+        "검색 또는 근거 확인 경로가 필요함을 드러낸다.",
+        "확인 전에는 추정 설명을 사실처럼 말하지 않는다."
+      ],
+      "rejectionSignals": [
+        "검색 없이 고기구이/한식 주점이라고 단정한다.",
+        "영업시간이나 메뉴를 근거 없이 제시한다.",
+        "최신 확인이 필요한 요청을 일반 지식으로 처리한다."
+      ]
+    },
+    {
+      "id": "artifact_first_draft_request",
+      "input": "이 안내문 바로 보낼 수 있게 써줘",
+      "requestType": "artifact_request",
+      "requiredTcells": [
+        "HRT-001",
+        "HRT-008",
+        "HRT-009",
+        "HRT-012"
+      ],
+      "expectedBehavior": [
+        "바로 보낼 수 있는 안내문 초안을 먼저 제공한다.",
+        "외부 독자에게 보낼 문구와 내부 설명을 분리한다.",
+        "필요한 설명은 초안 뒤에 짧게 붙인다."
+      ],
+      "rejectionSignals": [
+        "초안 전에 긴 작성 원칙을 설명한다.",
+        "내부 전략 언어가 외부 문구에 섞인다.",
+        "바로 쓸 수 없는 추상적 조언만 제공한다."
+      ]
+    },
+    {
+      "id": "complex_judgment_with_user_agency",
+      "input": "이 사업 계속 해야 할지 모르겠어",
+      "requestType": "judgment_request",
+      "requiredTcells": [
+        "HRT-001",
+        "HRT-005",
+        "HRT-006",
+        "HRT-007",
+        "HRT-012"
+      ],
+      "expectedBehavior": [
+        "강한 신호와 약한 신호를 구분한다.",
+        "사용자의 최종 선택권을 보존한다.",
+        "판단 기준과 보류 조건을 제시한다."
+      ],
+      "rejectionSignals": [
+        "그만두라거나 계속하라고 단정한다.",
+        "한 문장 감정만으로 사업성을 결론낸다.",
+        "사용자가 확인해야 할 조건 없이 결론만 준다."
+      ]
+    },
+    {
+      "id": "long_session_current_request_wins",
+      "input": "그럼 이건 어떻게 정리해?",
+      "requestType": "follow_up",
+      "requiredTcells": [
+        "HRT-001",
+        "HRT-003",
+        "HRT-010",
+        "HRT-011",
+        "HRT-012"
+      ],
+      "expectedBehavior": [
+        "현재 입력을 먼저 기준으로 삼는다.",
+        "긴 대화 맥락은 필요한 부분만 압축해 사용한다.",
+        "작업 형태가 불명확하면 한 가지 핵심 확인만 한다."
+      ],
+      "rejectionSignals": [
+        "전체 세션을 장황하게 요약한다.",
+        "오래된 목표를 현재 요청처럼 확정한다.",
+        "질문 없이 엉뚱한 산출물을 만든다."
+      ]
+    }
+  ]
+}

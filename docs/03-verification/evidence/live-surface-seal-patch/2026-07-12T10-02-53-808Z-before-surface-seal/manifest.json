@@ -1,0 +1,542 @@
+{
+  "schema": "gpao_t.live_surface_seal_patch_manifest.v0_1",
+  "generatedAt": "2026-07-12T10:02:53.957Z",
+  "liveRoot": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist",
+  "controlUiRoot": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui",
+  "mode": "apply",
+  "changedFileCount": 30,
+  "changedFiles": [
+    {
+      "file": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui/index.html",
+      "relativePath": "index.html",
+      "beforeSha256": "518a216b77ce5548c780a6520cf67078ba80e269edb1873a1f0fdd91a4c5611c",
+      "afterSha256": "d987a434039c0262f975ea5b50650cc2b034a8e0023f744f19f439b313013be6",
+      "replacements": [
+        {
+          "from": "Gateway 대시보드",
+          "to": "GPAO-T 연결 화면",
+          "count": 1
+        },
+        {
+          "from": "Gateway 토큰",
+          "to": "연결키",
+          "count": 1
+        },
+        {
+          "from": "Gateway 연결",
+          "to": "로컬 런타임 연결",
+          "count": 1
+        },
+        {
+          "from": "연결할 수 없음",
+          "to": "GPAO-T 로컬 런타임에 연결하지 못했습니다",
+          "count": 1
+        },
+        {
+          "from": "원시 오류",
+          "to": "상세 오류",
+          "count": 1
+        },
+        {
+          "from": "연결 방법",
+          "to": "연결 도움말",
+          "count": 1
+        },
+        {
+          "from": "연결 주소을",
+          "to": "연결 주소를",
+          "count": 1
+        },
+        {
+          "from": "Model & Thinking",
+          "to": "모델과 사고",
+          "count": 1
+        },
+        {
+          "from": "Fast mode",
+          "to": "응답 모드",
+          "count": 1
+        },
+        {
+          "from": "Tool profile",
+          "to": "도구 범위",
+          "count": 1
+        },
+        {
+          "from": "Exec policy",
+          "to": "실행 승인",
+          "count": 1
+        },
+        {
+          "from": "Device auth",
+          "to": "기기 승인",
+          "count": 1
+        },
+        {
+          "from": "Browser enabled",
+          "to": "브라우저 도구",
+          "count": 1
+        },
+        {
+          "from": "Text size",
+          "to": "글자 크기",
+          "count": 1
+        },
+        {
+          "from": "Choose image",
+          "to": "이미지 선택",
+          "count": 1
+        },
+        {
+          "from": "Clear avatar",
+          "to": "이미지 지우기",
+          "count": 1
+        },
+        {
+          "from": "Fallback logo",
+          "to": "기본 로고",
+          "count": 1
+        },
+        {
+          "from": "Assistants",
+          "to": "GPAO-T 대화",
+          "count": 6
+        },
+        {
+          "from": "scheduled tasks",
+          "to": "예약 작업",
+          "count": 1
+        },
+        {
+          "from": "기능s installed",
+          "to": "기능 설치됨",
+          "count": 1
+        },
+        {
+          "from": "MCP servers",
+          "to": "MCP 서버",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui/assets/ar-BPpmD0AO.js",
+      "relativePath": "assets/ar-BPpmD0AO.js",
+      "beforeSha256": "50d698644549276b2e017ce18c4cae84622e895a0c1779f14f2c4a20504bef09",
+      "afterSha256": "d8b972a646a732d35924654edbf30a31131468c33449247df62f92f3d2fdb1ef",
+      "replacements": [
+        {
+          "from": "ClawHub",
+          "to": "GPAO-T Extension Hub",
+          "count": 13
+        }
+      ]
+    },
+    {
+      "file": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui/assets/de-CBZzX3jX.js",
+      "relativePath": "assets/de-CBZzX3jX.js",
+      "beforeSha256": "35b93ce4ca04d13ba86ea68a95b593bd2b55f8d86c1166490b29f9c467dbcaac",
+      "afterSha256": "9dd0a04002657c55012a780cd2917a5a346ae732628bd8c88355c635855f8989",
+      "replacements": [
+        {
+          "from": "ClawHub",
+          "to": "GPAO-T Extension Hub",
+          "count": 13
+        }
+      ]
+    },
+    {
+      "file": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui/assets/es-CkKtMFg8.js",
+      "relativePath": "assets/es-CkKtMFg8.js",
+      "beforeSha256": "7a9cfbb8d4e538e1ac1e003b823843cc7c9f664afdadd36e989324b6fa00292e",
+      "afterSha256": "b1bc41a454c66e342032b3d33c8d6e110d1b98c37ea98127dbcfc1ecf5487f74",
+      "replacements": [
+        {
+          "from": "ClawHub",
+          "to": "GPAO-T Extension Hub",
+          "count": 13
+        }
+      ]
+    },
+    {
+      "file": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui/assets/fa-Jo3cCIlj.js",
+      "relativePath": "assets/fa-Jo3cCIlj.js",
+      "beforeSha256": "53e61f446f73342e8eebb2d2d0ee409c980ec06bc3fad1338da6063e0bc58c20",
+      "afterSha256": "b7ede99a35f712bac6243399cba95c430d7c59172328cc4cf657a5df48dd427f",
+      "replacements": [
+        {
+          "from": "ClawHub",
+          "to": "GPAO-T Extension Hub",
+          "count": 13
+        }
+      ]
+    },
+    {
+      "file": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui/assets/fr--LF3eTR0.js",
+      "relativePath": "assets/fr--LF3eTR0.js",
+      "beforeSha256": "b910d25173bdd3e66e68d688030a4622b87cbe652905806af751427f4e23cfa9",
+      "afterSha256": "6bf5071643b6a735661e0de7b6a83b09b2ad53f1629000b750fdb3208176514c",
+      "replacements": [
+        {
+          "from": "ClawHub",
+          "to": "GPAO-T Extension Hub",
+          "count": 13
+        }
+      ]
+    },
+    {
+      "file": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui/assets/hi-D2MuYJJg.js",
+      "relativePath": "assets/hi-D2MuYJJg.js",
+      "beforeSha256": "f691e6330053ddbdb256bac9fb5ce9b5ec086506aec85e4d00b9d1455579e1d3",
+      "afterSha256": "d6874fcde8d99aa34a889447b5e5ce2870b22f9bdac1b33f965ed2abe21e8748",
+      "replacements": [
+        {
+          "from": "ClawHub",
+          "to": "GPAO-T Extension Hub",
+          "count": 13
+        }
+      ]
+    },
+    {
+      "file": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui/assets/i18n-w6mKCrXO.js",
+      "relativePath": "assets/i18n-w6mKCrXO.js",
+      "beforeSha256": "4d7d2b10833904f6d8ccf51b2daa7e18eb5fb0eab258bf7497c3438aac8dbe07",
+      "afterSha256": "5314b5f0747f7a2374fc4178d43dd3f3a3e04bdf9837e83b9d6d7d8ae1ec61e2",
+      "replacements": [
+        {
+          "from": "ClawHub",
+          "to": "GPAO-T Extension Hub",
+          "count": 6
+        }
+      ]
+    },
+    {
+      "file": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui/assets/id-D_U7i3Od.js",
+      "relativePath": "assets/id-D_U7i3Od.js",
+      "beforeSha256": "a2474003d50ad1b8732e18bbfdba67069c361f766ed1d5e5083b66600447a900",
+      "afterSha256": "5bb0dd53f0f38f6ea6e4611a9db894e2ff60d52d72c6e049b04da07f0fed830c",
+      "replacements": [
+        {
+          "from": "ClawHub",
+          "to": "GPAO-T Extension Hub",
+          "count": 13
+        }
+      ]
+    },
+    {
+      "file": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui/assets/index-B-5yEkJA.js",
+      "relativePath": "assets/index-B-5yEkJA.js",
+      "beforeSha256": "1bcc113a3beadb31d9d5c4ec4ddbead4bedfd154d895a52c4053d4133691bd13",
+      "afterSha256": "72a63ae13eef86a436df5731276dc5f4fd43916e03b57830f2f47b8b510aa942",
+      "replacements": [
+        {
+          "from": "ClawHub",
+          "to": "GPAO-T Extension Hub",
+          "count": 1
+        },
+        {
+          "from": "clawhub",
+          "to": "gpao-t-extension-hub",
+          "count": 61
+        },
+        {
+          "from": "Clawdette",
+          "to": "GPAO-T",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui/assets/index-C30DXdRd.js",
+      "relativePath": "assets/index-C30DXdRd.js",
+      "beforeSha256": "b6f7779997c9eaef22a987f55ffb857402c9b3f28ccfe9ef23d3d0e8d7dbba85",
+      "afterSha256": "455d3542db5600d8ac3dfe8e7517c13591d342f8ec6abd57e0f9d21bc0485a88",
+      "replacements": [
+        {
+          "from": "ClawHub",
+          "to": "GPAO-T Extension Hub",
+          "count": 1
+        },
+        {
+          "from": "clawhub",
+          "to": "gpao-t-extension-hub",
+          "count": 61
+        },
+        {
+          "from": "Clawdette",
+          "to": "GPAO-T",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui/assets/it-D3DBLC6P.js",
+      "relativePath": "assets/it-D3DBLC6P.js",
+      "beforeSha256": "982e7e368c1628825020a287ce078945117c041f5d4491ae30529f5f1e582346",
+      "afterSha256": "d1fa9e06b4d28caacb50dde867e294d7ddf1de01546c52e40cf8a9825ba6ce88",
+      "replacements": [
+        {
+          "from": "ClawHub",
+          "to": "GPAO-T Extension Hub",
+          "count": 13
+        }
+      ]
+    },
+    {
+      "file": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui/assets/ja-JP-CE6pPzuo.js",
+      "relativePath": "assets/ja-JP-CE6pPzuo.js",
+      "beforeSha256": "8e4c601555214956ba2dcab9c52cfdbfda25a014d71136ada5eaef6a6d3f3516",
+      "afterSha256": "dae7676d71f86929820080afc59caf7b4607a1fcf3b25dc36ff97e87d276afbe",
+      "replacements": [
+        {
+          "from": "ClawHub",
+          "to": "GPAO-T Extension Hub",
+          "count": 13
+        }
+      ]
+    },
+    {
+      "file": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui/assets/ko-Bwa7b6_h.js",
+      "relativePath": "assets/ko-Bwa7b6_h.js",
+      "beforeSha256": "b97ff7da1a4a1682958fb0301a742a1439ec54c60cb8d43659ab1ef7dee1f515",
+      "afterSha256": "cb16e7ee99d25ac477dfc4558e8d4c89762f2fc0c3d1a11dc0b4b49b9780bec0",
+      "replacements": [
+        {
+          "from": "ClawHub",
+          "to": "GPAO-T Extension Hub",
+          "count": 6
+        }
+      ]
+    },
+    {
+      "file": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui/assets/markdown-figUYBVO.js",
+      "relativePath": "assets/markdown-figUYBVO.js",
+      "beforeSha256": "0cd812d8f55421cc852902970d24bbd9cf7a8ccd7a8017df715ef210cbe55d38",
+      "afterSha256": "e30a13bff13bfc187ca89f58688027ebdde6465b205b7fde2f084b8b17182716",
+      "replacements": [
+        {
+          "from": "clawhub",
+          "to": "gpao-t-extension-hub",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui/assets/markdown-x2Aq-bmO.js",
+      "relativePath": "assets/markdown-x2Aq-bmO.js",
+      "beforeSha256": "dae200527ff8ed1ac5bcc9c62ccc3ebde76630529cc3b75d8f275dfc3abf8f37",
+      "afterSha256": "b12da40fd5cf5df2c52bf8a649b5783af3a19966d5a4313fdc8cc92395cf5a59",
+      "replacements": [
+        {
+          "from": "clawhub",
+          "to": "gpao-t-extension-hub",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui/assets/nl-Dx-9_sUY.js",
+      "relativePath": "assets/nl-Dx-9_sUY.js",
+      "beforeSha256": "2d4fdd4e2c3bd572e5f1e39786cca6d2ccdc6625e9f2f204691e3b2066325d5e",
+      "afterSha256": "dba137e9f5ae491d6d7bf33d50612ed1f4450eb447c6b39fbe034059a2b948c1",
+      "replacements": [
+        {
+          "from": "ClawHub",
+          "to": "GPAO-T Extension Hub",
+          "count": 13
+        }
+      ]
+    },
+    {
+      "file": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui/assets/pl-BlFXF5cU.js",
+      "relativePath": "assets/pl-BlFXF5cU.js",
+      "beforeSha256": "fe5f986d52483f05ef06e576ceb54ace2a99084ef16653a0900519d7172a5a73",
+      "afterSha256": "4acbabf188b3ab54c6545788c733e1ccc2583df2834b33806fa19dd59686462e",
+      "replacements": [
+        {
+          "from": "ClawHub",
+          "to": "GPAO-T Extension Hub",
+          "count": 13
+        }
+      ]
+    },
+    {
+      "file": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui/assets/plugins-page-BS1LhHiD.js",
+      "relativePath": "assets/plugins-page-BS1LhHiD.js",
+      "beforeSha256": "2597ba4126181d7e919c52dce138ff4e5f309e7355589deb3f9b6b69f09f7d0b",
+      "afterSha256": "52f478d6128c8f2ff2d8ae1652a5ae5fc79c9a1a8d6f443e3549c708a0275fff",
+      "replacements": [
+        {
+          "from": "ClawHub",
+          "to": "GPAO-T Extension Hub",
+          "count": 11
+        },
+        {
+          "from": "clawhub",
+          "to": "gpao-t-extension-hub",
+          "count": 26
+        }
+      ]
+    },
+    {
+      "file": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui/assets/plugins-page-CvaVrMck.js",
+      "relativePath": "assets/plugins-page-CvaVrMck.js",
+      "beforeSha256": "fe4eb1720c9ed67b311d6e7af0721e59688ed0e512bcb338dfa54573dafd1d69",
+      "afterSha256": "01d3e1db1169cc3011f2d80a258b7028ce2e753683ea00248bb8e92dbebca3e6",
+      "replacements": [
+        {
+          "from": "ClawHub",
+          "to": "GPAO-T Extension Hub",
+          "count": 11
+        },
+        {
+          "from": "clawhub",
+          "to": "gpao-t-extension-hub",
+          "count": 26
+        }
+      ]
+    },
+    {
+      "file": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui/assets/pt-BR-D5M86xM9.js",
+      "relativePath": "assets/pt-BR-D5M86xM9.js",
+      "beforeSha256": "066a034d632fe03453bef1ba7e88f608c364fc41672a89ecb8886c3e0feaf3a4",
+      "afterSha256": "d6288aaa0b11b3b9db564961abe2ba77de1e28b835779b1df0183c77ce1a4294",
+      "replacements": [
+        {
+          "from": "ClawHub",
+          "to": "GPAO-T Extension Hub",
+          "count": 13
+        }
+      ]
+    },
+    {
+      "file": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui/assets/ru-CfCkqNPW.js",
+      "relativePath": "assets/ru-CfCkqNPW.js",
+      "beforeSha256": "15807706bb36f1e2118454cdbc3180439c24a13fb54b9e4e1ee7adfec9112325",
+      "afterSha256": "ea249830b3aea33c4140e0813c471a059529df82b940ad5a4b8532b03c01ba39",
+      "replacements": [
+        {
+          "from": "ClawHub",
+          "to": "GPAO-T Extension Hub",
+          "count": 13
+        }
+      ]
+    },
+    {
+      "file": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui/assets/skills-page-B_eli0xC.js",
+      "relativePath": "assets/skills-page-B_eli0xC.js",
+      "beforeSha256": "e618eeef680b91c90e125fb43524a825dcdee3af44350fb41bdd54865f84142b",
+      "afterSha256": "3526bb3dbe7d89f635e823c0a176e3558bb37f02d004d9913b19147ca52e705b",
+      "replacements": [
+        {
+          "from": "ClawHub",
+          "to": "GPAO-T Extension Hub",
+          "count": 17
+        },
+        {
+          "from": "clawhub",
+          "to": "gpao-t-extension-hub",
+          "count": 115
+        }
+      ]
+    },
+    {
+      "file": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui/assets/skills-page-uW6UAy8M.js",
+      "relativePath": "assets/skills-page-uW6UAy8M.js",
+      "beforeSha256": "269e06c7c23fbd9adf61965b730032bedb8852bdfb452e8119018b70c06227c1",
+      "afterSha256": "843063d329fde2c9d7da4aa6f050fb58cf4460661f36c9b40359bf05b258c9be",
+      "replacements": [
+        {
+          "from": "ClawHub",
+          "to": "GPAO-T Extension Hub",
+          "count": 17
+        },
+        {
+          "from": "clawhub",
+          "to": "gpao-t-extension-hub",
+          "count": 115
+        }
+      ]
+    },
+    {
+      "file": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui/assets/th--4vpNHHw.js",
+      "relativePath": "assets/th--4vpNHHw.js",
+      "beforeSha256": "69bd373608dba84a4419c2d3431fe6d356523fbb7f99a53c983955eecbf103ba",
+      "afterSha256": "b6a2a041bff5d957bc7f5f366d3b1f2ef7e706c52e96167cf2b3ead37cad42f6",
+      "replacements": [
+        {
+          "from": "ClawHub",
+          "to": "GPAO-T Extension Hub",
+          "count": 13
+        }
+      ]
+    },
+    {
+      "file": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui/assets/tr-DkDqHYXm.js",
+      "relativePath": "assets/tr-DkDqHYXm.js",
+      "beforeSha256": "3a4fcafa69b6038ca7537d1be6e97b5baef40c3049d2402cf10ddc86ee803d7c",
+      "afterSha256": "56dcaa83a08fd2c649512b6e8481dc85f629408b69da2593b9a16c00737ee12e",
+      "replacements": [
+        {
+          "from": "ClawHub",
+          "to": "GPAO-T Extension Hub",
+          "count": 13
+        }
+      ]
+    },
+    {
+      "file": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui/assets/uk-BqLIdqKQ.js",
+      "relativePath": "assets/uk-BqLIdqKQ.js",
+      "beforeSha256": "9cf1a063306db4420f557952cf0d09585aa3147e709775999d35eacb8a5a9b32",
+      "afterSha256": "62f7c98c3f593d02d82d83c36032bb355c5cef953eb97baddeaf1e105c630b4b",
+      "replacements": [
+        {
+          "from": "ClawHub",
+          "to": "GPAO-T Extension Hub",
+          "count": 13
+        }
+      ]
+    },
+    {
+      "file": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui/assets/vi-irLKEUwF.js",
+      "relativePath": "assets/vi-irLKEUwF.js",
+      "beforeSha256": "b6311268df5f0cf364d516c6a36dda0b39d6846473e5153f61182bdfc03bb37c",
+      "afterSha256": "80643d398b985a26ec209fd49963027ade9355237a28dc0e00fe19bc6bc1b515",
+      "replacements": [
+        {
+          "from": "ClawHub",
+          "to": "GPAO-T Extension Hub",
+          "count": 13
+        }
+      ]
+    },
+    {
+      "file": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui/assets/zh-CN-Crsl1YnI.js",
+      "relativePath": "assets/zh-CN-Crsl1YnI.js",
+      "beforeSha256": "85d08ac89e5170956508794553ea1cdc400478c7b2764669897ad6a4a1bff6a5",
+      "afterSha256": "9a0e64ebb0526d939696e34d20f7bac9ae685b0c6b282874e4e6d893ada33c75",
+      "replacements": [
+        {
+          "from": "ClawHub",
+          "to": "GPAO-T Extension Hub",
+          "count": 13
+        }
+      ]
+    },
+    {
+      "file": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui/assets/zh-TW-C9v3OH89.js",
+      "relativePath": "assets/zh-TW-C9v3OH89.js",
+      "beforeSha256": "c2ff84c39b6304c0894a6d18f58c960785c6fa7bd41038ec1cccd4beb4719482",
+      "afterSha256": "2a50d18b405da1f8d04c2a2fd36e794102a1ab27a0c8c1093c792ba2d32fb338",
+      "replacements": [
+        {
+          "from": "ClawHub",
+          "to": "GPAO-T Extension Hub",
+          "count": 13
+        }
+      ]
+    }
+  ],
+  "backupDir": "/Users/jyp/Documents/Playground 2/gpao-t/docs/03-verification/evidence/live-surface-seal-patch/2026-07-12T10-02-53-808Z-before-surface-seal",
+  "applyTokenRequired": "apply-gpao-t-surface-seal-live"
+}

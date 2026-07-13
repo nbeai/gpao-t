@@ -1,7 +1,6 @@
 import { buildConnectorGovernanceSummary } from "./connector-governance.js";
 import { buildApprovalAuditLocalRecordSubstrate } from "./approval-audit-records.js";
 import { buildExecutionApprovalPreview } from "./execution-approval.js";
-import { buildFirstLocalWorkLoop } from "./first-local-work-loop.js";
 import { buildWorkSurfaceExecutionFlow } from "./work-surface-execution-flow.js";
 import { readMemoryWiki, readTCellCandidates, resolveContextMesh } from "./memory-wiki.js";
 import { routeModel } from "./model-router.js";
@@ -9,6 +8,7 @@ import {
   readSessionWorkspaceState,
   SESSION_STATE_LABELS,
 } from "./session-workspace.js";
+import { buildCodexStyleMultiChatWorkspace } from "./multi-chat-workspace.js";
 import { routeSkillPacks, buildSkillExecutionPlan } from "./skill-ecosystem.js";
 import { readRuntimeState } from "./storage.js";
 import { runTurn } from "./turn-kernel.js";
@@ -44,11 +44,11 @@ const UI_LABELS = {
   mark_delete_pending: "삭제 대기",
   cancel_delete_pending: "삭제 대기 취소",
   allowed: "허용됨",
-  draft_not_sent: "초안 · 미전송",
-  preview_only: "미리보기만",
-  visible_preview_only: "미리보기만",
-  visible_preview_ready: "미리보기 준비",
-  visible_local_preview_structure: "로컬 preview",
+  draft_not_sent: "검토 중",
+  preview_only: "검토 대기",
+  visible_preview_only: "검토 대기",
+  visible_preview_ready: "검토 준비",
+  visible_local_preview_structure: "대시보드 검토",
   confirm_before_draft: "초안 전 확인",
   attached_preview: "근거 연결됨",
   review_needed: "확인 필요",
@@ -64,7 +64,7 @@ const UI_LABELS = {
   "audit record write": "감사 기록 쓰기",
   "replay read": "기록 재생 읽기",
   "rollback reference read": "되돌리기 기준 읽기",
-  "dry-run invocation": "미리보기 실행",
+  "dry-run invocation": "실행 전 검토",
   "durable memory promotion": "지속 기억 승격",
   "self-growth apply": "자가성장 적용",
   deployment: "배포",
@@ -73,8 +73,8 @@ const UI_LABELS = {
   general_request: "일반 요청",
   cli: "로컬 명령 후보",
   "cli.dry_run": "로컬 명령 미리보기",
-  "미리보기만 · dry_run": "미리보기만",
-  dry_run: "미리보기 후보",
+  "미리보기만 · dry_run": "검토 대기",
+  dry_run: "검토 후보",
   confirmed_for_local_record_only: "로컬 기록만 확인",
   written_local_only: "로컬 저장됨",
   not_written: "아직 저장 전",
@@ -82,10 +82,10 @@ const UI_LABELS = {
   local_jsonl_record_write_read_replay: "로컬 기록/재생",
   local_record_only: "로컬 기록 한정",
   blocked_in_this_slice: "이번 단계에서는 미전송",
-  visible_local_preview_structure: "로컬 미리보기",
-  local_structure_preview_only: "로컬 구조 미리보기",
-  local_reasoning_stub: "로컬 추론 후보",
-  "local.reasoning.stub": "로컬 추론 후보",
+  visible_local_preview_structure: "대시보드 검토",
+  local_structure_preview_only: "작업 구조 검토",
+  local_reasoning_stub: "모델 검토 대기",
+  "local.reasoning.stub": "모델 검토 대기",
   "gpao-core-thinking-pack": "GPAO Core Thinking Pack",
   "GPAO Core Thinking Pack": "핵심 사고 정리 팩",
   "GPAO Document Output Pack": "문서 결과물 정리 팩",
@@ -170,10 +170,12 @@ export function buildCoreWorkSurface({
   const connectorGovernance = buildConnectorGovernanceSummary();
   const executionApprovalPreview = buildExecutionApprovalPreview({ request: draftRequest });
   const approvalAuditLocalRecordSubstrate = buildApprovalAuditLocalRecordSubstrate({ root });
-  const firstLocalWorkLoopPreview = buildFirstLocalWorkLoop({
-    root,
+  const firstLocalWorkLoopPreview = buildFirstLocalWorkLoopPreview({
     request: draftRequest,
-    writeLocalRecords: false,
+    turnPreview,
+    contextPreview,
+    skillRoute,
+    modelRoute,
     now,
   });
   const executionGovernanceFlow = buildWorkSurfaceExecutionFlow({ root, request: draftRequest, now });
@@ -188,7 +190,7 @@ export function buildCoreWorkSurface({
     interactionMode: "interactive_local_submission",
     generatedAt: now,
     workspaceThread: {
-      title: "GPAO-T Work Surface",
+      title: "GPAO-T 작업 대시보드",
       language: "ko",
       mode: "interactive_local_submission",
       composer: {
@@ -332,7 +334,7 @@ export function buildCoreWorkSurface({
       previewMode: "structure_only_no_model_no_submit",
       headline: "이렇게 처리될 예정입니다",
       bridgeFromConfirmation:
-        "위 확인 카드가 맞다면 아래 preview가 다음 작업 흐름입니다. 다르면 수정 필요나 보류로 판단합니다.",
+        "위 확인 카드가 맞다면 아래 검토 내용이 다음 작업 흐름입니다. 다르면 수정 필요나 보류로 판단합니다.",
       understoodTask: userFacingObjective(turnPreview.taskPacket.objective),
       expectedOutputShape: {
         label: "예상 출력 형태",
@@ -390,7 +392,7 @@ export function buildCoreWorkSurface({
         {
           id: "empty",
           label: "입력이 없을 때",
-          userMessage: "맡길 일을 한 문장이라도 적으면 GPAO-T가 이해한 내용과 preview를 보여줍니다.",
+          userMessage: "맡길 일을 한 문장이라도 적으면 GPAO-T가 이해한 내용과 검토 화면을 보여줍니다.",
           outcome: "empty",
         },
         {
@@ -410,7 +412,7 @@ export function buildCoreWorkSurface({
         schema: "gpao_t.local_draft_preview_confirmation_flow.v0_1",
         status: "visible_preview_only",
         mode: "read_only_decision_strip",
-        prompt: "이 preview가 내 의도와 맞는지 확인하세요.",
+        prompt: "이 검토 내용이 내 의도와 맞는지 확인하세요.",
         decisions: [
           {
             id: "intent-match",
@@ -423,14 +425,14 @@ export function buildCoreWorkSurface({
             id: "needs-changes",
             label: "수정 필요",
             userMeaning: "목표, 맥락, 출력 형태 중 바꿀 부분이 있습니다.",
-            next: "입력이나 확인 카드 내용을 먼저 고친 뒤 preview를 다시 봅니다.",
+            next: "입력이나 확인 카드 내용을 먼저 고친 뒤 검토 내용을 다시 봅니다.",
             state: "review_needed",
           },
           {
             id: "hold",
             label: "보류",
             userMeaning: "지금은 판단하지 않고 안전하게 멈춥니다.",
-            next: "아무 실행도 하지 않고 현재 preview만 보존합니다.",
+            next: "아무 실행도 하지 않고 현재 검토 내용만 보존합니다.",
             state: "held",
           },
         ],
@@ -477,7 +479,7 @@ export function buildCoreWorkSurface({
       status: "visible_preview_ready",
       title: "첫 로컬 작업 루프",
       userMessage:
-        "입력을 작업 패킷으로 만들고 맥락, 스킬, 권한, 기록/replay 기준까지 연결하는 첫 로컬 루프입니다. 이 화면에서는 preview만 보여주며 실제 기록 쓰기는 로컬 제출 명령에서만 일어납니다.",
+        "입력을 작업 패킷으로 만들고 맥락, 스킬, 권한, 기록/replay 기준까지 연결하는 첫 로컬 루프입니다. 이 화면에서는 검토 내용만 보여주며 실제 기록 쓰기는 로컬 제출 명령에서만 일어납니다.",
       packet: firstLocalWorkLoopPreview.packet,
       taskPacket: firstLocalWorkLoopPreview.taskPacket,
       contextMesh: firstLocalWorkLoopPreview.contextMesh,
@@ -566,7 +568,7 @@ export function buildCoreWorkSurface({
         downgradeReason: candidate.downgradeReason || null,
       })),
       latestMemoryEntry: memoryWiki.entries.at(-1) || null,
-      boundary: "Context Mesh preview only; candidates are not durable promotion or live action authority.",
+      boundary: "Context Mesh review only; candidates are not durable promotion or live action authority.",
     },
     skillRoutePreview: {
       status: skillRoute.status,
@@ -623,6 +625,125 @@ export function buildCoreWorkSurface({
   };
 }
 
+function buildFirstLocalWorkLoopPreview({
+  request,
+  turnPreview,
+  contextPreview,
+  skillRoute,
+  modelRoute,
+  now,
+}) {
+  const text = String(request || "").trim();
+  const packetId = `work.local.${now.replaceAll(/[^0-9]/g, "").slice(0, 14)}.${hashText(text)}`;
+  const rollbackReference = `preview.${packetId}`;
+  return {
+    schema: "gpao_t.first_local_work_loop.v1",
+    status: "ready",
+    mode: "local_submission_preview_only",
+    generatedAt: now,
+    packet: {
+      schema: "gpao_t.work_surface_local_submission_packet.v1",
+      id: packetId,
+      createdAt: now,
+      sourceSurface: "/work-surface",
+      language: "ko",
+      userInput: {
+        text,
+        length: text.length,
+      },
+      confirmationState: "preview_only_not_written",
+      preExecutionState: "preview_only",
+      requestedOutput: "local_draft_preview_with_context_skill_authority",
+      authorityIntent: "preview_only_no_record_write",
+    },
+    taskPacket: {
+      id: turnPreview.taskPacket.id,
+      activeTargetId: turnPreview.taskPacket.activeTargetId,
+      objective: turnPreview.taskPacket.objective,
+      inputSignal: turnPreview.inputSignal.kind,
+      requestType: turnPreview.taskPacket.requestType,
+      targetSource: turnPreview.taskPacket.targetSource,
+      stalePriorTarget: turnPreview.taskPacket.stalePriorTarget,
+      selectedModelAdapter: turnPreview.taskPacket.selectedModelAdapter,
+      admittedToolAdapters: turnPreview.taskPacket.admittedToolAdapters,
+      authorityStatus: turnPreview.authorityDecision.status,
+    },
+    contextMesh: {
+      status: contextPreview.status,
+      retrievedCandidates: contextPreview.retrievedCandidates.slice(0, 3).map((candidate) => ({
+        id: candidate.id,
+        anchor: candidate.anchor,
+        score: candidate.meshScore,
+        lifecycle: candidate.lifecycle,
+        admissionRole: candidate.admissionRole,
+        answerAnchorEligible: candidate.answerAnchorEligible,
+        downgradeReason: candidate.downgradeReason || null,
+      })),
+      boundary: "Context Mesh는 근거 후보만 제공합니다. 기억 승격이나 실행 권한이 아닙니다.",
+    },
+    skillRoute: {
+      status: skillRoute.status,
+      selectedPacks: skillRoute.selectedPacks.slice(0, 3).map((pack) => ({
+        id: pack.id,
+        title: pack.title,
+        routeRole: pack.routeRole,
+        score: pack.score,
+      })),
+      executionMode: "preview_only",
+      authority: {
+        liveExecution: false,
+        writeRecordNow: false,
+      },
+    },
+    modelRoute: {
+      route: modelRoute.route,
+      selectedAdapterId: modelRoute.adapterSelection?.selected?.id || null,
+      liveModelCall: false,
+      invocationStatus: "not_invoked",
+      providerLane: "preview_only",
+      boundary: "작업 화면 preview는 외부 모델 호출 없이 경로와 권한만 보여줍니다.",
+    },
+    localDraftPreview: {
+      schema: "gpao_t.local_draft_preview.v1",
+      status: "ready",
+      headline: "이렇게 처리될 예정입니다",
+      summary: turnPreview.userVisibleState.summary,
+      promotesDurableMemory: false,
+      executesTools: false,
+      sendsExternally: false,
+    },
+    approvalAudit: {
+      recordWrite: {
+        status: "not_written",
+        reason: "work_surface_preview_only",
+      },
+      rollbackReference,
+      localOnly: true,
+    },
+    boundaryState: {
+      localJsonlRecordWrite: false,
+      toolCliMcpExecution: false,
+      connectorActivation: false,
+      externalSend: false,
+      credentialAccess: false,
+      paidAction: false,
+      destructiveAction: false,
+      durableMemoryPromotion: false,
+      selfGrowthLiveApply: false,
+    },
+    blockedActions: CLOSED_ACTIONS,
+    nextSafeAction: "의도와 맞는지 확인한 뒤, 실제 로컬 기록/실행은 별도 승인 경로에서만 엽니다.",
+  };
+}
+
+function hashText(text) {
+  let hash = 0;
+  for (let index = 0; index < text.length; index += 1) {
+    hash = ((hash << 5) - hash + text.charCodeAt(index)) | 0;
+  }
+  return Math.abs(hash).toString(36).padStart(6, "0").slice(0, 8);
+}
+
 function buildSessionWorkspace({
   root,
   draftRequest,
@@ -636,6 +757,7 @@ function buildSessionWorkspace({
   firstLocalWorkLoopPreview,
 }) {
   const workspaceState = readSessionWorkspaceState({ root, now });
+  const multiChatWorkspace = buildCodexStyleMultiChatWorkspace({ root, now });
   const sessions = mergeSessionRuntimeHints({
     sessions: workspaceState.sessions,
     draftRequest,
@@ -664,6 +786,12 @@ function buildSessionWorkspace({
       activeSessionId: workspaceState.activeSessionId,
       allowedActions: workspaceState.allowedActions,
       boundaries: workspaceState.boundaries,
+      codexStyleWorkspace: {
+        schema: multiChatWorkspace.schema,
+        status: multiChatWorkspace.status,
+        activeThreadId: multiChatWorkspace.activeThreadId,
+        threadCount: multiChatWorkspace.threads.length,
+      },
       permanentDelete: "blocked",
     },
     designSource: "docs/02-design/GPAO-T-SESSION-WORKSPACE-DESIGN-REPAIR-PACK-v0.1-ko.md",
@@ -705,6 +833,11 @@ function buildSessionWorkspace({
         enabled: true,
         authority: "local_session_state_only",
       })),
+      codexStyleGroups: {
+        pinnedCount: multiChatWorkspace.rail.pinned.length,
+        recentCount: multiChatWorkspace.rail.recent.length,
+        archivedCount: multiChatWorkspace.rail.archived.length,
+      },
       permanentDelete: {
         enabled: false,
         replacement: "delete_pending",
@@ -726,6 +859,21 @@ function buildSessionWorkspace({
         },
       ],
       sections: [
+        {
+          id: "thread-context",
+          label: "대화창 맥락",
+          value: `${activeSession.threadId} · ${activeSession.contextPacket?.scope || "thread"} · ${activeSession.contextPacket?.authorityStatus || "admission required"}`,
+        },
+        {
+          id: "memory-scope",
+          label: "기억 범위",
+          value: `통합 후보 ${activeSession.memoryScope?.global || "candidate_only"} · 세션 ${activeSession.memoryScope?.thread || activeSession.threadId} · 지속 기억 ${activeSession.memoryScope?.durablePromotion || "blocked"}`,
+        },
+        {
+          id: "activity-stream",
+          label: "활동 흐름",
+          value: `${activeSession.activitySummary?.status || "local_summary_ready"} · ${activeSession.activitySummary?.rawEventRef || ".gpao-t/events/audit.jsonl"}`,
+        },
         {
           id: "session-header",
           label: "세션 제목/상태",
@@ -771,8 +919,22 @@ function buildSessionWorkspace({
           id: "context",
           label: "맥락",
           state: contextPreview.status,
-          evidence: primaryContext?.anchor || "강한 후보 없음",
+          evidence: activeSession.contextPacket?.sourceSummary || primaryContext?.anchor || "강한 후보 없음",
           nextSafeAction: "현재 요청에 맞는 맥락만 주 맥락으로 둡니다.",
+        },
+        {
+          id: "memory",
+          label: "기억",
+          state: "review_only",
+          evidence: `thread=${activeSession.memoryScope?.thread || activeSession.threadId} · durable=${activeSession.memoryScope?.durablePromotion || "blocked"}`,
+          nextSafeAction: "통합 기억은 후보로만 보고, 답변 anchor는 admission/replay 후에만 씁니다.",
+        },
+        {
+          id: "replay",
+          label: "리플레이",
+          state: activeSession.replayState?.status || "not_run",
+          evidence: activeSession.replayState?.beforeAfterEvidence || "required_before_memory_anchor",
+          nextSafeAction: "세션 맥락 승격 전 before/after replay를 요구합니다.",
         },
         {
           id: "authority",
@@ -841,7 +1003,7 @@ function buildSessionWorkspace({
     },
     visualContract: {
       tone: ["simple", "clean", "quiet", "trustworthy", "fast_to_scan", "pleasant_daily_use"],
-      dashboardReference: "OpenClaw Control discipline",
+      dashboardReference: "GPAO-T control discipline",
       workRhythmReference: "Codex session workspace",
       authorityReference: "Claude Code permission clarity",
       koreanProductLanguage: true,
@@ -926,7 +1088,15 @@ export function verifyCoreWorkSurface({ surface = buildCoreWorkSurface(), html }
   if (!surface.sessionWorkspace?.activeWorkSession?.sections?.some((section) => section.id === "composer")) {
     findings.push("active_work_session_missing_composer");
   }
+  if (!surface.sessionWorkspace?.activeWorkSession?.sections?.some((section) => section.id === "thread-context")) {
+    findings.push("active_work_session_missing_thread_context");
+  }
+  if (!surface.sessionWorkspace?.activeWorkSession?.sections?.some((section) => section.id === "memory-scope")) {
+    findings.push("active_work_session_missing_memory_scope");
+  }
   if (!surface.sessionWorkspace?.inspector?.tabs?.some((tab) => tab.id === "context")) findings.push("inspector_missing_context");
+  if (!surface.sessionWorkspace?.inspector?.tabs?.some((tab) => tab.id === "memory")) findings.push("inspector_missing_memory");
+  if (!surface.sessionWorkspace?.inspector?.tabs?.some((tab) => tab.id === "replay")) findings.push("inspector_missing_replay");
   if (!surface.sessionWorkspace?.inspector?.tabs?.some((tab) => tab.id === "authority")) findings.push("inspector_missing_authority");
   if (!surface.sessionWorkspace?.inspector?.tabs?.some((tab) => tab.id === "model")) findings.push("inspector_missing_model");
   if (!surface.sessionWorkspace?.inspector?.tabs?.some((tab) => tab.id === "tools")) findings.push("inspector_missing_tools");
@@ -1041,7 +1211,7 @@ export function verifyCoreWorkSurface({ surface = buildCoreWorkSurface(), html }
   if (surface.localDraftPreview?.sendsExternally !== false) findings.push("local_draft_external_send_open");
   if (surface.localDraftPreview?.promotesDurableMemory !== false) findings.push("local_draft_memory_promotion_open");
   if (!surface.taskState.objective) findings.push("missing_task_objective");
-  if (!surface.contextPreview.boundary.includes("preview only")) findings.push("context_boundary_not_preview_only");
+  if (!surface.contextPreview.boundary.includes("review only")) findings.push("context_boundary_not_review_only");
   if (!surface.skillRoutePreview.executionMode) findings.push("missing_skill_route_preview");
   if (surface.modelToolRoutePreview.liveModelExecution !== false) findings.push("live_model_execution_open");
   if (surface.modelToolRoutePreview.liveToolExecution !== false) findings.push("live_tool_execution_open");
@@ -1055,7 +1225,7 @@ export function verifyCoreWorkSurface({ surface = buildCoreWorkSurface(), html }
   if (surface.safetyInvariants.usesOnlyLocalConfirmationForm !== true) findings.push("unscoped_form_invariant_open");
 
   if (html) {
-    if (!html.includes("GPAO-T Work Surface")) findings.push("html_missing_title");
+    if (!html.includes("GPAO-T 작업 대시보드")) findings.push("html_missing_title");
     if (!html.includes("data-core-work-surface=\"interactive-local\"")) findings.push("html_missing_surface_marker");
     if (!html.includes("data-session-workspace=\"session-based-local-ai-os\"")) findings.push("html_missing_session_workspace_marker");
     if (!html.includes("data-session-rail=\"left\"")) findings.push("html_missing_session_rail");
@@ -1168,7 +1338,7 @@ export function buildCoreWorkSurfaceHtml({ surface } = {}) {
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>GPAO-T Work Surface</title>
+  <title>GPAO-T 작업 대시보드</title>
   <style>
     :root {
       color-scheme: light;
@@ -1885,7 +2055,7 @@ export function buildCoreWorkSurfaceHtml({ surface } = {}) {
 <body data-core-work-surface="read-only" data-external-activation="blocked">
   <header class="topbar">
     <div class="topbar-main">
-      <h1>GPAO-T Work Surface</h1>
+      <h1>GPAO-T 작업 대시보드</h1>
       <p class="subtitle">작업 초안 · 맥락 프리뷰 · 권한 경계</p>
       <p class="topbar-action">다음 안전 행동: 의도 확인 · 수정/보류 선택 · 실행 없음</p>
     </div>
@@ -2157,7 +2327,7 @@ function renderSessionWorkspaceHtml({
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>GPAO-T Work Surface</title>
+  <title>GPAO-T 작업 대시보드</title>
   <style>
     :root {
       color-scheme: light;
@@ -3050,7 +3220,7 @@ function renderSessionWorkspaceHtml({
               <span class="muted">로컬 task packet, 모델 초안, 승인/감사 기록을 생성합니다.</span>
             </div>
           </form>
-          <p class="muted">외부 provider 호출은 인증/승인 전에는 열지 않고, 현재는 로컬 모델 초안으로 응답합니다.</p>
+          <p class="muted">외부 모델 호출은 인증/승인 전에는 열지 않고, 현재는 로컬 모델 초안으로 응답합니다.</p>
         </section>
       </div>
     </section>
@@ -3096,7 +3266,7 @@ function renderSessionWorkspaceHtml({
     </article>
   </section>
   <div class="qa-sentinel">
-    <span>GPAO-T Work Surface</span>
+    <span>GPAO-T 작업 대시보드</span>
     <span data-session-behavior="local-actions-enabled">새 세션 · 이름 변경 · 보관 · 복구 · 삭제 대기 취소</span>
     <span data-understanding-summary="read-only">읽기 전용 · 실제 전송/모델/도구 실행 없음</span>
     <span data-understanding-card="execution-boundary">읽기 전용 · 실제 전송/모델/도구 실행 없음</span>

@@ -1,0 +1,183 @@
+{
+  "schema": "gpao_t.dashboard_route_crawl.v1",
+  "generatedAt": "2026-07-12T11:22:07.884Z",
+  "liveRoot": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui",
+  "status": "ready",
+  "staticEvidence": {
+    "title": "nBeAI. GPAO-T",
+    "hasGpaoBrand": true,
+    "forbiddenMatches": []
+  },
+  "domReadbackEvidencePath": "/Users/jyp/Documents/Playground 2/gpao-t/docs/03-verification/evidence/GPAO-T-SAFARI-ROUTE-DOM-READBACK-2026-07-12.md",
+  "domReadbackEvidenceCount": 10,
+  "routes": [
+    {
+      "id": "dashboard",
+      "path": "/",
+      "requiredLabels": [
+        "nBeAI. GPAO-T"
+      ],
+      "crawlMode": "static_inventory_with_dom_readback_evidence",
+      "status": "dom_readback_accepted",
+      "domReadback": {
+        "path": "/",
+        "result": "covered_by_chat_shell",
+        "accepted": true,
+        "source": "safari_dom_readback_markdown"
+      },
+      "missingRequiredLabels": []
+    },
+    {
+      "id": "chat",
+      "path": "/chat",
+      "requiredLabels": [
+        "nBeAI. GPAO-T"
+      ],
+      "crawlMode": "static_inventory_with_dom_readback_evidence",
+      "status": "dom_readback_accepted",
+      "domReadback": {
+        "path": "/chat",
+        "result": "passed",
+        "accepted": true,
+        "source": "safari_dom_readback_markdown"
+      },
+      "missingRequiredLabels": []
+    },
+    {
+      "id": "settings_general",
+      "path": "/settings/general",
+      "requiredLabels": [
+        "설정"
+      ],
+      "crawlMode": "static_inventory_with_dom_readback_evidence",
+      "status": "dom_readback_accepted",
+      "domReadback": {
+        "path": "/settings/general",
+        "result": "passed",
+        "accepted": true,
+        "source": "safari_dom_readback_markdown"
+      },
+      "missingRequiredLabels": []
+    },
+    {
+      "id": "settings_profile",
+      "path": "/settings/profile",
+      "requiredLabels": [
+        "프로필"
+      ],
+      "crawlMode": "static_inventory_with_dom_readback_evidence",
+      "status": "dom_readback_accepted",
+      "domReadback": {
+        "path": "/settings/profile",
+        "result": "passed",
+        "accepted": true,
+        "source": "safari_dom_readback_markdown"
+      },
+      "missingRequiredLabels": [
+        "프로필"
+      ]
+    },
+    {
+      "id": "settings_ai_agents",
+      "path": "/settings/ai-agents",
+      "requiredLabels": [
+        "GPAO-T"
+      ],
+      "crawlMode": "static_inventory_with_dom_readback_evidence",
+      "status": "dom_readback_accepted",
+      "domReadback": {
+        "path": "/settings/ai-agents",
+        "result": "passed",
+        "accepted": true,
+        "source": "safari_dom_readback_markdown"
+      },
+      "missingRequiredLabels": []
+    },
+    {
+      "id": "agents",
+      "path": "/agents",
+      "requiredLabels": [
+        "에이전트"
+      ],
+      "crawlMode": "static_inventory_with_dom_readback_evidence",
+      "status": "dom_readback_accepted",
+      "domReadback": {
+        "path": "/agents",
+        "result": "passed",
+        "accepted": true,
+        "source": "safari_dom_readback_markdown"
+      },
+      "missingRequiredLabels": []
+    },
+    {
+      "id": "skills",
+      "path": "/skills",
+      "requiredLabels": [
+        "기능"
+      ],
+      "crawlMode": "static_inventory_with_dom_readback_evidence",
+      "status": "dom_readback_accepted",
+      "domReadback": {
+        "path": "/skills",
+        "result": "passed",
+        "accepted": true,
+        "source": "safari_dom_readback_markdown"
+      },
+      "missingRequiredLabels": []
+    },
+    {
+      "id": "nodes",
+      "path": "/nodes",
+      "requiredLabels": [
+        "노드"
+      ],
+      "crawlMode": "static_inventory_with_dom_readback_evidence",
+      "status": "dom_readback_accepted",
+      "domReadback": {
+        "path": "/nodes",
+        "result": "passed",
+        "accepted": true,
+        "source": "safari_dom_readback_markdown"
+      },
+      "missingRequiredLabels": []
+    },
+    {
+      "id": "dreaming",
+      "path": "/dreaming",
+      "requiredLabels": [
+        "드리밍"
+      ],
+      "crawlMode": "static_inventory_with_dom_readback_evidence",
+      "status": "dom_readback_accepted",
+      "domReadback": {
+        "path": "/dreaming",
+        "result": "passed",
+        "accepted": true,
+        "source": "safari_dom_readback_markdown"
+      },
+      "missingRequiredLabels": [
+        "드리밍"
+      ]
+    },
+    {
+      "id": "documents",
+      "path": "/documents",
+      "requiredLabels": [
+        "문서"
+      ],
+      "crawlMode": "static_inventory_with_dom_readback_evidence",
+      "status": "dom_readback_accepted",
+      "domReadback": {
+        "path": "/documents",
+        "result": "redirect_observed",
+        "accepted": true,
+        "source": "safari_dom_readback_markdown"
+      },
+      "missingRequiredLabels": [
+        "문서"
+      ]
+    }
+  ],
+  "findings": [],
+  "nextVerification": "Route seal automation is connected to the current Safari DOM readback evidence. Re-run browser readback after each visible dashboard patch."
+}

@@ -3,6 +3,7 @@ import { execFileSync } from "node:child_process";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { buildConnectorToolGovernance } from "./connector-governance.js";
+import { appendToolProgressEvent } from "./live-turn-absorption-bridge.js";
 
 const MODULE_DIR = dirname(fileURLToPath(import.meta.url));
 const PROJECT_ROOT = resolve(MODULE_DIR, "..", "..");
@@ -132,20 +133,42 @@ export function invokeExecutionRuntimeDryRun({
 } = {}) {
   const commandSpec = SAFE_DRY_RUN_COMMANDS[commandId];
   const approvalCheck = verifyExecutionRuntimeApproval({ commandId, approval });
+  const sessionKey = approval.sessionKey || "agent:main:main";
+  const runId = approval.runId || `execution-runtime.${Date.parse(now) || 0}.${commandId}`;
 
   if (!commandSpec) {
+    const progressEvent = appendExecutionProgress({
+      root,
+      now,
+      runId,
+      sessionKey,
+      commandId,
+      status: "blocked",
+      summary: "알 수 없는 dry-run 명령이라 실행하지 않았습니다.",
+    });
     return {
       schema: "gpao_t.execution_runtime_invocation.v1",
       status: "blocked",
       invokedAt: now,
       commandId,
       approvalCheck,
+      progressEvents: [progressEvent],
       output: null,
       nextSafeAction: "Choose a known safe dry-run command.",
     };
   }
 
   if (approvalCheck.status !== "ready") {
+    const progressEvent = appendExecutionProgress({
+      root,
+      now,
+      runId,
+      sessionKey,
+      commandId,
+      commandSpec,
+      status: "blocked",
+      summary: "승인 조건이 맞지 않아 dry-run 실행을 차단했습니다.",
+    });
     return {
       schema: "gpao_t.execution_runtime_invocation.v1",
       status: "blocked",
@@ -153,12 +176,23 @@ export function invokeExecutionRuntimeDryRun({
       commandId,
       command: renderCommand(commandSpec),
       approvalCheck,
+      progressEvents: [progressEvent],
       output: null,
       nextSafeAction: approvalCheck.nextSafeAction,
     };
   }
 
   if (commandSpec.recursiveSurface && approval.allowRecursiveSurface !== true) {
+    const progressEvent = appendExecutionProgress({
+      root,
+      now,
+      runId,
+      sessionKey,
+      commandId,
+      commandSpec,
+      status: "blocked",
+      summary: "재귀 표면 dry-run은 별도 승인이 없어 실행하지 않았습니다.",
+    });
     return {
       schema: "gpao_t.execution_runtime_invocation.v1",
       status: "blocked",
@@ -170,18 +204,77 @@ export function invokeExecutionRuntimeDryRun({
         status: "blocked",
         findings: [...approvalCheck.findings, "recursive_surface_command_requires_explicit_approval"],
       },
+      progressEvents: [progressEvent],
       output: null,
       nextSafeAction: "Use a non-recursive dry-run command for automatic runtime proof.",
     };
   }
 
-  const stdout = execFileSync(commandSpec.command, commandSpec.args, {
-    cwd: root,
-    encoding: "utf8",
-    stdio: ["ignore", "pipe", "pipe"],
-    timeout: 30000,
+  const startedProgress = appendExecutionProgress({
+    root,
+    now,
+    runId,
+    sessionKey,
+    commandId,
+    commandSpec,
+    status: "running",
+    summary: `${commandSpec.label} dry-run을 실행 중입니다.`,
   });
-  const parsed = parseJsonOrText(stdout);
+  let stdout = "";
+  let parsed;
+  let completedProgress;
+  try {
+    stdout = execFileSync(commandSpec.command, commandSpec.args, {
+      cwd: root,
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "pipe"],
+      timeout: 30000,
+    });
+    parsed = parseJsonOrText(stdout);
+    completedProgress = appendExecutionProgress({
+      root,
+      now,
+      runId,
+      sessionKey,
+      commandId,
+      commandSpec,
+      status: "complete",
+      summary: `${commandSpec.label} dry-run이 통과했습니다.`,
+    });
+  } catch (error) {
+    const failedProgress = appendExecutionProgress({
+      root,
+      now,
+      runId,
+      sessionKey,
+      commandId,
+      commandSpec,
+      status: "error",
+      summary: `${commandSpec.label} dry-run이 실패했습니다.`,
+    });
+    return {
+      schema: "gpao_t.execution_runtime_invocation.v1",
+      status: "failed_dry_run_invocation",
+      invokedAt: now,
+      commandId,
+      label: commandSpec.label,
+      command: renderCommand(commandSpec),
+      approvalCheck,
+      progressEvents: [startedProgress, failedProgress],
+      output: {
+        type: "error",
+        message: error instanceof Error ? error.message : String(error),
+      },
+      safetyInvariants: {
+        writeMutationExpected: commandSpec.expectedMutation,
+        externalSend: false,
+        credentialAccess: false,
+        destructiveAction: false,
+        connectorActivation: false,
+      },
+      nextSafeAction: "Inspect the dry-run error before expanding this execution lane.",
+    };
+  }
 
   return {
     schema: "gpao_t.execution_runtime_invocation.v1",
@@ -191,6 +284,7 @@ export function invokeExecutionRuntimeDryRun({
     label: commandSpec.label,
     command: renderCommand(commandSpec),
     approvalCheck,
+    progressEvents: [startedProgress, completedProgress],
     output: parsed,
     safetyInvariants: {
       writeMutationExpected: commandSpec.expectedMutation,
@@ -351,6 +445,28 @@ function buildDryRunPreview({ request, requestedSurface, requestedTier }) {
 
 function renderCommand(commandSpec) {
   return [commandSpec.command, ...commandSpec.args].join(" ");
+}
+
+function appendExecutionProgress({
+  root,
+  now,
+  runId,
+  sessionKey,
+  commandId,
+  commandSpec,
+  status,
+  summary,
+}) {
+  return appendToolProgressEvent({
+    root,
+    now,
+    runId,
+    sessionKey,
+    toolName: commandSpec?.label || commandId,
+    status,
+    summary,
+    command: commandSpec ? renderCommand(commandSpec) : null,
+  });
 }
 
 function parseJsonOrText(stdout) {

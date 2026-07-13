@@ -1,0 +1,33 @@
+{
+  "schema": "gpao_t.openclaw_live_gpao_bridge_patch_manifest.v0_1",
+  "status": "applied",
+  "createdAt": "2026-07-10T18:28:14.618Z",
+  "liveDist": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist",
+  "labDist": "/Users/jyp/Documents/Playground 2/openclaw-clean-lab/gpao-t-openclaw-dashboard-lab/dist",
+  "backupDir": "/Users/jyp/Documents/Playground 2/gpao-t/docs/03-verification/evidence/live-backups/openclaw-live-gpao-bridge-2026-07-11-before-patch",
+  "patchedFiles": {
+    "serverMethods": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/server-methods-B64pXQ-G.js",
+    "coreDescriptors": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/core-descriptors-B2lASufG.js",
+    "gpaoBridge": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/gpao-t-CkviVFR2.js",
+    "controlUi": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui"
+  },
+  "hashes": {
+    "serverMethods": "d9ff2fed2af02a9d8166e6cfd649af26e3cd75c84d841221ce1ff1621fdd1ffd",
+    "coreDescriptors": "873ac2815a869f3c8971cab578330a6321e372bc2633b52cd4b2c2faa363e869",
+    "gpaoBridge": "f1d98da7ad3887fcc82ddeac5f61ee7bcc650e135dd9d9a078d0f262e0ab749a",
+    "controlUiIndex": "4d5d8fae70b843f4e90b13b4eefeee9905ffc978c02b51f831b35bf8ea7a9271"
+  },
+  "rollback": {
+    "restoreServerMethodsFrom": "/Users/jyp/Documents/Playground 2/gpao-t/docs/03-verification/evidence/live-backups/openclaw-live-gpao-bridge-2026-07-11-before-patch/server-methods-B64pXQ-G.js",
+    "restoreCoreDescriptorsFrom": "/Users/jyp/Documents/Playground 2/gpao-t/docs/03-verification/evidence/live-backups/openclaw-live-gpao-bridge-2026-07-11-before-patch/core-descriptors-B2lASufG.js",
+    "restoreControlUiFrom": "/Users/jyp/Documents/Playground 2/gpao-t/docs/03-verification/evidence/live-backups/openclaw-live-gpao-bridge-2026-07-11-before-patch/control-ui",
+    "removeGpaoBridge": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/gpao-t-CkviVFR2.js"
+  },
+  "authority": {
+    "durableMemoryPromotion": "blocked",
+    "openClawMemoryWrite": "blocked",
+    "sessionMetaWrite": "blocked",
+    "externalSend": "blocked",
+    "automaticAdmission": "blocked"
+  }
+}

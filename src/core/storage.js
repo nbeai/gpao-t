@@ -67,14 +67,36 @@ export function appendAuditEvent(event, { root = PACKAGE_ROOT, now = new Date().
 
 export function readAuditEvents({ root = PACKAGE_ROOT, limit = 50 } = {}) {
   const paths = runtimePaths({ root });
-  if (!existsSync(paths.eventFile)) {
-    return [];
-  }
-  return readFileSync(paths.eventFile, "utf8")
+  return readJsonlTail(paths.eventFile, { limit });
+}
+
+export function readJsonlTail(filePath, { limit = 50, dedupeKey, tolerateInvalid = false } = {}) {
+  if (!existsSync(filePath)) return [];
+  const records = readFileSync(filePath, "utf8")
     .split("\n")
     .filter(Boolean)
-    .slice(-limit)
-    .map((line) => JSON.parse(line));
+    .slice(-Math.max(limit * 4, limit))
+    .map((line) => {
+      try {
+        return JSON.parse(line);
+      } catch (error) {
+        if (tolerateInvalid) return null;
+        throw error;
+      }
+    })
+    .filter(Boolean);
+  if (!dedupeKey) return records.slice(-limit);
+  const seen = new Set();
+  const deduped = [];
+  for (let index = records.length - 1; index >= 0; index -= 1) {
+    const record = records[index];
+    const key = typeof dedupeKey === "function" ? dedupeKey(record) : record?.[dedupeKey];
+    if (key && seen.has(key)) continue;
+    if (key) seen.add(key);
+    deduped.push(record);
+    if (deduped.length >= limit) break;
+  }
+  return deduped.reverse();
 }
 
 function defaultRuntimeState({ root = PACKAGE_ROOT, now = new Date().toISOString() } = {}) {

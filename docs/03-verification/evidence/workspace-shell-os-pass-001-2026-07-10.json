@@ -1,0 +1,88 @@
+{
+  "schema": "gpao_t.workspace_shell_os_pass_001_visual_qa.v0_1",
+  "status": "implemented_with_review_items",
+  "date": "2026-07-10",
+  "surface": "GPAO-T Workspace Shell",
+  "route": "/gpao-t-workspace",
+  "passName": "작업 OS 체감 1차 개선",
+  "implementedSignals": [
+    {
+      "id": "active_target_strip",
+      "status": "visible",
+      "purpose": "후속 질문에서도 현재 작업 목표를 먼저 복구하게 한다."
+    },
+    {
+      "id": "compact_progress_lane",
+      "status": "visible",
+      "purpose": "로그 대신 이해, 맥락, 권한, 로컬, 검증 흐름을 얇게 보여준다."
+    },
+    {
+      "id": "local_first_latency_signal",
+      "status": "visible",
+      "purpose": "무거운 런타임 작업 전에도 즉시 읽을 수 있는 로컬 상태를 보여준다."
+    }
+  ],
+  "visualDirectionApplied": {
+    "cardDashboardAvoidance": true,
+    "workspacePlanes": true,
+    "statusStrips": true,
+    "progressLane": true,
+    "bottomComposer": true,
+    "rightInspector": true
+  },
+  "browserEvidence": {
+    "desktop": {
+      "viewport": {
+        "width": 1440,
+        "height": 960
+      },
+      "screenshot": "docs/03-verification/evidence/gpao-t-workspace-os-pass-001-desktop-2026-07-10.png",
+      "visibleMarkers": [
+        "현재 목표",
+        "권한 경계",
+        "다음 안전 행동",
+        "이해",
+        "맥락",
+        "권한",
+        "로컬",
+        "검증",
+        "체감 속도"
+      ]
+    },
+    "mobile": {
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "screenshot": "docs/03-verification/evidence/gpao-t-workspace-os-pass-001-mobile-390x844-2026-07-10.png",
+      "visibleMarkers": [
+        "현재 목표",
+        "로컬 미리보기 허용",
+        "로컬 작업 상태 먼저 확인",
+        "이해",
+        "맥락"
+      ]
+    },
+    "snapshot": ".playwright-mcp/page-2026-07-10T12-14-12-581Z.yml"
+  },
+  "verification": {
+    "nodeCheck": "passed",
+    "workspaceShellTest": "passed",
+    "controlCenterWorkspaceShellTest": "passed",
+    "npmCheck": "passed",
+    "serveCheck": "passed_before_final_text_label_patch",
+    "liveOpenClawMutation": false,
+    "gatewayRestart": false,
+    "externalModelCall": false,
+    "toolExecution": false,
+    "connectorActivation": false,
+    "externalSend": false
+  },
+  "remainingReviewItems": [
+    "현재 목표 strip은 보이지만 active target recovery replay proof와 아직 직접 연결되지는 않았다.",
+    "모바일 첫 화면에서 progress lane이 세로로 길게 내려오므로 다음 패스에서는 일부를 접거나 sheet로 보낼 수 있다.",
+    "채팅 컨디션 상세에는 아직 카드가 남아 있으므로 다음 패스에서 disclosure-only evidence로 더 낮출 수 있다.",
+    "일부 내부 상태 표현인 preview only는 다음 한국어 라벨 정리 패스에서 줄일 수 있다."
+  ],
+  "nextSafeAction": "이번 패스는 사용자 검토 가능한 화면으로 닫고, 다음 패스에서 모바일 압축과 inspector disclosure를 다듬는다."
+}

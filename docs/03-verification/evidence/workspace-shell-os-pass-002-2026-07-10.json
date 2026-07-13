@@ -1,0 +1,82 @@
+{
+  "schema": "gpao_t.workspace_shell_os_pass_002.v0_1",
+  "status": "implemented_with_local_replay_candidate",
+  "date": "2026-07-10",
+  "surface": "GPAO-T Workspace Shell",
+  "route": "/gpao-t-workspace",
+  "passName": "active target replay candidate and quiet mobile shell",
+  "implementedSignals": [
+    {
+      "id": "active_target_replay_proof",
+      "status": "review_candidate",
+      "purpose": "현재 목표 복구가 어떤 evidence와 authority boundary를 통해 화면에 표시됐는지 남긴다."
+    },
+    {
+      "id": "mobile_compressed_progress",
+      "status": "visible",
+      "purpose": "모바일에서 이해/맥락/권한/로컬/검증 lane을 한 줄 요약으로 압축한다."
+    },
+    {
+      "id": "quiet_condition_disclosure",
+      "status": "visible",
+      "purpose": "채팅 컨디션 상세를 기본 접힘 근거 영역으로 낮춰 카드 대시보드 느낌을 줄인다."
+    }
+  ],
+  "replayProof": {
+    "schema": "gpao_t.active_target_replay_proof.v0_1",
+    "status": "review_candidate",
+    "mode": "local_state_replay",
+    "requiredRecoveredTarget": "activeTargetId",
+    "requiredRejectedAuthority": [
+      "live_openclaw_mutation",
+      "durable_memory_promotion",
+      "external_send"
+    ],
+    "promotionBoundary": "not live runtime truth, not durable memory, not Canon"
+  },
+  "htmlMarkers": [
+    "data-active-target-replay=\"visible\"",
+    "data-mobile-progress-lane=\"compressed\"",
+    "data-chat-condition-disclosure=\"quiet\""
+  ],
+  "browserEvidence": {
+    "mobile": {
+      "status": "captured",
+      "screenshot": "docs/03-verification/evidence/gpao-t-workspace-os-pass-002-mobile-390x844-2026-07-10.png",
+      "visibleSignals": [
+        "현재 목표",
+        "권한 경계",
+        "다음 안전 행동",
+        "진행",
+        "복구 증거",
+        "후속 질문 기준"
+      ]
+    },
+    "desktop": {
+      "status": "pending_wide_viewport_capture",
+      "reason": "The available MCP browser viewport was mobile-width during this pass."
+    },
+    "snapshot": "docs/03-verification/evidence/workspace-shell-os-pass-002-snapshot-2026-07-10.md"
+  },
+  "verification": {
+    "nodeCheck": "passed",
+    "workspaceShellTest": "passed",
+    "controlCenterWorkspaceShellTest": "passed",
+    "npmCheck": "passed",
+    "npmTest": "passed",
+    "serveCheck": "passed",
+    "liveOpenClawMutation": false,
+    "gatewayRestart": false,
+    "externalModelCall": false,
+    "toolExecution": false,
+    "connectorActivation": false,
+    "externalSend": false,
+    "durableMemoryPromotion": false
+  },
+  "remainingReviewItems": [
+    "Fresh desktop screenshot evidence is still needed for OS Pass 002.",
+    "Replay proof remains local review candidate until broader replay fixtures exist.",
+    "Next UX decision should compare multi-chat session creation against active target replay fixtures."
+  ],
+  "nextSafeAction": "Run local serve-check and visual QA for OS Pass 002."
+}

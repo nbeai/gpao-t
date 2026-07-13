@@ -2,6 +2,7 @@
 
 Status: required reference bridge for first-production design readiness  
 Reference root: `/Users/jyp/Documents/Playground 2/gpao-t-references/codex-ui`
+Current live-work reference: `/Users/jyp/Documents/Playground 2/gpao-t-references/codex-current-work-environment`
 
 ## Purpose
 
@@ -20,6 +21,8 @@ Read these before first-production design review:
 - `/Users/jyp/Documents/Playground 2/gpao-t-references/codex-ui/CODEX-SCREEN-PATTERN-MATRIX.md`
 - `/Users/jyp/Documents/Playground 2/gpao-t-references/codex-ui/KOREAN-UX-QUALITY-GATE.md`
 - `/Users/jyp/Documents/Playground 2/gpao-t-references/codex-ui/DESIGN-REFERENCE-CAPTURE-TODO.md`
+- `/Users/jyp/Documents/Playground 2/gpao-t-references/codex-current-work-environment/README.md`
+- `/Users/jyp/Documents/Playground 2/gpao-t-references/codex-current-work-environment/codex-current-work-environment-2026-07-10-205411.png`
 
 ## Design Readiness Rule
 
@@ -36,5 +39,4 @@ Before first-production validation, GPAO-T must prove:
 
 Official Codex screen patterns and translation rules are prepared.
 
-Clean local screenshot evidence is still incomplete. The existing local Codex screenshot is marked local-only and deprecated as a main design source because it contains live workspace context.
-
+Clean product-marketing screenshots are still incomplete, but 윤 provided a local screenshot of the actual Codex work environment on 2026-07-10. Treat it as a local lived-work reference, not a public design asset. Its main value is the operating rhythm: left project/task rail, wide text-centered work surface, bottom composer, right environment/source panel, restrained dividers, and a serious work feel without a box/card dashboard.

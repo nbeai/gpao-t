@@ -21,6 +21,7 @@ const STATUS_LABELS = {
 
 const PANEL_GROUPS = {
   "core-work-surface": "작업",
+  "runtime-workspace-welcome": "작업",
   runtime: "작업",
   "skill-ecosystem": "작업",
   "approval-preview": "권한",
@@ -150,6 +151,8 @@ const UI_LABELS = {
   preview_validation_only_no_write_no_invocation: "검증 미리보기만 · 쓰기/호출 없음",
   local_jsonl_write_available: "로컬 JSONL 기록 가능",
   local_jsonl_only: "로컬 JSONL 한정",
+  blocked_unless_durableMemoryApproved_true: "지속 기억 승인 전까지 잠김",
+  blocked_unless_heartbeatEnabled_true: "heartbeat 승인 전까지 잠김",
   blocked: "잠김",
   allowed: "허용됨",
   not_stored: "저장하지 않음",
@@ -1247,13 +1250,13 @@ export function buildControlCenterHtml({ snapshot, designContract } = {}) {
 </html>`;
 }
 
-export function renderControlCenterHtml({ root, outputPath = DEFAULT_OUTPUT_PATH, now } = {}) {
-  const snapshot = buildControlCenterSnapshot({ root });
+export function renderControlCenterHtml({ root, outputPath = DEFAULT_OUTPUT_PATH, now, snapshot } = {}) {
+  const controlSnapshot = snapshot || buildControlCenterSnapshot({ root, now });
   const designContract = buildLocalControlCenterDesignContract();
   const uiContract = buildControlCenterUiContract();
-  const uiSnapshot = buildControlCenterUiSnapshot({ snapshot, designContract, uiContract });
+  const uiSnapshot = buildControlCenterUiSnapshot({ snapshot: controlSnapshot, designContract, uiContract });
   const validation = validateControlCenterUiSnapshot({ uiSnapshot });
-  const html = buildControlCenterHtml({ snapshot, designContract });
+  const html = buildControlCenterHtml({ snapshot: controlSnapshot, designContract });
   const resolvedOutputPath = resolve(root || process.cwd(), outputPath);
 
   mkdirSync(dirname(resolvedOutputPath), { recursive: true });
@@ -1264,7 +1267,7 @@ export function renderControlCenterHtml({ root, outputPath = DEFAULT_OUTPUT_PATH
     status: "rendered_static_html",
     outputPath: resolvedOutputPath,
     generatedAt: now || new Date().toISOString(),
-    snapshotSchema: snapshot.schema,
+    snapshotSchema: controlSnapshot.schema,
     designSchema: designContract.schema,
     uiContractSchema: uiContract.schema,
     uiSnapshotSchema: uiSnapshot.schema,
@@ -1273,10 +1276,10 @@ export function renderControlCenterHtml({ root, outputPath = DEFAULT_OUTPUT_PATH
     renderEvidence: "static_html_file_written",
     executableSurfaces: ["gpao-t control html", "gpao-t control render [output.html]"],
     counts: {
-      panels: snapshot.counts.panels,
-      blocked: snapshot.counts.blocked,
-      review: snapshot.counts.review,
-      authorityBoundaries: Object.keys(snapshot.authorityBoundary || {}).length,
+      panels: controlSnapshot.counts.panels,
+      blocked: controlSnapshot.counts.blocked,
+      review: controlSnapshot.counts.review,
+      authorityBoundaries: Object.keys(controlSnapshot.authorityBoundary || {}).length,
     },
     authorityBoundary: {
       startsDaemon: false,
@@ -1313,6 +1316,7 @@ function panelHtml(panel) {
               ${statePill("다음", states.next)}
             </div>
             ${coreWorkSurfaceHtml(panel)}
+            ${runtimeWorkspaceWelcomeHtml(panel)}
             ${approvalPreviewHtml(panel)}
             ${designReferenceHtml(panel)}
             ${executionApprovalHtml(panel)}
@@ -1337,6 +1341,7 @@ function panelHtml(panel) {
                 ${designReferenceInspectorRows(panel)}
                 ${executionApprovalInspectorRows(panel)}
                 ${coreWorkSurfaceInspectorRows(panel)}
+                ${runtimeWorkspaceWelcomeInspectorRows(panel)}
                 ${adapterInspectorRows(panel)}
                 ${connectorInspectorRows(panel)}
                 ${inspectorRow("권한 설명", authorityLens(group))}
@@ -1345,6 +1350,53 @@ function panelHtml(panel) {
               </div>
             </details>
           </section>`;
+}
+
+function runtimeWorkspaceWelcomeHtml(panel) {
+  if (panel.id !== "runtime-workspace-welcome" || !panel.data) return "";
+  const welcome = panel.data.welcome;
+  const sampleDraft = panel.data.sampleDraft;
+  const questions = welcome.requiredQuestions || [];
+  const authority = welcome.authorityBoundary || {};
+  return `
+            <div class="work-thread-preview" data-runtime-workspace-welcome="ready">
+              <div class="work-composer" role="note" aria-readonly="true" data-welcome-message="first-install">
+                <strong>첫 설정 메시지</strong>
+                ${escapeHtml(welcome.welcomeMessage)}
+              </div>
+              <div class="work-surface-grid" aria-label="Welcome setup state">
+                ${workSignal("질문", `${questions.length}`)}
+                ${workSignal("상태", panel.status)}
+                ${workSignal("draft", sampleDraft.status)}
+                ${workSignal("적용", "token required")}
+              </div>
+              <div class="blocked-actions" aria-label="Welcome authority boundary">
+                <strong>처음 설정 경계</strong>
+                <span class="blocked-action"><span class="blocked-action-label">기억</span>${escapeHtml(uiLabel(authority.durableMemoryPromotion))}<span class="blocked-action-detail">승인 없이는 후보만</span></span>
+                <span class="blocked-action"><span class="blocked-action-label">자가점검</span>${escapeHtml(uiLabel(authority.heartbeatActivation))}<span class="blocked-action-detail">기본 비활성</span></span>
+                <span class="blocked-action"><span class="blocked-action-label">외부 행동</span>${escapeHtml(uiLabel(authority.externalActions))}<span class="blocked-action-detail">환영 중 전송 없음</span></span>
+              </div>
+              <div class="work-surface-grid" aria-label="Welcome questions">
+                ${questions.slice(0, 8).map((question) => workSignal(question.id, question.targetFile)).join("")}
+              </div>
+            </div>`;
+}
+
+function runtimeWorkspaceWelcomeInspectorRows(panel) {
+  if (panel.id !== "runtime-workspace-welcome" || !panel.data) return "";
+  const welcome = panel.data.welcome;
+  const check = panel.data.welcomeCheck;
+  const draft = panel.data.sampleDraft;
+  return [
+    inspectorRow("워크스페이스", welcome.workspaceRoot),
+    inspectorRow("웰컴 상태", `${uiLabel(welcome.status)} · ${uiLabel(check.status)}`),
+    inspectorRow("질문 수", `${welcome.requiredQuestions.length}`),
+    inspectorRow("누락 파일", welcome.missingFiles.join(" · ") || "없음"),
+    inspectorRow("draft 쓰기 후보", `${draft.writes.length}`),
+    inspectorRow("기억 승격", uiLabel(welcome.authorityBoundary.durableMemoryPromotion)),
+    inspectorRow("heartbeat", uiLabel(welcome.authorityBoundary.heartbeatActivation)),
+    inspectorRow("적용 토큰", welcome.authorityBoundary.applyRequiresToken),
+  ].join("");
 }
 
 function coreWorkSurfaceHtml(panel) {

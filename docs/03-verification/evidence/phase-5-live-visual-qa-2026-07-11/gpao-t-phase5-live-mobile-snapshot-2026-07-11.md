@@ -1,0 +1,37 @@
+- generic [ref=f4e6] [box=12,16,360,900]:
+  - generic [ref=f4e7] [box=33,41,318,125]:
+    - img "nBeAI. GPAO-T" [ref=f4e8] [box=168,41,48,48]
+    - generic [ref=f4e9] [box=33,107,318,34]: nBeAI. GPAO-T
+    - generic [ref=f4e10] [box=33,145,318,22]: Gateway 대시보드
+  - generic [ref=f4e11] [box=33,190,318,294]:
+    - generic [ref=f4e12] [box=33,190,318,70]:
+      - generic [ref=f4e13] [box=33,190,318,20]: WebSocket URL
+      - textbox "WebSocket URL" [ref=f4e14] [box=33,217,318,44]:
+        - /placeholder: ws://127.0.0.1:18789
+        - text: ws://127.0.0.1:18789
+    - generic [ref=f4e15] [box=33,273,318,70]:
+      - generic [ref=f4e16] [box=33,273,318,20]: Gateway 토큰
+      - generic [ref=f4e17] [box=33,299,318,44]:
+        - textbox "Gateway 토큰 토큰 표시 여부 전환" [ref=f4e18] [box=33,299,266,44]:
+          - /placeholder: OPENCLAW_GATEWAY_TOKEN (선택 사항)
+        - button "토큰 표시 여부 전환" [ref=f4e20] [box=307,299,44,44]
+    - generic [ref=f4e26] [box=33,355,318,70]:
+      - generic [ref=f4e27] [box=33,355,318,20]: 비밀번호(저장되지 않음)
+      - generic [ref=f4e28] [box=33,381,318,44]:
+        - textbox "비밀번호(저장되지 않음) 비밀번호 표시 여부 전환" [ref=f4e29] [box=33,381,266,44]:
+          - /placeholder: 선택 사항
+        - button "비밀번호 표시 여부 전환" [ref=f4e31] [box=307,381,44,44]
+    - button "연결" [ref=f4e37] [box=33,441,318,44]
+  - alert [ref=f4e38] [box=33,499,318,337]:
+    - generic [ref=f4e39] [box=50,514,284,21]: 연결할 수 없음
+    - generic [ref=f4e40] [box=50,541,284,57]: 브라우저가 Gateway 연결을 완료할 수 없습니다. 자격 증명을 다시 시도하기 전에 대상과 전송 방식을 확인하세요.
+    - list [ref=f4e41] [box=50,607,284,157]:
+      - listitem [ref=f4e42] [box=68,607,266,37]: openclaw status 또는 openclaw gateway run으로 Gateway가 실행 중인지 확인하세요.
+      - listitem [ref=f4e43] [box=68,649,266,56]: WebSocket URL을 확인하고 Gateway가 HTTPS/Tailscale Serve 뒤에 있으면 wss://를 사용하세요.
+      - listitem [ref=f4e44] [box=68,708,266,56]: openclaw dashboard --no-open으로 dashboard를 다시 열어 현재 URL과 인증 세부 정보를 다시 복사하세요.
+    - group [ref=f4e45] [box=50,774,284,18]:
+      - generic "원시 오류" [ref=f4e46] [box=50,774,284,18]
+    - link "Control UI 인증 문서" [ref=f4e47] [cursor=pointer] [box=50,802,104,18]:
+      - /url: https://docs.openclaw.ai/web/dashboard
+  - group [ref=f4e48] [box=33,856,318,36]:
+    - generic "연결 방법" [ref=f4e49] [box=33,873,318,19]

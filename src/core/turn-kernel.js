@@ -54,7 +54,7 @@ export function runTurn({ input, priorFlow, root } = {}) {
 }
 
 export function classifyInputSignal(text) {
-  if (/그럼|그건|그거|아까|이어서|then|that|it/i.test(text)) {
+  if (/그럼|그건|그거|거기|그곳|저기|그 집|그 가게|아까|방금|이어서|계속|후기|예약|then|that|it/i.test(text)) {
     return { kind: "follow_up", confidence: 0.78 };
   }
   if (/파일|문서|package|release|배포/.test(text)) {
@@ -85,6 +85,8 @@ function buildTaskPacket({
     activeTargetId: sessionOverlay.activeTargetId,
     requestType: sessionOverlay.requestType,
     targetSource: sessionOverlay.targetSource,
+    activeReferent: sessionOverlay.activeReferent,
+    continuityHandoff: sessionOverlay.continuityHandoff,
     stalePriorTarget: sessionOverlay.stalePriorTarget,
     staleReason: sessionOverlay.staleReason,
     admittedTCells: admissionPacket.admittedCells.map((item) => ({
@@ -146,6 +148,9 @@ function buildTaskPacket({
 }
 
 function inferObjective({ input, sessionOverlay }) {
+  if (sessionOverlay.activeReferent?.entity && sessionOverlay.continuityHandoff?.decision === "auto_carry") {
+    return `Continue from recent referent: ${sessionOverlay.activeReferent.entity}`;
+  }
   if (sessionOverlay.activeTargetId === "release-file") {
     return "Recover the release-file active target and answer or draft only within local authority.";
   }
@@ -158,8 +163,18 @@ function buildUserVisibleState({ taskPacket, authorityDecision }) {
     language: "ko",
     summary: authorityDecision.status === "needs_approval"
       ? "요청의 맥락은 복구했지만 실제 배포/외부 실행은 승인 전까지 로컬 초안으로만 다룹니다."
+      : taskPacket.continuityHandoff?.decision === "auto_carry"
+      ? `${taskPacket.activeReferent.entity} 맥락을 새 세션에서도 이어받았습니다.`
       : "요청의 맥락을 복구했고 로컬 작업으로 진행할 수 있습니다.",
     activeTarget: taskPacket.activeTargetId,
+    activeReferent: taskPacket.activeReferent,
+    continuityHandoff: taskPacket.continuityHandoff
+      ? {
+        decision: taskPacket.continuityHandoff.decision,
+        confidence: taskPacket.continuityHandoff.confidence,
+        userFacingHint: taskPacket.continuityHandoff.userFacingHint,
+      }
+      : null,
     selectedSkills: taskPacket.skillRoute.selectedPacks.map((pack) => ({
       id: pack.id,
       role: pack.routeRole,

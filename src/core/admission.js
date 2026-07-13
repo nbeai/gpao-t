@@ -58,6 +58,14 @@ export function scoreAdmission({ cell, inputSignal, sessionOverlay }) {
     breakdown.push({ signal: "active_target_anchor", value: 40, detail: `anchor matches ${sessionOverlay.activeTargetId}` });
     total += 40;
   }
+  if (sessionOverlay.activeReferent?.entity && cell.anchor === `referent:${sessionOverlay.activeReferent.entity}`) {
+    breakdown.push({
+      signal: "active_referent_anchor",
+      value: 36,
+      detail: `referent matches ${sessionOverlay.activeReferent.entity}`,
+    });
+    total += 36;
+  }
   if (cell.admissionRole === "stale_supporting") {
     breakdown.push({ signal: "stale_supporting_downgrade", value: -10, detail: cell.downgradeReason || "stale supporting context" });
     total -= 10;
@@ -104,6 +112,9 @@ function classifyCellRole({ cell, inputSignal, sessionOverlay, scoring }) {
   }
   if (cell.answerAnchorEligible === false) {
     return "support";
+  }
+  if (sessionOverlay.activeReferent?.entity && cell.anchor === `referent:${sessionOverlay.activeReferent.entity}`) {
+    return cell.answerAnchorEligible ? "anchor" : "support";
   }
   if (cell.anchor === sessionOverlay.activeTargetId) {
     return "anchor";

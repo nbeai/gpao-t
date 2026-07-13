@@ -97,7 +97,7 @@ export function hasReleaseSignal(text) {
 }
 
 export function hasFollowUpSignal(text) {
-  return /그럼|그건|그거|아까|이어서|방금|then|that|it/i.test(text);
+  return /그럼|그건|그거|거기|그곳|저기|그 집|그 가게|아까|이어서|방금|계속|후기|예약|then|that|it/i.test(text);
 }
 
 function inferArtifactTarget(text) {

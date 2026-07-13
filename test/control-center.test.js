@@ -167,6 +167,10 @@ describe("GPAO-T Local Control Center readiness", () => {
     assert.equal(snapshot.surface, "local_control_center_data_contract");
     assert.equal(snapshot.panels.length, snapshot.counts.panels);
     assert.equal(snapshot.counts.memoryEntries, 0);
+    assert.equal(snapshot.counts.memoryReviewQueueRecords, 0);
+    assert.equal(snapshot.counts.memoryReviewQueueCandidates, 0);
+    assert.equal(snapshot.counts.memoryReviewQueueReplayEvidence, 0);
+    assert.equal(snapshot.counts.memoryContextMeshApplied, 0);
     assert.equal(snapshot.counts.installHardeningReports, 0);
     assert.equal(snapshot.counts.dataSurfaces >= 8, true);
     assert.equal(snapshot.counts.modelAdapters, 4);
@@ -196,6 +200,10 @@ describe("GPAO-T Local Control Center readiness", () => {
     assert.equal(snapshot.counts.approvalRecordBlockedActions, 14);
     assert.equal(snapshot.counts.coreWorkSurfaceThreadMessages, 2);
     assert.equal(snapshot.counts.coreWorkSurfaceSelectedSkillPacks >= 1, true);
+    assert.equal(snapshot.counts.welcomeQuestions, 8);
+    assert.equal(snapshot.counts.welcomeMissingFiles, 0);
+    assert.equal(snapshot.counts.welcomeDraftWrites, 4);
+    assert.equal(snapshot.counts.welcomeFindings, 0);
     assert.equal(snapshot.authorityBoundary.connectorActivation, "blocked_until_explicit_approval");
     assert.equal(snapshot.authorityBoundary.toolCliMcpExecution, "preview_confirmation_approval_replay_audit_and_rollback_references_exist");
     assert.equal(snapshot.authorityBoundary.modelRouterBoundary, "blocked_until_provider_setup_task_approval_and_audit");
@@ -209,6 +217,8 @@ describe("GPAO-T Local Control Center readiness", () => {
     assert.equal(snapshot.authorityBoundary.approvalRecordWrite, "local_jsonl_only");
     assert.equal(snapshot.authorityBoundary.dryRunInvocation, "blocked");
     assert.equal(snapshot.authorityBoundary.externalModelCall, "blocked_until_configured_and_approved");
+    assert.equal(snapshot.authorityBoundary.runtimeWorkspaceWelcomeApply, "apply-gpao-t-welcome-settings");
+    assert.equal(snapshot.authorityBoundary.runtimeWorkspaceWelcomeExternalActions, "blocked");
     assert.ok(snapshot.panels.some((panel) =>
       panel.id === "core-work-surface"
       && panel.status === "ready"
@@ -219,8 +229,21 @@ describe("GPAO-T Local Control Center readiness", () => {
       && panel.data.safetyInvariants.executesTools === false
       && panel.data.authoritySummary.closedActions.includes("connector activation")
     ));
-    assert.ok(snapshot.panels.some((panel) => panel.id === "memory" && panel.status === "review"));
+    assert.ok(snapshot.panels.some((panel) =>
+      panel.id === "memory"
+      && panel.status === "review"
+      && panel.data.applyGate.currentStage === "source_truth"
+      && panel.data.sourceCandidateReplayApplyLine.includes("approval_audit")
+      && panel.data.blockedMutations.includes("GPAO-T 원천 메모리 쓰기")
+    ));
     assert.ok(snapshot.panels.some((panel) => panel.id === "ops" && panel.status === "blocked"));
+    assert.ok(snapshot.panels.some((panel) =>
+      panel.id === "runtime-workspace-welcome"
+      && panel.status === "ready"
+      && panel.data.welcome.requiredQuestions.length === 8
+      && panel.data.sampleDraft.preview.memory === "not_promoted"
+      && panel.data.welcome.authorityBoundary.externalActions === "blocked"
+    ));
     assert.ok(snapshot.panels.some((panel) =>
       panel.id === "approval-preview"
       && panel.data.stages.length === 5
@@ -347,6 +370,12 @@ describe("GPAO-T Local Control Center readiness", () => {
     assert.equal(summary.controlCenterReadiness, "data_contract_before_ui");
     assert.equal(summary.counts.memoryEntries, 1);
     assert.equal(summary.counts.tcellCandidates, 1);
+    assert.equal(summary.counts.memoryReviewQueueRecords, 0);
+    assert.equal(summary.counts.memoryReviewQueueCandidates, 0);
+    assert.equal(summary.counts.memoryContextMeshApplied, 0);
+    assert.equal(summary.counts.firstCompletionStages, 6);
+    assert.equal(summary.counts.firstCompletionReadyStages, 6);
+    assert.ok(summary.panels.some((panel) => panel.id === "first-completion" && panel.status === "ready"));
     assert.equal(summary.counts.recoveryRecords, 2);
     assert.equal(summary.counts.installHardeningReports, 0);
     assert.equal(summary.counts.growthProposals, 1);
@@ -422,12 +451,49 @@ describe("GPAO-T Local Control Center readiness", () => {
     const cliSummary = JSON.parse(cliOutput);
     const snapshot = handleGatewayRequest({ method: "GET", path: "/control-center" });
     const summary = handleGatewayRequest({ method: "GET", path: "/control-center/summary" });
+    const welcome = handleGatewayRequest({ method: "GET", path: "/workspace/welcome" });
+    const welcomeCheck = handleGatewayRequest({ method: "GET", path: "/workspace/welcome/check" });
+    const welcomeDraft = handleGatewayRequest({
+      method: "POST",
+      path: "/workspace/welcome/draft",
+      body: {
+        answers: {
+          userName: "테스트",
+          userAddress: "테스트님",
+          companionName: "Mina",
+          tone: "차분한 존댓말",
+          rememberAutomatically: ["처음 사용 중"],
+          durableMemoryApproved: false,
+        },
+      },
+    });
+    const welcomeApplyBlocked = handleGatewayRequest({
+      method: "POST",
+      path: "/workspace/welcome/apply",
+      body: {
+        answers: {
+          userName: "테스트",
+          userAddress: "테스트님",
+          companionName: "Mina",
+          tone: "차분한 존댓말",
+        },
+        approvalToken: "wrong",
+      },
+    });
 
     assert.equal(cliSummary.schema, "gpao_t.control_center_summary.v0_1");
     assert.equal(snapshot.status, 200);
     assert.equal(summary.status, 200);
     assert.equal(snapshot.body.schema, "gpao_t.control_center_snapshot.v0_1");
     assert.equal(summary.body.schema, "gpao_t.control_center_summary.v0_1");
+    assert.equal(welcome.status, 200);
+    assert.equal(welcome.body.schema, "gpao_t.runtime_workspace_welcome.v0_1");
+    assert.equal(welcomeCheck.status, 200);
+    assert.equal(welcomeCheck.body.status, "ready");
+    assert.equal(welcomeDraft.status, 200);
+    assert.equal(welcomeDraft.body.preview.memory, "not_promoted");
+    assert.equal(welcomeApplyBlocked.status, 409);
+    assert.equal(welcomeApplyBlocked.body.applied, false);
   });
 
   it("renders a static Local Control Center UI reader without external activation", () => {
@@ -439,6 +505,7 @@ describe("GPAO-T Local Control Center readiness", () => {
       root,
       outputPath: "control-center.html",
       now,
+      snapshot,
     });
     const renderedHtml = readFileSync(render.outputPath, "utf8");
 
@@ -454,6 +521,10 @@ describe("GPAO-T Local Control Center readiness", () => {
     assert.match(html, /권한 경계/);
     assert.match(html, /data-panel="memory"/);
     assert.match(html, /data-panel="approval-preview"/);
+    assert.match(html, /data-panel="runtime-workspace-welcome"/);
+    assert.match(html, /data-runtime-workspace-welcome="ready"/);
+    assert.match(html, /첫 설정 메시지/);
+    assert.match(html, /data-welcome-message="first-install"/);
     assert.match(html, /data-panel="design-reference"/);
     assert.match(html, /data-design-reference-gate="required"/);
     assert.match(html, /data-design-reference-axes="required"/);
@@ -800,7 +871,7 @@ describe("GPAO-T Local Control Center readiness", () => {
     assert.equal(surface.executionGovernanceFlow.boundaries.toolCliMcpExecution, "blocked");
     assert.equal(surface.executionGovernanceFlow.boundaries.externalSend, "blocked");
     assert.equal(surface.taskState.objective.includes("GPAO-T"), true);
-    assert.equal(surface.contextPreview.boundary.includes("preview only"), true);
+    assert.equal(surface.contextPreview.boundary.includes("review only"), true);
     assert.equal(surface.skillRoutePreview.selectedPacks.length >= 1, true);
     assert.equal(surface.modelToolRoutePreview.liveModelExecution, false);
     assert.equal(surface.modelToolRoutePreview.liveToolExecution, false);
@@ -814,7 +885,7 @@ describe("GPAO-T Local Control Center readiness", () => {
     assert.equal(surface.safetyInvariants.usesScript, false);
     assert.equal(surface.safetyInvariants.usesForm, true);
     assert.equal(surface.safetyInvariants.usesOnlyLocalConfirmationForm, true);
-    assert.match(html, /GPAO-T Work Surface/);
+    assert.match(html, /GPAO-T 작업 대시보드/);
     assert.match(html, /data-core-work-surface="interactive-local"/);
     assert.match(html, /data-session-workspace="session-based-local-ai-os"/);
     assert.match(html, /data-session-rail="left"/);
@@ -891,7 +962,7 @@ describe("GPAO-T Local Control Center readiness", () => {
     assert.equal(verification.status, "ready");
     assert.equal(cliSurface.schema, surface.schema);
     assert.equal(cliCheck.status, "ready");
-    assert.match(cliHtml, /GPAO-T Work Surface/);
+    assert.match(cliHtml, /GPAO-T 작업 대시보드/);
     assert.equal(gatewaySurface.status, 200);
     assert.equal(gatewaySurface.body.schema, surface.schema);
     assert.equal(gatewayCheck.status, 200);
@@ -1127,7 +1198,7 @@ describe("GPAO-T Local Control Center readiness", () => {
     assert.equal(state.panels.length > 0, true);
     assert.equal(state.uiValidation.status, "ready");
     assert.equal(state.stateLanes.length, 4);
-    assert.equal(state.stateLanes.some((lane) => lane.id === "workflow" && lane.source === "GET /control-center/summary"), true);
+    assert.equal(state.stateLanes.some((lane) => lane.id === "workflow" && lane.source === "GPAO-T 로컬 상태 요약"), true);
     assert.equal(state.stateLanes.some((lane) => lane.id === "recovery"), true);
     assert.equal(state.stateLanes.some((lane) => lane.id === "authority" && lane.status === "ready"), true);
     assert.equal(state.stateLanes.some((lane) => lane.id === "next"), true);
@@ -1144,9 +1215,9 @@ describe("GPAO-T Local Control Center readiness", () => {
     const html = buildBrowserLocalAppShellHtml({ state });
     const verification = verifyBrowserLocalAppShell({ html, state });
 
-    assert.match(html, /GPAO-T Browser-Local App Shell/);
-    assert.match(html, /127\.0\.0\.1 read-mostly shell/);
-    assert.match(html, /POST and external activation blocked/);
+    assert.match(html, /GPAO-T 로컬 작업 화면/);
+    assert.match(html, /내 PC에서 먼저 확인하는 안전한 읽기 화면/);
+    assert.match(html, /외부 전송과 실행은 닫혀 있음/);
     assert.match(html, /data-app-shell="browser-local"/);
     assert.match(html, /data-interaction-mode="read-mostly-get"/);
     assert.match(html, /href="#shell-panel-runtime"/);
@@ -2103,7 +2174,7 @@ describe("GPAO-T Local Control Center readiness", () => {
       assert.match(page.body, /다음 안전 행동/);
       assert.doesNotMatch(page.body, /<script/i);
       assert.equal(workSurface.status, 200);
-      assert.match(workSurface.body, /GPAO-T Work Surface/);
+      assert.match(workSurface.body, /GPAO-T 작업 대시보드/);
       assert.match(workSurface.body, /data-composer-state="local-submission-enabled"/);
       assert.doesNotMatch(workSurface.body, /<script/i);
       assert.match(workSurface.body, /data-local-confirmation-form="approval-audit-record"/);
@@ -2131,7 +2202,7 @@ describe("GPAO-T Local Control Center readiness", () => {
       assert.equal(localRecordResult.body.writeResult.boundaryState.toolCliMcpExecution, false);
       assert.equal(localRecordResult.body.writeResult.boundaryState.externalSend, false);
       assert.equal(appShell.status, 200);
-      assert.match(appShell.body, /GPAO-T Browser-Local App Shell/);
+      assert.match(appShell.body, /GPAO-T 로컬 작업 화면/);
       assert.doesNotMatch(appShell.body, /<script/i);
       assert.equal(appShellContract.body.schema, "gpao_t.browser_local_app_shell_contract.v0_1");
       assert.equal(appShellState.body.schema, "gpao_t.browser_local_app_shell_state.v0_1");

@@ -1,0 +1,339 @@
+{
+  "schema": "gpao_t.live_patch_reproducibility_audit.v0_1",
+  "generatedAt": "2026-07-12T11:11:11.943Z",
+  "repoRoot": "/Users/jyp/Documents/Playground 2/gpao-t/",
+  "status": "ready",
+  "counts": {
+    "ready": 9
+  },
+  "families": [
+    {
+      "id": "gpao_bridge",
+      "label": "GPAO-T live bridge",
+      "status": "ready",
+      "tools": [
+        {
+          "path": "tools/apply-openclaw-live-gpao-bridge-patch.mjs",
+          "exists": true,
+          "hasApplyGate": true,
+          "hasTokenGate": true,
+          "hasBackup": true,
+          "hasManifestWrite": true,
+          "hasDryRun": true
+        },
+        {
+          "path": "tools/preview-openclaw-live-gpao-bridge-patch.mjs",
+          "exists": true,
+          "hasApplyGate": true,
+          "hasTokenGate": false,
+          "hasBackup": true,
+          "hasManifestWrite": true,
+          "hasDryRun": false
+        }
+      ],
+      "evidence": [
+        {
+          "path": "docs/03-verification/evidence/live-backups",
+          "exists": true,
+          "fileCount": 9549,
+          "manifestCount": 8,
+          "summaryCount": 25,
+          "structuredReceiptCount": 8
+        },
+        {
+          "path": "docs/03-verification/evidence/live-hook-preview",
+          "exists": true,
+          "fileCount": 7,
+          "manifestCount": 1,
+          "summaryCount": 2,
+          "structuredReceiptCount": 1
+        },
+        {
+          "path": "docs/03-verification/evidence/live-patch-stage",
+          "exists": true,
+          "fileCount": 3,
+          "manifestCount": 0,
+          "summaryCount": 0,
+          "structuredReceiptCount": 0
+        }
+      ],
+      "readback": [
+        "node bin/gpao-t.js openclaw live-turn-hook-readiness-check"
+      ],
+      "rollback": "backup_manifest_restore",
+      "findings": []
+    },
+    {
+      "id": "surface_seal",
+      "label": "GPAO-T surface seal",
+      "status": "ready",
+      "tools": [
+        {
+          "path": "tools/apply-openclaw-live-gpao-t-surface-seal-patch.mjs",
+          "exists": true,
+          "hasApplyGate": true,
+          "hasTokenGate": true,
+          "hasBackup": true,
+          "hasManifestWrite": true,
+          "hasDryRun": true
+        }
+      ],
+      "evidence": [
+        {
+          "path": "docs/03-verification/evidence/live-surface-seal-patch",
+          "exists": true,
+          "fileCount": 141,
+          "manifestCount": 8,
+          "summaryCount": 8,
+          "structuredReceiptCount": 8
+        }
+      ],
+      "readback": [
+        "npm run seal:routes",
+        "npm run check"
+      ],
+      "rollback": "backup_manifest_restore",
+      "findings": []
+    },
+    {
+      "id": "user_screen_ux",
+      "label": "GPAO-T user-screen UX",
+      "status": "ready",
+      "tools": [
+        {
+          "path": "tools/apply-openclaw-live-user-screen-ux-patch.mjs",
+          "exists": true,
+          "hasApplyGate": true,
+          "hasTokenGate": true,
+          "hasBackup": true,
+          "hasManifestWrite": false,
+          "hasDryRun": true
+        }
+      ],
+      "evidence": [
+        {
+          "path": "docs/03-verification/evidence/live-user-screen-ux-patch",
+          "exists": true,
+          "fileCount": 39,
+          "manifestCount": 0,
+          "summaryCount": 1,
+          "structuredReceiptCount": 1
+        }
+      ],
+      "readback": [
+        "Safari DOM readback",
+        "npm run seal:routes",
+        "npm run check"
+      ],
+      "rollback": "backup_folder_restore",
+      "findings": []
+    },
+    {
+      "id": "conversation_ux",
+      "label": "GPAO-T conversation UX",
+      "status": "ready",
+      "tools": [
+        {
+          "path": "tools/apply-openclaw-live-conversation-ux-patch.mjs",
+          "exists": true,
+          "hasApplyGate": true,
+          "hasTokenGate": true,
+          "hasBackup": true,
+          "hasManifestWrite": false,
+          "hasDryRun": true
+        }
+      ],
+      "evidence": [
+        {
+          "path": "docs/03-verification/evidence/live-conversation-ux-patch",
+          "exists": true,
+          "fileCount": 5,
+          "manifestCount": 0,
+          "summaryCount": 1,
+          "structuredReceiptCount": 1
+        }
+      ],
+      "readback": [
+        "npm run qa:conversation-ux",
+        "npm run qa:conversation"
+      ],
+      "rollback": "backup_folder_restore",
+      "findings": []
+    },
+    {
+      "id": "runtime_workspace",
+      "label": "GPAO-T runtime workspace pack",
+      "status": "ready",
+      "tools": [
+        {
+          "path": "tools/apply-gpao-t-runtime-workspace-pack.mjs",
+          "exists": true,
+          "hasApplyGate": true,
+          "hasTokenGate": true,
+          "hasBackup": true,
+          "hasManifestWrite": true,
+          "hasDryRun": true
+        }
+      ],
+      "evidence": [
+        {
+          "path": "docs/03-verification/evidence/runtime-workspace-absorption-2026-07-12",
+          "exists": true,
+          "fileCount": 14,
+          "manifestCount": 0,
+          "summaryCount": 14,
+          "structuredReceiptCount": 0
+        }
+      ],
+      "readback": [
+        "node tools/apply-gpao-t-runtime-workspace-pack.mjs"
+      ],
+      "rollback": "backup_folder_restore",
+      "findings": []
+    },
+    {
+      "id": "runtime_repair",
+      "label": "GPAO-T live runtime repair",
+      "status": "ready",
+      "tools": [
+        {
+          "path": "tools/repair-live-gpao-t-runtime.mjs",
+          "exists": true,
+          "hasApplyGate": true,
+          "hasTokenGate": true,
+          "hasBackup": true,
+          "hasManifestWrite": true,
+          "hasDryRun": true
+        },
+        {
+          "path": "tools/rollback-live-gpao-t-runtime-repair.mjs",
+          "exists": true,
+          "hasApplyGate": true,
+          "hasTokenGate": true,
+          "hasBackup": true,
+          "hasManifestWrite": true,
+          "hasDryRun": false
+        }
+      ],
+      "evidence": [
+        {
+          "path": "docs/03-verification/evidence/live-runtime-repair-2026-07-12",
+          "exists": true,
+          "fileCount": 5,
+          "manifestCount": 0,
+          "summaryCount": 0,
+          "structuredReceiptCount": 0
+        }
+      ],
+      "readback": [
+        "node tools/repair-live-gpao-t-runtime.mjs --no-write"
+      ],
+      "rollback": "tokened_rollback_tool",
+      "findings": []
+    },
+    {
+      "id": "plugin_allowlist",
+      "label": "GPAO-T plugin allowlist",
+      "status": "ready",
+      "tools": [
+        {
+          "path": "tools/fix-live-gpao-t-plugin-allowlist.mjs",
+          "exists": true,
+          "hasApplyGate": true,
+          "hasTokenGate": true,
+          "hasBackup": true,
+          "hasManifestWrite": true,
+          "hasDryRun": true
+        }
+      ],
+      "evidence": [
+        {
+          "path": "docs/03-verification/evidence/live-plugin-allowlist",
+          "exists": true,
+          "fileCount": 2,
+          "manifestCount": 1,
+          "summaryCount": 1,
+          "structuredReceiptCount": 1
+        }
+      ],
+      "readback": [
+        "openclaw gateway call health --json",
+        "npm run qa:conversation"
+      ],
+      "rollback": "config_backup_restore",
+      "findings": []
+    },
+    {
+      "id": "test_session_cleanup",
+      "label": "GPAO-T live test-session cleanup",
+      "status": "ready",
+      "tools": [
+        {
+          "path": "tools/cleanup-live-gpao-t-test-sessions.mjs",
+          "exists": true,
+          "hasApplyGate": true,
+          "hasTokenGate": true,
+          "hasBackup": true,
+          "hasManifestWrite": false,
+          "hasDryRun": true
+        }
+      ],
+      "evidence": [
+        {
+          "path": "docs/03-verification/evidence/live-test-session-cleanup",
+          "exists": true,
+          "fileCount": 180,
+          "manifestCount": 0,
+          "summaryCount": 98,
+          "structuredReceiptCount": 8
+        }
+      ],
+      "readback": [
+        "node tools/cleanup-live-gpao-t-test-sessions.mjs"
+      ],
+      "rollback": "session_index_backup_restore",
+      "findings": []
+    },
+    {
+      "id": "runtime_namespace",
+      "label": "GPAO-T runtime namespace stage-one",
+      "status": "ready",
+      "tools": [
+        {
+          "path": "tools/migrate-gpao-t-runtime-namespace.mjs",
+          "exists": true,
+          "hasApplyGate": true,
+          "hasTokenGate": true,
+          "hasBackup": true,
+          "hasManifestWrite": true,
+          "hasDryRun": true
+        },
+        {
+          "path": "tools/audit-gpao-t-runtime-namespace.mjs",
+          "exists": true,
+          "hasApplyGate": false,
+          "hasTokenGate": false,
+          "hasBackup": false,
+          "hasManifestWrite": false,
+          "hasDryRun": false
+        }
+      ],
+      "evidence": [
+        {
+          "path": "docs/03-verification/evidence/live-namespace-migration",
+          "exists": true,
+          "fileCount": 3,
+          "manifestCount": 1,
+          "summaryCount": 1,
+          "structuredReceiptCount": 1
+        }
+      ],
+      "readback": [
+        "npm run seal:namespace"
+      ],
+      "rollback": "backup_manifest_restore",
+      "findings": []
+    }
+  ],
+  "completionRule": "ready requires every live mutation family to have a source tool, token/dry-run gate, backup or rollback evidence, structured manifest or receipt, and readback command."
+}

@@ -1,26 +1,23 @@
 # What Is Not Done
 
-## Still Blocked After Stage 4
+## Still Excluded
 
-- Live model call is not open.
-- Tool / CLI / MCP execution from model output is not open.
-- Connector activation and OAuth / credential access are not open.
-- External send is not open.
-- Paid or destructive action is not open.
-- Public release / deployment is not open.
-- Durable memory promotion and self-growth live apply are not open.
-- Tauri packaged build / dependency install / signing / installer creation is not open.
-- Install / update / rollback execution is not open.
-- Local IPC command execution is not open.
+- large rewrite
+- unapproved deployment
+- unrelated refactor
+- technical deep-dive before the first workflow is approved
 
 ## Current Completion Boundary
 
-Stage 4 is complete as a local production-hardening readiness surface only.
+- Do not call this complete unless verification evidence and completion language guard pass.
+- Do not ask the user to test before AI/developer scenario verification covers success, empty, and failure states when applicable.
+- Current status: completed
 
-The browser-local app shell can show `/app-shell/production-hardening`, read Stage 4 state, verify readiness, and display desktop/mobile screenshot evidence. It still does not build, package, install, update, roll back, deploy, or execute live model/tool/connector actions.
+## Blockers
 
-## Known Product Quality Risks
-
-- The Stage 4 surface is product-readable, but the future packaged desktop shell should share a tighter component system with the main Work Surface.
-- The locked-action rail is intentionally explicit; later grouping can reduce density without hiding authority boundaries.
-- Actual packaged desktop build/install/release remains an explicit authority-gated later stage.
+- completion-gate: 1 completion gate blocker(s) detected.
+- completion-gate: 1 completion gate blocker(s) detected.
+- product-quality: Product quality gate is review.
+- verify: 1 verification check(s) failed.
+- completion-gate: 1 completion gate blocker(s) detected.
+- product-quality: Product quality gate is review.

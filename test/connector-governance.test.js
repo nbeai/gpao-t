@@ -5,6 +5,7 @@ import { describe, it } from "node:test";
 import {
   buildConnectorGovernanceSummary,
   buildConnectorToolGovernance,
+  buildConversationProgressLane,
   buildExecutionRuntimePlan,
   inspectReadOnlyConnector,
   invokeExecutionRuntimeDryRun,
@@ -116,8 +117,15 @@ describe("GPAO-T connector governance", () => {
 
     assert.equal(invocation.schema, "gpao_t.execution_runtime_invocation.v1");
     assert.equal(invocation.status, "completed_dry_run_invocation");
+    assert.equal(invocation.progressEvents.length, 2);
+    assert.equal(invocation.progressEvents[0].phase, "tool_running");
+    assert.equal(invocation.progressEvents[1].phase, "tool_complete");
+    assert.equal(invocation.progressEvents.every((event) => event.tool.bodyLogPolicy === "compact_lane_only"), true);
     assert.equal(invocation.safetyInvariants.writeMutationExpected, false);
     assert.equal(invocation.safetyInvariants.connectorActivation, false);
+    const lane = buildConversationProgressLane({ root: ROOT });
+    assert.equal(lane.uxContract.toolLogsInBody, "blocked");
+    assert.equal(lane.uxContract.bodyLogLeakFindings.length, 0);
     assert.equal(inspection.schema, "gpao_t.read_only_connector_inspection.v1");
     assert.equal(inspection.status, "ready");
     assert.equal(inspection.evidence.packageName, "gpao-t");

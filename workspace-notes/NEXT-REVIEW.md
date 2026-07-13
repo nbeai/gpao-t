@@ -1,27 +1,24 @@
 # Next Review
 
-## Current Position
+## Next Safe Action
 
-Stage 4 is complete as a local app / desktop production-hardening readiness surface:
-
-- `/app-shell/production-hardening`
-- `gpao-t control stage-4-production-hardening`
-- `gpao-t control stage-4-production-hardening-check`
-- Gateway `GET /app-shell/production-hardening`
-- desktop/mobile screenshot QA evidence
-
-## Next Big Stage
-
-The next large stage should be explicit approval-gated packaged desktop execution readiness:
-
-- decide whether to allow Tauri dependency install/build
-- if approved, implement build/install verification in a separate safe branch
-- keep installer/update/rollback execution separate from mere build verification
-- preserve local records, replay, rollback, source-control, screenshot, and authority boundaries
+Run beai verify to inspect available checks before implementation.
 
 ## Review Before Continuing
 
-- Keep model/tool/connector/external execution blocked unless explicitly approved.
-- Keep credential access, paid/destructive action, deployment, and durable memory promotion blocked.
-- Treat Stage 4 as production-readiness evidence, not a packaged desktop release.
-- Continue using desktop/mobile screenshot evidence for UI-facing work.
+- Check whether the current phase has pass/blocked evidence.
+- Confirm that AI/developer scenario verification happened before final user review.
+- Keep risky actions manual or dry-run until explicitly approved.
+- Use `applied but unverified` until verification evidence exists.
+
+## Session Resume
+
+Apply the newer source guidance to implementation or explicitly mark it out of scope before claiming completion.
+
+## Recent Evidence
+
+- preflight: Read-only workspace check completed for gpao-t.
+- route: Routed work as strict.
+- plan: Saved build plan.
+- route: Routed work as strict.
+- plan: Saved build plan.

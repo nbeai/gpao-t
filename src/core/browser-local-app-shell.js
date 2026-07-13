@@ -1,10 +1,3 @@
-import { buildControlCenterSnapshot, buildControlCenterSummary } from "./control-center.js";
-import {
-  buildControlCenterUiContract,
-  buildControlCenterUiSnapshot,
-  validateControlCenterUiSnapshot,
-} from "./control-center-ui-contract.js";
-import { buildLocalControlCenterDesignContract } from "./design-contract.js";
 import { runDoctor } from "./doctor.js";
 
 export const BROWSER_LOCAL_ALLOWED_GET_ROUTES = [
@@ -19,6 +12,10 @@ export const BROWSER_LOCAL_ALLOWED_GET_ROUTES = [
   "/work-surface/execution-flow",
   "/work-surface/execution-flow/confirmation",
   "/work-surface/execution-flow/verify",
+  "/gpao-t-workspace",
+  "/gpao-t-workspace.html",
+  "/gpao-t-workspace/state",
+  "/gpao-t-workspace/verify",
   "/sessions",
   "/sessions/verify",
   "/control-center",
@@ -196,12 +193,12 @@ export function buildBrowserLocalAppShellState({
         missing: ["loopback_runtime_unavailable"],
         nextAction: "Restart the loopback preview before using the app shell.",
       };
-  const snapshot = buildControlCenterSnapshot({ root });
-  const summary = buildControlCenterSummary({ root });
-  const design = buildLocalControlCenterDesignContract();
-  const uiContract = buildControlCenterUiContract();
-  const uiSnapshot = buildControlCenterUiSnapshot({ snapshot, designContract: design, uiContract });
-  const uiValidation = validateControlCenterUiSnapshot({ uiSnapshot });
+  const summary = buildBrowserLocalAppShellSummary({ health, contract });
+  const uiValidation = {
+    schema: "gpao_t.browser_local_app_shell_lightweight_validation.v0_1",
+    status: summary.panels.length ? "ready" : "blocked",
+    findings: summary.panels.length ? [] : ["panels_missing"],
+  };
 
   const stateFlags = {
     runtime_unavailable: !runtimeAvailable,
@@ -211,8 +208,8 @@ export function buildBrowserLocalAppShellState({
     port_conflict: portConflict,
     permission_blocked: permissionBlocked,
     overflow_regression: overflowRegression,
-    authority_hidden: authorityHidden || !Object.keys(snapshot.authorityBoundary || {}).length,
-    next_action_hidden: nextActionHidden || !snapshot.nextSafeAction,
+    authority_hidden: authorityHidden || !Object.keys(summary.authorityBoundary || {}).length,
+    next_action_hidden: nextActionHidden || !summary.nextSafeAction,
   };
   const failureRecoveryStates = contract.failureRecoveryStates.map((state) => ({
     ...state,
@@ -270,6 +267,58 @@ export function buildBrowserLocalAppShellState({
   };
 }
 
+function buildBrowserLocalAppShellSummary({ health, contract }) {
+  const panels = [
+    {
+      id: "runtime",
+      label: "로컬 런타임",
+      status: health.status === "ready" ? "ready" : "blocked",
+      headline: health.status === "ready"
+        ? "GPAO-T 로컬 런타임을 읽기 전용으로 확인할 수 있다."
+        : "GPAO-T 로컬 런타임 상태를 먼저 복구해야 한다.",
+      nextSafeAction: health.status === "ready"
+        ? "대화 화면과 작업 화면을 읽기 전용으로 확인한다."
+        : health.nextAction || "GPAO-T 런타임 상태를 복구한다.",
+    },
+    {
+      id: "workspace",
+      label: "작업 화면",
+      status: "ready",
+      headline: "작업/대화 화면은 사용자 경험 확인을 위한 읽기 표면으로 유지된다.",
+      nextSafeAction: "대화 입력, 응답 표시, 진행 상태, 모바일 배치를 확인한다.",
+    },
+    {
+      id: "authority",
+      label: "권한",
+      status: "ready",
+      headline: "외부 전송, 실행, 설치, 롤백, 자동화는 사용자 승인 전까지 닫혀 있다.",
+      nextSafeAction: "사용자가 보는 화면에서는 권한 경계를 짧고 명확하게 유지한다.",
+    },
+    {
+      id: "visual-qa",
+      label: "화면 QA",
+      status: "review",
+      headline: "완료 주장 전 데스크톱과 모바일 화면 증거가 필요하다.",
+      nextSafeAction: "브라우저에서 실제 화면을 확인하고 overflow/절단/빈 화면을 막는다.",
+    },
+  ];
+
+  return {
+    schema: "gpao_t.browser_local_app_shell_lightweight_summary.v0_1",
+    status: health.status === "ready" ? "ready" : "review",
+    panels,
+    counts: {
+      panels: panels.length,
+      blocked: panels.filter((panel) => panel.status === "blocked").length,
+      review: panels.filter((panel) => panel.status === "review").length,
+    },
+    authorityBoundary: contract.authorityBoundary,
+    nextSafeAction: health.status === "ready"
+      ? "Use the browser-local app shell as a fast user-facing read surface; leave the full Control Center on its own route."
+      : health.nextAction || "Recover the local runtime before using the app shell.",
+  };
+}
+
 export function buildBrowserLocalAppShellHtml({ state } = {}) {
   const shellState = state || buildBrowserLocalAppShellState();
   return `<!doctype html>
@@ -277,7 +326,7 @@ export function buildBrowserLocalAppShellHtml({ state } = {}) {
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>GPAO-T Browser-Local App Shell</title>
+  <title>GPAO-T 로컬 작업 화면</title>
   <style>
     :root {
       color-scheme: light;
@@ -502,36 +551,36 @@ export function buildBrowserLocalAppShellHtml({ state } = {}) {
 <body data-app-shell="browser-local" data-interaction-mode="read-mostly-get">
   <header class="topbar">
     <div>
-      <h1>GPAO-T Browser-Local App Shell</h1>
-      <p class="subtitle">127.0.0.1 read-mostly shell · POST and external activation blocked</p>
+      <h1>GPAO-T 로컬 작업 화면</h1>
+      <p class="subtitle">내 PC에서 먼저 확인하는 안전한 읽기 화면 · 외부 전송과 실행은 닫혀 있음</p>
     </div>
     <div class="topbar-action">
       <p data-next-safe-action="shell"><strong>다음 안전 행동:</strong> ${escapeHtml(shellState.nextSafeAction)}</p>
       <div class="mobile-panel-nav" data-panel-navigation="topbar" aria-label="Mobile panel navigation">
-        <a href="#shell-panel-runtime">Runtime</a>
-        <a href="#shell-panel-authority">Authority</a>
+        <a href="#shell-panel-runtime">상태</a>
+        <a href="#shell-panel-authority">권한</a>
         <a href="#shell-screenshot-qa">QA</a>
       </div>
       <div class="mobile-action-line" aria-label="Mobile shell safety line">
-        <span data-authority-boundary="topbar">Authority blocked</span>
-        <span data-screenshot-qa="topbar">Screenshot QA required</span>
+        <span data-authority-boundary="topbar">권한 닫힘</span>
+        <span data-screenshot-qa="topbar">화면 확인 필요</span>
       </div>
     </div>
   </header>
   <div class="layout">
     <nav class="panel-nav" aria-label="Browser-local shell panel navigation">
-      <p class="nav-title">Panels</p>
+      <p class="nav-title">화면</p>
       ${shellState.panels.map((panel) => `<a class="nav-link" href="${panel.anchor}">${escapeHtml(panel.label)}</a>`).join("")}
-      <p class="nav-title" style="margin-top:16px;">Evidence</p>
-      <a class="nav-link" href="#shell-failure-recovery">Failure / Recovery</a>
+      <p class="nav-title" style="margin-top:16px;">점검</p>
+      <a class="nav-link" href="#shell-failure-recovery">문제 / 복구</a>
       <a class="nav-link" href="#shell-screenshot-qa">Screenshot QA</a>
-      <a class="nav-link" href="#shell-authority">Authority Boundary</a>
+      <a class="nav-link" href="#shell-authority">권한 경계</a>
     </nav>
     <main>
       <section class="strip" aria-label="Browser-local shell status">
-        <div class="card"><h2>${escapeHtml(shellState.status)}</h2><p class="muted">Shell state</p></div>
-        <div class="card"><h2>${shellState.panels.length}</h2><p class="muted">Readable panels</p></div>
-        <div class="card"><h2>${shellState.activeFailureStates.length}</h2><p class="muted">Active recovery states</p></div>
+        <div class="card"><h2>${escapeHtml(shellState.status)}</h2><p class="muted">화면 상태</p></div>
+        <div class="card"><h2>${shellState.panels.length}</h2><p class="muted">확인 가능한 화면</p></div>
+        <div class="card"><h2>${shellState.activeFailureStates.length}</h2><p class="muted">복구 필요 상태</p></div>
       </section>
       <section class="state-lanes" id="shell-state-lanes" aria-label="Workflow, recovery, authority, and next action state lanes">
         ${shellState.stateLanes.map(renderStateLane).join("")}
@@ -540,21 +589,21 @@ export function buildBrowserLocalAppShellHtml({ state } = {}) {
     </main>
     <aside>
       <section class="side" id="shell-authority" data-authority-boundary="side">
-        <h2>Authority Boundary</h2>
-        <p class="muted">First slice exposes read-only and blocked states. It does not mutate runtime state.</p>
+        <h2>권한 경계</h2>
+        <p class="muted">이 화면은 읽기와 확인만 제공합니다. 런타임 상태를 직접 바꾸지 않습니다.</p>
         <ul class="blocked-list">
           ${shellState.blockedActions.map((action) => `<li>${escapeHtml(action)}</li>`).join("")}
         </ul>
       </section>
       <section class="side" id="shell-failure-recovery">
-        <h2>Failure / Recovery</h2>
+        <h2>문제 / 복구</h2>
         <div class="list">
           ${shellState.failureRecoveryStates.map(renderFailureState).join("")}
         </div>
       </section>
       <section class="side" id="shell-screenshot-qa" data-screenshot-qa="side">
-        <h2>Screenshot QA</h2>
-        <p class="muted">Required before claiming browser-local shell visual quality.</p>
+        <h2>화면 확인</h2>
+        <p class="muted">사용자 화면 품질을 완료라고 말하기 전 확인해야 합니다.</p>
         <ul class="blocked-list">
           ${shellState.screenshotQa.requiredSignals.map((signal) => `<li>${escapeHtml(signal)}</li>`).join("")}
         </ul>
@@ -569,12 +618,12 @@ export function verifyBrowserLocalAppShell({ html, state } = {}) {
   const shellHtml = html || buildBrowserLocalAppShellHtml({ state });
   const findings = [];
   const requiredText = [
-    "GPAO-T Browser-Local App Shell",
-    "127.0.0.1 read-mostly shell",
-    "Authority Boundary",
-    "Failure / Recovery",
+    "GPAO-T 로컬 작업 화면",
+    "내 PC에서 먼저 확인하는 안전한 읽기 화면",
+    "권한 경계",
+    "문제 / 복구",
     "Screenshot QA",
-    "POST and external activation blocked",
+    "외부 전송과 실행은 닫혀 있음",
   ];
 
   for (const text of requiredText) {
@@ -634,7 +683,7 @@ function renderPanel(panel) {
         <div class="row"><strong>Panel ID</strong><span>${escapeHtml(panel.id)}</span></div>
         <div class="row"><strong>Status</strong><span>${escapeHtml(panel.status)}</span></div>
         <div class="row"><strong>Authority</strong><span>${escapeHtml(panel.authority)}</span></div>
-        <div class="row"><strong>Transport</strong><span>GET-only 127.0.0.1 HTTP source routes</span></div>
+        <div class="row"><strong>연결</strong><span>내 PC의 읽기 전용 확인 경로</span></div>
       </div>
     </details>
   </article>`;
@@ -675,8 +724,8 @@ function buildAppShellStateLanes({ contract, health, summary, uiValidation, acti
       id: "workflow",
       label: "Workflow State",
       status: summary.status === "blocked" ? "blocked" : "ready",
-      summary: `${summary.panels.length} panels are readable through GET-only shell state.`,
-      source: "GET /control-center/summary",
+      summary: `${summary.panels.length}개 화면을 내 PC의 읽기 전용 상태로 확인할 수 있습니다.`,
+      source: "GPAO-T 로컬 상태 요약",
     },
     {
       id: "recovery",
@@ -685,20 +734,20 @@ function buildAppShellStateLanes({ contract, health, summary, uiValidation, acti
       summary: activeFailureStates.length
         ? `${activeFailureStates.length} recovery state(s) need attention before deeper behavior.`
         : "No active recovery state blocks read-only inspection.",
-      source: "GET /health + GET /control-center/ui-validate",
+      source: "상태 점검 + 화면 검증",
     },
     {
       id: "authority",
       label: "Authority State",
       status: "ready",
-      summary: `${contract.blockedActions.length} mutating action classes remain blocked.`,
-      source: "browser-local app-shell contract",
+      summary: `${contract.blockedActions.length}개 실행 행동은 아직 잠겨 있습니다.`,
+      source: "GPAO-T 로컬 화면 계약",
     },
     {
       id: "next",
       label: "Next Action State",
       status: health.status === "ready" && uiValidation.status === "ready" ? "ready" : "review",
-      summary: activeFailureStates[0]?.recovery || "Continue with read-only inspection; do not activate connectors, tools, deployment, or memory promotion.",
+      summary: activeFailureStates[0]?.recovery || "읽기 전용 확인을 계속하고, 커넥터/도구/배포/기억 승격은 열지 않습니다.",
       source: "derived from doctor, UI validation, and active recovery state",
     },
   ];

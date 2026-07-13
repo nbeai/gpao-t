@@ -6,3 +6,44 @@ dist/
 tmp/
 *.log
 .DS_Store
+
+# GPAO-T generated evidence hygiene.
+# Keep curated Markdown/JSON evidence files explicit, but do not flood git with
+# raw copied live runtime backups or repeated generated run directories.
+docs/03-verification/evidence/live-backups/**
+!docs/03-verification/evidence/live-backups/**/
+!docs/03-verification/evidence/live-backups/**/manifest.json
+docs/03-verification/evidence/live-*-patch/**
+!docs/03-verification/evidence/live-*-patch/**/
+!docs/03-verification/evidence/live-*-patch/**/manifest.json
+docs/03-verification/evidence/live-test-session-cleanup/**
+!docs/03-verification/evidence/live-test-session-cleanup/**/
+!docs/03-verification/evidence/live-test-session-cleanup/**/manifest.json
+docs/03-verification/evidence/conversation-ux-qa/*.json
+
+# Raw live/runtime repair snapshots are retained on disk but should not dominate
+# normal source review. Curated Markdown/JSON summaries in the evidence root stay
+# visible and should reference these folders when needed.
+docs/03-verification/evidence/live-device-repair-backup-*/**
+docs/03-verification/evidence/live-runtime-repair-*/**
+docs/03-verification/evidence/live-conversation-qa-*/**
+docs/03-verification/evidence/live-plugin-allowlist/**
+docs/03-verification/evidence/live-hook-preview/**
+docs/03-verification/evidence/live-patch-stage/**
+docs/03-verification/evidence/live-namespace-migration/**
+docs/03-verification/evidence/runtime-workspace-absorption-*/backups/**
+docs/03-verification/evidence/**/*.before
+
+# Heavy generated runtime/browser rebuild evidence stays local. Keep curated
+# root-level Markdown/JSON evidence and screenshots when they are intentionally
+# referenced by release notes.
+docs/03-verification/evidence/live-standalone-namespace-rebuild/**
+docs/03-verification/evidence/live-chat-layout-recovery-hotfix/**
+docs/03-verification/evidence/live-dashboard-cache-bust-hotfix/**
+docs/03-verification/evidence/final-stage-6-visual-qa-*/runtime-lock-recovery/**
+docs/03-verification/evidence/git-hygiene-backups/**
+docs/03-verification/evidence/**/*.backup
+docs/03-verification/evidence/**/*.sqlite.before-*
+
+# Accidental scratch files from terminal experiments.
+console.log(yaml ok))

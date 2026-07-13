@@ -2,10 +2,10 @@ import { buildModelRouterPolicy, routeModel } from "./model-router.js";
 
 const PROVIDER_LANES = [
   {
-    id: "openclaw.oauth",
-    label: "OpenClaw OAuth / session",
+    id: "gpao_t.account_session",
+    label: "GPAO-T 계정 세션 연결",
     lane: "oauth_session",
-    provider: "openclaw_compatible",
+    provider: "gpao_t_runtime_compatible",
     authMode: "oauth_or_session_auth",
     credentialSurface: "external_session_not_local_secret",
     primaryUse: "ChatGPT/Codex account based interactive use",
@@ -39,7 +39,7 @@ const PROVIDER_LANES = [
   },
   {
     id: "local.deterministic",
-    label: "Local deterministic preview",
+    label: "로컬 검토 모델",
     lane: "local_private",
     provider: "local",
     authMode: "none",
@@ -96,7 +96,7 @@ export function buildModelProviderRegistry({ env = process.env } = {}) {
       modelOutputIsNotToolAuthority: true,
     },
     nextSafeAction:
-      "Use local deterministic invocation for proof, and require explicit connection/approval before OAuth or API provider calls.",
+      "먼저 로컬 검토 응답으로 확인하고, 계정/API 모델 연결은 명확한 연결 상태와 승인 후에만 엽니다.",
   };
 }
 
@@ -139,8 +139,8 @@ export function buildModelInvocationPacket({
     approval: {
       required: needsApproval,
       reason: needsApproval
-        ? "외부 provider, 계정/session, API key, 비용 또는 네트워크 경계가 있으므로 명시 승인 전 호출하지 않습니다."
-        : "로컬 deterministic preview는 외부 호출, 비밀키, 비용 없이 실행할 수 있습니다.",
+        ? "외부 모델 연결, 계정 세션, API 키, 비용 또는 네트워크 경계가 있으므로 명시 승인 전 호출하지 않습니다."
+        : "로컬 검토 응답은 외부 호출, 비밀키, 비용 없이 실행할 수 있습니다.",
       requiredBeforeExternalCall: [
         "connection_status_visible",
         "provider_scope_visible",
@@ -168,7 +168,7 @@ export function buildModelInvocationPacket({
 }
 
 export function invokeModelLocally({
-  request = "GPAO-T 작업을 로컬 preview로 정리해줘.",
+  request = "GPAO-T 작업을 로컬 검토용 응답으로 정리해줘.",
   providerId = "local.deterministic",
   now = new Date().toISOString(),
 } = {}) {
@@ -184,7 +184,7 @@ export function invokeModelLocally({
       output: null,
       invokedProvider: false,
       userVisibleSummary:
-        "이 provider lane은 정식 경로로 준비됐지만, 계정/API/비용/네트워크 경계 때문에 아직 호출하지 않았습니다.",
+        "이 모델 연결 경로는 준비됐지만, 계정/API/비용/네트워크 경계 때문에 아직 호출하지 않았습니다.",
       nextSafeAction: "연결 상태와 승인 패킷을 먼저 확인한 뒤 외부 호출을 별도 단계로 엽니다.",
     };
   }
@@ -199,21 +199,21 @@ export function invokeModelLocally({
     invokedProvider: "local.deterministic",
     output: {
       role: "assistant",
-      type: "local_preview_draft",
+      type: "local_review_response",
       text:
-        `요청을 로컬 preview로 정리했습니다. 핵심 작업은 "${focus}"이며, ` +
+        `요청을 검토 가능한 응답으로 정리했습니다. 핵심 작업은 "${focus}"이며, ` +
         "다음 단계는 맥락 후보, 스킬 경로, 권한 경계를 붙인 뒤 외부 실행 없이 초안을 검토하는 것입니다.",
       modelOutputBoundary: "draft_only_not_action_authority",
     },
     blockedActions: packet.blockedActions,
     userVisibleSummary:
-      "외부 호출 없이 로컬 모델 호출 proof를 완료했습니다. 결과는 초안이며 도구 실행 권한이 아닙니다.",
-    nextSafeAction: "이 결과를 Work Surface draft로 보여주고, 실제 provider 호출은 OAuth/API 연결 승인 뒤에만 엽니다.",
+      "외부 호출 없이 로컬 검토 응답을 완료했습니다. 결과는 초안이며 도구 실행 권한이 아닙니다.",
+    nextSafeAction: "이 결과를 작업 대시보드에 표시하고, 실제 모델 호출은 OAuth/API 연결 승인 뒤에만 엽니다.",
   };
 }
 
 export async function invokeModelProvider({
-  request = "GPAO-T 작업을 실제 provider 호출 후보로 처리한다.",
+  request = "GPAO-T 작업을 실제 모델 연결 후보로 처리한다.",
   providerId = "local.deterministic",
   approval = {},
   env = process.env,
@@ -238,7 +238,7 @@ export async function invokeModelProvider({
       invokedProvider: false,
       output: null,
       userVisibleSummary:
-        "실제 provider 호출은 준비됐지만, 연결/비용/승인 조건이 아직 충족되지 않아 실행하지 않았습니다.",
+        "실제 모델 호출은 준비됐지만, 연결/비용/승인 조건이 아직 충족되지 않아 실행하지 않았습니다.",
       nextSafeAction: approvalCheck.nextSafeAction,
     };
   }
@@ -253,8 +253,8 @@ export async function invokeModelProvider({
       invokedProvider: false,
       output: null,
       userVisibleSummary:
-        "승인 조건은 충족됐지만, 실제 provider transport가 연결되지 않아 외부 호출을 실행하지 않았습니다.",
-      nextSafeAction: "OAuth/session 또는 API provider transport를 연결한 뒤 같은 승인 패킷으로 호출합니다.",
+        "승인 조건은 충족됐지만, 실제 모델 전송 경로가 연결되지 않아 외부 호출을 실행하지 않았습니다.",
+      nextSafeAction: "계정 세션 또는 API 모델 연결을 붙인 뒤 같은 승인 패킷으로 호출합니다.",
     };
   }
 
@@ -289,8 +289,8 @@ export async function invokeModelProvider({
       promotesDurableMemory: false,
     },
     userVisibleSummary:
-      "실제 provider 호출 결과를 초안으로 받았습니다. 이 출력은 도구 실행 권한이 아니며 Work Surface에서 검토되어야 합니다.",
-    nextSafeAction: "초안을 Work Surface에 표시하고, 도구/커넥터 실행은 별도 approval flow로 넘깁니다.",
+        "실제 모델 호출 결과를 검토용 응답으로 받았습니다. 이 출력은 도구 실행 권한이 아니며 작업 대시보드에서 검토되어야 합니다.",
+    nextSafeAction: "응답을 작업 대시보드에 표시하고, 도구/커넥터 실행은 별도 승인 흐름으로 넘깁니다.",
   };
 }
 
@@ -321,7 +321,7 @@ export function verifyProviderInvocationApproval({
     grantedApprovals: granted,
     nextSafeAction: findings.length
       ? "연결 상태, 비용/계정 정책, task packet, 사용자 확인, audit/replay reference를 먼저 채웁니다."
-      : "Provider transport를 호출해도 되지만, 출력은 초안이며 도구 실행 권한이 아닙니다.",
+      : "모델 전송 경로를 호출해도 되지만, 출력은 초안이며 도구 실행 권한이 아닙니다.",
   };
 }
 
@@ -354,8 +354,8 @@ export function verifyModelInvocation({
     checkedLanes: providers.map((provider) => provider.id),
     checkedOutputBoundary: localResult.output?.modelOutputBoundary || null,
     nextSafeAction: findings.length
-      ? "Repair model invocation lane findings before exposing provider calls."
-      : "Wire OAuth/API connection setup later; keep local deterministic invocation as the safe proof lane.",
+      ? "모델 호출 경로 문제를 먼저 고친 뒤 외부 모델 연결을 노출합니다."
+      : "계정/API 연결 설정은 뒤에서 붙이고, 지금은 로컬 검토 응답을 안전한 증거 경로로 유지합니다.",
   };
 }
 
@@ -404,7 +404,7 @@ function inferProviderConfigured({ provider, env }) {
   if (provider.id === "local.deterministic") return true;
   if (provider.id === "openai.api_key") return Boolean(env.OPENAI_API_KEY);
   if (provider.id === "anthropic.api_key") return Boolean(env.ANTHROPIC_API_KEY);
-  if (provider.id === "openclaw.oauth") {
+  if (provider.id === "gpao_t.account_session") {
     return Boolean(env.OPENCLAW_SESSION || env.OPENCLAW_GATEWAY_TOKEN || env.GPAO_T_OPENCLAW_SESSION);
   }
   return false;

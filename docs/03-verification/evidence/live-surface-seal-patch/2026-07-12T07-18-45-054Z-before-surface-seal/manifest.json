@@ -1,0 +1,1401 @@
+{
+  "schema": "gpao_t.live_surface_seal_patch_manifest.v0_1",
+  "generatedAt": "2026-07-12T07:18:45.173Z",
+  "liveRoot": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist",
+  "controlUiRoot": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui",
+  "mode": "apply",
+  "changedFileCount": 33,
+  "changedFiles": [
+    {
+      "file": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui/index.html",
+      "relativePath": "index.html",
+      "beforeSha256": "17674df5e7de9fb6100fd506f56f01b40f317ec3a519cbe6fd46a3242ff678db",
+      "afterSha256": "0cd7f8b0ab864e4dd61bfa0621be7d11f0f1f56b6bb82e1a11fc9a921874023e",
+      "replacements": [
+        {
+          "from": "https://docs.openclaw.ai/web/control-ui#blank-control-ui-page",
+          "to": "#gpao-t-recovery",
+          "count": 1
+        },
+        {
+          "from": "Control UI did not start",
+          "to": "GPAO-T 화면을 시작하지 못했습니다",
+          "count": 1
+        },
+        {
+          "from": "Control UI troubleshooting",
+          "to": "GPAO-T 복구 안내",
+          "count": 1
+        },
+        {
+          "from": "A fresh page still could not start the Control UI.",
+          "to": "A fresh page still could not start GPAO-T.",
+          "count": 1
+        },
+        {
+          "from": "Try again, then check the troubleshooting guide if the problem persists.",
+          "to": "Try again, then check GPAO-T recovery if the problem persists.",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "file": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui/favicon.svg",
+      "relativePath": "favicon.svg",
+      "beforeSha256": "74e1fb7542675f68aafe502576f7c857c3f3620d07095e910515e3c05d62ab2e",
+      "afterSha256": "9784a56b7cee051b3e16c94ddab4e12e3840d9f0f03eb86cfc2c30e552b6bca0",
+      "replacements": [
+        {
+          "from": "legacy favicon.svg",
+          "to": "GPAO-T svg logo",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui/assets/agents-page-CATl8JFm.js",
+      "relativePath": "assets/agents-page-CATl8JFm.js",
+      "beforeSha256": "a8ab7319bc1a29c8dfb7ed7879c32b15cae3aa9e3ac6505655cbcc2bf56b8182",
+      "afterSha256": "2efa6741c891fec7b89445ea35f36b374a31c52cb859cb52dc106b09d510332d",
+      "replacements": [
+        {
+          "from": "https://docs.openclaw.ai/channels",
+          "to": "#gpao-t-communications",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui/assets/agents-page-DUEW60G0.js",
+      "relativePath": "assets/agents-page-DUEW60G0.js",
+      "beforeSha256": "6d91579313083568a34b4d7d2877d0f5d3fb83e5633597cc2485f479a296cd87",
+      "afterSha256": "86c7af4fdec9f29f626b3aa0e6fd8d6111d255a55b5da713fb04ced410c5249f",
+      "replacements": [
+        {
+          "from": "https://docs.openclaw.ai/channels",
+          "to": "#gpao-t-communications",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui/assets/ar-BPpmD0AO.js",
+      "relativePath": "assets/ar-BPpmD0AO.js",
+      "beforeSha256": "ac7f1c52163f032828a53dea9bbbe22d1ea22ae3a6b37791af0d4e42ba75faf1",
+      "afterSha256": "87b8ac58d432b7b78e91678ee0d312f5f9fea52a275e03a8618298b81bad0a3f",
+      "replacements": [
+        {
+          "from": "openclaw dashboard",
+          "to": "gpao-t dashboard",
+          "count": 5
+        },
+        {
+          "from": "openclaw doctor",
+          "to": "gpao-t doctor",
+          "count": 1
+        },
+        {
+          "from": "openclaw models auth",
+          "to": "gpao-t models auth",
+          "count": 1
+        },
+        {
+          "from": "openclaw status",
+          "to": "gpao-t status",
+          "count": 1
+        },
+        {
+          "from": "openclaw gateway run",
+          "to": "gpao-t runtime run",
+          "count": 1
+        },
+        {
+          "from": "openclaw.json",
+          "to": "GPAO-T runtime config",
+          "count": 1
+        },
+        {
+          "from": "Lobsterdex",
+          "to": "GPAO-T companion log",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui/assets/de-CBZzX3jX.js",
+      "relativePath": "assets/de-CBZzX3jX.js",
+      "beforeSha256": "8a8aa39ab6e335d870da74fa5bdd7252ee7cff4a71ef1b95fedec701269bb8e7",
+      "afterSha256": "3fe96197d18de8ac2e7f6040e4e416aced9ad85f625110439ed3ca75ab79ba58",
+      "replacements": [
+        {
+          "from": "OpenClaw mobile",
+          "to": "GPAO-T mobile",
+          "count": 2
+        },
+        {
+          "from": "openclaw dashboard",
+          "to": "gpao-t dashboard",
+          "count": 5
+        },
+        {
+          "from": "openclaw doctor",
+          "to": "gpao-t doctor",
+          "count": 1
+        },
+        {
+          "from": "openclaw models auth",
+          "to": "gpao-t models auth",
+          "count": 1
+        },
+        {
+          "from": "openclaw status",
+          "to": "gpao-t status",
+          "count": 1
+        },
+        {
+          "from": "openclaw gateway run",
+          "to": "gpao-t runtime run",
+          "count": 1
+        },
+        {
+          "from": "openclaw.json",
+          "to": "GPAO-T runtime config",
+          "count": 1
+        },
+        {
+          "from": "Lobsterdex",
+          "to": "GPAO-T companion log",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui/assets/debug-page-ClKL6-ho.js",
+      "relativePath": "assets/debug-page-ClKL6-ho.js",
+      "beforeSha256": "57005afdcc0808bdd076d65a2ccc703f8086dda76c6651a6e509dead23cda07a",
+      "afterSha256": "c021b9b171d941f5dba71cc6c4cb2a95c1bfaa30becd1858f77432279e9f75c8",
+      "replacements": [
+        {
+          "from": "openclaw security audit --deep",
+          "to": "gpao-t security audit --deep",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui/assets/debug-page-dDvwVo2y.js",
+      "relativePath": "assets/debug-page-dDvwVo2y.js",
+      "beforeSha256": "da0bbace2b191513d17639ecccc7cf880ac22acd7077bcd9083fd25896560485",
+      "afterSha256": "709639ac41c19c806d0ba528f8cd5052e010b9066642eede436e27e66a75de7b",
+      "replacements": [
+        {
+          "from": "openclaw security audit --deep",
+          "to": "gpao-t security audit --deep",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui/assets/es-CkKtMFg8.js",
+      "relativePath": "assets/es-CkKtMFg8.js",
+      "beforeSha256": "73fcabcf17c732ebf4eafb442a2479625b2646d0b8249ec1451ab543bed91cb0",
+      "afterSha256": "1a3c14b66c78af0276fb73f6959646349db93bc706d5609cd981ed5963c1c33e",
+      "replacements": [
+        {
+          "from": "openclaw dashboard",
+          "to": "gpao-t dashboard",
+          "count": 5
+        },
+        {
+          "from": "openclaw doctor",
+          "to": "gpao-t doctor",
+          "count": 1
+        },
+        {
+          "from": "openclaw models auth",
+          "to": "gpao-t models auth",
+          "count": 1
+        },
+        {
+          "from": "openclaw status",
+          "to": "gpao-t status",
+          "count": 1
+        },
+        {
+          "from": "openclaw gateway run",
+          "to": "gpao-t runtime run",
+          "count": 1
+        },
+        {
+          "from": "openclaw.json",
+          "to": "GPAO-T runtime config",
+          "count": 1
+        },
+        {
+          "from": "Lobsterdex",
+          "to": "GPAO-T companion log",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui/assets/fa-Jo3cCIlj.js",
+      "relativePath": "assets/fa-Jo3cCIlj.js",
+      "beforeSha256": "ed03f2f87d3b399a5e00fbd26ccf18efd18f658ea3275d9c5600445750093568",
+      "afterSha256": "3e96e1b04667f9d4651df0c727f8006ebf37f3845bdd3edc97b328f0445a8ccf",
+      "replacements": [
+        {
+          "from": "openclaw dashboard",
+          "to": "gpao-t dashboard",
+          "count": 5
+        },
+        {
+          "from": "openclaw doctor",
+          "to": "gpao-t doctor",
+          "count": 1
+        },
+        {
+          "from": "openclaw models auth",
+          "to": "gpao-t models auth",
+          "count": 1
+        },
+        {
+          "from": "openclaw status",
+          "to": "gpao-t status",
+          "count": 1
+        },
+        {
+          "from": "openclaw gateway run",
+          "to": "gpao-t runtime run",
+          "count": 1
+        },
+        {
+          "from": "openclaw.json",
+          "to": "GPAO-T runtime config",
+          "count": 1
+        },
+        {
+          "from": "Lobsterdex",
+          "to": "GPAO-T companion log",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui/assets/fr--LF3eTR0.js",
+      "relativePath": "assets/fr--LF3eTR0.js",
+      "beforeSha256": "a1a02738d74a3f484920b40ee7892b3f5d49f675a850f1677b9db993a89b1aae",
+      "afterSha256": "8fefac6c569406e4839ba673494d3eb4ec8c78109d9e23cab1b904f371ab2977",
+      "replacements": [
+        {
+          "from": "OpenClaw mobile",
+          "to": "GPAO-T mobile",
+          "count": 2
+        },
+        {
+          "from": "openclaw dashboard",
+          "to": "gpao-t dashboard",
+          "count": 5
+        },
+        {
+          "from": "openclaw doctor",
+          "to": "gpao-t doctor",
+          "count": 1
+        },
+        {
+          "from": "openclaw models auth",
+          "to": "gpao-t models auth",
+          "count": 1
+        },
+        {
+          "from": "openclaw status",
+          "to": "gpao-t status",
+          "count": 1
+        },
+        {
+          "from": "openclaw gateway run",
+          "to": "gpao-t runtime run",
+          "count": 1
+        },
+        {
+          "from": "openclaw.json",
+          "to": "GPAO-T runtime config",
+          "count": 1
+        },
+        {
+          "from": "Lobsterdex",
+          "to": "GPAO-T companion log",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui/assets/hi-D2MuYJJg.js",
+      "relativePath": "assets/hi-D2MuYJJg.js",
+      "beforeSha256": "93661b91f99e247baab394de6a82ee6f472bc02c929bd3c2527b4174aa69124d",
+      "afterSha256": "f31ef433a34b5c638d126f076e3c4997c1b7771fd154211614be720b29f0d736",
+      "replacements": [
+        {
+          "from": "openclaw dashboard",
+          "to": "gpao-t dashboard",
+          "count": 5
+        },
+        {
+          "from": "openclaw doctor",
+          "to": "gpao-t doctor",
+          "count": 1
+        },
+        {
+          "from": "openclaw models auth",
+          "to": "gpao-t models auth",
+          "count": 1
+        },
+        {
+          "from": "openclaw status",
+          "to": "gpao-t status",
+          "count": 1
+        },
+        {
+          "from": "openclaw gateway run",
+          "to": "gpao-t runtime run",
+          "count": 1
+        },
+        {
+          "from": "openclaw.json",
+          "to": "GPAO-T runtime config",
+          "count": 1
+        },
+        {
+          "from": "Lobsterdex",
+          "to": "GPAO-T companion log",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui/assets/i18n-w6mKCrXO.js",
+      "relativePath": "assets/i18n-w6mKCrXO.js",
+      "beforeSha256": "befedb0c0d2400df276dff6b3a9c7f42035c26a810cc70633cb4cb81b76c8d26",
+      "afterSha256": "adadee595d7fe3e420c6a1e0fc074f5726c0b9455d3d2681341dbdec71993242",
+      "replacements": [
+        {
+          "from": "Control UI and connected Gateway build identity.",
+          "to": "GPAO-T dashboard and local runtime build identity.",
+          "count": 1
+        },
+        {
+          "from": "Control UI build details",
+          "to": "GPAO-T dashboard build details",
+          "count": 1
+        },
+        {
+          "from": "latest Control UI bundle",
+          "to": "latest GPAO-T dashboard bundle",
+          "count": 1
+        },
+        {
+          "from": "OpenClaw mobile pairing QR code",
+          "to": "GPAO-T mobile pairing QR code",
+          "count": 1
+        },
+        {
+          "from": "OpenClaw mobile",
+          "to": "GPAO-T mobile",
+          "count": 2
+        },
+        {
+          "from": "owned by OpenClaw",
+          "to": "managed by GPAO-T",
+          "count": 1
+        },
+        {
+          "from": "extend OpenClaw",
+          "to": "extend GPAO-T",
+          "count": 1
+        },
+        {
+          "from": "Optional OpenClaw capability.",
+          "to": "Optional GPAO-T capability.",
+          "count": 1
+        },
+        {
+          "from": "Search plugins and ClawHub",
+          "to": "Search plugins and GPAO-T Extension Hub",
+          "count": 1
+        },
+        {
+          "from": "Browse ClawHub",
+          "to": "Browse GPAO-T Extension Hub",
+          "count": 1
+        },
+        {
+          "from": "Searching ClawHub",
+          "to": "Searching GPAO-T Extension Hub",
+          "count": 1
+        },
+        {
+          "from": "From ClawHub",
+          "to": "From GPAO-T Extension Hub",
+          "count": 1
+        },
+        {
+          "from": "ClawHub has no results",
+          "to": "GPAO-T Extension Hub has no results",
+          "count": 1
+        },
+        {
+          "from": "Community plugins on ClawHub",
+          "to": "Community plugins on GPAO-T Extension Hub",
+          "count": 1
+        },
+        {
+          "from": "Find on ClawHub",
+          "to": "Find on GPAO-T Extension Hub",
+          "count": 1
+        },
+        {
+          "from": "Review the ClawHub warning",
+          "to": "Review the GPAO-T Extension Hub warning",
+          "count": 1
+        },
+        {
+          "from": "openclaw dashboard",
+          "to": "gpao-t dashboard",
+          "count": 5
+        },
+        {
+          "from": "openclaw doctor",
+          "to": "gpao-t doctor",
+          "count": 1
+        },
+        {
+          "from": "openclaw models auth",
+          "to": "gpao-t models auth",
+          "count": 1
+        },
+        {
+          "from": "openclaw status",
+          "to": "gpao-t status",
+          "count": 1
+        },
+        {
+          "from": "openclaw gateway run",
+          "to": "gpao-t runtime run",
+          "count": 1
+        },
+        {
+          "from": "openclaw.json",
+          "to": "GPAO-T runtime config",
+          "count": 1
+        },
+        {
+          "from": "Lobster visits",
+          "to": "GPAO-T companion visits",
+          "count": 1
+        },
+        {
+          "from": "Lobster sounds",
+          "to": "GPAO-T companion sounds",
+          "count": 1
+        },
+        {
+          "from": "Lobsterdex",
+          "to": "GPAO-T companion log",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui/assets/id-D_U7i3Od.js",
+      "relativePath": "assets/id-D_U7i3Od.js",
+      "beforeSha256": "ad2868ca6581c056b3ca8e0077eefe0ed4da1b1a467cc6df82997276d3921af3",
+      "afterSha256": "60c30a4964720a41277c70a0d56ae443ddece669d623d4a7dd3af4f04b887979",
+      "replacements": [
+        {
+          "from": "openclaw dashboard",
+          "to": "gpao-t dashboard",
+          "count": 5
+        },
+        {
+          "from": "openclaw doctor",
+          "to": "gpao-t doctor",
+          "count": 1
+        },
+        {
+          "from": "openclaw models auth",
+          "to": "gpao-t models auth",
+          "count": 1
+        },
+        {
+          "from": "openclaw status",
+          "to": "gpao-t status",
+          "count": 1
+        },
+        {
+          "from": "openclaw gateway run",
+          "to": "gpao-t runtime run",
+          "count": 1
+        },
+        {
+          "from": "openclaw.json",
+          "to": "GPAO-T runtime config",
+          "count": 1
+        },
+        {
+          "from": "Lobsterdex",
+          "to": "GPAO-T companion log",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui/assets/index-B-5yEkJA.js",
+      "relativePath": "assets/index-B-5yEkJA.js",
+      "beforeSha256": "e3ddd719f2fbdcd9983564502eb19f3a9ed229065610bfd738fbc3f084d89b86",
+      "afterSha256": "b18e45a38fb7f48ff7c23eaa432659b2a6f69fe60a602ce2796f1c8bb0c90ba4",
+      "replacements": [
+        {
+          "from": "https://docs.openclaw.ai/web/control-ui#device-pairing-first-connection",
+          "to": "#gpao-t-device-approval",
+          "count": 1
+        },
+        {
+          "from": "https://docs.openclaw.ai/web/control-ui#insecure-http",
+          "to": "#gpao-t-secure-local-access",
+          "count": 1
+        },
+        {
+          "from": "https://docs.openclaw.ai/web/control-ui#debuggingtesting-dev-server--remote-gateway",
+          "to": "#gpao-t-local-runtime",
+          "count": 2
+        },
+        {
+          "from": "https://docs.openclaw.ai/web/dashboard",
+          "to": "#gpao-t-dashboard-help",
+          "count": 2
+        },
+        {
+          "from": "https://docs.openclaw.ai/channels/pairing#pair-from-the-control-ui-recommended",
+          "to": "#gpao-t-device-approval",
+          "count": 1
+        },
+        {
+          "from": "https://docs.openclaw.ai",
+          "to": "#gpao-t-help",
+          "count": 1
+        },
+        {
+          "from": "Review the ClawHub warning",
+          "to": "Review the GPAO-T Extension Hub warning",
+          "count": 1
+        },
+        {
+          "from": "openclaw dashboard",
+          "to": "gpao-t dashboard",
+          "count": 1
+        },
+        {
+          "from": "openclaw doctor",
+          "to": "gpao-t doctor",
+          "count": 1
+        },
+        {
+          "from": "openclaw gateway run",
+          "to": "gpao-t runtime run",
+          "count": 1
+        },
+        {
+          "from": "openclaw.json",
+          "to": "GPAO-T runtime config",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui/assets/index-C30DXdRd.js",
+      "relativePath": "assets/index-C30DXdRd.js",
+      "beforeSha256": "f061779130e6e6857846b610400f4966c74a6360737e073d4f7837f585dca8f5",
+      "afterSha256": "77b6bcf5a3e7ba7cfc66c36902e26d3232f3473a1ea6a76b7a29ae3bd074be02",
+      "replacements": [
+        {
+          "from": "https://docs.openclaw.ai/web/control-ui#device-pairing-first-connection",
+          "to": "#gpao-t-device-approval",
+          "count": 1
+        },
+        {
+          "from": "https://docs.openclaw.ai/web/control-ui#insecure-http",
+          "to": "#gpao-t-secure-local-access",
+          "count": 1
+        },
+        {
+          "from": "https://docs.openclaw.ai/web/control-ui#debuggingtesting-dev-server--remote-gateway",
+          "to": "#gpao-t-local-runtime",
+          "count": 2
+        },
+        {
+          "from": "https://docs.openclaw.ai/web/dashboard",
+          "to": "#gpao-t-dashboard-help",
+          "count": 2
+        },
+        {
+          "from": "https://docs.openclaw.ai/channels/pairing#pair-from-the-control-ui-recommended",
+          "to": "#gpao-t-device-approval",
+          "count": 1
+        },
+        {
+          "from": "https://docs.openclaw.ai",
+          "to": "#gpao-t-help",
+          "count": 1
+        },
+        {
+          "from": "Review the ClawHub warning",
+          "to": "Review the GPAO-T Extension Hub warning",
+          "count": 1
+        },
+        {
+          "from": "openclaw dashboard",
+          "to": "gpao-t dashboard",
+          "count": 1
+        },
+        {
+          "from": "openclaw doctor",
+          "to": "gpao-t doctor",
+          "count": 1
+        },
+        {
+          "from": "openclaw gateway run",
+          "to": "gpao-t runtime run",
+          "count": 1
+        },
+        {
+          "from": "openclaw.json",
+          "to": "GPAO-T runtime config",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui/assets/it-D3DBLC6P.js",
+      "relativePath": "assets/it-D3DBLC6P.js",
+      "beforeSha256": "7c4d7837d7f98ffcd11de45d3d08abee446a8938139ed8b295d766a0b3bfcee7",
+      "afterSha256": "009ad8451424a13e4e55a6f779a34508337ba13d23e497cac88ca46ebc14a1a9",
+      "replacements": [
+        {
+          "from": "OpenClaw mobile",
+          "to": "GPAO-T mobile",
+          "count": 2
+        },
+        {
+          "from": "openclaw dashboard",
+          "to": "gpao-t dashboard",
+          "count": 5
+        },
+        {
+          "from": "openclaw doctor",
+          "to": "gpao-t doctor",
+          "count": 1
+        },
+        {
+          "from": "openclaw models auth",
+          "to": "gpao-t models auth",
+          "count": 1
+        },
+        {
+          "from": "openclaw status",
+          "to": "gpao-t status",
+          "count": 1
+        },
+        {
+          "from": "openclaw gateway run",
+          "to": "gpao-t runtime run",
+          "count": 1
+        },
+        {
+          "from": "openclaw.json",
+          "to": "GPAO-T runtime config",
+          "count": 1
+        },
+        {
+          "from": "Lobsterdex",
+          "to": "GPAO-T companion log",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui/assets/ja-JP-CE6pPzuo.js",
+      "relativePath": "assets/ja-JP-CE6pPzuo.js",
+      "beforeSha256": "12abe0af47258ae826b4b734a28b9cdb8a4a950aee6c8af35df7fd4dbbbdd87d",
+      "afterSha256": "dc2640025d6c57b7a1c08dadbb8e58ad47273246f907d92670c56d9ccae090e3",
+      "replacements": [
+        {
+          "from": "OpenClaw mobile",
+          "to": "GPAO-T mobile",
+          "count": 3
+        },
+        {
+          "from": "openclaw dashboard",
+          "to": "gpao-t dashboard",
+          "count": 5
+        },
+        {
+          "from": "openclaw doctor",
+          "to": "gpao-t doctor",
+          "count": 1
+        },
+        {
+          "from": "openclaw models auth",
+          "to": "gpao-t models auth",
+          "count": 1
+        },
+        {
+          "from": "openclaw status",
+          "to": "gpao-t status",
+          "count": 1
+        },
+        {
+          "from": "openclaw gateway run",
+          "to": "gpao-t runtime run",
+          "count": 1
+        },
+        {
+          "from": "openclaw.json",
+          "to": "GPAO-T runtime config",
+          "count": 1
+        },
+        {
+          "from": "Lobsterdex",
+          "to": "GPAO-T companion log",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui/assets/ko-Bwa7b6_h.js",
+      "relativePath": "assets/ko-Bwa7b6_h.js",
+      "beforeSha256": "2fd5d2c9006535878105cae00e9b84b80bf33b17d8109ac288d8a3d3f1fc59c5",
+      "afterSha256": "503b47e7fe52d027e2a00fceafc8466b6ebd6ad9f676e0ce83e91981b08d04a6",
+      "replacements": [
+        {
+          "from": "Control UI 및 연결된 Gateway 빌드 ID입니다.",
+          "to": "GPAO-T 대시보드와 로컬 런타임 빌드 ID입니다.",
+          "count": 1
+        },
+        {
+          "from": "Control UI 빌드 세부 정보",
+          "to": "GPAO-T 대시보드 빌드 세부 정보",
+          "count": 1
+        },
+        {
+          "from": "연결된 Gateway 버전",
+          "to": "연결된 로컬 런타임 버전",
+          "count": 1
+        },
+        {
+          "from": "OpenClaw 모바일",
+          "to": "GPAO-T 모바일",
+          "count": 3
+        },
+        {
+          "from": "OpenClaw가 소유한",
+          "to": "GPAO-T가 관리하는",
+          "count": 1
+        },
+        {
+          "from": "OpenClaw를 확장",
+          "to": "GPAO-T를 확장",
+          "count": 1
+        },
+        {
+          "from": "선택적 OpenClaw 기능입니다.",
+          "to": "선택적 GPAO-T 기능입니다.",
+          "count": 1
+        },
+        {
+          "from": "ClawHub 둘러보기",
+          "to": "GPAO-T 확장 허브 둘러보기",
+          "count": 1
+        },
+        {
+          "from": "ClawHub 검색 중",
+          "to": "GPAO-T 확장 허브 검색 중",
+          "count": 1
+        },
+        {
+          "from": "ClawHub에서",
+          "to": "GPAO-T 확장 허브에서",
+          "count": 2
+        },
+        {
+          "from": "ClawHub에",
+          "to": "GPAO-T 확장 허브에",
+          "count": 1
+        },
+        {
+          "from": "ClawHub의 커뮤니티 플러그인",
+          "to": "GPAO-T 확장 허브의 커뮤니티 플러그인",
+          "count": 1
+        },
+        {
+          "from": "ClawHub 경고",
+          "to": "GPAO-T 확장 허브 경고",
+          "count": 1
+        },
+        {
+          "from": "openclaw dashboard",
+          "to": "gpao-t dashboard",
+          "count": 5
+        },
+        {
+          "from": "openclaw doctor",
+          "to": "gpao-t doctor",
+          "count": 1
+        },
+        {
+          "from": "openclaw models auth",
+          "to": "gpao-t models auth",
+          "count": 1
+        },
+        {
+          "from": "openclaw status",
+          "to": "gpao-t status",
+          "count": 1
+        },
+        {
+          "from": "openclaw gateway run",
+          "to": "gpao-t runtime run",
+          "count": 1
+        },
+        {
+          "from": "openclaw.json",
+          "to": "GPAO-T runtime config",
+          "count": 1
+        },
+        {
+          "from": "Lobsterdex",
+          "to": "GPAO-T companion log",
+          "count": 1
+        },
+        {
+          "from": "바닷가재 방문",
+          "to": "GPAO-T 동반자 표시",
+          "count": 1
+        },
+        {
+          "from": "바닷가재 소리",
+          "to": "GPAO-T 동반자 소리",
+          "count": 1
+        },
+        {
+          "from": "산호초",
+          "to": "GPAO-T 작업공간",
+          "count": 4
+        }
+      ]
+    },
+    {
+      "file": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui/assets/markdown-figUYBVO.js",
+      "relativePath": "assets/markdown-figUYBVO.js",
+      "beforeSha256": "3c13f21fc770132d0369c0e56db8cc40e34f3b7c712be1303ea07cf4ac2f71bf",
+      "afterSha256": "0cd812d8f55421cc852902970d24bbd9cf7a8ccd7a8017df715ef210cbe55d38",
+      "replacements": [
+        {
+          "from": "https://docs.openclaw.ai",
+          "to": "#gpao-t-help",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui/assets/markdown-x2Aq-bmO.js",
+      "relativePath": "assets/markdown-x2Aq-bmO.js",
+      "beforeSha256": "ffc317cb4ff699f0f2f0a5f2e8dcc7833606af8905e9d9667672b8698c57fe64",
+      "afterSha256": "dae200527ff8ed1ac5bcc9c62ccc3ebde76630529cc3b75d8f275dfc3abf8f37",
+      "replacements": [
+        {
+          "from": "https://docs.openclaw.ai",
+          "to": "#gpao-t-help",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui/assets/nl-Dx-9_sUY.js",
+      "relativePath": "assets/nl-Dx-9_sUY.js",
+      "beforeSha256": "a3959517f869993c5ab3f163b7723303296d414de0fbd3b6ae4ca6a304779e9d",
+      "afterSha256": "d83afbc8d13f890d870b3c520fe56b4d747ed7ecbaf5ae5d44dd37612c7189fb",
+      "replacements": [
+        {
+          "from": "openclaw dashboard",
+          "to": "gpao-t dashboard",
+          "count": 5
+        },
+        {
+          "from": "openclaw doctor",
+          "to": "gpao-t doctor",
+          "count": 1
+        },
+        {
+          "from": "openclaw models auth",
+          "to": "gpao-t models auth",
+          "count": 1
+        },
+        {
+          "from": "openclaw status",
+          "to": "gpao-t status",
+          "count": 1
+        },
+        {
+          "from": "openclaw gateway run",
+          "to": "gpao-t runtime run",
+          "count": 1
+        },
+        {
+          "from": "openclaw.json",
+          "to": "GPAO-T runtime config",
+          "count": 1
+        },
+        {
+          "from": "Lobsterdex",
+          "to": "GPAO-T companion log",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui/assets/overview-page-B8WA7jyd.js",
+      "relativePath": "assets/overview-page-B8WA7jyd.js",
+      "beforeSha256": "1c4e4c5bcc19cb384f27ca79daf27d270b2544ec8c481a589492b2336b1c4f79",
+      "afterSha256": "7aed6438eb07fe9c4a2dc977bb2b5b622c5cfc3461ca698477d6ea9342cc0972",
+      "replacements": [
+        {
+          "from": "https://docs.openclaw.ai/web/dashboard",
+          "to": "#gpao-t-dashboard-help",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui/assets/overview-page-DSk2LTh_.js",
+      "relativePath": "assets/overview-page-DSk2LTh_.js",
+      "beforeSha256": "93a9c937a8f6ac9ab40cdb8918dcda12dce944e15fd81dc83a5c7055d5ad91af",
+      "afterSha256": "42430ae883d24c838f53d2c9ede7cf8403083e9c8c3c74deb03fb1aae91f8726",
+      "replacements": [
+        {
+          "from": "https://docs.openclaw.ai/web/dashboard",
+          "to": "#gpao-t-dashboard-help",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui/assets/pl-BlFXF5cU.js",
+      "relativePath": "assets/pl-BlFXF5cU.js",
+      "beforeSha256": "4727d1655c98f8604ccfb771fa5c2bc81d33b3671bfc49939aabb3e4b1b5dfd6",
+      "afterSha256": "a567d27f72ca6051c7bb3396788021ac4f40497a091892abaf66380ef4cf2651",
+      "replacements": [
+        {
+          "from": "OpenClaw mobile",
+          "to": "GPAO-T mobile",
+          "count": 2
+        },
+        {
+          "from": "openclaw dashboard",
+          "to": "gpao-t dashboard",
+          "count": 5
+        },
+        {
+          "from": "openclaw doctor",
+          "to": "gpao-t doctor",
+          "count": 1
+        },
+        {
+          "from": "openclaw models auth",
+          "to": "gpao-t models auth",
+          "count": 1
+        },
+        {
+          "from": "openclaw status",
+          "to": "gpao-t status",
+          "count": 1
+        },
+        {
+          "from": "openclaw gateway run",
+          "to": "gpao-t runtime run",
+          "count": 1
+        },
+        {
+          "from": "openclaw.json",
+          "to": "GPAO-T runtime config",
+          "count": 1
+        },
+        {
+          "from": "Lobsterdex",
+          "to": "GPAO-T companion log",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui/assets/pt-BR-D5M86xM9.js",
+      "relativePath": "assets/pt-BR-D5M86xM9.js",
+      "beforeSha256": "a50f35be807f9e85e051948ddadb0a4c376bc1915de96ec37b5aaaa08cf7fbe7",
+      "afterSha256": "b01c0b90206df5782ea9bac856e2361458a4de91ae70c56a5e139aa7aeebcb66",
+      "replacements": [
+        {
+          "from": "OpenClaw mobile",
+          "to": "GPAO-T mobile",
+          "count": 2
+        },
+        {
+          "from": "openclaw dashboard",
+          "to": "gpao-t dashboard",
+          "count": 5
+        },
+        {
+          "from": "openclaw doctor",
+          "to": "gpao-t doctor",
+          "count": 1
+        },
+        {
+          "from": "openclaw models auth",
+          "to": "gpao-t models auth",
+          "count": 1
+        },
+        {
+          "from": "openclaw status",
+          "to": "gpao-t status",
+          "count": 1
+        },
+        {
+          "from": "openclaw gateway run",
+          "to": "gpao-t runtime run",
+          "count": 1
+        },
+        {
+          "from": "openclaw.json",
+          "to": "GPAO-T runtime config",
+          "count": 1
+        },
+        {
+          "from": "Lobsterdex",
+          "to": "GPAO-T companion log",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui/assets/ru-CfCkqNPW.js",
+      "relativePath": "assets/ru-CfCkqNPW.js",
+      "beforeSha256": "c0de2814355390e48166b8949d3fbda23aa3916962d2f5578ef226ff1b5a7be3",
+      "afterSha256": "bd765fa96976d3995d59aa4e994726eee9dff98e86206bcd78197758ffaa2cdf",
+      "replacements": [
+        {
+          "from": "openclaw dashboard",
+          "to": "gpao-t dashboard",
+          "count": 5
+        },
+        {
+          "from": "openclaw doctor",
+          "to": "gpao-t doctor",
+          "count": 1
+        },
+        {
+          "from": "openclaw models auth",
+          "to": "gpao-t models auth",
+          "count": 1
+        },
+        {
+          "from": "openclaw status",
+          "to": "gpao-t status",
+          "count": 1
+        },
+        {
+          "from": "openclaw gateway run",
+          "to": "gpao-t runtime run",
+          "count": 1
+        },
+        {
+          "from": "openclaw.json",
+          "to": "GPAO-T runtime config",
+          "count": 1
+        },
+        {
+          "from": "Lobsterdex",
+          "to": "GPAO-T companion log",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui/assets/th--4vpNHHw.js",
+      "relativePath": "assets/th--4vpNHHw.js",
+      "beforeSha256": "a1ba4813b6c82913b614d6e9ef75388e7bb622532d0a63008ff4fad31ba1f6bd",
+      "afterSha256": "ac005d1ac405c68f25f026e75add6093f0b6e102d664be8e31571d2d5ee64ab9",
+      "replacements": [
+        {
+          "from": "OpenClaw mobile",
+          "to": "GPAO-T mobile",
+          "count": 3
+        },
+        {
+          "from": "openclaw dashboard",
+          "to": "gpao-t dashboard",
+          "count": 5
+        },
+        {
+          "from": "openclaw doctor",
+          "to": "gpao-t doctor",
+          "count": 1
+        },
+        {
+          "from": "openclaw models auth",
+          "to": "gpao-t models auth",
+          "count": 1
+        },
+        {
+          "from": "openclaw status",
+          "to": "gpao-t status",
+          "count": 1
+        },
+        {
+          "from": "openclaw gateway run",
+          "to": "gpao-t runtime run",
+          "count": 1
+        },
+        {
+          "from": "openclaw.json",
+          "to": "GPAO-T runtime config",
+          "count": 1
+        },
+        {
+          "from": "Lobsterdex",
+          "to": "GPAO-T companion log",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui/assets/tr-DkDqHYXm.js",
+      "relativePath": "assets/tr-DkDqHYXm.js",
+      "beforeSha256": "03905ec35ccc9f548a28893d3a4d83a158370dc15511d4ecefa1b6a26801cd34",
+      "afterSha256": "b862d720a9dc8f6644ff48a33b6edb3e8409913729c3aabade01da227ee98685",
+      "replacements": [
+        {
+          "from": "openclaw dashboard",
+          "to": "gpao-t dashboard",
+          "count": 5
+        },
+        {
+          "from": "openclaw doctor",
+          "to": "gpao-t doctor",
+          "count": 1
+        },
+        {
+          "from": "openclaw models auth",
+          "to": "gpao-t models auth",
+          "count": 1
+        },
+        {
+          "from": "openclaw status",
+          "to": "gpao-t status",
+          "count": 1
+        },
+        {
+          "from": "openclaw gateway run",
+          "to": "gpao-t runtime run",
+          "count": 1
+        },
+        {
+          "from": "openclaw.json",
+          "to": "GPAO-T runtime config",
+          "count": 1
+        },
+        {
+          "from": "Lobsterdex",
+          "to": "GPAO-T companion log",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui/assets/uk-BqLIdqKQ.js",
+      "relativePath": "assets/uk-BqLIdqKQ.js",
+      "beforeSha256": "29fbbc263da0e391cd1459e52d143ae6adb3485cc91fdf7ead7cb64a29a41124",
+      "afterSha256": "8475aa5ea17250e9ad7c501f50e5d0310880902be1510bcd9eaa17b177ed40d0",
+      "replacements": [
+        {
+          "from": "OpenClaw mobile",
+          "to": "GPAO-T mobile",
+          "count": 2
+        },
+        {
+          "from": "openclaw dashboard",
+          "to": "gpao-t dashboard",
+          "count": 5
+        },
+        {
+          "from": "openclaw doctor",
+          "to": "gpao-t doctor",
+          "count": 1
+        },
+        {
+          "from": "openclaw models auth",
+          "to": "gpao-t models auth",
+          "count": 1
+        },
+        {
+          "from": "openclaw status",
+          "to": "gpao-t status",
+          "count": 1
+        },
+        {
+          "from": "openclaw gateway run",
+          "to": "gpao-t runtime run",
+          "count": 1
+        },
+        {
+          "from": "openclaw.json",
+          "to": "GPAO-T runtime config",
+          "count": 1
+        },
+        {
+          "from": "Lobsterdex",
+          "to": "GPAO-T companion log",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui/assets/vi-irLKEUwF.js",
+      "relativePath": "assets/vi-irLKEUwF.js",
+      "beforeSha256": "500743e943da26b6505394d4f74222e4d597c1ee6785b03ab9a7b9fbeb00c2b6",
+      "afterSha256": "10985994baa95d44aaa1194dd87af30f616c5348dcaa9937c03f544c0fe90aad",
+      "replacements": [
+        {
+          "from": "openclaw dashboard",
+          "to": "gpao-t dashboard",
+          "count": 5
+        },
+        {
+          "from": "openclaw doctor",
+          "to": "gpao-t doctor",
+          "count": 1
+        },
+        {
+          "from": "openclaw models auth",
+          "to": "gpao-t models auth",
+          "count": 1
+        },
+        {
+          "from": "openclaw status",
+          "to": "gpao-t status",
+          "count": 1
+        },
+        {
+          "from": "openclaw gateway run",
+          "to": "gpao-t runtime run",
+          "count": 1
+        },
+        {
+          "from": "openclaw.json",
+          "to": "GPAO-T runtime config",
+          "count": 1
+        },
+        {
+          "from": "Lobsterdex",
+          "to": "GPAO-T companion log",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui/assets/zh-CN-Crsl1YnI.js",
+      "relativePath": "assets/zh-CN-Crsl1YnI.js",
+      "beforeSha256": "6a7ac72ee1516ab9fc1ab3dc84d7c90bf02023ce451cd1900575a10e1affd1f8",
+      "afterSha256": "1402032d72d8e2616ebb01c4ad6709dc22bab57c2a5b382ba6ce78b935e7ecd9",
+      "replacements": [
+        {
+          "from": "openclaw dashboard",
+          "to": "gpao-t dashboard",
+          "count": 5
+        },
+        {
+          "from": "openclaw doctor",
+          "to": "gpao-t doctor",
+          "count": 1
+        },
+        {
+          "from": "openclaw models auth",
+          "to": "gpao-t models auth",
+          "count": 1
+        },
+        {
+          "from": "openclaw status",
+          "to": "gpao-t status",
+          "count": 1
+        },
+        {
+          "from": "openclaw gateway run",
+          "to": "gpao-t runtime run",
+          "count": 1
+        },
+        {
+          "from": "openclaw.json",
+          "to": "GPAO-T runtime config",
+          "count": 1
+        },
+        {
+          "from": "Lobsterdex",
+          "to": "GPAO-T companion log",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui/assets/zh-TW-C9v3OH89.js",
+      "relativePath": "assets/zh-TW-C9v3OH89.js",
+      "beforeSha256": "e8a52cf9b769a56f53d8eec169f9d862cf9dad3a87cb040b097917993ff4a6ec",
+      "afterSha256": "0064fec2b5d7eeedd0ba06463214cbb6a56fe3f69fc94c7a84d5111a6426a47b",
+      "replacements": [
+        {
+          "from": "openclaw dashboard",
+          "to": "gpao-t dashboard",
+          "count": 5
+        },
+        {
+          "from": "openclaw doctor",
+          "to": "gpao-t doctor",
+          "count": 1
+        },
+        {
+          "from": "openclaw models auth",
+          "to": "gpao-t models auth",
+          "count": 1
+        },
+        {
+          "from": "openclaw status",
+          "to": "gpao-t status",
+          "count": 1
+        },
+        {
+          "from": "openclaw gateway run",
+          "to": "gpao-t runtime run",
+          "count": 1
+        },
+        {
+          "from": "openclaw.json",
+          "to": "GPAO-T runtime config",
+          "count": 1
+        },
+        {
+          "from": "Lobsterdex",
+          "to": "GPAO-T companion log",
+          "count": 1
+        }
+      ]
+    }
+  ],
+  "backupDir": "/Users/jyp/Documents/Playground 2/gpao-t/docs/03-verification/evidence/live-surface-seal-patch/2026-07-12T07-18-45-054Z-before-surface-seal",
+  "applyTokenRequired": "apply-gpao-t-surface-seal-live"
+}

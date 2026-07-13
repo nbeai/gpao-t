@@ -1,0 +1,73 @@
+{
+  "schema": "gpao_t.live_surface_seal_patch_manifest.v0_1",
+  "generatedAt": "2026-07-12T09:07:56.445Z",
+  "liveRoot": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist",
+  "controlUiRoot": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui",
+  "mode": "apply",
+  "changedFileCount": 2,
+  "changedFiles": [
+    {
+      "file": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui/index.html",
+      "relativePath": "index.html",
+      "beforeSha256": "74d6f0c248aee3a7edceb02111e545134902fa42995df53405f362a7eb3fde0e",
+      "afterSha256": "241585ed5e01b80de11184658e1267937b2516ba7964b4b8ee04aebba5aaeabb",
+      "replacements": [
+        {
+          "from": "Gateway 대시보드",
+          "to": "GPAO-T 연결 화면",
+          "count": 1
+        },
+        {
+          "from": "Gateway 토큰",
+          "to": "연결키",
+          "count": 1
+        },
+        {
+          "from": "Gateway 연결",
+          "to": "로컬 런타임 연결",
+          "count": 1
+        },
+        {
+          "from": "연결할 수 없음",
+          "to": "GPAO-T 로컬 런타임에 연결하지 못했습니다",
+          "count": 1
+        },
+        {
+          "from": "원시 오류",
+          "to": "상세 오류",
+          "count": 1
+        },
+        {
+          "from": "연결 방법",
+          "to": "연결 도움말",
+          "count": 1
+        },
+        {
+          "from": "연결 주소을",
+          "to": "연결 주소를",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui/assets/ko-Bwa7b6_h.js",
+      "relativePath": "assets/ko-Bwa7b6_h.js",
+      "beforeSha256": "76aede424c23ccb7ad40c839a6f865877728d4d5c09106b630ccb887f63e6f4f",
+      "afterSha256": "eb0f77390f9068f028ac06014cbab935d50d5ba2941f0a32371497180802846e",
+      "replacements": [
+        {
+          "from": "gpao-t status 또는 gpao-t runtime run으로 GPAO-T 로컬 런타임이 실행 중인지 확인하세요.",
+          "to": "GPAO-T 런타임이 켜져 있는지 확인하세요.",
+          "count": 1
+        },
+        {
+          "from": "연결 주소를 확인하고 GPAO-T 로컬 런타임이 HTTPS/Tailscale Serve 뒤에 있으면 wss://를 사용하세요.",
+          "to": "연결 주소는 보통 ws://127.0.0.1:18789 입니다.",
+          "count": 1
+        }
+      ]
+    }
+  ],
+  "backupDir": "/Users/jyp/Documents/Playground 2/gpao-t/docs/03-verification/evidence/live-surface-seal-patch/2026-07-12T09-07-56-149Z-before-surface-seal",
+  "applyTokenRequired": "apply-gpao-t-surface-seal-live"
+}

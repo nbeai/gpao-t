@@ -1,0 +1,30 @@
+This patch package has been applied and build-verified in the OpenClaw lab worktree:
+
+`/Users/jyp/Documents/Playground 2/openclaw-clean-lab/gpao-t-openclaw-dashboard-lab`
+
+Branch:
+
+`codex/gpao-t-dashboard-lab-slice-001`
+
+Actual changed files:
+
+- `ui/src/pages/chat/gpao-work-pane-state.ts`
+- `ui/src/pages/chat/components/gpao-work-pane-status.ts`
+- `ui/src/pages/chat/chat-pane.ts`
+- `ui/src/styles/chat/split-view.css`
+
+Verification:
+
+- `pnpm install --frozen-lockfile`: passed.
+- `npm --prefix ui run build`: passed.
+
+Design constraint:
+
+- This is not a standalone dashboard surface.
+- It preserves OpenClaw ChatPane, composer, session switching, and split-pane operation.
+- It adds a GPAO-T active target strip, compact progress lane, context/authority/latency labels, and local-first state derivation.
+
+Reason this file is a pointer rather than a stale manual diff:
+
+- The authoritative patch now lives as an inspected Git worktree diff in the lab branch above.
+- The next step is browser visual QA, then a live-apply package against the user's current live OpenClaw tree.

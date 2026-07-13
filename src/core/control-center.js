@@ -1,5 +1,9 @@
+import { fileURLToPath } from "node:url";
 import { listModelAdapters, listToolAdapters } from "./adapter-boundary.js";
 import { buildApprovalAuditLocalRecordSubstrate } from "./approval-audit-records.js";
+import { buildAutoMemoryGrowthSummary } from "./auto-memory-growth-loop.js";
+import { buildLiveTurnAbsorptionSummary } from "./live-turn-absorption-bridge.js";
+import { buildOpenClawLiveTurnHookReadinessGate } from "./openclaw-absorption-control.js";
 import { buildConnectorGovernanceSummary } from "./connector-governance.js";
 import { buildCoreWorkSurface } from "./core-work-surface.js";
 import {
@@ -7,15 +11,25 @@ import {
   buildAuditWriteDesignProof,
   buildExecutionApprovalPreview,
 } from "./execution-approval.js";
+import { buildGpaoTFirstCompletionAudit } from "./first-completion.js";
 import { buildGpaoTDesignReferenceGate } from "./design-contract.js";
 import { runDoctor } from "./doctor.js";
 import { buildGrowthApplicationGateSummary } from "./growth-application-gates.js";
 import { readSelfGrowthProposals } from "./growth-proposals.js";
 import { buildInstallHardeningSummary } from "./install-hardening.js";
 import { buildModelRouterBoundary, buildModelRouterPolicy } from "./model-router.js";
+import {
+  buildMemoryApplyGateState,
+  buildMemoryReviewQueueSummary,
+} from "./memory-candidate-review-queue.js";
 import { readMemoryWiki, readTCellCandidates } from "./memory-wiki.js";
 import { buildOperationsContractSummary } from "./operations-contract.js";
 import { buildRecoveryHistorySummary, readReplayRecoveryHistory } from "./replay-history.js";
+import {
+  buildRuntimeWorkspaceWelcome,
+  buildRuntimeWorkspaceWelcomeDraft,
+  verifyRuntimeWorkspaceWelcome,
+} from "./runtime-workspace-welcome.js";
 import { buildSkillExecutionSummary } from "./skill-execution-adapter.js";
 import {
   buildSkillCandidateAtlas,
@@ -26,12 +40,19 @@ import {
 } from "./skill-ecosystem.js";
 import { readAuditEvents, readRuntimeState } from "./storage.js";
 
+const DEFAULT_RUNTIME_WORKSPACE_SOURCE_PACK = fileURLToPath(new URL("../../runtime-workspace/gpao-t", import.meta.url));
+
 export function buildControlCenterSnapshot({ root } = {}) {
   const doctor = runDoctor({ root });
   const runtimeState = readRuntimeState({ root });
   const auditEvents = readAuditEvents({ root });
   const memoryWiki = readMemoryWiki({ root });
   const tcellCandidates = readTCellCandidates({ root });
+  const memoryReviewQueue = buildMemoryReviewQueueSummary({ root });
+  const memoryApplyGate = buildMemoryApplyGateState({ root });
+  const autoMemoryGrowth = buildAutoMemoryGrowthSummary({ root });
+  const liveTurnAbsorption = buildLiveTurnAbsorptionSummary({ root });
+  const openClawLiveHook = buildOpenClawLiveTurnHookReadinessGate({ root });
   const recoveryHistory = readReplayRecoveryHistory({ root });
   const recoverySummary = buildRecoveryHistorySummary({ root });
   const growthProposals = readSelfGrowthProposals({ root });
@@ -56,9 +77,32 @@ export function buildControlCenterSnapshot({ root } = {}) {
   const skillProductionStatus = buildSkillProductionStatus({ phase: "phase-1" });
   const approvalPreviewFlow = buildApprovalPreviewFlow({ root });
   const coreWorkSurface = buildCoreWorkSurface({ root });
+  const firstCompletion = buildGpaoTFirstCompletionAudit({ root });
+  const runtimeWorkspaceSourcePack = DEFAULT_RUNTIME_WORKSPACE_SOURCE_PACK;
+  const runtimeWorkspaceWelcome = buildRuntimeWorkspaceWelcome({ workspaceRoot: runtimeWorkspaceSourcePack });
+  const runtimeWorkspaceWelcomeCheck = verifyRuntimeWorkspaceWelcome({ workspaceRoot: runtimeWorkspaceSourcePack });
+  const runtimeWorkspaceWelcomeDraft = buildRuntimeWorkspaceWelcomeDraft({
+    answers: {
+      userName: "새 사용자",
+      userAddress: "사용자님",
+      companionName: "Aigis",
+      tone: "차분하고 정확한 존댓말",
+      rememberAutomatically: ["GPAO-T를 처음 설정 중이다"],
+      durableMemoryApproved: false,
+      heartbeatEnabled: false,
+    },
+  });
 
   const panels = [
+    buildFirstCompletionPanel({ firstCompletion }),
+    buildRuntimeWorkspaceWelcomePanel({
+      welcome: runtimeWorkspaceWelcome,
+      welcomeCheck: runtimeWorkspaceWelcomeCheck,
+      welcomeDraft: runtimeWorkspaceWelcomeDraft,
+    }),
     buildCoreWorkSurfacePanel({ coreWorkSurface }),
+    buildLiveTurnAbsorptionPanel({ liveTurnAbsorption }),
+    buildOpenClawLiveHookPanel({ openClawLiveHook }),
     buildRuntimePanel({ doctor, runtimeState, auditEvents }),
     buildOpsPanel({ installHardening, operationsContract }),
     buildApprovalPreviewPanel({ approvalPreviewFlow }),
@@ -72,7 +116,7 @@ export function buildControlCenterSnapshot({ root } = {}) {
       skillRoadmap,
       skillProductionStatus,
     }),
-    buildMemoryPanel({ memoryWiki, tcellCandidates }),
+    buildMemoryPanel({ memoryWiki, tcellCandidates, memoryReviewQueue, memoryApplyGate, autoMemoryGrowth }),
     buildRecoveryPanel({ recoveryHistory, recoverySummary }),
     buildGrowthPanel({ growthProposals, growthApplicationGates }),
     buildAdapterPanel({ modelAdapters, modelRouterBoundary, modelRouterPolicy, toolAdapters }),
@@ -96,6 +140,17 @@ export function buildControlCenterSnapshot({ root } = {}) {
       auditEvents: auditEvents.length,
       memoryEntries: memoryWiki.entries.length,
       tcellCandidates: tcellCandidates.length,
+      memoryReviewQueueRecords: memoryReviewQueue.counts.records,
+      memoryReviewQueueCandidates: memoryReviewQueue.counts.candidates,
+      memoryReviewQueueReplayEvidence: memoryReviewQueue.counts.replayEvidence,
+      memoryContextMeshApplied: memoryReviewQueue.counts.contextMeshApplied,
+      autoMemoryGrowthRuns: autoMemoryGrowth.totalRuns,
+      autoMemoryGrowthCompleted: autoMemoryGrowth.completedLocalAutoLoops,
+      liveTurnAbsorptionRuns: liveTurnAbsorption.totalRuns,
+      liveTurnAbsorptionPostAnswerGrowth: liveTurnAbsorption.postAnswerGrowthRecorded,
+      liveTurnAbsorptionWaitingForAnswer: liveTurnAbsorption.waitingForAnswer,
+      liveTurnAbsorptionBlocked: liveTurnAbsorption.blockedRuns,
+      openClawLiveHookFindings: openClawLiveHook.findings.length,
       recoveryRecords: recoveryHistory.length,
       installHardeningReports: installHardening.totalReports,
       dataSurfaces: operationsContract.dataSurfaces,
@@ -127,6 +182,13 @@ export function buildControlCenterSnapshot({ root } = {}) {
       coreWorkSurfaceThreadMessages: coreWorkSurface.workspaceThread.threadPreview.length,
       coreWorkSurfaceSelectedSkillPacks: coreWorkSurface.skillRoutePreview.selectedPacks.length,
       coreWorkSurfaceContextCandidates: coreWorkSurface.contextPreview.retrievedCandidates.length,
+      firstCompletionStages: firstCompletion.progress.totalStages,
+      firstCompletionReadyStages: firstCompletion.progress.readyStages,
+      firstCompletionFindings: firstCompletion.findings.length,
+      welcomeQuestions: runtimeWorkspaceWelcome.requiredQuestions.length,
+      welcomeMissingFiles: runtimeWorkspaceWelcome.missingFiles.length,
+      welcomeDraftWrites: runtimeWorkspaceWelcomeDraft.writes.length,
+      welcomeFindings: runtimeWorkspaceWelcomeCheck.findings.length,
       growthProposals: growthProposals.length,
       growthApplicationGates: growthApplicationGates.totalGates,
       blockedGrowthApplications: growthApplicationGates.blockedLiveMutations,
@@ -163,12 +225,47 @@ export function buildControlCenterSnapshot({ root } = {}) {
       connectorExternalSend: connectorGovernance.authorityBoundary.externalSend,
       toolCliMcpExecution: connectorGovernance.authorityBoundary.toolCliMcpExecution,
       growthApplication: growthApplicationGates.authorityBoundary.liveRuntimeMutation,
+      liveTurnAbsorption: liveTurnAbsorption.authorityBoundary.liveOpenClawMutation,
+      openClawLiveHook: openClawLiveHook.authorityBoundary.liveMutationAllowedByThisGate,
       durableMemoryPromotion: runtimeState.boundaries?.durableMemoryPromotion || "blocked",
       publicRelease: runtimeState.boundaries?.publicRelease || "blocked",
       localPreview: runtimeState.boundaries?.localPreview || "allowed",
+      firstCompletionLine: firstCompletion.status,
+      runtimeWorkspaceWelcomeApply: runtimeWorkspaceWelcome.authorityBoundary.applyRequiresToken,
+      runtimeWorkspaceWelcomeExternalActions: runtimeWorkspaceWelcome.authorityBoundary.externalActions,
+      runtimeWorkspaceWelcomeDurableMemory: runtimeWorkspaceWelcome.authorityBoundary.durableMemoryPromotion,
+      runtimeWorkspaceWelcomeHeartbeat: runtimeWorkspaceWelcome.authorityBoundary.heartbeatActivation,
       secrets: "not_stored",
     },
     nextSafeAction: buildNextSafeAction({ blockedPanels, reviewPanels }),
+  };
+}
+
+function buildRuntimeWorkspaceWelcomePanel({ welcome, welcomeCheck, welcomeDraft }) {
+  const status = welcomeCheck.status === "ready" && welcome.status === "ready" ? "ready" : "blocked";
+  return {
+    id: "runtime-workspace-welcome",
+    label: "처음 설정",
+    status,
+    headline: status === "ready"
+      ? "새 사용자가 이름, 말투, 기억 경계, 자동화 경계를 설정할 준비가 되어 있다."
+      : "처음 설정에 필요한 런타임 워크스페이스 파일이 아직 부족하다.",
+    data: {
+      welcome,
+      welcomeCheck,
+      sampleDraft: welcomeDraft,
+      userFacingRoutes: [
+        "/workspace/welcome",
+        "/workspace/welcome/check",
+        "/workspace/welcome/draft",
+        "/workspace/welcome/apply",
+      ],
+      productInvariant:
+        "Welcome can draft persona and runtime preferences, but durable memory and heartbeat stay blocked without explicit approval.",
+    },
+    nextSafeAction: status === "ready"
+      ? "대시보드에서 웰컴 질문을 보여주고, 적용 전 draft를 먼저 보여준다."
+      : "워크스페이스 팩을 다시 적용한 뒤 welcome-check를 통과시킨다.",
   };
 }
 
@@ -192,6 +289,34 @@ export function buildControlCenterSummary({ root } = {}) {
   };
 }
 
+function buildFirstCompletionPanel({ firstCompletion }) {
+  const residueStage = firstCompletion.stages.find((stage) => stage.id === "residue_closeout");
+  return {
+    id: "first-completion",
+    label: "1차 완료선",
+    status: firstCompletion.status,
+    headline:
+      firstCompletion.status === "ready"
+        ? `6단계 1차 완료선 ${firstCompletion.progress.readyStages}/${firstCompletion.progress.totalStages} ready. 다음은 수정/보강이다.`
+        : "6단계 1차 완료선에 보강할 항목이 남아 있다.",
+    data: {
+      firstCompletionLine: firstCompletion.firstCompletionLine,
+      progress: firstCompletion.progress,
+      stages: firstCompletion.stages.map((stage) => ({
+        id: stage.id,
+        status: stage.status,
+        findings: stage.findings,
+        evidence: stage.evidence,
+      })),
+      residue: residueStage?.controls?.nextRepairQueue || [],
+      authorityBoundaries: firstCompletion.authorityBoundaries,
+      afterFirstCompletion: firstCompletion.afterFirstCompletion,
+      userLine: firstCompletion.userLine,
+    },
+    nextSafeAction: firstCompletion.nextSafeAction,
+  };
+}
+
 function buildCoreWorkSurfacePanel({ coreWorkSurface }) {
   return {
     id: "core-work-surface",
@@ -200,6 +325,55 @@ function buildCoreWorkSurfacePanel({ coreWorkSurface }) {
     headline: "GPAO-T에게 일을 맡기는 첫 작업 표면이다. 입력은 초안이고 실행은 아직 열리지 않는다.",
     data: coreWorkSurface,
     nextSafeAction: coreWorkSurface.nextSafeAction,
+  };
+}
+
+function buildLiveTurnAbsorptionPanel({ liveTurnAbsorption }) {
+  return {
+    id: "live-turn-absorption",
+    label: "라이브 턴 흡수",
+    status: liveTurnAbsorption.status,
+    headline: liveTurnAbsorption.latest
+      ? `라이브 턴 ${liveTurnAbsorption.totalRuns}개 중 ${liveTurnAbsorption.postAnswerGrowthRecorded}개가 답변 후 replay/growth 기록까지 연결됐다.`
+      : "아직 라이브 턴 흡수 기록이 없다. 첫 연결 전 로컬 smoke가 필요하다.",
+    data: {
+      totalRuns: liveTurnAbsorption.totalRuns,
+      postAnswerGrowthRecorded: liveTurnAbsorption.postAnswerGrowthRecorded,
+      waitingForAnswer: liveTurnAbsorption.waitingForAnswer,
+      blockedRuns: liveTurnAbsorption.blockedRuns,
+      latestTrace: liveTurnAbsorption.latest?.traceLink || null,
+      latestStatus: liveTurnAbsorption.latest?.status || null,
+      source: liveTurnAbsorption.latest?.source || null,
+      authorityBoundary: liveTurnAbsorption.authorityBoundary,
+    },
+    nextSafeAction: liveTurnAbsorption.nextSafeAction,
+  };
+}
+
+function buildOpenClawLiveHookPanel({ openClawLiveHook }) {
+  return {
+    id: "gpao-t-live-hook-readiness",
+    label: "GPAO-T 라이브 연결 준비",
+    status: openClawLiveHook.status === "ready_for_authorized_live_hook_stage" ? "review" : "blocked",
+    headline:
+      openClawLiveHook.status === "ready_for_authorized_live_hook_stage"
+        ? "라이브 훅 적용 전 diff, backup, rollback, restart, visual QA 조건이 준비됐다. 실제 적용은 아직 승인 대기다."
+        : "라이브 훅 적용 전 보강할 준비 조건이 남아 있다.",
+    data: {
+      gateStatus: openClawLiveHook.status,
+      findings: openClawLiveHook.findings,
+      hookSequence: openClawLiveHook.hookSequence.map((step) => ({
+        id: step.id,
+        hostBoundary: step.hostBoundary,
+        invariant: step.invariant,
+      })),
+      targetPaths: openClawLiveHook.targetPaths,
+      requiredBeforeApply: openClawLiveHook.diffPlan.requiredBeforeApply,
+      rollbackMustRestore: openClawLiveHook.rollbackPlan.rollbackMustRestore,
+      visualQaRequiredEvidence: openClawLiveHook.visualQaPlan.requiredEvidence,
+      authorityBoundary: openClawLiveHook.authorityBoundary,
+    },
+    nextSafeAction: openClawLiveHook.nextSafeAction,
   };
 }
 
@@ -444,22 +618,57 @@ function buildExecutionApprovalPanel({ executionApprovalPreview, approvalAuditLo
   };
 }
 
-function buildMemoryPanel({ memoryWiki, tcellCandidates }) {
+function buildMemoryPanel({ memoryWiki, tcellCandidates, memoryReviewQueue, memoryApplyGate, autoMemoryGrowth }) {
   const hasCandidates = tcellCandidates.length > 0;
+  const hasReviewQueue = memoryReviewQueue.counts.records > 0;
+  const hasAppliedContextMesh = memoryReviewQueue.counts.contextMeshApplied > 0;
+  const hasAutoLoop = autoMemoryGrowth.totalRuns > 0;
   return {
     id: "memory",
     label: "기억 / Context Mesh",
-    status: hasCandidates ? "ready" : "review",
-    headline: hasCandidates
+    status: hasCandidates || hasReviewQueue || hasAutoLoop ? "ready" : "review",
+    headline: hasAppliedContextMesh
+      ? "자동/승인/감사/rollback receipt를 거친 Context Mesh 후보가 로컬 적용되어 있다."
+      : hasCandidates
       ? "Context Mesh 선별에 쓸 기억 후보가 있다."
+      : hasReviewQueue
+      ? "기억 후보 review/apply queue가 준비되어 있고 적용은 잠겨 있다."
+      : hasAutoLoop
+      ? "자동 기억/자가성장 루프 기록이 있다."
       : "아직 사용할 T-cell 후보가 없다.",
     data: {
       entries: memoryWiki.entries.length,
       candidates: tcellCandidates.length,
       latestEntry: memoryWiki.entries.at(-1) || null,
+      autoMemoryGrowth,
+      reviewQueue: memoryReviewQueue,
+      applyGate: {
+        status: memoryApplyGate.status,
+        currentStage: memoryApplyGate.activeGate.currentStage,
+        sequence: memoryApplyGate.activeGate.sequence,
+        controls: memoryApplyGate.controls,
+        latest: memoryApplyGate.latest,
+      },
+      sourceCandidateReplayApplyLine: [
+        "source_truth",
+        "memory_candidate",
+        "read_only_replay",
+        "apply_request",
+        "approval_audit",
+        "reversible_context_mesh_apply",
+        "rollback_receipt",
+      ],
+      blockedMutations: [
+        "durable memory promotion",
+        "GPAO-T 원천 메모리 쓰기",
+        "automatic admission",
+        "external send",
+      ],
     },
-    nextSafeAction: hasCandidates
-      ? "현재 요청은 admission 전에 Context Mesh로 먼저 선별한다."
+    nextSafeAction: hasAppliedContextMesh
+      ? "적용 후보도 현재 요청마다 Context Mesh resolve와 admission을 다시 거친다."
+      : hasCandidates || hasReviewQueue
+      ? "원본, 후보, replay, apply request, approval/audit, rollback receipt를 분리해 검토한다."
       : "기억 연속성에 기대기 전에 출처가 연결된 Memory Wiki 항목을 남긴다.",
   };
 }

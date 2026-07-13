@@ -12,7 +12,10 @@ import {
   readSessionWorkspaceState,
   verifySessionWorkspaceBehavior,
 } from "../src/index.js";
-import { sessionWorkspacePaths } from "../src/core/session-workspace.js";
+import {
+  deriveSessionTitleFromRequest,
+  sessionWorkspacePaths,
+} from "../src/core/session-workspace.js";
 
 const CLI = fileURLToPath(new URL("../bin/gpao-t.js", import.meta.url));
 
@@ -21,6 +24,21 @@ function tempRoot() {
 }
 
 describe("Interactive Session Behavior v1", () => {
+  it("derives new session titles from the first user input when no manual title is provided", () => {
+    const root = tempRoot();
+    const created = applySessionWorkspaceAction({
+      root,
+      action: "new_session",
+      request: "이제 실 대화에서 중요한 UX 개선 계획을 수립하겠다. 속도와 출력 과정을 점검해줘.",
+      now: "2026-07-09T10:00:30.000Z",
+    });
+
+    assert.equal(created.status, "applied");
+    assert.equal(created.state.sessions[0].title, "실 대화에서 중요한 UX 개선 계획을 수립하겠다.");
+    assert.equal(created.state.sessions[0].titleMode, "auto_from_first_input");
+    assert.equal(deriveSessionTitleFromRequest("좋아. 대화창 이름 자동생성 구현해줘."), "대화창 이름 자동생성 구현");
+  });
+
   it("creates, renames, selects, archives, restores, and delete-pends sessions locally only", () => {
     const root = tempRoot();
     const initial = readSessionWorkspaceState({ root, now: "2026-07-09T10:00:00.000Z" });
@@ -49,6 +67,7 @@ describe("Interactive Session Behavior v1", () => {
     });
     assert.equal(renamed.status, "applied");
     assert.equal(renamed.state.sessions.find((session) => session.id === sessionId).title, "시장 자료 정리 v1");
+    assert.equal(renamed.state.sessions.find((session) => session.id === sessionId).titleMode, "manual");
 
     const archived = applySessionWorkspaceAction({
       root,
@@ -117,6 +136,15 @@ describe("Interactive Session Behavior v1", () => {
 
     assert.equal(existsSync(sessionWorkspacePaths({ root }).sessionFile), true);
     assert.equal(verifySessionWorkspaceBehavior({ root }).status, "ready");
+  });
+
+  it("keeps generated titles user-facing instead of timestamp or QA prefixes", () => {
+    const title = deriveSessionTitleFromRequest("좋아. 지금 대화 UX 진행 표시를 코덱스처럼 개선해줘.");
+
+    assert.equal(title.includes("2026-"), false);
+    assert.equal(title.includes("gpao-t-live-conversation-qa"), false);
+    assert.equal(title.includes("새 작업 세션"), false);
+    assert.equal(title, "지금 대화 UX 진행 표시를 코덱스처럼 개선");
   });
 
   it("feeds local session state into Work Surface and exposes Gateway/CLI surfaces", () => {

@@ -4,6 +4,23 @@ Status: operating guidance for product development
 
 GPAO-T is not a rejection of OpenClaw or Codex. It should absorb proven foundations and recombine them around the GPAO-T semantic and growth kernel.
 
+## Source And Absorption Constitution
+
+The controlling OpenClaw absorption directive is `docs/00-canon/GPAO-T-OPENCLAW-ABSORPTION-CONSTITUTION-v0.1-ko.md`.
+
+Use the nbeai GitHub account as the primary source library for prior GPAO, BEAI Package, OpenClaw-facing package, Codex-facing package, Knowledge Loop, and T-cell-related material. Hidden previous-work result storage is deprecated and must not be treated as active truth unless 윤 explicitly reopens it.
+
+`gpao-t-hardware-engine` is out of scope for the current GPAO-T/OpenClaw absorption project. Do not treat it as a required source, dependency, blocker, or completion gate for this repository unless 윤 explicitly reopens that lane.
+
+The engineering direction is internal absorption, not external attachment:
+
+- avoid final architectures where GPAO-T is merely a plugin, sidecar, or external service attached to OpenClaw
+- prefer replacing, modifying, strengthening, or deleting OpenClaw internals when the source anatomy and verification justify it
+- use wrappers only as migration scaffolding, not the final product identity
+- keep asking whether the change moves OpenClaw closer to becoming GPAO-T from the inside
+
+The Ferrari rule applies: because we are rebuilding OpenClaw into a different supercar, we must understand both OpenClaw engineering and the wider AI operating-system / local agent-runtime field deeply.
+
 ## Product Standard
 
 - Stability should aim for OpenClaw-grade local runtime reliability.

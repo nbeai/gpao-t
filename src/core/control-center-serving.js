@@ -26,12 +26,32 @@ import {
   verifyWorkSurfaceExecutionFlow,
 } from "./work-surface-execution-flow.js";
 import {
+  buildGpaoTWorkspaceShell,
+  buildGpaoTWorkspaceShellHtml,
+  verifyGpaoTWorkspaceShell,
+} from "./workspace-shell.js";
+import {
   applySessionWorkspaceAction,
   readSessionWorkspaceState,
   verifySessionWorkspaceBehavior,
 } from "./session-workspace.js";
+import {
+  buildCodexStyleMultiChatWorkspace,
+  verifyCodexStyleMultiChatWorkspace,
+} from "./multi-chat-workspace.js";
+import {
+  buildMultiChatStageSixCompletion,
+  buildThreadScopedMemoryReviewQueue,
+  verifyMultiChatStageSixCompletion,
+} from "./multi-chat-stage-six.js";
 import { renderControlCenterHtml } from "./control-center-renderer.js";
 import { buildControlCenterSnapshot, buildControlCenterSummary } from "./control-center.js";
+import {
+  applyRuntimeWorkspaceWelcomeSettings,
+  buildRuntimeWorkspaceWelcome,
+  buildRuntimeWorkspaceWelcomeDraft,
+  verifyRuntimeWorkspaceWelcome,
+} from "./runtime-workspace-welcome.js";
 import {
   buildControlCenterUiContract,
   buildControlCenterUiSnapshot,
@@ -127,6 +147,10 @@ export function buildControlCenterServingContract({
       { path: "/work-surface/execution-flow", content: "work_surface_execution_governance_flow" },
       { path: "/work-surface/execution-flow/confirmation", content: "work_surface_execution_confirmation_control" },
       { path: "/work-surface/execution-flow/verify", content: "work_surface_execution_governance_flow_verification" },
+      { path: "/gpao-t-workspace", content: "gpao_t_workspace_shell_html" },
+      { path: "/gpao-t-workspace.html", content: "gpao_t_workspace_shell_html" },
+      { path: "/gpao-t-workspace/state", content: "gpao_t_workspace_shell_state" },
+      { path: "/gpao-t-workspace/verify", content: "gpao_t_workspace_shell_verification" },
       { path: "/sessions", content: "session_workspace_state" },
       { path: "/sessions/verify", content: "session_workspace_behavior_verification" },
       { path: "/app-shell", content: "browser_local_app_shell_html" },
@@ -164,6 +188,10 @@ export function buildControlCenterServingContract({
       { path: "/app-shell/production-hardening/state", content: "stage_4_production_hardening_state" },
       { path: "/app-shell/production-hardening/verify", content: "stage_4_production_hardening_verification" },
       { path: "/control-center/summary", content: "local_json_control_center_summary" },
+      { path: "/workspace/welcome", content: "gpao_t_first_install_welcome_contract" },
+      { path: "/workspace/welcome/check", content: "gpao_t_first_install_welcome_verification" },
+      { path: "/workspace/welcome/draft", content: "gpao_t_first_install_welcome_draft_post" },
+      { path: "/workspace/welcome/apply", content: "gpao_t_first_install_welcome_token_gated_apply_post" },
       { path: "/control-center/design", content: "local_json_control_center_design" },
       { path: "/control-center/design-reference-gate", content: "local_json_gpao_t_design_reference_gate" },
       { path: "/control-center/design-reference-gate/verify", content: "local_json_gpao_t_design_reference_gate_verification" },
@@ -350,6 +378,31 @@ export async function startControlCenterPreviewServer({
       return;
     }
 
+    if (request.method === "POST" && url.pathname === "/workspace/welcome/draft") {
+      const body = await readRequestBody(request);
+      const parsedBody = parseGenericRequestBody(body, request.headers["content-type"]);
+      const result = buildRuntimeWorkspaceWelcomeDraft({
+        workspaceRoot: parsedBody.workspaceRoot,
+        answers: parsedBody.answers || parsedBody,
+        now,
+      });
+      respondJson(response, result.status === "blocked" ? 409 : 200, result);
+      return;
+    }
+
+    if (request.method === "POST" && url.pathname === "/workspace/welcome/apply") {
+      const body = await readRequestBody(request);
+      const parsedBody = parseGenericRequestBody(body, request.headers["content-type"]);
+      const result = applyRuntimeWorkspaceWelcomeSettings({
+        workspaceRoot: parsedBody.workspaceRoot,
+        answers: parsedBody.answers || parsedBody,
+        approvalToken: parsedBody.approvalToken || "",
+        now,
+      });
+      respondJson(response, result.status === "applied" ? 200 : 409, result);
+      return;
+    }
+
     if (request.method !== "GET") {
       respondJson(response, 405, {
         schema: "gpao_t.browser_local_app_shell_blocked_route.v0_1",
@@ -360,6 +413,14 @@ export async function startControlCenterPreviewServer({
         blockedActions: buildBrowserLocalAppShellContract().blockedActions,
         nextSafeAction: "Use GET-only app-shell and control-center read routes.",
       });
+      return;
+    }
+
+    if (url.pathname === "/favicon.ico") {
+      response.writeHead(204, {
+        "cache-control": "no-store",
+      });
+      response.end();
       return;
     }
 
@@ -375,6 +436,16 @@ export async function startControlCenterPreviewServer({
 
     if (url.pathname === "/control-center/summary") {
       respondJson(response, 200, buildControlCenterSummary({ root }));
+      return;
+    }
+
+    if (url.pathname === "/workspace/welcome") {
+      respondJson(response, 200, buildRuntimeWorkspaceWelcome());
+      return;
+    }
+
+    if (url.pathname === "/workspace/welcome/check") {
+      respondJson(response, 200, verifyRuntimeWorkspaceWelcome());
       return;
     }
 
@@ -532,6 +603,28 @@ export async function startControlCenterPreviewServer({
       return;
     }
 
+    if (url.pathname === "/gpao-t-workspace" || url.pathname === "/gpao-t-workspace.html") {
+      const shell = buildGpaoTWorkspaceShell({ root, now });
+      respondHtml(response, 200, buildGpaoTWorkspaceShellHtml({ root, shell }), {
+        "x-gpao-t-surface": "workspace-shell",
+      });
+      return;
+    }
+
+    if (url.pathname === "/gpao-t-workspace/state") {
+      respondJson(response, 200, buildGpaoTWorkspaceShell({ root, now }));
+      return;
+    }
+
+    if (url.pathname === "/gpao-t-workspace/verify") {
+      const shell = buildGpaoTWorkspaceShell({ root, now });
+      respondJson(response, 200, verifyGpaoTWorkspaceShell({
+        shell,
+        html: buildGpaoTWorkspaceShellHtml({ root, shell }),
+      }));
+      return;
+    }
+
     if (url.pathname === "/sessions") {
       respondJson(response, 200, readSessionWorkspaceState({ root, now }));
       return;
@@ -539,6 +632,33 @@ export async function startControlCenterPreviewServer({
 
     if (url.pathname === "/sessions/verify") {
       respondJson(response, 200, verifySessionWorkspaceBehavior({ root }));
+      return;
+    }
+
+    if (url.pathname === "/multi-chat-workspace") {
+      respondJson(response, 200, buildCodexStyleMultiChatWorkspace({ root, now }));
+      return;
+    }
+
+    if (url.pathname === "/multi-chat-workspace/verify") {
+      const workspace = buildCodexStyleMultiChatWorkspace({ root, now });
+      respondJson(response, 200, verifyCodexStyleMultiChatWorkspace({ workspace }));
+      return;
+    }
+
+    if (url.pathname === "/multi-chat-workspace/stages-1-6") {
+      respondJson(response, 200, buildMultiChatStageSixCompletion({ root, now }));
+      return;
+    }
+
+    if (url.pathname === "/multi-chat-workspace/stages-1-6/verify") {
+      const completion = buildMultiChatStageSixCompletion({ root, now });
+      respondJson(response, 200, verifyMultiChatStageSixCompletion({ root, completion }));
+      return;
+    }
+
+    if (url.pathname === "/multi-chat-workspace/memory-review-queue") {
+      respondJson(response, 200, buildThreadScopedMemoryReviewQueue({ root }));
       return;
     }
 
@@ -792,6 +912,10 @@ export async function verifyControlCenterPreviewServing({
     const workSurfaceExecutionFlow = await fetchJson(`http://${host}:${preview.port}/work-surface/execution-flow`);
     const workSurfaceExecutionConfirmation = await fetchJson(`http://${host}:${preview.port}/work-surface/execution-flow/confirmation`);
     const workSurfaceExecutionFlowVerify = await fetchJson(`http://${host}:${preview.port}/work-surface/execution-flow/verify`);
+    const workspaceShell = await fetchText(`http://${host}:${preview.port}/gpao-t-workspace`);
+    const workspaceShellState = await fetchJson(`http://${host}:${preview.port}/gpao-t-workspace/state`);
+    const workspaceShellVerify = await fetchJson(`http://${host}:${preview.port}/gpao-t-workspace/verify`);
+    const favicon = await fetchText(`http://${host}:${preview.port}/favicon.ico`);
     const workSurfaceExecutionRecord = await fetchJson(`http://${host}:${preview.port}/work-surface/execution-flow/record`, {
       method: "POST",
       headers: {
@@ -850,7 +974,7 @@ export async function verifyControlCenterPreviewServing({
     if (health.status !== 200 || health.body.status !== "ready") {
       findings.push("health_route_not_ready");
     }
-    if (workSurface.status !== 200 || !workSurface.body.includes("GPAO-T Work Surface")) {
+    if (workSurface.status !== 200 || !workSurface.body.includes("GPAO-T 작업 대시보드")) {
       findings.push("work_surface_not_ready");
     }
     if (/<script/i.test(workSurface.body)) {
@@ -913,6 +1037,27 @@ export async function verifyControlCenterPreviewServing({
     if (workSurfaceExecutionFlowVerify.status !== 200 || workSurfaceExecutionFlowVerify.body.status !== "ready") {
       findings.push("work_surface_execution_flow_verify_not_ready");
     }
+    if (workspaceShell.status !== 200 || !workspaceShell.body.includes("GPAO-T 작업 대시보드")) {
+      findings.push("workspace_shell_route_not_ready");
+    }
+    if (!workspaceShell.body.includes("data-gpao-t-workspace-shell=\"owned-workspace\"")) {
+      findings.push("workspace_shell_marker_missing");
+    }
+    if (!workspaceShell.body.includes("data-chat-condition-status=\"visible\"")) {
+      findings.push("workspace_shell_chat_condition_missing");
+    }
+    if (/<script/i.test(workspaceShell.body)) {
+      findings.push("workspace_shell_script_tag_present");
+    }
+    if (workspaceShellState.status !== 200 || workspaceShellState.body.schema !== "gpao_t.workspace_shell.v0_1") {
+      findings.push("workspace_shell_state_not_ready");
+    }
+    if (workspaceShellVerify.status !== 200 || workspaceShellVerify.body.status !== "ready") {
+      findings.push("workspace_shell_verify_not_ready");
+    }
+    if (favicon.status !== 204) {
+      findings.push("favicon_route_not_quiet");
+    }
     if (
       workSurfaceExecutionRecord.status !== 200
       || workSurfaceExecutionRecord.body.status !== "written_local_only"
@@ -943,7 +1088,7 @@ export async function verifyControlCenterPreviewServing({
     if (appShell.status !== 200) {
       findings.push("app_shell_route_not_200");
     }
-    if (!appShell.body.includes("GPAO-T Browser-Local App Shell")) {
+    if (!appShell.body.includes("GPAO-T 로컬 작업 화면")) {
       findings.push("app_shell_missing_title");
     }
     if (/<script/i.test(appShell.body)) {
@@ -1118,6 +1263,7 @@ export async function verifyControlCenterPreviewServing({
       status: findings.length ? "blocked" : "ready",
       url: preview.url,
       workSurfaceUrl: `http://${host}:${preview.port}/work-surface`,
+      workspaceShellUrl: `http://${host}:${preview.port}/gpao-t-workspace`,
       workSurfaceSubmissionGateUrl: `http://${host}:${preview.port}/work-surface/submission-gate`,
       workSurfaceSubmissionValidationGateUrl: `http://${host}:${preview.port}/work-surface/submission-validation-gate`,
       appShellUrl: `http://${host}:${preview.port}/app-shell`,
@@ -1150,6 +1296,10 @@ export async function verifyControlCenterPreviewServing({
       workSurfaceExecutionFlowStatus: workSurfaceExecutionFlow.status,
       workSurfaceExecutionConfirmationStatus: workSurfaceExecutionConfirmation.status,
       workSurfaceExecutionFlowVerifyStatus: workSurfaceExecutionFlowVerify.status,
+      workspaceShellStatus: workspaceShell.status,
+      workspaceShellStateStatus: workspaceShellState.status,
+      workspaceShellVerifyStatus: workspaceShellVerify.status,
+      faviconStatus: favicon.status,
       workSurfaceExecutionRecordStatus: workSurfaceExecutionRecord.status,
       pageStatus: page.status,
       appShellStatus: appShell.status,
@@ -1234,6 +1384,18 @@ function parseGenericRequestBody(body, contentType = "") {
     action: params.get("action") || undefined,
     sessionId: params.get("sessionId") || undefined,
     title: params.get("title") || undefined,
+    workspaceRoot: params.get("workspaceRoot") || undefined,
+    userName: params.get("userName") || undefined,
+    userAddress: params.get("userAddress") || undefined,
+    companionName: params.get("companionName") || undefined,
+    tone: params.get("tone") || undefined,
+    rememberAutomatically: params.get("rememberAutomatically") || undefined,
+    neverRemember: params.get("neverRemember") || undefined,
+    approvalActions: params.get("approvalActions") || undefined,
+    durableMemoryApproved: params.get("durableMemoryApproved") === "true",
+    heartbeatEnabled: params.get("heartbeatEnabled") === "true",
+    heartbeatApproved: params.get("heartbeatApproved") === "true",
+    approvalToken: params.get("approvalToken") || undefined,
     confirmationChoice: params.get("confirmationChoice") || undefined,
     confirmationState: params.get("confirmationState") || undefined,
   };
@@ -1358,7 +1520,7 @@ function renderWorkSurfaceSubmitResultHtml({ result, requestText }) {
     </section>
     <section class="boundary">
       <h2>아직 잠긴 것</h2>
-      <p>외부 provider 호출, 도구/CLI/MCP 실행, 커넥터 활성화, 외부 전송, 비용/파괴 행동, 지속 기억 승격은 아직 실행하지 않았습니다.</p>
+      <p>외부 모델 호출, 도구/CLI/MCP 실행, 커넥터 활성화, 외부 전송, 비용/파괴 행동, 지속 기억 승격은 아직 실행하지 않았습니다.</p>
     </section>
     <section class="actions">
       <a href="/work-surface">작업 표면으로 돌아가기</a>

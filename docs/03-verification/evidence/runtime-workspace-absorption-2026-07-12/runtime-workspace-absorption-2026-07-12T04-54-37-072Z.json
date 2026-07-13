@@ -1,0 +1,230 @@
+{
+  "schema": "gpao_t.runtime_workspace_absorption_run.v0_1",
+  "status": "verified_live",
+  "createdAt": "2026-07-12T04:54:37.088Z",
+  "applyToken": "apply-gpao-t-runtime-workspace",
+  "sourcePack": "/Users/jyp/Documents/Playground 2/gpao-t/runtime-workspace/gpao-t",
+  "liveWorkspace": "/Users/jyp/.openclaw/workspace",
+  "backupDir": null,
+  "sourceSummary": {
+    "manifest": {
+      "schema": "gpao_t.runtime_workspace_manifest.v0_1",
+      "product": "nBeAI. GPAO-T",
+      "packVersion": "0.1.0",
+      "createdAt": "2026-07-12T00:00:00.000Z",
+      "targetWorkspace": "/Users/jyp/.openclaw/workspace",
+      "sourcePack": "runtime-workspace/gpao-t",
+      "files": [
+        "AGENTS.md",
+        "SOUL.md",
+        "IDENTITY.md",
+        "USER.md",
+        "TOOLS.md",
+        "HEARTBEAT.md",
+        "MEMORY.md",
+        "WELCOME.md",
+        "RUNTIME-MANIFEST.json"
+      ],
+      "authority": {
+        "externalSend": "blocked",
+        "durableMemoryPromotion": "review_required",
+        "openClawMemoryWrite": "blocked",
+        "sessionMetaWrite": "blocked",
+        "liveOsRuleMutation": "blocked",
+        "heartbeatActivation": "explicit_user_enable_required"
+      },
+      "openClawRelation": "inherited_runtime_substrate",
+      "gpaoTRole": "user_facing_runtime_identity_and_operating_contract"
+    },
+    "files": [
+      {
+        "file": "AGENTS.md",
+        "sha256": "5d9461d563931d528bffe515ddb7519912c360775b8e40aa032726013fb4379a"
+      },
+      {
+        "file": "HEARTBEAT.md",
+        "sha256": "bfdebbeacc48c556b18834510a8cdf724606c351c87c02948c8f090b49762c08"
+      },
+      {
+        "file": "IDENTITY.md",
+        "sha256": "593d2f21ff5905bf487539cde75fae030ff4b1518bbca131dcb02962531452e3"
+      },
+      {
+        "file": "MEMORY.md",
+        "sha256": "bb69588319f5b10adcbf9884390be885f9a6dfd0e0d4eb8d73f67eb6801f35a7"
+      },
+      {
+        "file": "RUNTIME-MANIFEST.json",
+        "sha256": "13faeeca481859c3f14f878a23a5d25c12a49ee58e76090997e8fadf95308326"
+      },
+      {
+        "file": "SOUL.md",
+        "sha256": "1622a13ee332ace6394cd3ad21d6f51fd66d606243f51dfd38a2c8b9eb1de52e"
+      },
+      {
+        "file": "TOOLS.md",
+        "sha256": "1fd58fa2e82be7ab529b182d5f6966ac8a04ea8126eee9efc2d363f9eed5710a"
+      },
+      {
+        "file": "USER.md",
+        "sha256": "c9cf1dca2224efb7bd8d6c2c45f6f5c6f6f05072838dd84ac6eb729410b1332e"
+      },
+      {
+        "file": "WELCOME.md",
+        "sha256": "fa72c55f64984456a28b97c334d6c5eb306abd6c1a080e4ac9981be0b8b96054"
+      }
+    ]
+  },
+  "backedUp": [],
+  "copied": [],
+  "dailyMemory": null,
+  "logo": null,
+  "verification": {
+    "schema": "gpao_t.runtime_workspace_verification.v0_1",
+    "status": "pass",
+    "checkedAt": "2026-07-12T04:54:37.088Z",
+    "workspace": "/Users/jyp/.openclaw/workspace",
+    "checks": [
+      {
+        "id": "exists:AGENTS.md",
+        "status": "pass",
+        "detail": "/Users/jyp/.openclaw/workspace/AGENTS.md"
+      },
+      {
+        "id": "exists:SOUL.md",
+        "status": "pass",
+        "detail": "/Users/jyp/.openclaw/workspace/SOUL.md"
+      },
+      {
+        "id": "exists:IDENTITY.md",
+        "status": "pass",
+        "detail": "/Users/jyp/.openclaw/workspace/IDENTITY.md"
+      },
+      {
+        "id": "exists:USER.md",
+        "status": "pass",
+        "detail": "/Users/jyp/.openclaw/workspace/USER.md"
+      },
+      {
+        "id": "exists:TOOLS.md",
+        "status": "pass",
+        "detail": "/Users/jyp/.openclaw/workspace/TOOLS.md"
+      },
+      {
+        "id": "exists:HEARTBEAT.md",
+        "status": "pass",
+        "detail": "/Users/jyp/.openclaw/workspace/HEARTBEAT.md"
+      },
+      {
+        "id": "exists:MEMORY.md",
+        "status": "pass",
+        "detail": "/Users/jyp/.openclaw/workspace/MEMORY.md"
+      },
+      {
+        "id": "exists:WELCOME.md",
+        "status": "pass",
+        "detail": "/Users/jyp/.openclaw/workspace/WELCOME.md"
+      },
+      {
+        "id": "exists:RUNTIME-MANIFEST.json",
+        "status": "pass",
+        "detail": "/Users/jyp/.openclaw/workspace/RUNTIME-MANIFEST.json"
+      },
+      {
+        "id": "agents.constitution",
+        "status": "pass",
+        "detail": ""
+      },
+      {
+        "id": "agents.product_identity",
+        "status": "pass",
+        "detail": ""
+      },
+      {
+        "id": "soul.gpao_t_identity",
+        "status": "pass",
+        "detail": ""
+      },
+      {
+        "id": "identity.gpao_t_product",
+        "status": "pass",
+        "detail": ""
+      },
+      {
+        "id": "tools.secret_boundary",
+        "status": "pass",
+        "detail": ""
+      },
+      {
+        "id": "memory.north_star",
+        "status": "pass",
+        "detail": ""
+      },
+      {
+        "id": "welcome.personalization",
+        "status": "pass",
+        "detail": ""
+      },
+      {
+        "id": "heartbeat.default_inactive",
+        "status": "pass",
+        "detail": ""
+      },
+      {
+        "id": "legacy_template_removed:AGENTS.md",
+        "status": "pass",
+        "detail": ""
+      },
+      {
+        "id": "legacy_template_removed:SOUL.md",
+        "status": "pass",
+        "detail": ""
+      },
+      {
+        "id": "legacy_template_removed:IDENTITY.md",
+        "status": "pass",
+        "detail": ""
+      },
+      {
+        "id": "legacy_template_removed:USER.md",
+        "status": "pass",
+        "detail": ""
+      },
+      {
+        "id": "legacy_template_removed:TOOLS.md",
+        "status": "pass",
+        "detail": ""
+      },
+      {
+        "id": "legacy_template_removed:HEARTBEAT.md",
+        "status": "pass",
+        "detail": ""
+      },
+      {
+        "id": "legacy_template_removed:MEMORY.md",
+        "status": "pass",
+        "detail": ""
+      },
+      {
+        "id": "legacy_template_removed:WELCOME.md",
+        "status": "pass",
+        "detail": ""
+      },
+      {
+        "id": "manifest.schema",
+        "status": "pass",
+        "detail": ""
+      },
+      {
+        "id": "manifest.product",
+        "status": "pass",
+        "detail": ""
+      }
+    ]
+  },
+  "nextChecks": [
+    "Ask GPAO-T to inspect its workspace and confirm it reports nBeAI. GPAO-T identity, not OpenClaw template identity.",
+    "Wire WELCOME.md into first-install onboarding UI/CLI.",
+    "Keep durable memory promotion behind review and replay gates."
+  ]
+}

@@ -1,5 +1,64 @@
 const BASE_SKILL_PACKS = [
   {
+    id: "gpao-human-response-kernel-pack",
+    category: "core",
+    priority: 101,
+    title: "GPAO Human Response Kernel Pack",
+    targetUserProblem:
+      "사용자가 한 말의 형식과 의도를 보존하면서, 짧고 정확하고 사람답게 쓸 수 있는 답변을 받아야 한다.",
+    tcellPrinciple:
+      "A human response skill admits only the response T-cells needed for the current turn: current input, request form, certainty, agency, depth, artifact-first output, minimal questions, and usable closeout.",
+    triggerSignals: ["말귀", "응답", "답변", "질문", "초안", "출력", "추측", "검색 안", "모호", "바로 써"],
+    inputTypes: [
+      "natural_language_request",
+      "follow_up",
+      "artifact_request",
+      "judgment_request",
+      "ambiguous_short_input",
+    ],
+    outputArtifacts: [
+      "usable_answer",
+      "artifact_draft",
+      "clarifying_question",
+      "decision_boundary",
+      "hold_condition",
+      "natural_closeout",
+    ],
+    researchProtocol: [
+      "Use docs/00-canon/GPAO-T-HUMAN-CENTERED-RESPONSE-CANON-ko.md as the implementation-bound response contract.",
+      "Do not inject the source prompt verbatim; extract only task-fit T-cells into the task packet.",
+      "Preserve the current user request before applying long conversation context, memory, skill conventions, or style rules.",
+    ],
+    qualityGates: [
+      "The current user input is preserved as the primary answer anchor.",
+      "Facts, unknowns, assumptions, emotions, and judgments are separated when the distinction changes the answer.",
+      "Artifact requests produce the usable draft or result before meta explanation.",
+      "Questions are asked only when the answer direction would otherwise be wrong or unsafe.",
+      "Long conversation context supports the current request instead of replacing it.",
+      "The answer ends with a usable conclusion, action, hold condition, or natural closeout.",
+    ],
+    replayCases: [
+      "A one-word Korean follow-up asks one short clarification instead of inventing a prior target.",
+      "A place or today-information request routes to evidence/current-source behavior instead of unsupported guessing.",
+      "A draft request returns a usable draft first and explains only after the artifact.",
+      "A complex judgment separates strong signals, weak signals, assumptions, and user decision rights.",
+      "A long-session follow-up uses admitted context without recapping or hijacking the current request.",
+    ],
+    authorityBoundary: {
+      localDraft: "allowed",
+      webResearch: "allowed_when_requested_or_needed",
+      durableMemoryPromotion: "review_required",
+      promptCanonMutation: "review_required",
+      externalAction: "blocked_until_approval",
+    },
+    growthSignals: [
+      "User says the system misunderstood the request or ignored the requested output form.",
+      "The system repeatedly asks unnecessary questions before producing usable work.",
+      "The system answers current or local information requests without source checks.",
+      "The system exposes internal enum or framework language to the user-facing answer.",
+    ],
+  },
+  {
     id: "gpao-core-thinking-pack",
     category: "core",
     priority: 100,
@@ -207,6 +266,68 @@ const BASE_SKILL_PACKS = [
     growthSignals: [
       "User repeatedly asks for the same Korean official data domain.",
       "Connector needs appear across multiple business workflows.",
+    ],
+  },
+  {
+    id: "gpao-owner-ops-pack",
+    category: "domain",
+    priority: 89,
+    title: "GPAO Owner Ops Pack",
+    targetUserProblem:
+      "한국 자영업자와 1인/소규모 사업자가 반복 업무를 직접 자동화 도구로 설계하지 않아도, 리뷰/문의/예약 같은 사업 문제를 말하면 안전한 초안과 자동화 후보를 받아야 한다.",
+    tcellPrinciple:
+      "Owner Ops turns repeated business pressure into bounded automation candidates: business problem -> workflow candidate -> authority ladder -> local draft -> record -> replay/growth signal.",
+    triggerSignals: [
+      "자영업",
+      "사장님",
+      "리뷰",
+      "예약",
+      "문의",
+      "스마트스토어",
+      "쇼핑몰",
+      "고객응대",
+      "반복 업무",
+      "자동화 후보",
+    ],
+    inputTypes: ["owner_problem", "pasted_reviews", "csv", "excel", "customer_inquiry_text"],
+    outputArtifacts: [
+      "automation_candidates",
+      "workflow_preview",
+      "reply_drafts",
+      "local_record",
+      "effect_replay_summary",
+    ],
+    researchProtocol: [
+      "Start with no-API paste/CSV/Excel workflows before adding MCP or live connectors.",
+      "Use Korean owner-operator language and hide trigger/action/OAuth/MCP raw details from the front surface.",
+      "Separate review replies, shopping inquiries, and reservation inquiries before broad automation.",
+    ],
+    qualityGates: [
+      "The user sees business problem language before automation jargon.",
+      "External send, review posting, refund, deletion, payment, and bulk messaging remain blocked in v0.1.",
+      "Each workflow produces local draft, review-needed items, local record, and replay signal.",
+      "The pack works without external API connection for the first three workflows.",
+    ],
+    replayCases: [
+      "Restaurant owner pastes reviews and receives classification, reply drafts, locked auto-posting, and local records.",
+      "SmartStore owner pastes inquiries and receives shipping/exchange/restock/product-info categories with safe drafts.",
+      "Reservation business owner pastes a booking inquiry and receives missing questions plus a non-confirming draft.",
+    ],
+    authorityBoundary: {
+      localParsing: "allowed",
+      localSummary: "allowed",
+      localDraft: "allowed",
+      localRecord: "allowed",
+      readOnlyConnector: "review_required_later",
+      externalSend: "blocked_until_approval",
+      paymentRefundDeletion: "blocked",
+      durableMemoryPromotion: "review_required",
+    },
+    growthSignals: [
+      "The same inquiry category appears repeatedly across local records.",
+      "The user edits the same reply phrase repeatedly.",
+      "A workflow repeatedly needs a read-only connector input source.",
+      "Sensitive customer data appears in pasted inputs.",
     ],
   },
   {
@@ -500,6 +621,20 @@ const SKILL_CANDIDATE_ATLAS = [
     dependencies: ["gpao-research-evidence-pack", "gpao-document-output-pack"],
     shouldBuildWith: ["gpao-mcp-source-connector-pack"],
     requiredProof: ["official_source_registry", "legal_tax_finance_boundary"],
+  },
+  {
+    id: "gpao-owner-ops-pack",
+    category: "domain",
+    tier: "domain",
+    phase: "phase-2",
+    title: "Owner Ops",
+    productionStatus: "production_pack_exists",
+    userProblem: "한국 자영업자가 리뷰, 예약, 쇼핑몰 문의 같은 반복 업무를 쉽게 초안/기록/자동화 후보로 바꿔야 한다.",
+    tcellFocus: "business_repetition_to_safe_automation_candidate",
+    buildReason: "GPAO-T의 비개발자 시장성과 실전 자동화 가치를 보여주는 첫 도메인 proof surface다.",
+    dependencies: ["gpao-korean-business-pack", "gpao-data-insight-pack", "gpao-growth-governance-pack"],
+    shouldBuildWith: ["gpao-mcp-source-connector-pack", "gpao-automation-workflow-pack"],
+    requiredProof: ["no_api_workflow_preview", "authority_ladder", "local_record_replay"],
   },
   {
     id: "gpao-data-insight-pack",
@@ -1265,15 +1400,19 @@ export function buildSkillIntentProfile({ request }) {
   addIf(primaryIntents, "document_artifact", /문서|보고서|제안서|매뉴얼|계획서|원고|글|정리/.test(text));
   addIf(primaryIntents, "data_insight", /데이터|엑셀|CSV|통계|지표|차트|수치/.test(text));
   addIf(primaryIntents, "korean_business", /한국|사업|세무|법률|공시|정부지원|사업계획|특허|건축/.test(text));
+  addIf(primaryIntents, "owner_ops", /자영업|사장님|리뷰|예약|문의|스마트스토어|쇼핑몰|고객응대|반복 업무|자동화 후보/.test(text));
   addIf(primaryIntents, "self_growth_or_governance", /자가성장|업그레이드|자동화|승인|리포트|루프|개선|가버넌스/.test(text));
   addIf(primaryIntents, "decision_or_plan", /뭐부터|어떻게|방향|판단|계획|우선순위|진행|정리/.test(text));
+  addIf(primaryIntents, "human_response_quality", /말귀|응답|답변|질문|초안|출력|추측|검색 안|모호|바로 써/.test(text));
 
   addIf(qualityNeeds, "visual_finish", /디자인|예쁘|시각|UI|UX|브랜드|고급|프리미엄/.test(text));
   addIf(qualityNeeds, "source_grounding", /리서치|근거|자료|최신|공식|확인|비교/.test(text));
   addIf(qualityNeeds, "practical_execution", /실전|현실|쓸모|사용자|작동|구현|진행|완성/.test(text));
+  addIf(qualityNeeds, "owner_operator_fit", /자영업|사장님|리뷰|예약|문의|스마트스토어|쇼핑몰|고객응대/.test(text));
   addIf(qualityNeeds, "verification", /검증|테스트|확인|품질|정확|성능/.test(text));
   addIf(qualityNeeds, "continuity", /이전|아까|이어|맥락|흐름|계속/.test(text));
   addIf(qualityNeeds, "safety_governance", /승인|보안|법률|금융|삭제|배포|외부|권한/.test(text));
+  addIf(qualityNeeds, "response_fit", /말귀|응답|답변|질문|초안|출력|추측|검색 안|모호|바로 써/.test(text));
 
   addIf(outputNeeds, "working_app", /웹앱|앱|사이트|구현|개발/.test(text));
   addIf(outputNeeds, "design_spec", /디자인|UI|UX|브랜드|화면|랜딩/.test(text));
@@ -1281,6 +1420,8 @@ export function buildSkillIntentProfile({ request }) {
   addIf(outputNeeds, "document", /문서|보고서|제안서|매뉴얼|계획서|원고|글/.test(text));
   addIf(outputNeeds, "decision_plan", /뭐부터|방향|판단|계획|정리|진행/.test(text));
   addIf(outputNeeds, "growth_proposal", /업그레이드|자가성장|개선|리포트|루프/.test(text));
+  addIf(outputNeeds, "automation_candidate", /자영업|사장님|반복 업무|리뷰|예약 문의|고객 문의|스마트스토어|쇼핑몰|고객응대/.test(text));
+  addIf(outputNeeds, "usable_answer", /말귀|응답|답변|질문|초안|출력|추측|검색 안|모호|바로 써/.test(text));
 
   addIf(authoritySignals, "external_or_public_action", /배포|공개|전송|메일|텔레그램|외부|publish|deploy/.test(text));
   addIf(authoritySignals, "sensitive_domain", /보안|법률|금융|세무|삭제|토큰|secret|oauth/.test(text));
@@ -1423,12 +1564,14 @@ function scorePack({ pack, text, intentProfile }) {
 
 function scoreIntentFit({ pack, intentProfile }) {
   const map = {
+    "gpao-human-response-kernel-pack": ["human_response_quality"],
     "gpao-core-thinking-pack": ["decision_or_plan", "general_help"],
     "gpao-research-evidence-pack": ["research_evidence"],
     "gpao-document-output-pack": ["document_artifact"],
     "gpao-visual-design-pack": ["improve_visual_quality"],
     "gpao-webapp-builder-pack": ["build_or_modify_app"],
     "gpao-korean-business-pack": ["korean_business"],
+    "gpao-owner-ops-pack": ["owner_ops"],
     "gpao-data-insight-pack": ["data_insight"],
     "gpao-growth-governance-pack": ["self_growth_or_governance"],
   };
@@ -1446,6 +1589,8 @@ function scoreOutputFit({ pack, intentProfile }) {
   if (outputs.has("document") && /markdown_doc|report|proposal|manual|brief/.test(outputText)) score += 18;
   if (outputs.has("decision_plan") && /decision_brief|task_plan|next_action/.test(outputText)) score += 18;
   if (outputs.has("growth_proposal") && /growth_report|upgrade_proposal|approval_card|audit_record/.test(outputText)) score += 18;
+  if (outputs.has("automation_candidate") && /automation_candidates|workflow_preview|reply_drafts|local_record|effect_replay_summary/.test(outputText)) score += 22;
+  if (outputs.has("usable_answer") && /usable_answer|artifact_draft|clarifying_question|natural_closeout/.test(outputText)) score += 18;
   return score;
 }
 
@@ -1454,10 +1599,14 @@ function scoreQualityFit({ pack, intentProfile }) {
   let score = 0;
   if (needs.has("visual_finish") && pack.category === "design") score += 22;
   if (needs.has("source_grounding") && pack.category === "evidence") score += 22;
-  if (needs.has("practical_execution") && ["builder", "core", "domain"].includes(pack.category)) score += 12;
+  if (needs.has("practical_execution")
+    && ["builder", "core", "domain"].includes(pack.category)
+    && pack.id !== "gpao-human-response-kernel-pack") score += 12;
   if (needs.has("verification") && ["builder", "governance", "evidence"].includes(pack.category)) score += 12;
-  if (needs.has("continuity") && pack.category === "core") score += 12;
+  if (needs.has("continuity") && pack.category === "core" && pack.id !== "gpao-human-response-kernel-pack") score += 12;
   if (needs.has("safety_governance") && pack.category === "governance") score += 18;
+  if (needs.has("response_fit") && pack.id === "gpao-human-response-kernel-pack") score += 24;
+  if (needs.has("owner_operator_fit") && pack.id === "gpao-owner-ops-pack") score += 28;
   return score;
 }
 
@@ -1481,6 +1630,7 @@ function explainPackFit({ pack, text, intentProfile }) {
 }
 
 function routeRoleFor({ pack, intentProfile }) {
+  if (pack.id === "gpao-human-response-kernel-pack") return "response_kernel";
   if (pack.category === "core" && intentProfile.ambiguity !== "low") return "intent_recovery";
   if (pack.category === "governance"
     && (intentProfile.authoritySignals.length
