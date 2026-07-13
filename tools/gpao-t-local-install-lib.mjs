@@ -679,6 +679,18 @@ export function migrateConfigObject(value, oldRoot, newRoot, oldPort, newPort) {
   return value;
 }
 
+function normalizeGpaoTPluginConfig(config) {
+  const next = config && typeof config === "object" ? config : {};
+  next.plugins = next.plugins && typeof next.plugins === "object" ? next.plugins : {};
+  next.plugins.entries = next.plugins.entries && typeof next.plugins.entries === "object"
+    ? next.plugins.entries
+    : {};
+  next.plugins.entries.codex = { enabled: false };
+  const allow = Array.isArray(next.plugins.allow) ? next.plugins.allow : [];
+  next.plugins.allow = [...new Set([...allow.filter((pluginId) => pluginId !== "codex"), "telegram", "openai", "memory-core"])];
+  return next;
+}
+
 async function stageMigratedState(plan, stagingState, options) {
   await fs.mkdir(stagingState, { recursive: true, mode: 0o700 });
   const sourceConfig = join(options.openclawHome, "openclaw.json");
@@ -689,6 +701,7 @@ async function stageMigratedState(plan, stagingState, options) {
     const migrated = migrateConfigObject(config, resolve(options.openclawHome), plan.paths.stateHome, oldPort, options.port);
     migrated.gateway = migrated.gateway && typeof migrated.gateway === "object" ? migrated.gateway : {};
     migrated.gateway.port = options.port;
+    normalizeGpaoTPluginConfig(migrated);
     const configDestination = join(stagingState, "gpao-t.json");
     await writeJsonAtomic(configDestination, migrated, sourceStat.mode & 0o7777);
   }

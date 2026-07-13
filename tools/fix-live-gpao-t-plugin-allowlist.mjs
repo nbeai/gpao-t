@@ -4,10 +4,10 @@ import { existsSync } from "node:fs";
 import { cp, mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 
-const DEFAULT_CONFIG_PATH = "/Users/jyp/.openclaw/openclaw.json";
+const DEFAULT_CONFIG_PATH = "/Users/jyp/.gpao-t/gpao-t.json";
 const DEFAULT_EVIDENCE_ROOT =
   "/Users/jyp/Documents/Playground 2/gpao-t/docs/03-verification/evidence/live-plugin-allowlist";
-const DEFAULT_ALLOWED_PLUGINS = ["codex", "telegram"];
+const DEFAULT_ALLOWED_PLUGINS = ["telegram", "openai", "memory-core"];
 const REQUIRED_APPROVAL_TOKEN = "GPAO-T-LIVE-PLUGIN-ALLOWLIST-2026-07-12";
 
 function hasArg(name) {
@@ -44,10 +44,13 @@ function normalizeOpenClawConfig(config, allowedPlugins) {
   const next = JSON.parse(JSON.stringify(config));
   next.plugins = next.plugins && typeof next.plugins === "object" ? next.plugins : {};
   next.plugins.allow = stableUnique(allowedPlugins);
+  next.plugins.entries = next.plugins.entries && typeof next.plugins.entries === "object"
+    ? next.plugins.entries
+    : {};
+  if (next.plugins.entries.codex && typeof next.plugins.entries.codex === "object") {
+    next.plugins.entries.codex = { enabled: false };
+  }
   for (const pluginId of next.plugins.allow) {
-    next.plugins.entries = next.plugins.entries && typeof next.plugins.entries === "object"
-      ? next.plugins.entries
-      : {};
     next.plugins.entries[pluginId] = {
       ...(next.plugins.entries[pluginId] && typeof next.plugins.entries[pluginId] === "object"
         ? next.plugins.entries[pluginId]
@@ -90,9 +93,10 @@ async function buildManifest({ configPath, evidenceRoot, allowedPlugins, apply, 
     },
     changed: beforeText !== afterText,
     plannedOperations: [
-      "backup ~/.openclaw/openclaw.json",
+      "backup ~/.gpao-t/gpao-t.json",
       "set explicit plugins.allow for trusted live GPAO-T plugins",
-      "enable matching plugins.entries ids",
+      "enable matching installed plugins.entries ids",
+      "disable codex plugin entry unless a first-class GPAO-T Codex plugin is installed",
       "leave bundled provider discovery and channel configuration unchanged",
     ],
     rollback: {
@@ -131,7 +135,6 @@ async function main() {
   if (readArg("--approval-token") !== REQUIRED_APPROVAL_TOKEN) {
     findings.push("approval_token_missing_or_invalid");
   }
-  if (!allowedPlugins.includes("codex")) findings.push("codex_plugin_not_allowlisted");
   if (!allowedPlugins.includes("telegram")) findings.push("telegram_plugin_not_allowlisted");
   if (findings.length) {
     console.error(JSON.stringify({

@@ -152,6 +152,12 @@ import {
   resolveContextMesh,
 } from "./core/memory-wiki.js";
 import {
+  buildMemorySearchIndex,
+  getMemorySearchStatus,
+  readMemorySearchIndex,
+  searchMemory,
+} from "./core/memory-search.js";
+import {
   appendAnswerReplayEvaluation,
   appendChatPreflightPacket,
   appendPostAnswerReplayRecord,
@@ -700,6 +706,7 @@ export {
   buildReplayRecoveryView,
   buildReadOnlyMemoryReplay,
   buildSelfGrowthProposal,
+  buildMemorySearchIndex,
   captureMemoryEntry,
   getSkillPack,
   handleGatewayRequest,
@@ -717,6 +724,7 @@ export {
   readGrowthApplicationGates,
   readInstallHardeningReports,
   readMemoryWiki,
+  readMemorySearchIndex,
   readMemoryReviewQueue,
   rollbackMemoryReversibleApply,
   readOwnerOpsRecords,
@@ -734,6 +742,8 @@ export {
   previewOwnerOpsPasteIntake,
   previewOwnerOpsTableTextIntake,
   resolveContextMesh,
+  getMemorySearchStatus,
+  searchMemory,
   reviewConnectorPermission,
   routeSkillPacks,
   routeModel,

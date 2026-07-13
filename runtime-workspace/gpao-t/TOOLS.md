@@ -6,20 +6,20 @@ This file records local tool conventions and runtime equipment notes. It does no
 
 - GPAO-T live runtime state: local absorbed runtime state directory
 - GPAO-T live runtime workspace: local absorbed runtime workspace
-- GPAO-T core repository: `/Users/jyp/Documents/Playground 2/gpao-t`
+- GPAO-T core repository: `/Users/jyp/Developer/gpao-t`
 - Technical source reference: clean upstream runtime source kept for engineering comparison
 - GPAO-T lab reference: patched dashboard lab kept for engineering comparison
 
 ## Gateway
 
-- Local dashboard: `http://127.0.0.1:18789/`
+- Local dashboard: `http://127.0.0.1:18799/`
 - Gateway mode: local loopback
 - Do not expose or print gateway auth tokens.
 - Use authenticated Safari session for visual QA when Playwright lacks auth context.
 
 ## Core Product Commands
 
-Run from `/Users/jyp/Documents/Playground 2/gpao-t`:
+Run from `/Users/jyp/Developer/gpao-t`:
 
 - Syntax check: `npm run check`
 - Main tests: `npm test`

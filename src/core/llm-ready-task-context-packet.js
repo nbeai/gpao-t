@@ -1,4 +1,6 @@
 import { runRuntimeTurn } from "./runtime.js";
+import { searchMemory } from "./memory-search.js";
+import { runtimePaths } from "./storage.js";
 
 export function buildLlmReadyTaskContextPacket({
   root,
@@ -31,6 +33,7 @@ export function buildLlmReadyTaskContextPacket({
   });
   const admittedMemory = turn.admissionPacket.admittedCells.map(formatAdmittedCell);
   const excludedMemory = turn.admissionPacket.rejectedCells.map(formatExcludedCell);
+  const memorySearch = buildMemorySearchAttachment({ root, text });
   const admittedAnchors = admittedMemory.filter((cell) => cell.role === "anchor");
   const support = admittedMemory.filter((cell) => cell.role === "support");
   const blockedCandidates = [
@@ -82,6 +85,7 @@ export function buildLlmReadyTaskContextPacket({
     },
     admittedMemory,
     excludedMemory,
+    memorySearch,
     admittedTCellAnchors: admittedAnchors,
     admittedSupport: support,
     blockedCandidates,
@@ -108,12 +112,47 @@ export function buildLlmReadyTaskContextPacket({
     sourceState: {
       meshStatus: turn.contextRuntime.mesh.status,
       retrievedCandidateCount: turn.contextRuntime.mesh.retrievedCandidates.length,
+      memorySearchStatus: memorySearch.status,
+      memorySearchResultCount: memorySearch.results?.length || 0,
       admittedCount: admittedMemory.length,
       excludedCount: excludedMemory.length,
     },
     nextSafeAction:
       "Use this packet as the answer-input contract; keep memory writes and automatic admission behind separate Apply Gate receipts.",
   };
+}
+
+function buildMemorySearchAttachment({ root, text }) {
+  try {
+    const stateDir = runtimePaths({ root }).runtimeRoot;
+    const search = searchMemory({ stateDir, query: text, limit: 5 });
+    return {
+      schema: "gpao_t.llm_ready.memory_search_attachment.v0_1",
+      status: "ready",
+      rule: "Search results are source-linked context candidates; they are not durable truth and do not bypass T-cell admission.",
+      engine: search.engine,
+      index: search.index,
+      results: search.results.map((result) => ({
+        id: result.id,
+        source: result.source,
+        title: result.title,
+        score: result.score,
+        createdAt: result.createdAt,
+        excerpt: result.excerpt,
+        path: result.path,
+        admissionRole: "search_support_candidate",
+        answerAnchorEligible: false,
+      })),
+    };
+  } catch (error) {
+    return {
+      schema: "gpao_t.llm_ready.memory_search_attachment.v0_1",
+      status: "degraded",
+      rule: "Memory search failed closed; current request remains primary and no missing result may become answer authority.",
+      error: error.message,
+      results: [],
+    };
+  }
 }
 
 export function buildLlmReadyPacketSurfaceState({
@@ -141,6 +180,9 @@ export function buildLlmReadyPacketSurfaceState({
       endpoint: packet.endpointCenter?.objective || "입력 대기",
       anchor: anchor?.anchor || "없음",
       supportCount: String(packet.admittedSupport?.length || 0),
+      memorySearch: packet.memorySearch?.status === "ready"
+        ? `${packet.memorySearch.results?.length || 0}개`
+        : "검색 제한",
       blocked: packet.authorityBoundary?.requiresApproval ? "승인 필요" : "로컬 가능",
       memoryWrite: "차단",
       automaticAdmission: "차단",
@@ -148,6 +190,7 @@ export function buildLlmReadyPacketSurfaceState({
     tones: {
       activeTarget: packet.activeTarget?.stalePriorTarget ? "review" : "ready",
       anchor: anchor ? "ready" : "waiting",
+      memorySearch: packet.memorySearch?.status === "ready" ? "ready" : "review",
       blocked: packet.authorityBoundary?.requiresApproval ? "blocked" : "ready",
       memoryWrite: "blocked",
       automaticAdmission: "blocked",
@@ -159,7 +202,7 @@ export function buildLlmReadyPacketSurfaceState({
       targetSurface: "gpao_work_pane_inspector",
       sidecarSurface: false,
       liveMutation: false,
-      controlLabels: ["현재 목표", "입력 패킷", "Anchor", "Support", "차단 권한", "Replay 기대값"],
+      controlLabels: ["현재 목표", "입력 패킷", "Anchor", "Support", "기억 검색", "차단 권한", "Replay 기대값"],
     },
     nextSafeAction: packet.nextSafeAction,
   };
@@ -185,6 +228,9 @@ export function verifyLlmReadyTaskContextPacket({ root } = {}) {
   if (!packet.endpointCenter?.objective) findings.push("endpoint_center_missing");
   if (!Array.isArray(packet.admittedMemory)) findings.push("admitted_memory_not_array");
   if (!Array.isArray(packet.excludedMemory)) findings.push("excluded_memory_not_array");
+  if (!packet.memorySearch || !Array.isArray(packet.memorySearch.results)) {
+    findings.push("memory_search_attachment_missing");
+  }
   if (!packet.responseContract?.forbiddenModes?.includes("answer_from_unadmitted_memory")) {
     findings.push("unadmitted_memory_not_forbidden");
   }
