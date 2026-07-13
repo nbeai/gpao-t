@@ -4,7 +4,7 @@ import { cp, mkdir, readFile, readdir, stat, writeFile } from "node:fs/promises"
 import { existsSync } from "node:fs";
 import { basename, join, relative, resolve } from "node:path";
 
-const workspace = "/Users/jyp/Documents/Playground 2";
+const workspace = "/Users/jyp/Developer";
 const gpaoRoot = join(workspace, "gpao-t");
 const liveDist = "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist";
 const stageDir = join(

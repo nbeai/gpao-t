@@ -4,7 +4,7 @@ import { basename, dirname, join } from "node:path";
 
 const DEFAULT_SESSIONS_INDEX = "/Users/jyp/.gpao-t/agents/main/sessions/sessions.json";
 const DEFAULT_EVIDENCE_ROOT =
-  "/Users/jyp/Documents/Playground 2/gpao-t/docs/03-verification/evidence/live-test-session-cleanup";
+  "/Users/jyp/Developer/gpao-t/docs/03-verification/evidence/live-test-session-cleanup";
 const REQUIRED_TOKEN = "GPAO-T-LIVE-TEST-SESSION-CLEANUP-2026-07-12";
 const DEFAULT_PATTERNS = [
   "gpao-t conversation qa",

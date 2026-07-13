@@ -5,8 +5,8 @@ import { createHash } from "node:crypto";
 import { dirname, join } from "node:path";
 
 const REQUIRED_APPROVAL_TOKEN = "GPAO-T-LIVE-OPENCLAW-APPLY-2026-07-11";
-const workspace = "/Users/jyp/Documents/Playground 2";
-const labDist = join(workspace, "openclaw-clean-lab/gpao-t-openclaw-dashboard-lab/dist");
+const workspace = "/Users/jyp/Developer";
+const labDist = join(workspace, "gpao-t-lab/gpao-t-openclaw-dashboard-lab/dist");
 const liveDist = "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist";
 const evidenceRoot = join(workspace, "gpao-t/docs/03-verification/evidence/live-backups");
 const runStamp = new Date().toISOString().replace(/[:.]/g, "-");

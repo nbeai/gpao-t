@@ -43,3 +43,12 @@ iCloud document sync is not a Phase 2 completion blocker. It may become a later 
 - OpenClaw comparison/optimization
 
 are solid.
+
+## Local Latest-Only Retention Rule
+
+- GPAO-T local development source is /Users/jyp/Developer/gpao-t.
+- GPAO-T live runtime is /Users/jyp/.gpao-t.
+- Local release folders keep only the latest usable distribution by default.
+- Old local clones, labs, generated evidence outside the project, package caches, and duplicate releases are delete-candidates after they are captured in a manifest.
+- GitHub is the source-history archive. Local folders are working copies, not long-term storage.
+- iCloud is not a development or runtime dependency. It may be used only as optional document backup/sync outside the Phase 2 core.

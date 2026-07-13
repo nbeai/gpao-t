@@ -11,7 +11,7 @@ const CONTROL_UI_ROOT = join(LIVE_ROOT, "control-ui");
 const ASSETS_DIR = join(CONTROL_UI_ROOT, "assets");
 const BACKUP_ROOT =
   process.env.GPAO_T_SURFACE_SEAL_BACKUP_ROOT ||
-  "/Users/jyp/Documents/Playground 2/gpao-t/docs/03-verification/evidence/live-surface-seal-patch";
+  "/Users/jyp/Developer/gpao-t/docs/03-verification/evidence/live-surface-seal-patch";
 const APPLY_TOKEN = "apply-gpao-t-surface-seal-live";
 
 const TEXT_REPLACEMENTS = [

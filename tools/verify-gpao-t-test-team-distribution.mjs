@@ -17,7 +17,7 @@ const PROJECT_ROOT = fileURLToPath(new URL("..", import.meta.url));
 const DEFAULT_SOURCE_BUILD = resolve(
   PROJECT_ROOT,
   "..",
-  "openclaw-clean-lab",
+  "gpao-t-lab",
   "gpao-t-openclaw-dashboard-lab",
 );
 

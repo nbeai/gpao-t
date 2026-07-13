@@ -9,12 +9,12 @@ import { spawnSync } from "node:child_process";
 const require = createRequire(import.meta.url);
 
 const REQUIRED_APPROVAL_TOKEN = "GPAO-T-LIVE-RUNTIME-REPAIR-2026-07-12";
-const DEFAULT_WORKSPACE = "/Users/jyp/Documents/Playground 2";
+const DEFAULT_WORKSPACE = "/Users/jyp/Developer";
 const DEFAULT_LIVE_OPENCLAW_ROOT =
   "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw";
 const DEFAULT_PURE_OPENCLAW_ROOT = join(
   DEFAULT_WORKSPACE,
-  "openclaw-clean-lab/github-openclaw-source",
+  "gpao-t-lab/github-openclaw-source",
 );
 const DEFAULT_EVIDENCE_ROOT = join(
   DEFAULT_WORKSPACE,

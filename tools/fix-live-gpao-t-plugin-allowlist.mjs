@@ -6,7 +6,7 @@ import { dirname, join } from "node:path";
 
 const DEFAULT_CONFIG_PATH = "/Users/jyp/.gpao-t/gpao-t.json";
 const DEFAULT_EVIDENCE_ROOT =
-  "/Users/jyp/Documents/Playground 2/gpao-t/docs/03-verification/evidence/live-plugin-allowlist";
+  "/Users/jyp/Developer/gpao-t/docs/03-verification/evidence/live-plugin-allowlist";
 const DEFAULT_ALLOWED_PLUGINS = ["telegram", "openai", "memory-core"];
 const REQUIRED_APPROVAL_TOKEN = "GPAO-T-LIVE-PLUGIN-ALLOWLIST-2026-07-12";
 

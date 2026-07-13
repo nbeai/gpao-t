@@ -8,7 +8,7 @@ const DEFAULT_LIVE_CONTROL_UI =
   "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui";
 const DEFAULT_DOM_READBACK_EVIDENCE =
   process.env.GPAO_T_ROUTE_DOM_READBACK_EVIDENCE ||
-  "/Users/jyp/Documents/Playground 2/gpao-t/docs/03-verification/evidence/GPAO-T-SAFARI-ROUTE-DOM-READBACK-2026-07-12.md";
+  "/Users/jyp/Developer/gpao-t/docs/03-verification/evidence/GPAO-T-SAFARI-ROUTE-DOM-READBACK-2026-07-12.md";
 
 const REQUIRED_ROUTES = [
   { id: "dashboard", path: "/", requiredLabels: ["nBeAI. GPAO-T"] },

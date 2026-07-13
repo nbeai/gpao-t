@@ -5,7 +5,7 @@ import { mkdir, writeFile } from "node:fs/promises";
 import { homedir } from "node:os";
 import { join } from "node:path";
 
-const DEFAULT_ROOT = "/Users/jyp/Documents/Playground 2/gpao-t";
+const DEFAULT_ROOT = "/Users/jyp/Developer/gpao-t";
 const DEFAULT_EVIDENCE_ROOT = join(
   DEFAULT_ROOT,
   "docs/03-verification/evidence/live-conversation-qa-runs",

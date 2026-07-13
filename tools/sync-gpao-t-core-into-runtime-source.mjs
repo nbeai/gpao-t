@@ -8,7 +8,7 @@ const REPO_ROOT = fileURLToPath(new URL("..", import.meta.url));
 const DEFAULT_RUNTIME_SOURCE = resolve(
   REPO_ROOT,
   "..",
-  "openclaw-clean-lab",
+  "gpao-t-lab",
   "gpao-t-openclaw-dashboard-lab",
 );
 

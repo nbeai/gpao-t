@@ -13,7 +13,7 @@ const GPAO_HANDLER =
   join(LIVE_ROOT, "gpao-t-B6WiwufB.js");
 const BACKUP_ROOT =
   process.env.GPAO_T_LIVE_PATCH_BACKUP_ROOT ||
-  "/Users/jyp/Documents/Playground 2/gpao-t/docs/03-verification/evidence/live-conversation-ux-patch";
+  "/Users/jyp/Developer/gpao-t/docs/03-verification/evidence/live-conversation-ux-patch";
 const APPLY_TOKEN = "apply-gpao-t-conversation-ux-live";
 
 function hasArg(name) {

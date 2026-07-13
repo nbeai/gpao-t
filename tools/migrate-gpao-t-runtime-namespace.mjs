@@ -12,7 +12,7 @@ const CONTROL_UI_INDEX_HTML = join(CONTROL_UI_ROOT, "index.html");
 const CONTROL_UI_SW = join(CONTROL_UI_ROOT, "sw.js");
 const BACKUP_ROOT =
   process.env.GPAO_T_NAMESPACE_MIGRATION_BACKUP_ROOT ||
-  "/Users/jyp/Documents/Playground 2/gpao-t/docs/03-verification/evidence/live-namespace-migration";
+  "/Users/jyp/Developer/gpao-t/docs/03-verification/evidence/live-namespace-migration";
 const APPLY_TOKEN = "apply-gpao-t-runtime-namespace-live";
 const NAMESPACE_MARKER = "gpao_t_runtime_namespace_mirror_v0_1";
 const CUSTOM_ELEMENT_ALIAS_MARKER = "gpao_t_custom_element_alias_bridge_v0_1";

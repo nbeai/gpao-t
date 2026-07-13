@@ -12,7 +12,7 @@ import {
 
 const DEFAULT_ROOT = mkdtempSync(join(tmpdir(), "gpao-t-conversation-ux-qa-"));
 const DEFAULT_EVIDENCE_ROOT =
-  "/Users/jyp/Documents/Playground 2/gpao-t/docs/03-verification/evidence/conversation-ux-qa";
+  "/Users/jyp/Developer/gpao-t/docs/03-verification/evidence/conversation-ux-qa";
 
 function hasArg(name) {
   return process.argv.includes(name);

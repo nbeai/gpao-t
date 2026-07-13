@@ -13,7 +13,7 @@ const CONTROL_UI_ASSETS_DIR = join(LIVE_ROOT, "control-ui", "assets");
 const CONTROL_UI_INDEX_HTML = join(LIVE_ROOT, "control-ui", "index.html");
 const BACKUP_ROOT =
   process.env.GPAO_T_LIVE_PATCH_BACKUP_ROOT ||
-  "/Users/jyp/Documents/Playground 2/gpao-t/docs/03-verification/evidence/live-user-screen-ux-patch";
+  "/Users/jyp/Developer/gpao-t/docs/03-verification/evidence/live-user-screen-ux-patch";
 const APPLY_TOKEN = "apply-gpao-t-user-screen-ux-live";
 const CSS_MARKER = "gpao_t_user_screen_default_hides_work_pane_css_v0_1";
 const INDEX_MARKER = "gpao_t_user_screen_css_cache_bust_v0_1";

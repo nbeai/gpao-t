@@ -120,7 +120,7 @@ Tool rules:
 
 For GPAO-T development:
 
-- Treat `/Users/jyp/Documents/Playground 2/gpao-t` as the core product repository.
+- Treat `/Users/jyp/Developer/gpao-t` as the core product repository.
 - Treat this workspace as the live runtime prompt/memory home.
 - Treat `~/.gpao-t` as the live GPAO-T state root.
 - Treat previous compatibility state as read-only migration material only.

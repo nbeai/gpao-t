@@ -9,7 +9,7 @@ const LIVE_CONTROL_UI =
   "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui";
 const BACKUP_ROOT =
   process.env.GPAO_T_STANDALONE_NAMESPACE_BACKUP_ROOT ||
-  "/Users/jyp/Documents/Playground 2/gpao-t/docs/03-verification/evidence/live-standalone-namespace-rebuild";
+  "/Users/jyp/Developer/gpao-t/docs/03-verification/evidence/live-standalone-namespace-rebuild";
 const APPLY_TOKEN = "apply-gpao-t-standalone-namespace-rebuild";
 const STANDALONE_MARKER = "gpao_t_standalone_namespace_rebuild_v0_1";
 
