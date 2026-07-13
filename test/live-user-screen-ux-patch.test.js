@@ -110,9 +110,8 @@ test("patchControlUiIndexHtmlSource cache-busts the user screen CSS", () => {
   assert.match(patched, /hiddenSettingLabels/);
   assert.match(patched, /작업공간 요약/);
   assert.match(patched, /고급 파일/);
-  assert.match(patched, /이번 답변의 작동 근거/);
-  assert.match(patched, /기억 후보/);
-  assert.match(patched, /성장 제안/);
+  assert.doesNotMatch(patched, /이번 답변의 작동 근거/);
+  assert.doesNotMatch(patched, /gpao-os-evidence-strip/);
   assert.match(patched, /RUNTIME-MANIFEST/);
   assert.match(patched, /telegramRows\.slice\(1\)/);
   assert.match(patched, /"MCP"/);

@@ -164,7 +164,6 @@ const TELEGRAM_COMMUNICATION_RAIL_SCRIPT = `
               color: var(--muted, #746a60);
               text-align: right;
             }
-            .gpao-os-evidence-strip,
             .gpao-workspace-user-summary {
               max-width: 760px;
               margin: 10px auto 14px;
@@ -176,27 +175,15 @@ const TELEGRAM_COMMUNICATION_RAIL_SCRIPT = `
               font-size: 12px;
               line-height: 1.45;
             }
-            .gpao-os-evidence-strip {
-              position: fixed !important;
-              left: clamp(280px, 30vw, 420px);
-              right: 120px;
-              bottom: 112px;
-              z-index: 30;
-              margin: 0;
-              max-width: 760px;
-            }
-            .gpao-os-evidence-strip__head,
             .gpao-workspace-user-summary__head {
               font-weight: 740;
               margin-bottom: 6px;
             }
-            .gpao-os-evidence-strip__grid,
             .gpao-workspace-user-summary__grid {
               display: grid;
               grid-template-columns: repeat(4, minmax(0, 1fr));
               gap: 6px;
             }
-            .gpao-os-evidence-chip,
             .gpao-workspace-user-summary__item {
               min-width: 0;
               padding: 7px 8px;
@@ -204,7 +191,6 @@ const TELEGRAM_COMMUNICATION_RAIL_SCRIPT = `
               background: color-mix(in srgb, var(--background, #f8f3ed) 82%, transparent);
               overflow-wrap: anywhere;
             }
-            .gpao-os-evidence-chip strong,
             .gpao-workspace-user-summary__item strong {
               display: block;
               font-size: 11px;
@@ -212,20 +198,10 @@ const TELEGRAM_COMMUNICATION_RAIL_SCRIPT = `
               margin-bottom: 2px;
             }
             @media (max-width: 720px) {
-              .gpao-os-evidence-strip,
               .gpao-workspace-user-summary {
                 margin-left: 8px;
                 margin-right: 8px;
               }
-              .gpao-os-evidence-strip {
-                left: 12px;
-                right: 12px;
-                bottom: 104px;
-                max-width: none;
-                margin-left: 0;
-                margin-right: 0;
-              }
-              .gpao-os-evidence-strip__grid,
               .gpao-workspace-user-summary__grid {
                 grid-template-columns: repeat(2, minmax(0, 1fr));
               }
@@ -663,30 +639,6 @@ const TELEGRAM_COMMUNICATION_RAIL_SCRIPT = `
           anchor.insertBefore(summary, anchor.firstChild);
         }
 
-        function applyOsEvidenceStrip(root) {
-          if (!root || root !== document) return;
-          if (location.pathname !== "/chat" && !location.pathname.startsWith("/chat/")) return;
-          if (document.querySelector('[data-gpao-t-os-evidence-strip="' + marker + '"]')) return;
-          const composer =
-            document.querySelector('textarea[placeholder*="GPAO-T"], textarea[placeholder*="메시지"], input[placeholder*="GPAO-T"], input[placeholder*="메시지"]')?.closest("form, section, footer, div");
-          const main = document.querySelector("main, [role='main']") || document.body;
-          const strip = document.createElement("section");
-          strip.className = "gpao-os-evidence-strip";
-          strip.setAttribute("data-gpao-t-os-evidence-strip", marker);
-          strip.setAttribute("aria-label", "이번 답변의 작동 근거");
-          strip.innerHTML = [
-            '<div class="gpao-os-evidence-strip__head">이번 답변의 작동 근거</div>',
-            '<div class="gpao-os-evidence-strip__grid">',
-            '<div class="gpao-os-evidence-chip"><strong>맥락</strong><span>현재 대화 기준으로 확인</span></div>',
-            '<div class="gpao-os-evidence-chip"><strong>도구</strong><span>사용 시 진행 영역에 분리 표시</span></div>',
-            '<div class="gpao-os-evidence-chip"><strong>기억 후보</strong><span>승인 전 저장 차단</span></div>',
-            '<div class="gpao-os-evidence-chip"><strong>성장 제안</strong><span>검토 후 다음 턴에 반영</span></div>',
-            '</div>',
-          ].join("");
-          if (composer?.parentElement) composer.parentElement.insertBefore(strip, composer);
-          else main.appendChild(strip);
-        }
-
         function isTelegramRow(row) {
           const text = (row?.textContent || "").trim();
           const href = row?.querySelector?.("a[href]")?.getAttribute("href") || "";
@@ -764,7 +716,6 @@ const TELEGRAM_COMMUNICATION_RAIL_SCRIPT = `
           }
           applyUserSettingsSummary(document);
           applyWorkspaceUserSummary(document);
-          applyOsEvidenceStrip(document);
         }
 
         let scheduled = false;
@@ -1078,7 +1029,6 @@ async function main() {
       translatesPairingLoopbackErrors: true,
       hidesRawWorkspaceFilesByDefault: true,
       showsUserModeWorkspaceSummary: true,
-      showsOsEvidenceStripAfterChatTurns: true,
       keepsInternalEvidenceAvailableInRuntimeState: true,
     },
   };
