@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { existsSync, readFileSync, statSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { join, relative, resolve } from "node:path";
 
 const root = resolve(process.cwd());
@@ -27,26 +27,12 @@ function walk(path, out = []) {
   if (!existsSync(path)) return out;
   const stat = statSync(path);
   if (stat.isDirectory()) {
-    const { readdirSync } = awaitFs();
     for (const entry of readdirSync(path)) walk(join(path, entry), out);
     return out;
   }
   if (stat.isFile()) out.push(path);
   return out;
 }
-
-function awaitFs() {
-  return { readdirSync: globalThis.__gpaoReaddirSync || requireFs().readdirSync };
-}
-
-function requireFs() {
-  return globalThis.__gpaoFs || (globalThis.__gpaoFs = Object.fromEntries([]));
-}
-
-// Avoid CommonJS require in runtime code; this small dynamic import keeps the
-// audit script ESM while keeping walk simple.
-const { readdirSync } = await import("node:fs");
-globalThis.__gpaoReaddirSync = readdirSync;
 
 const files = SCAN_TARGETS.flatMap((target) => walk(join(root, target))).filter((file) =>
   /\.(mjs|js|json|md|txt|yml|yaml)$/.test(file),
