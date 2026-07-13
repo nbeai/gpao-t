@@ -1,0 +1,12 @@
+.git
+.gpao-t
+.beai-harness
+node_modules
+npm-debug.log*
+dist
+tmp
+logs
+coverage
+docs/03-verification/evidence/live-backups
+docs/03-verification/evidence/live-surface-seal-patch
+**/.DS_Store

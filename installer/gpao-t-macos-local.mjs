@@ -26,7 +26,7 @@ Safety:
 Options:
   --release <path>             Distribution root
   --state-home <path>          GPAO-T state root (default: ~/.gpao-t)
-  --openclaw-home <path>       Existing OpenClaw state root
+  --compat-home <path>         Existing compatibility state root
   --launch-agents-dir <path>   LaunchAgents directory
   --migration-profile <name>   standard | none
   --port <number>              Dedicated gateway port (default: 18799)
@@ -46,7 +46,7 @@ function parseArgs(argv, defaults) {
   const valueFlags = new Map([
     ["--release", "release"],
     ["--state-home", "stateHome"],
-    ["--openclaw-home", "openclawHome"],
+    ["--compat-home", "openclawHome"],
     ["--launch-agents-dir", "launchAgentsDir"],
     ["--migration-profile", "migrationProfile"],
     ["--port", "port"],
@@ -119,4 +119,3 @@ main().catch((error) => {
   process.stderr.write(formatHuman({ status: "refused", writesPerformed: false, error: error.message }));
   process.exitCode = 1;
 });
-

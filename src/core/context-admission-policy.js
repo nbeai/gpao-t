@@ -93,7 +93,7 @@ export function classifyContextCandidateUse({ candidate, requestPolicy, inputSig
 }
 
 export function hasReleaseSignal(text) {
-  return /배포파일|배포 파일|GPAO Operating Package|GPAO for OpenClaw|release[-\s]?file|release package|package file/i.test(text);
+  return /배포파일|배포 파일|GPAO-T Operating Package|GPAO Operating Package|release[-\s]?file|release package|package file/i.test(text);
 }
 
 export function hasFollowUpSignal(text) {

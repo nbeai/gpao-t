@@ -301,7 +301,7 @@ function buildStage7TeamAlpha({ root, now, writePackage }) {
       "record team feedback without external sends",
     ],
     comparisonQuestions: [
-      "OpenClaw보다 작업 시작이 이해하기 쉬운가?",
+      "다른 AI 런타임보다 작업 시작이 이해하기 쉬운가?",
       "세션/작업 흐름이 자연스러운가?",
       "권한 경계가 안전하면서도 방해가 적은가?",
       "맥락/스킬/모델/도구 후보가 사용자를 피곤하게 만들지 않는가?",

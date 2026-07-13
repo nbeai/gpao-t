@@ -122,8 +122,10 @@ For GPAO-T development:
 
 - Treat `/Users/jyp/Documents/Playground 2/gpao-t` as the core product repository.
 - Treat this workspace as the live runtime prompt/memory home.
-- Treat `~/.openclaw` as the live state substrate.
-- Treat OpenClaw clean lab source as the upstream structural reference.
+- Treat `~/.gpao-t` as the live GPAO-T state root.
+- Treat previous compatibility state as read-only migration material only.
+- Treat OpenClaw as a separate comparison product and compatibility reference,
+  never as GPAO-T's user-facing identity.
 
 Before claiming completion, provide evidence:
 

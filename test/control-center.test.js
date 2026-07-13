@@ -358,7 +358,7 @@ describe("GPAO-T Local Control Center readiness", () => {
     captureMemoryEntry({
       root,
       title: "배포파일 meaning",
-      body: "배포파일 means GPAO Operating Package / GPAO for OpenClaw in this product flow.",
+      body: "배포파일 means GPAO-T Operating Package in this product flow.",
     });
     appendReplayRecoveryRecord({ root, fixture: releaseFixture, now: "2026-07-08T00:00:00.000Z" });
     appendReplayRecoveryRecord({ root, fixture: releaseFixture, now: "2026-07-08T00:01:00.000Z" });

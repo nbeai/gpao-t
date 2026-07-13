@@ -212,15 +212,15 @@ function buildTCellCandidateFromMemory(entry) {
 }
 
 function inferOperatingPrinciple(entry) {
-  if (/배포파일|GPAO Operating Package|GPAO for OpenClaw/i.test(`${entry.title} ${entry.body}`)) {
-    return "When the user says 배포파일 in a GPAO packaging flow, prefer GPAO Operating Package / GPAO for OpenClaw over older BEAI archive meanings.";
+  if (/배포파일|GPAO-T Operating Package|GPAO Operating Package/i.test(`${entry.title} ${entry.body}`)) {
+    return "When the user says 배포파일 in a GPAO-T packaging flow, prefer GPAO-T Operating Package over older BEAI archive meanings.";
   }
   return `Use memory entry '${entry.title}' as a candidate operating principle only after Context Mesh admission.`;
 }
 
 function inferAnchor(entry) {
   const text = `${entry.title} ${entry.body}`;
-  if (/배포파일|GPAO Operating Package|GPAO for OpenClaw/i.test(text)) {
+  if (/배포파일|GPAO-T Operating Package|GPAO Operating Package/i.test(text)) {
     return "release-file";
   }
   return slug(entry.title);

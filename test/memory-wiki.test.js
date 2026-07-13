@@ -84,7 +84,7 @@ describe("GPAO-T Memory Wiki and Context Mesh", () => {
     const result = captureMemoryEntry({
       root,
       title: "배포파일 meaning",
-      body: "In a GPAO packaging flow, 배포파일 means GPAO Operating Package / GPAO for OpenClaw before older BEAI Harness archives.",
+      body: "In a GPAO-T packaging flow, 배포파일 means GPAO-T Operating Package before older BEAI Harness archives.",
       now: "2026-07-08T00:00:00.000Z",
     });
     const wiki = readMemoryWiki({ root });
@@ -103,7 +103,7 @@ describe("GPAO-T Memory Wiki and Context Mesh", () => {
     captureMemoryEntry({
       root,
       title: "GPAO package noun binding",
-      body: "배포파일 should resolve to GPAO Operating Package / GPAO for OpenClaw in this product flow.",
+      body: "배포파일 should resolve to GPAO-T Operating Package in this product flow.",
     });
     const mesh = resolveContextMesh({
       root,
@@ -114,7 +114,7 @@ describe("GPAO-T Memory Wiki and Context Mesh", () => {
 
     assert.equal(mesh.status, "ready");
     assert.equal(mesh.retrievedCandidates[0].anchor, "release-file");
-    assert.match(mesh.retrievedCandidates[0].pi, /GPAO Operating Package/);
+    assert.match(mesh.retrievedCandidates[0].pi, /GPAO-T Operating Package/);
     assert.match(mesh.boundary, /not admitted context/);
   });
 
@@ -123,7 +123,7 @@ describe("GPAO-T Memory Wiki and Context Mesh", () => {
     captureMemoryEntry({
       root,
       title: "GPAO package noun binding",
-      body: "배포파일 should resolve to GPAO Operating Package / GPAO for OpenClaw in this product flow.",
+      body: "배포파일 should resolve to GPAO-T Operating Package in this product flow.",
     });
     const mesh = resolveContextMesh({
       root,
@@ -145,7 +145,7 @@ describe("GPAO-T Memory Wiki and Context Mesh", () => {
     captureMemoryEntry({
       root,
       title: "GPAO package noun binding",
-      body: "배포파일 should resolve to GPAO Operating Package / GPAO for OpenClaw in this product flow.",
+      body: "배포파일 should resolve to GPAO-T Operating Package in this product flow.",
     });
     const result = runRuntimeTurn({
       root,
@@ -165,7 +165,7 @@ describe("GPAO-T Memory Wiki and Context Mesh", () => {
     captureMemoryEntry({
       root,
       title: "GPAO package noun binding",
-      body: "배포파일 should resolve to GPAO Operating Package / GPAO for OpenClaw in this product flow.",
+      body: "배포파일 should resolve to GPAO-T Operating Package in this product flow.",
     });
     const result = runRuntimeTurn({
       root,
@@ -191,7 +191,7 @@ describe("GPAO-T Memory Wiki and Context Mesh", () => {
       path: "/memory/capture",
       body: {
         title: "GPAO package noun binding",
-        body: "배포파일 means GPAO Operating Package / GPAO for OpenClaw.",
+        body: "배포파일 means GPAO-T Operating Package.",
       },
     });
     const resolve = handleGatewayRequest({

@@ -102,7 +102,7 @@ function buildProposalBody({ target, evidenceCount }) {
     return {
       title: "Strengthen release-file active-target recovery",
       operatingPrinciple:
-        "When the user says 배포파일 in the current GPAO-T/OpenClaw packaging flow, recover the active target before answering or selecting tools.",
+        "When the user says 배포파일 in the current GPAO-T packaging flow, recover the active target before answering or selecting tools.",
       expectedBenefit:
         "Reduce wrong-anchor answers and keep short Korean follow-up requests on the intended product/package thread.",
       candidateRuntimeChange:

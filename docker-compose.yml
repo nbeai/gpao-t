@@ -1,0 +1,36 @@
+services:
+  gpao-t:
+    build:
+      context: .
+    image: nbeai/gpao-t:local
+    container_name: gpao-t-local
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: production
+      GPAO_T_STATE_DIR: /data/gpao-t
+      GPAO_T_STATE_HOME: /data/gpao-t
+      GPAO_T_HOST: 0.0.0.0
+      GPAO_T_PORT: "18799"
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "const http=require('node:http');const req=http.get('http://127.0.0.1:18799/health',res=>process.exit(res.statusCode>=200&&res.statusCode<500?0:1));req.on('error',()=>process.exit(1));req.setTimeout(4000,()=>{req.destroy();process.exit(1);});"
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    ports:
+      - "18799:18799"
+    volumes:
+      - gpao_t_state:/data/gpao-t
+      - gpao_t_logs:/data/gpao-t/logs
+    restart: unless-stopped
+
+volumes:
+  gpao_t_state:
+  gpao_t_logs:

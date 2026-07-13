@@ -21,7 +21,7 @@ describe("GPAO-T admission scoring and replay recovery view", () => {
     captureMemoryEntry({
       root,
       title: "GPAO package noun binding",
-      body: "배포파일 should resolve to GPAO Operating Package / GPAO for OpenClaw in this product flow.",
+      body: "배포파일 should resolve to GPAO-T Operating Package in this product flow.",
     });
     const result = runRuntimeTurn({
       root,

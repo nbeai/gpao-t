@@ -26,8 +26,13 @@
     "seal:live-patches": "node tools/audit-live-patch-reproducibility.mjs",
     "seal:source-groups": "node tools/audit-source-evidence-groups.mjs",
     "seal:final": "node tools/audit-gpao-t-final-supercar-seal.mjs",
+    "seal:identity": "node tools/audit-gpao-t-identity-seal.mjs",
     "cleanup:test-sessions": "node tools/cleanup-live-gpao-t-test-sessions.mjs",
     "verify": "npm run check && npm test",
+    "docker:build": "docker build -t nbeai/gpao-t:local .",
+    "docker:up": "docker compose up --build gpao-t",
+    "docker:health": "docker compose ps gpao-t",
+    "verify:container": "docker compose config --quiet",
     "package:test-team": "node tools/build-gpao-t-test-team-distribution.mjs"
   },
   "engines": {
