@@ -127,8 +127,8 @@ export function buildControlCenterUiSnapshot({ snapshot, designContract, uiContr
     uiContractSchema: contract.schema,
     generatedAt: snapshot?.generatedAt || null,
     firstViewport: {
-      title: "GPAO-T Local Control Center",
-      subtitle: "정적 UI reader · 외부 활성화 없음",
+      title: "GPAO-T 대시보드",
+      subtitle: "로컬 운영 화면 · 외부 활성화 없음",
       overallStatus: snapshot?.status || "unknown",
       counts: {
         panels: snapshot?.counts?.panels ?? panels.length,

@@ -2,7 +2,7 @@
 
 ## Next Safe Action
 
-Run beai verify to inspect available checks before implementation.
+Run beai scenario --apply before scenario verification.
 
 ## Review Before Continuing
 
@@ -13,12 +13,12 @@ Run beai verify to inspect available checks before implementation.
 
 ## Session Resume
 
-Apply the newer source guidance to implementation or explicitly mark it out of scope before claiming completion.
+Run beai scenario --apply before scenario verification.
 
 ## Recent Evidence
 
 - preflight: Read-only workspace check completed for gpao-t.
-- route: Routed work as strict.
+- preflight: Read-only workspace check completed for gpao-t.
+- route: Routed work as standard.
 - plan: Saved build plan.
-- route: Routed work as strict.
-- plan: Saved build plan.
+- verify: Detected 2 checks without running them.

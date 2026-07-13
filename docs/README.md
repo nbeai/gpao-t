@@ -48,7 +48,7 @@ OpenClaw Gateway Dashboard fork and chat condition work is governed by `docs/03-
 
 Hardware Engine material has been retired from the current GPAO-T project scope. The archived notes are under `docs/99-out-of-scope/retired-hardware-engine/` and must not be used as a source, dependency, blocker, or completion gate for the current OpenClaw absorption/test-team candidate path.
 
-Local Control Center design guidance is maintained in `docs/LOCAL-CONTROL-CENTER-DESIGN-RECIPE.md`. It adapts BEAI Harness `design.md` into the GPAO-T visual UI contract before any desktop/web surface is built.
+GPAO-T dashboard design guidance is maintained in `docs/GPAO-T-DASHBOARD-DESIGN-RECIPE.md`. It adapts BEAI Harness `design.md` into the GPAO-T visual UI contract before any desktop/web surface is built.
 
 GPAO-T design reference gating is now a required UI/UX contract. `gpao-t control design-reference-gate`, `gpao-t control design-reference-gate-check`, `GET /control-center/design-reference-gate`, and `GET /control-center/design-reference-gate/verify` expose the Codex-level visual/conversation UX, Claude-Code-level operating/authority UX, Korean-first UI, visual system, and tone-unity requirements that every future UI/UX slice must prove with desktop/mobile screenshot evidence and human visual review. The Control Center `Design Reference` panel shows this gate without opening approval writes, audit writes, dry-run invocation, tool/CLI/MCP execution, connector activation, credential access, external send, paid/destructive action, or durable memory promotion.
 
@@ -101,8 +101,8 @@ The first slice implements a local, dependency-free runtime skeleton:
 - `Connector / Tool Governance`: local connector registry plus tool / CLI / MCP / connector execution-candidate boundary
 - `Execution Approval Preview`: execution proposal confirmation, Korean authority-level labels, approval packet validation, and audit write design without actual writes or invocation
 - `Install / Update / Rollback Hardening`: local operational readiness and recovery contract
-- `Local Control Center Contract`: one snapshot for runtime, ops, memory, recovery, growth, adapters, connectors, and authority
-- `Local Control Center Design Recipe`: BEAI design doctrine adapted to GPAO-T UI implementation
+- `GPAO-T Dashboard Contract`: one snapshot for runtime, ops, memory, recovery, growth, adapters, connectors, and authority
+- `GPAO-T Dashboard Design Recipe`: BEAI design doctrine adapted to GPAO-T UI implementation
 - `GPAO-T Design Reference Gate`: Codex-level work rhythm, Claude-Code-level authority UX, Korean-first visual/tone system, screenshot evidence, and human-eye design review required for every UI/UX slice
 - `Control Center Human Readability Check`: first-scan clarity and no-script/local-inspection QA before app-shell transition
 - `App Shell Decision Gate`: technology, authority, rollback, IPC/local-serving, screenshot, and recovery decisions before desktop shell implementation
@@ -426,7 +426,7 @@ Adapter Boundary keeps model freedom and tool safety separate:
 - local preview tools can be admitted for draft/replay work
 - external send, public release, deletion, secret write, and recurring automation remain blocked until explicit authority gates exist
 
-This boundary is intentionally visible in `modelRoute`, `toolPlan`, `adapterPlan`, `modelRouterBoundary`, `modelRouterPolicy`, CLI, Gateway, and the Local Control Center adapter panel so a future live provider or tool path can be judged before it is opened.
+This boundary is intentionally visible in `modelRoute`, `toolPlan`, `adapterPlan`, `modelRouterBoundary`, `modelRouterPolicy`, CLI, Gateway, and the GPAO-T dashboard adapter panel so a future live provider or tool path can be judged before it is opened.
 
 Connector / Tool Governance keeps account and execution-candidate visibility separate from account or tool execution:
 
@@ -452,7 +452,7 @@ Install / Update / Rollback Hardening keeps operational confidence separate from
 
 This slice does not install GPAO-T, start a daemon, download updates, deploy, store secrets, or run destructive rollback. It only makes the safety gates visible before those executors exist.
 
-Local Control Center readiness is exposed as data and a static UI reader, not as a daemon or desktop app yet:
+GPAO-T dashboard readiness is exposed as data and a local operating surface, not as a daemon or desktop app yet:
 
 - `control snapshot` returns full panel data for runtime, install/update/rollback readiness, memory, replay recovery, growth proposals/application gates, adapters, connectors, and authority
 - `control summary` returns compact panel status, counts, and next safe action
@@ -463,13 +463,13 @@ Local Control Center readiness is exposed as data and a static UI reader, not as
 - `control work-surface-submission-gate` and `control work-surface-submission-gate-check` define and verify the future work-surface input submission decision gate without enabling live submission, model calls, tool/CLI/MCP execution, connector activation, external send, approval writes, install/update/rollback, or durable memory promotion
 - `control work-surface-submission-validation-gate` and `control work-surface-submission-validation-gate-check` define and verify the final pre-submit validation and confirmation gate: required fields, empty input, length, risk signals, Context Mesh preview, Skill route preview, Authority preview, confirmation card, blocked/review product language, README freshness tracking, and the stop rule against further submission meta-gate splitting
 - `control work-surface-execution-flow`, `control work-surface-execution-confirmation`, `control work-surface-execution-flow-check`, and `control work-surface-execution-record` connect execution proposal, explicit confirmation, local approval/audit record write, replay, and rollback reference into one Work Surface governance flow while keeping live model/tool/connector/external actions blocked
-- `control design` returns the Local Control Center design contract adapted from BEAI Harness `design.md`
+- `control design` returns the GPAO-T dashboard design contract adapted from BEAI Harness `design.md`
 - `control ui-contract` returns the UI schema and section contract that maps snapshot fields into visual sections
 - `control ui-snapshot` returns the renderer-ready UI snapshot
 - `control ui-validate` checks that the UI snapshot preserves required panel fields, visible status text, authority boundaries, and no external activation
 - `control html` and `control render` now produce a no-script local inspection UI: panel anchor navigation, focus navigation, mobile next-safe-action strip, and expandable panel inspectors are interactive, but they do not start daemons, call models, connect accounts, execute tools, or mutate memory/growth state
-- `control html` prints the static Local Control Center HTML reader to stdout
-- `control render [output.html]` writes the static Local Control Center HTML reader to a local file
+- `control html` prints the official GPAO-T dashboard HTML to stdout
+- `control render [output.html]` writes the official GPAO-T dashboard HTML to a local file
 - `control serve-contract` returns the browser-safe loopback serving and screenshot verification contract
 - `control serve-check` starts a temporary loopback preview server, checks `/health` and `/control-center`, then stops it
 - `control serve [port]` starts an explicit `127.0.0.1` preview server for browser screenshot verification
@@ -488,7 +488,7 @@ Local Control Center readiness is exposed as data and a static UI reader, not as
 - `control tauri-dry-run-invocation-approval` and `control tauri-dry-run-invocation-approval-check` define and verify the future invocation approval contract without recording approval, invoking dry-run, writing audit files, running commands, building, installing, updating, rolling back, opening IPC, or using external network
 - `control tauri-dry-run-approval-storage` and `control tauri-dry-run-approval-storage-check` define and verify future approval-record storage location, schema, lifecycle, replay/audit/rollback references, and write gate boundary without creating directories, reading records, writing records, invoking dry-run, mutating files, running commands, building, installing, updating, rolling back, opening IPC, or using external network
 - `control tauri-dry-run-approval-write-gate` and `control tauri-dry-run-approval-write-gate-check` define and verify the future approval packet write gate without implementing a write gate, writing records, invoking dry-run, mutating files, running commands, building, installing, updating, rolling back, opening IPC, or using external network
-- The Local Control Center includes an `Approval / Preview` panel that integrates dry-run plan, user preview, invocation approval, approval storage, and write-gate statuses as a preview-only user flow. The packaged desktop planning review now acts as the stop-line: do not add another meta-gate unless a concrete mutating action is explicitly approved; return to the user-facing GPAO-T core work surface next.
+- The GPAO-T dashboard includes an `Approval / Preview` panel that integrates dry-run plan, user preview, invocation approval, approval storage, and write-gate statuses as a preview-only user flow. The packaged desktop planning review now acts as the stop-line: do not add another meta-gate unless a concrete mutating action is explicitly approved; return to the user-facing GPAO-T core work surface next.
 - `control tauri-shell-slice`, `control tauri-shell-html`, and `control tauri-shell-check` define and verify the first read-mostly Tauri source scaffold
 - `GET /control-center`, `GET /control-center/summary`, `GET /control-center/design`, `GET /control-center/ui-contract`, `GET /control-center/ui-snapshot`, and `GET /control-center/ui-validate` expose the same contracts through the local gateway handler
 - `GET /control-center/design-reference-gate` and `GET /control-center/design-reference-gate/verify` expose the required GPAO-T design reference gate for future UI/UX slices
@@ -536,7 +536,7 @@ This keeps GPAO-T skills practical: a skill is accepted only when it maps resear
 
 Skill execution remains local-first. It drafts inspectable artifacts and checks quality gates, but does not mutate live skills, promote durable memory, send externally, deploy, call external models, start daemons, or activate connectors.
 
-The visual Local Control Center must follow `docs/LOCAL-CONTROL-CENTER-DESIGN-RECIPE.md`:
+The visual GPAO-T dashboard must follow `docs/GPAO-T-DASHBOARD-DESIGN-RECIPE.md`:
 
 - first viewport shows actual GPAO-T state, not a marketing hero
 - layout maps to Work / Context / Evidence / Growth / Authority

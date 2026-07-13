@@ -4,6 +4,14 @@ GPAO-T is a local-first Growth Personal AI Operating System runtime with T-cell 
 
 This repository root is the canonical implementation target for GPAO-T. OpenClaw is treated as a separate comparison product and compatibility reference, not as the identity or origin story of this product.
 
+Mission:
+
+GPAO-T is built to grow with the user. It operates user intent, context, memory, tools, and work loops to reduce wasted tokens and repeated setup while producing faster, higher-quality conversations, artifacts, design work, and development outcomes. GPAO-T must remain flexible across models and tools, and must not depend on a single closed AI ecosystem as its product identity.
+
+Canonical charter:
+
+- `docs/00-canon/GPAO-T-PRODUCT-CHARTER-v0.1-ko.md`
+
 Current development is governed by three tracks:
 
 - `Core Kernel`: memory, context, T-cell admission, replay, approval/audit, reversible apply, rollback, self-growth, and task packets.

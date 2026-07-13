@@ -131,6 +131,8 @@ async function main() {
   };
 
   if (!apply) {
+    await mkdir(backupRoot, { recursive: true });
+    await writeFile(join(backupRoot, "cleanup-plan.json"), `${JSON.stringify(report, null, 2)}\n`);
     console.log(JSON.stringify(report, null, 2));
     return;
   }

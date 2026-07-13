@@ -17,6 +17,15 @@ import {
 } from "node:path";
 import { promisify } from "node:util";
 import net from "node:net";
+import {
+  buildProviderAuthRepairPlan,
+  inspectProviderAuthStores,
+  verifyProviderAuthHeart,
+} from "../src/core/provider-auth-heart.js";
+import {
+  buildDoctorRecoveryHeart,
+  verifyDoctorRecoveryHeart,
+} from "../src/core/doctor-recovery-heart.js";
 
 const execFileAsync = promisify(execFile);
 
@@ -1103,6 +1112,40 @@ export async function healthCheck(options) {
     }
   }
   checks.push(endpoint);
+  const providerAuthInventory = inspectProviderAuthStores({
+    stateDir: stateHome,
+    legacyStateDir: resolve(options.openclawHome),
+  });
+  const providerAuthRepairPlan = buildProviderAuthRepairPlan({ inventory: providerAuthInventory });
+  const providerAuthVerification = verifyProviderAuthHeart({
+    inventory: providerAuthInventory,
+    repairPlan: providerAuthRepairPlan,
+  });
+  checks.push({
+    id: "provider-auth-heart",
+    ok: providerAuthVerification.status === "ready",
+    inventoryStatus: providerAuthInventory.status,
+    repairPlanStatus: providerAuthRepairPlan.status,
+    userVisibleState: providerAuthInventory.userVisibleState,
+    completionClaimAllowed: providerAuthVerification.completionClaimAllowed,
+    reason: providerAuthVerification.findings.join(",") || undefined,
+  });
+  const doctorRecoveryHeart = buildDoctorRecoveryHeart({
+    installHealth: { checks: [...checks] },
+    providerAuthInventory,
+    providerAuthRepairPlan,
+  });
+  const doctorRecoveryVerification = verifyDoctorRecoveryHeart({ heart: doctorRecoveryHeart });
+  checks.push({
+    id: "doctor-recovery-heart",
+    ok: doctorRecoveryVerification.status === "ready" && doctorRecoveryHeart.status !== "blocked",
+    status: doctorRecoveryHeart.status,
+    severity: doctorRecoveryHeart.severity,
+    userVisibleStatus: doctorRecoveryHeart.userVisibleStatus,
+    recoveryActionCount: doctorRecoveryHeart.recoveryPlan.actions.length,
+    completionClaimAllowed: doctorRecoveryHeart.completionClaimAllowed,
+    reason: doctorRecoveryVerification.findings.join(",") || undefined,
+  });
   return { schema: `${INSTALL_SCHEMA}.health`, checkedAt: new Date().toISOString(), status: checks.every((check) => check.ok) ? "healthy" : "unhealthy", checks };
 }
 

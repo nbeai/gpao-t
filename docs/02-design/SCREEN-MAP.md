@@ -19,7 +19,7 @@ Design reference bridge:
 - Must show: draft task input, preview thread, compact read-only task understanding summary, native no-script task readability details, confirmation card, first local draft preview, intent-match / needs-changes / hold confirmation flow, empty/blocked/review-needed preview states, execution proposal confirmation, approval packet validation summary, audit write design boundary, approval record write UX preview, current task state, Context Mesh / Memory Wiki / T-cell preview, Skill Pack route preview, authority/approval summary, closed execution boundary, and next safe action.
 - Must not show as available: live send, external model call, tool execution, connector activation, approval-record write, dry-run invocation, durable memory promotion, self-growth apply, deployment, messenger send, or recurring automation.
 
-## Local Control Center
+## GPAO-T Dashboard
 
 - Purpose: inspect GPAO-T runtime, context, recovery, growth, authority, approval/preview, and work-surface readiness.
 - Must show: panel navigation, inspector evidence, Model Router boundary, mobile action visibility, authority boundary, next safe action, and the `Design Reference` panel without script or external activation.

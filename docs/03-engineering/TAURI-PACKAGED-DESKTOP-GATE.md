@@ -141,7 +141,7 @@ This keeps a packaged window separate from real installation, update, rollback, 
 
 ## Packaged Desktop Planning Review Stop-Line
 
-The packaged desktop planning review closes the Local Control Center / browser-local app-shell / Tauri substrate planning track before the next product stage.
+The packaged desktop planning review closes the GPAO-T dashboard / browser-local app-shell / Tauri substrate planning track before the next product stage.
 
 Machine contract:
 

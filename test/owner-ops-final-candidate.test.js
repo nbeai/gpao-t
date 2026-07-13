@@ -1,10 +1,13 @@
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
-import { existsSync } from "node:fs";
-import { join } from "node:path";
+import { existsSync, mkdtempSync, mkdirSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { dirname, join } from "node:path";
 import { describe, it } from "node:test";
 import { fileURLToPath } from "node:url";
 import {
+  appendOwnerOpsBroaderOwnerTestingResult,
+  appendOwnerOpsFieldTestRecord,
   buildOwnerOpsFinalLocalReleaseCandidateDecisionPacket,
   buildOwnerOpsFinalCandidateOwnerDecisionLane,
   buildOwnerOpsFinalCandidateNextActionPacket,
@@ -16,14 +19,191 @@ import {
   verifyOwnerOpsFinalLocalReleaseCandidateDecisionPacket,
   verifyOwnerOpsProductionCompletionAudit,
   verifyOwnerOpsSupervisedTestingReadinessPacket,
+  writeOwnerOpsBetaFeedbackActionQueue,
+  writeOwnerOpsBroaderOwnerTestingHandoff,
+  writeOwnerOpsBroaderOwnerTestingRepairCompletionEvidence,
+  writeOwnerOpsBroaderOwnerTestingRepairQueue,
+  writeOwnerOpsDeploymentDryRunPlan,
+  writeOwnerOpsFieldTestActionQueue,
+  writeOwnerOpsFieldTestRepairCompletionEvidence,
+  writeOwnerOpsFirstOwnerBetaHandoffBundle,
+  writeOwnerOpsFirstOwnerBetaOperationalTestPackage,
+  writeOwnerOpsFirstOwnerBetaResultReview,
+  writeOwnerOpsHumanReviewApprovalPacket,
+  writeOwnerOpsInstallUpdateRollbackProof,
+  writeOwnerOpsLocalPackageCandidate,
+  writeOwnerOpsMarketEvidenceBundle,
+  writeOwnerOpsNextOwnerTestingLoop,
+  writeOwnerOpsPrePublicRepairBacklog,
+  writeOwnerOpsPrePublicRepairCompletionEvidence,
+  writeOwnerOpsReleaseReadinessEvidence,
+  writeOwnerOpsSignedPackageEvidence,
+  writeOwnerOpsTeamAlphaHandoffBundle,
 } from "../src/index.js";
 
 const CLI = fileURLToPath(new URL("../bin/gpao-t.js", import.meta.url));
-const ROOT = fileURLToPath(new URL("..", import.meta.url));
+
+function tempRoot() {
+  return mkdtempSync(join(tmpdir(), "gpao-t-owner-ops-final-"));
+}
+
+function populateDistributionRoot(root) {
+  const files = [
+    "bin/gpao-t.js",
+    "bin/gpao-t-owner-ops-mcp.js",
+    "src/index.js",
+    "src/core/doctor.js",
+    "src/core/gateway.js",
+    "src/core/storage.js",
+    "src/core/owner-ops.js",
+    "src/core/owner-ops-alpha.js",
+    "src/core/owner-ops-alpha-handoff.js",
+    "src/core/owner-ops-beta.js",
+    "src/core/owner-ops-connectors.js",
+    "src/core/owner-ops-distribution.js",
+    "src/core/owner-ops-intake-connectors.js",
+    "src/core/owner-ops-market-readiness.js",
+    "src/core/owner-ops-mcp-server.js",
+    "src/core/owner-ops-package.js",
+    "src/core/owner-ops-public-package.js",
+    "src/core/owner-ops-scenarios.js",
+    "src/core/owner-ops-team-alpha-package.js",
+    "docs/04-skill-ecosystem/GPAO-T-OWNER-OPS-PACK-DEVELOPMENT-PLAN-ko.md",
+    "docs/04-skill-ecosystem/OWNER-OPS-AUTHORITY-MATRIX-ko.md",
+    "docs/04-skill-ecosystem/OWNER-OPS-FIELD-CASEBOOK-ko.md",
+    "docs/04-skill-ecosystem/OWNER-OPS-FIRST-SCENARIOS-ko.md",
+    "docs/04-skill-ecosystem/OWNER-OPS-MCP-CONNECTOR-PLAN-ko.md",
+    "docs/04-skill-ecosystem/OWNER-OPS-PLUGIN-PACKAGE-v0.1-ko.md",
+    "docs/04-skill-ecosystem/OWNER-OPS-FIRST-OWNER-SCENARIO-ko.md",
+    "docs/04-skill-ecosystem/OWNER-OPS-TEAM-ALPHA-GUIDE-v0.1-ko.md",
+    "docs/04-skill-ecosystem/OWNER-OPS-HOST-REGISTRATION-AND-FEEDBACK-v0.1-ko.md",
+    "docs/04-skill-ecosystem/OWNER-OPS-FIRST-OWNER-BETA-GUIDE-v0.1-ko.md",
+    "docs/04-skill-ecosystem/OWNER-OPS-FIRST-OWNER-BETA-HANDOFF-BUNDLE-v0.1-ko.md",
+    "docs/04-skill-ecosystem/OWNER-OPS-FIRST-OWNER-BETA-RESULT-REVIEW-v0.1-ko.md",
+    "docs/04-skill-ecosystem/OWNER-OPS-FIELD-TEST-LEDGER-v0.1-ko.md",
+    "docs/04-skill-ecosystem/OWNER-OPS-FIELD-TEST-ACTION-QUEUE-v0.1-ko.md",
+    "docs/04-skill-ecosystem/OWNER-OPS-FIELD-TEST-REPAIR-COMPLETION-EVIDENCE-v0.1-ko.md",
+    "docs/04-skill-ecosystem/OWNER-OPS-BROADER-OWNER-TESTING-HANDOFF-v0.1-ko.md",
+    "docs/04-skill-ecosystem/OWNER-OPS-BROADER-OWNER-TESTING-RESULT-LEDGER-v0.1-ko.md",
+    "docs/04-skill-ecosystem/OWNER-OPS-BROADER-OWNER-TESTING-REPAIR-QUEUE-v0.1-ko.md",
+    "docs/04-skill-ecosystem/OWNER-OPS-BROADER-OWNER-TESTING-REPAIR-COMPLETION-EVIDENCE-v0.1-ko.md",
+    "docs/04-skill-ecosystem/OWNER-OPS-NEXT-OWNER-TESTING-LOOP-v0.1-ko.md",
+    "docs/04-skill-ecosystem/OWNER-OPS-FINAL-LOCAL-RELEASE-CANDIDATE-DECISION-PACKET-v0.1-ko.md",
+    "docs/04-skill-ecosystem/OWNER-OPS-FINAL-CANDIDATE-OWNER-DECISION-LANE-v0.1-ko.md",
+    "docs/04-skill-ecosystem/OWNER-OPS-FINAL-CANDIDATE-NEXT-ACTION-PACKET-v0.1-ko.md",
+    "docs/04-skill-ecosystem/OWNER-OPS-MARKET-READINESS-GATE-v0.1-ko.md",
+    "docs/04-skill-ecosystem/OWNER-OPS-MARKET-EVIDENCE-BUNDLE-v0.1-ko.md",
+    "docs/04-skill-ecosystem/OWNER-OPS-PRE-PUBLIC-PACKAGE-REVIEW-v0.1-ko.md",
+    "docs/04-skill-ecosystem/OWNER-OPS-PRE-PUBLIC-EVIDENCE-BRIDGE-v0.1-ko.md",
+    "docs/04-skill-ecosystem/OWNER-OPS-PRE-PUBLIC-REPAIR-BACKLOG-v0.1-ko.md",
+    "docs/04-skill-ecosystem/OWNER-OPS-PRE-PUBLIC-REPAIR-COMPLETION-EVIDENCE-v0.1-ko.md",
+    "docs/04-skill-ecosystem/OWNER-OPS-DISTRIBUTION-EVIDENCE-v0.1-ko.md",
+    "docs/04-skill-ecosystem/OWNER-OPS-RELEASE-READINESS-EVIDENCE-v0.1-ko.md",
+    "docs/04-skill-ecosystem/OWNER-OPS-HUMAN-REVIEW-APPROVAL-PACKET-v0.1-ko.md",
+    "docs/04-skill-ecosystem/OWNER-OPS-HUMAN-REVIEW-DECISION-LANE-v0.1-ko.md",
+    "docs/04-skill-ecosystem/OWNER-OPS-PUBLIC-RELEASE-AUTHORITY-GATE-v0.1-ko.md",
+    "docs/04-skill-ecosystem/OWNER-OPS-PUBLIC-RELEASE-READBACK-SNAPSHOT-v0.1-ko.md",
+    "docs/04-skill-ecosystem/OWNER-OPS-PRODUCT-AXIS-READINESS-MATRIX-v0.1-ko.md",
+    "docs/04-skill-ecosystem/OWNER-OPS-PRODUCTION-COMPLETION-AUDIT-v0.1-ko.md",
+    "docs/04-skill-ecosystem/OWNER-OPS-SUPERVISED-TESTING-READINESS-PACKET-v0.1-ko.md",
+    "docs/04-skill-ecosystem/OWNER-OPS-APPROVED-SIGNING-LANE-v0.1-ko.md",
+    "docs/04-skill-ecosystem/OWNER-OPS-MARKETPLACE-UPLOAD-APPROVAL-GATE-v0.1-ko.md",
+    "docs/04-skill-ecosystem/OWNER-OPS-MARKETPLACE-UPLOAD-DECISION-LANE-v0.1-ko.md",
+    "docs/04-skill-ecosystem/OWNER-OPS-SIGNED-PACKAGE-EVIDENCE-v0.1-ko.md",
+    "docs/04-skill-ecosystem/OWNER-OPS-INSTALL-UPDATE-ROLLBACK-PROOF-v0.1-ko.md",
+    "docs/04-skill-ecosystem/OWNER-OPS-DEPLOYMENT-DRY-RUN-PLAN-v0.1-ko.md",
+    "docs/04-skill-ecosystem/OWNER-OPS-DRY-RUN-EXECUTOR-PROOF-v0.1-ko.md",
+    "docs/04-skill-ecosystem/OWNER-OPS-DRY-RUN-APPROVAL-RECORD-DESIGN-v0.1-ko.md",
+    "docs/04-skill-ecosystem/OWNER-OPS-DRY-RUN-APPROVAL-RECORD-WRITE-LANE-v0.1-ko.md",
+    "docs/04-skill-ecosystem/OWNER-OPS-CONTROLLED-DRY-RUN-INVOCATION-v0.1-ko.md",
+    "docs/04-skill-ecosystem/OWNER-OPS-DRY-RUN-RESULT-REVIEW-HANDOFF-v0.1-ko.md",
+    "docs/README.md",
+    "docs/DEVELOPMENT-PRINCIPLES.md",
+  ];
+  writeFileSync(join(root, "package.json"), JSON.stringify({
+    version: "9.9.9",
+    bin: { "gpao-t": "./bin/gpao-t.js" },
+    scripts: {
+      check: "node --check src/index.js",
+      test: "node --test",
+      verify: "npm run check && npm test",
+    },
+  }, null, 2));
+  for (const file of files) {
+    const target = join(root, file);
+    mkdirSync(dirname(target), { recursive: true });
+    writeFileSync(target, `fixture for ${file}\n`);
+  }
+}
+
+function prepareFinalCandidateRoot() {
+  const root = tempRoot();
+  populateDistributionRoot(root);
+  writeOwnerOpsLocalPackageCandidate({ root, confirmationToken: "confirm-local-owner-ops-package" });
+  writeOwnerOpsTeamAlphaHandoffBundle({ root });
+  writeOwnerOpsFirstOwnerBetaHandoffBundle({ root });
+  writeOwnerOpsFirstOwnerBetaOperationalTestPackage({ root });
+  writeOwnerOpsFirstOwnerBetaResultReview({ root });
+  writeOwnerOpsMarketEvidenceBundle({ root });
+  writeOwnerOpsBetaFeedbackActionQueue({ root });
+  writeOwnerOpsPrePublicRepairBacklog({ root });
+  writeOwnerOpsPrePublicRepairCompletionEvidence({ root });
+  writeOwnerOpsReleaseReadinessEvidence({ root });
+  writeOwnerOpsHumanReviewApprovalPacket({ root });
+  writeOwnerOpsSignedPackageEvidence({ root });
+  writeOwnerOpsInstallUpdateRollbackProof({ root });
+  writeOwnerOpsDeploymentDryRunPlan({ root });
+  appendOwnerOpsFieldTestRecord({
+    root,
+    approvalToken: "record-owner-ops-field-test-local-only",
+    record: {
+      stage: "first_owner_beta",
+      host: "codex",
+      testerRole: "first_owner_tester",
+      industry: "smartstore_shop",
+      dataMode: "sample_or_deidentified",
+      understoodNoAutoSend: true,
+      actualCustomerSendExecuted: false,
+      liveAccountConnected: false,
+      paymentRefundDeleteExecuted: false,
+      requestedTemplates: ["배송 문의", "교환/환불 문의"],
+    },
+  });
+  writeOwnerOpsFieldTestActionQueue({ root });
+  writeOwnerOpsFieldTestRepairCompletionEvidence({ root });
+  writeOwnerOpsBroaderOwnerTestingHandoff({ root });
+  appendOwnerOpsBroaderOwnerTestingResult({
+    root,
+    approvalToken: "record-owner-ops-broader-testing-local-only",
+    result: {
+      stage: "broader_owner_testing",
+      host: "codex",
+      testerRole: "supervised_owner_tester",
+      industry: "restaurant_cafe",
+      dataMode: "sample_or_deidentified",
+      understoodNoAutoSend: true,
+      actualCustomerSendExecuted: false,
+      liveAccountConnected: false,
+      paymentRefundDeleteExecuted: false,
+      credentialAccessUsed: false,
+      ratings: {
+        understandability: 4,
+        usefulness: 4,
+        trust: 4,
+        setupFriction: 2,
+      },
+      requestedTemplates: ["예약 문의", "부정 리뷰 답변"],
+    },
+  });
+  writeOwnerOpsBroaderOwnerTestingRepairQueue({ root });
+  writeOwnerOpsBroaderOwnerTestingRepairCompletionEvidence({ root });
+  writeOwnerOpsNextOwnerTestingLoop({ root });
+  return root;
+}
 
 describe("Owner Ops final local release candidate", () => {
   it("exposes a ready local candidate packet while keeping external release authority closed", () => {
-    const root = ROOT;
+    const root = prepareFinalCandidateRoot();
 
     const packet = buildOwnerOpsFinalLocalReleaseCandidateDecisionPacket({ root });
     const lane = buildOwnerOpsFinalCandidateOwnerDecisionLane({ root });

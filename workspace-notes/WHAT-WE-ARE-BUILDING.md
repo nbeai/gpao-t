@@ -1,21 +1,32 @@
 # What We Are Building
 
-The first real user can route a vague request, see the plan, run checks, and understand the result without reading the whole codebase so that a user can move from vague request to safer implementation with visible gates and evidence.
+The first useful workflow is not shaped yet.
 
 ## Current Phase
 
-- Phase: plan
-- Command: plan
-- Status: completed
+- Phase: verify
+- Command: verify
+- Status: blocked
 
 ## User Mode
 
-- Mode: beginner
-- Task type: plugin
+- Mode: unknown
+- Task type: unknown
 
 ## First Workflow
 
-Guided First Workflow
+### Production-Candidate Version
+
+- Fit: best when the user asked for a complete, customer-facing, team-facing, or production-grade result instead of an MVP
+- User story: End users can complete the main flow, understand what is production-ready and what is still only verified locally, and avoid sharing unverified work as final.
+- Includes:
+  - first user path
+  - error and empty states
+  - developer verification evidence
+  - user-facing scenario acceptance
+  - deployment/operation boundary
+  - known limitations and next recovery action
+- Confirm: Should this be treated as production-candidate quality, with MVP shortcuts blocked unless you explicitly ask for them?
 
 ## Companion Principle
 
@@ -23,16 +34,12 @@ AI does the work. User keeps authority.
 
 ## AI First
 
-- AI/developer verifies first success path for Guided First Workflow.
-- AI/developer verifies empty or first-time state before asking the user to test.
-- AI/developer verifies likely failure or recovery state before claiming completion.
-- AI/developer inspects the main visual flow when a UI exists.
+- Shape the first scenario, implement it, and verify it before asking the user to test.
 
 ## User Authority
 
-- Confirm whether "Guided First Workflow" feels like the intended product direction.
-- Approve any taste, brand, operating policy, or business decision that AI cannot know.
+- Judge direction, approve real-world actions, and give final lived-context feedback.
 
 ## Latest Summary
 
-Saved build plan for GPAO-T 최종 완성 작업 지시서 v1.0의 8공정을 증거 기반으로 끝까지 수행.
+Detected 2 checks without running them.

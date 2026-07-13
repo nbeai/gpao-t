@@ -234,7 +234,7 @@ export function buildControlCenterHtml({ snapshot, designContract } = {}) {
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>GPAO-T Local Control Center</title>
+  <title>GPAO-T 대시보드</title>
   <style>
     :root {
       color-scheme: light;
@@ -1178,8 +1178,8 @@ export function buildControlCenterHtml({ snapshot, designContract } = {}) {
   <div class="shell">
     <header class="topbar">
       <div class="brand">
-        <h1>GPAO-T Local Control Center</h1>
-        <span class="subtitle">정적 UI reader · 외부 활성화 없음</span>
+        <h1>GPAO-T 대시보드</h1>
+        <span class="subtitle">로컬 운영 화면 · 외부 활성화 없음</span>
       </div>
       <span class="topbar-action">다음 행동: ${escapeHtml(uiSnapshot.firstViewport.nextSafeAction)}</span>
       ${statusChip(controlSnapshot.status)}
@@ -1194,7 +1194,7 @@ export function buildControlCenterHtml({ snapshot, designContract } = {}) {
         <a class="nav-item" href="#panel-${escapeHtml(panel.id)}"><span>${escapeHtml(panel.label)}</span><span>${escapeHtml(STATUS_LABELS[panel.status] || panel.status)}</span></a>`).join("")}
       </nav>
       <main>
-        <section class="focus-strip" aria-label="Control Center focus navigation">
+        <section class="focus-strip" aria-label="GPAO-T 대시보드 빠른 이동">
           <a class="focus-link" href="#decision-strip">상태</a>
           <a class="focus-link" href="#workflow-state-view">흐름</a>
           <a class="focus-link" href="#next-safe-action">다음 행동</a>
@@ -1207,7 +1207,7 @@ export function buildControlCenterHtml({ snapshot, designContract } = {}) {
           ${metric("근거", uiSnapshot.firstViewport.counts.evidence, "기록된 재검토 신호")}
         </section>
         <section class="workflow-state-view" id="workflow-state-view" aria-label="Workflow, recovery, authority, and next action states">
-          ${stateCard("작업 흐름", workflowState(controlSnapshot), "전체 Control Center 진행 상태")}
+          ${stateCard("작업 흐름", workflowState(controlSnapshot), "전체 GPAO-T 대시보드 진행 상태")}
           ${stateCard("복구 상태", recoveryState(controlSnapshot), "복구 우선순위와 검토 필요성")}
           ${stateCard("권한 경계", authorityState(controlSnapshot), "외부 실행과 권한 경계")}
           ${stateCard("다음 행동", nextActionState(controlSnapshot), "지금 이어갈 안전 행동")}
@@ -1216,7 +1216,7 @@ export function buildControlCenterHtml({ snapshot, designContract } = {}) {
           <h2>다음 안전 행동</h2>
           <p class="next">${escapeHtml(uiSnapshot.firstViewport.nextSafeAction)}</p>
         </section>
-        <section class="panel-grid" aria-label="Control Center panels">
+        <section class="panel-grid" aria-label="GPAO-T 대시보드 패널">
           ${panels.map((panel) => panelHtml(panel)).join("")}
         </section>
       </main>
@@ -1327,7 +1327,7 @@ function panelHtml(panel) {
             </div>
             <details class="inspector" id="inspect-${escapeHtml(panel.id)}" data-panel-inspector="${escapeHtml(panel.id)}">
               <summary>운영 드릴다운</summary>
-              <div class="inspector-grid" aria-label="Control Center panel inspector">
+              <div class="inspector-grid" aria-label="GPAO-T 대시보드 패널 상세">
                 ${inspectorRow("패널 ID", panel.id)}
                 ${inspectorRow("그룹", group)}
                 ${inspectorRow("상태", STATUS_LABELS[panel.status] || panel.status)}
@@ -1422,7 +1422,7 @@ function coreWorkSurfaceHtml(panel) {
               </div>
               <div class="blocked-actions" aria-label="Session workspace recoverable actions">
                 <strong>세션 작업공간</strong>
-                <span class="blocked-action"><span class="blocked-action-label">구조</span>좌측 세션 레일 · 중앙 활성 작업 세션 · 우측 인스펙터<span class="blocked-action-detail">Control Center는 보조 검토 표면</span></span>
+                <span class="blocked-action"><span class="blocked-action-label">구조</span>좌측 세션 레일 · 중앙 활성 작업 세션 · 우측 인스펙터<span class="blocked-action-detail">GPAO-T 대시보드는 운영 상태를 확인하는 정식 표면</span></span>
                 <span class="blocked-action"><span class="blocked-action-label">보관</span>보관된 세션은 복구 가능<span class="blocked-action-detail">영구 삭제 없음</span></span>
                 <span class="blocked-action"><span class="blocked-action-label">삭제 대기</span>삭제 대기 취소 가능<span class="blocked-action-detail">recoverable 상태</span></span>
               </div>

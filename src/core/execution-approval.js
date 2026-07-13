@@ -465,7 +465,7 @@ export function buildApprovalRecordWriteUxDesign({
     userMessage: "승인 기록이 무엇이고 무엇이 저장될 예정인지 먼저 보여줍니다. 아직 저장하지 않습니다.",
     designReference: {
       sourceDocuments: [
-        "docs/LOCAL-CONTROL-CENTER-DESIGN-RECIPE.md",
+        "docs/GPAO-T-DASHBOARD-DESIGN-RECIPE.md",
         "docs/02-design/CODEX-LEVEL-DESIGN-REFERENCE.md",
         "docs/02-design/CLAUDE-CODE-LEVEL-OPERATING-UX-REFERENCE.md",
       ],

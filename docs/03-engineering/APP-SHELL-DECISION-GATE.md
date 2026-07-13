@@ -1,7 +1,7 @@
 # App Shell Decision Gate
 
 Status: decision closed, implementation not started
-Scope: transition from no-script Local Control Center reader to a local app shell
+Scope: transition from the no-script GPAO-T dashboard to a local app shell
 
 GPAO-T should not jump from a static reader into a desktop shell just because the UI is visually ready. The app shell becomes part of the operating system boundary, so it must be decided as infrastructure, not decoration.
 

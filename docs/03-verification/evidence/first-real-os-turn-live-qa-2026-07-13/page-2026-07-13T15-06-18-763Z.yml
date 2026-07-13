@@ -1,0 +1,592 @@
+- generic [ref=e6]:
+  - complementary [ref=e9]:
+    - generic [ref=e10]:
+      - generic [ref=e11]:
+        - generic [ref=e12]: nBeAI. GPAO-T
+        - generic [ref=e15]:
+          - button "명령 팔레트 열기" [ref=e17]
+          - button "사이드바 접기" [expanded] [ref=e22]
+      - generic [ref=e26]:
+        - navigation [ref=e27]:
+          - link "개요" [ref=e29]:
+            - /url: /overview
+          - button "더 보기" [ref=e34]
+        - generic [ref=e39]:
+          - button "새 대화" [disabled] [ref=e40]
+          - region "소통" [ref=e155]:
+            - generic [ref=e156]:
+              - generic [ref=e157]: 소통
+              - generic [ref=e158]: 전용
+            - generic [ref=e160]:
+              - link "Telegram 전용 소통 세션 열기" [ref=e161]:
+                - /url: /chat?session=agent%3Amain%3Atelegram%3Adirect%3A8601204821
+                - generic [ref=e162]: Telegram
+              - generic [ref=e163]:
+                - generic: 17h
+                - generic [ref=e164]:
+                  - button "세션 고정"
+                  - button "열기 session menu"
+          - generic "세션" [ref=e44]:
+            - generic [ref=e45]:
+              - generic [ref=e46]: 세션
+              - button "새 그룹…" [ref=e47]
+              - button "세션 정렬" [ref=e49]
+            - generic [ref=e51]:
+              - button "그룹 없음" [expanded] [ref=e53]:
+                - generic [ref=e58]: "6"
+              - generic [ref=e59]:
+                - generic [ref=e60]:
+                  - link "Main 대화" [ref=e61]:
+                    - /url: /chat?session=agent%3Amain%3Amain
+                  - generic [ref=e63]:
+                    - generic:
+                      - img "활성 실행"
+                    - generic [ref=e64]:
+                      - button "세션 고정"
+                      - button "열기 session menu"
+                - generic [ref=e165]:
+                  - link "AI 이름 소개" [ref=e166]:
+                    - /url: /chat?session=agent%3Amain%3Adashboard%3A2ef9819d-9548-448e-91a7-5afa3347c19c
+                  - generic [ref=e168]:
+                    - generic: 5h
+                    - generic [ref=e169]:
+                      - button "세션 고정"
+                      - button "열기 session menu"
+                - generic [ref=e170]:
+                  - link "이전 대화 파악 가능 여부" [ref=e171]:
+                    - /url: /chat?session=agent%3Amain%3Adashboard%3A2c0323df-a851-4723-82e7-9ef5f09c8dd9
+                  - generic [ref=e173]:
+                    - generic: 8h
+                    - generic [ref=e174]:
+                      - button "세션 고정"
+                      - button "열기 session menu"
+                - generic [ref=e175]:
+                  - link "작업 대화" [ref=e176]:
+                    - /url: /chat?session=agent%3Amain%3Adashboard%3A32d9b687-3a64-48ec-a235-7b5d0c220fbb
+                  - generic [ref=e178]:
+                    - generic: 9h
+                    - generic [ref=e179]:
+                      - button "세션 고정"
+                      - button "열기 session menu"
+                - generic [ref=e180]:
+                  - link "텔레그램 창 동시 생성" [ref=e181]:
+                    - /url: /chat?session=agent%3Amain%3Adashboard%3Acc632743-2eed-4306-b9bd-0d8c611a6cc1
+                  - generic [ref=e183]:
+                    - generic: 10h
+                    - generic [ref=e184]:
+                      - button "세션 고정"
+                      - button "열기 session menu"
+      - generic [ref=e66]:
+        - 'img "GPAO-T 상태: 온라인" [ref=e68]'
+        - link "설정" [ref=e70]:
+          - /url: /settings/general
+        - link "정보" [ref=e75]:
+          - /url: /settings/about
+        - button "모바일 기기 페어링" [ref=e79]
+        - 'button "색상 모드: 시스템" [ref=e85]'
+  - separator "사이드바 크기 조절" [ref=e88]
+  - main [ref=e89]:
+    - generic [ref=e92]:
+      - generic [ref=e95]:
+        - button "세션 파일 표시" [ref=e97]
+        - generic [ref=e103]:
+          - log [ref=e104]:
+            - generic [ref=e105]:
+              - generic [ref=e238]:
+                - paragraph [ref=e241]: 아이기스
+                - generic [ref=e243]:
+                  - generic [ref=e245]:
+                    - generic:
+                      - button "Delete message"
+                  - generic [ref=e246]: 윤
+                  - time [ref=e247]: 2026년 7월 13일 오전 7:22
+              - generic [ref=e248]:
+                - img "GPAO-T" [ref=e249]
+                - generic [ref=e250]:
+                  - paragraph [ref=e253]: 네, 윤님. 여기 있습니다.
+                  - generic [ref=e254]:
+                    - generic [ref=e255]:
+                      - generic [ref=e256]: GPAO-T
+                      - group [ref=e257]:
+                        - generic "Message context for 2026년 7월 13일 월요일 오전 7시 22분 4초 GMT+9" [ref=e258]:
+                          - time [ref=e259]: 2026년 7월 13일 오전 7:22
+                    - generic [ref=e260]:
+                      - generic [ref=e262]:
+                        - generic:
+                          - button "Delete message"
+                      - generic [ref=e263]:
+                        - generic:
+                          - button "열기 in canvas"
+                      - generic [ref=e264]:
+                        - generic:
+                          - button "Copy as markdown"
+              - generic [ref=e270]:
+                - paragraph [ref=e273]: 지금 지파오티는 어떤 상태야?
+                - generic [ref=e275]:
+                  - generic [ref=e277]:
+                    - generic:
+                      - button "Delete message"
+                  - generic [ref=e278]: 윤
+                  - time [ref=e279]: 2026년 7월 13일 오후 8:39
+              - generic [ref=e280]:
+                - img "GPAO-T" [ref=e281]
+                - generic [ref=e282]:
+                  - paragraph [ref=e285]: "⚠️ GPAO-T failed before reply: No API key found for provider \"openai\". Auth store: /Users/jyp/.gpao-t/agents/main/agent/gpao-t-agent.sqlite (agentDir: /Users/jyp/.gpao-t/agents/main/agent). Configure auth for this agent (gpao-t agents add <id>) or copy only portable static auth profiles from the main agentDir. | missing-provider-auth. Logs: gpao-t logs --follow"
+                  - generic [ref=e286]:
+                    - generic [ref=e287]:
+                      - generic [ref=e288]: GPAO-T
+                      - time [ref=e289]: 2026년 7월 13일 오후 8:39
+                    - generic [ref=e290]:
+                      - generic [ref=e292]:
+                        - generic:
+                          - button "Delete message"
+                      - generic [ref=e293]:
+                        - generic:
+                          - button "열기 in canvas"
+                      - generic [ref=e294]:
+                        - generic:
+                          - button "Copy as markdown"
+              - generic [ref=e300]:
+                - paragraph [ref=e303]: 복구 검증 테스트입니다. 한 문장으로 현재 응답 가능 상태인지 답해줘.
+                - generic [ref=e305]:
+                  - generic [ref=e307]:
+                    - generic:
+                      - button "Delete message"
+                  - generic [ref=e308]: 윤
+                  - time [ref=e309]: 2026년 7월 13일 오후 8:44
+              - generic [ref=e310]:
+                - img "GPAO-T" [ref=e311]
+                - generic [ref=e312]:
+                  - paragraph [ref=e315]: 네, 현재 GPAO-T는 이 세션에서 정상적으로 응답 가능한 상태입니다.
+                  - generic [ref=e316]:
+                    - generic [ref=e317]:
+                      - generic [ref=e318]: GPAO-T
+                      - group [ref=e319]:
+                        - generic "Message context for 2026년 7월 13일 월요일 오후 8시 44분 29초 GMT+9" [ref=e320]:
+                          - time [ref=e321]: 2026년 7월 13일 오후 8:44
+                    - generic [ref=e322]:
+                      - generic [ref=e324]:
+                        - generic:
+                          - button "Delete message"
+                      - generic [ref=e325]:
+                        - generic:
+                          - button "열기 in canvas"
+                      - generic [ref=e326]:
+                        - generic:
+                          - button "Copy as markdown"
+              - generic [ref=e332]:
+                - paragraph [ref=e335]: 지금 지파오티는 어떤 상태야?
+                - generic [ref=e337]:
+                  - generic [ref=e339]:
+                    - generic:
+                      - button "Delete message"
+                  - generic [ref=e340]: 윤
+                  - time [ref=e341]: 2026년 7월 13일 오후 8:46
+              - generic [ref=e346]:
+                - 'button "Activity: 4 tools" [ref=e348]'
+                - generic [ref=e356]:
+                  - generic [ref=e357]: Activity
+                  - time [ref=e358]: 2026년 7월 13일 오후 8:46
+                  - generic [ref=e360]:
+                    - generic:
+                      - button "Delete message"
+              - generic [ref=e361]:
+                - img "GPAO-T" [ref=e362]
+                - generic [ref=e363]:
+                  - generic [ref=e365]:
+                    - paragraph [ref=e366]:
+                      - text: 윤님, 현재 GPAO-T는
+                      - strong [ref=e367]: 웹챗 응답은 정상
+                      - text: ", 런타임는"
+                      - strong [ref=e368]: 로컬 루프백에서 reachable
+                      - text: ", 모델/세션도 정상 동작 중입니다."
+                    - paragraph [ref=e369]:
+                      - text: "다만 상태상 주의점이 있습니다:"
+                      - strong [ref=e370]: GPAO-T 런타임 uptime이 약 2분대로 방금 재기동된 상태
+                      - text: 이고, 서비스 LaunchAgent는 미설치라 자동 상주 구성은 아닌 상태입니다. Telegram 채널은 현재 OK로 보이지만, 기록에는 과거
+                      - code [ref=e371]: getUpdates conflict
+                      - text: 가 남아 있어 중복 폴러 가능성은 별도 점검 가치가 있습니다.
+                  - generic [ref=e372]:
+                    - generic [ref=e373]:
+                      - generic [ref=e374]: GPAO-T
+                      - group [ref=e375]:
+                        - generic "Message context for 2026년 7월 13일 월요일 오후 8시 46분 21초 GMT+9" [ref=e376]:
+                          - time [ref=e377]: 2026년 7월 13일 오후 8:46
+                    - generic [ref=e378]:
+                      - generic [ref=e380]:
+                        - generic:
+                          - button "Delete message"
+                      - generic [ref=e381]:
+                        - generic:
+                          - button "열기 in canvas"
+                      - generic [ref=e382]:
+                        - generic:
+                          - button "Copy as markdown"
+              - generic [ref=e388]:
+                - paragraph [ref=e391]: 니가 직접 다 점검해봐.
+                - generic [ref=e393]:
+                  - generic [ref=e395]:
+                    - generic:
+                      - button "Delete message"
+                  - generic [ref=e396]: 윤
+                  - time [ref=e397]: 2026년 7월 13일 오후 8:46
+              - generic [ref=e402]:
+                - button "▸ Read first 200 lines of /Users/jyp/.gpao-t/releases/gpao-t-0.1.0-test-team.1/compatibility/gpao-t/기능/healthcheck/SKILL.md" [ref=e406]:
+                  - text: ▸
+                  - generic [ref=e411]: Read
+                  - generic [ref=e412]: first 200 lines of /Users/jyp/.gpao-t/releases/gpao-t-0.1.0-test-team.1/compatibility/gpao-t/기능/healthcheck/SKILL.md
+                - generic [ref=e413]:
+                  - generic [ref=e414]:
+                    - generic [ref=e415]: Tool
+                    - group [ref=e416]:
+                      - generic "Message context for 2026년 7월 13일 월요일 오후 8시 46분 45초 GMT+9" [ref=e417]:
+                        - time [ref=e418]: 2026년 7월 13일 오후 8:46
+                  - generic [ref=e421]:
+                    - generic:
+                      - button "Delete message"
+              - generic [ref=e422]:
+                - img "GPAO-T" [ref=e423]
+                - generic [ref=e424]:
+                  - paragraph [ref=e427]: 윤님, 제가 읽기 전용으로 런타임·런타임·채널·호스트 보안·서비스 상태까지 직접 훑겠습니다. 비밀값은 출력하지 않겠습니다.
+                  - generic [ref=e428]:
+                    - generic [ref=e429]:
+                      - generic [ref=e430]: GPAO-T
+                      - group [ref=e431]:
+                        - generic "Message context for 2026년 7월 13일 월요일 오후 8시 46분 51초 GMT+9" [ref=e432]:
+                          - time [ref=e433]: 2026년 7월 13일 오후 8:46
+                    - generic [ref=e434]:
+                      - generic [ref=e436]:
+                        - generic:
+                          - button "Delete message"
+                      - generic [ref=e437]:
+                        - generic:
+                          - button "열기 in canvas"
+                      - generic [ref=e438]:
+                        - generic:
+                          - button "Copy as markdown"
+              - generic [ref=e443]:
+                - 'button "Activity: 10 tools" [ref=e445]'
+                - generic [ref=e453]:
+                  - generic [ref=e454]: Activity
+                  - time [ref=e455]: 2026년 7월 13일 오후 8:47
+                  - generic [ref=e457]:
+                    - generic:
+                      - button "Delete message"
+              - generic [ref=e458]:
+                - img "GPAO-T" [ref=e459]
+                - generic [ref=e460]:
+                  - paragraph [ref=e463]: 1차 점검에서 몇 가지 실제 이슈가 보입니다. 계속해서 GPAO-T repo 검증과 스케줄러/세션 쪽까지 확인하겠습니다.
+                  - generic [ref=e464]:
+                    - generic [ref=e465]:
+                      - generic [ref=e466]: GPAO-T
+                      - group [ref=e467]:
+                        - generic "Message context for 2026년 7월 13일 월요일 오후 8시 47분 29초 GMT+9" [ref=e468]:
+                          - time [ref=e469]: 2026년 7월 13일 오후 8:47
+                    - generic [ref=e470]:
+                      - generic [ref=e472]:
+                        - generic:
+                          - button "Delete message"
+                      - generic [ref=e473]:
+                        - generic:
+                          - button "열기 in canvas"
+                      - generic [ref=e474]:
+                        - generic:
+                          - button "Copy as markdown"
+              - generic [ref=e479]:
+                - 'button "Activity: 5 tools" [ref=e481]'
+                - generic [ref=e489]:
+                  - generic [ref=e490]: Activity
+                  - time [ref=e491]: 2026년 7월 13일 오후 8:47
+                  - generic [ref=e493]:
+                    - generic:
+                      - button "Delete message"
+              - generic [ref=e494]:
+                - img "GPAO-T" [ref=e495]
+                - generic [ref=e496]:
+                  - paragraph [ref=e499]: 참고로 문서에 적힌 core repo 경로와 실제 디스크 경로가 어긋나 있습니다. 정확한 repo 위치를 다시 찾아서 검증하겠습니다.
+                  - generic [ref=e500]:
+                    - generic [ref=e501]:
+                      - generic [ref=e502]: GPAO-T
+                      - group [ref=e503]:
+                        - generic "Message context for 2026년 7월 13일 월요일 오후 8시 47분 40초 GMT+9" [ref=e504]:
+                          - time [ref=e505]: 2026년 7월 13일 오후 8:47
+                    - generic [ref=e506]:
+                      - generic [ref=e508]:
+                        - generic:
+                          - button "Delete message"
+                      - generic [ref=e509]:
+                        - generic:
+                          - button "열기 in canvas"
+                      - generic [ref=e510]:
+                        - generic:
+                          - button "Copy as markdown"
+              - generic [ref=e515]:
+                - 'button "Activity: 4 tools" [ref=e517]'
+                - generic [ref=e525]:
+                  - generic [ref=e526]: Activity
+                  - time [ref=e527]: 2026년 7월 13일 오후 8:47
+                  - generic [ref=e529]:
+                    - generic:
+                      - button "Delete message"
+              - generic [ref=e530]:
+                - img "GPAO-T" [ref=e531]
+                - generic [ref=e532]:
+                  - paragraph [ref=e535]: 기본 문법 검증은 통과했습니다. 이제 전체 테스트까지 돌려서 코드 레벨 상태도 확인하겠습니다.
+                  - generic [ref=e536]:
+                    - generic [ref=e537]:
+                      - generic [ref=e538]: GPAO-T
+                      - group [ref=e539]:
+                        - generic "Message context for 2026년 7월 13일 월요일 오후 8시 48분 3초 GMT+9" [ref=e540]:
+                          - time [ref=e541]: 2026년 7월 13일 오후 8:48
+                    - generic [ref=e542]:
+                      - generic [ref=e544]:
+                        - generic:
+                          - button "Delete message"
+                      - generic [ref=e545]:
+                        - generic:
+                          - button "열기 in canvas"
+                      - generic [ref=e546]:
+                        - generic:
+                          - button "Copy as markdown"
+              - generic [ref=e551]:
+                - 'button "Activity: 6 tools" [ref=e553]'
+                - generic [ref=e561]:
+                  - generic [ref=e562]: Activity
+                  - time [ref=e563]: 2026년 7월 13일 오후 8:48
+                  - generic [ref=e565]:
+                    - generic:
+                      - button "Delete message"
+              - generic [ref=e566]:
+                - img "GPAO-T" [ref=e567]
+                - generic [ref=e568]:
+                  - generic [ref=e570]:
+                    - paragraph [ref=e571]: 윤님, 직접 점검한 결론입니다.
+                    - paragraph [ref=e572]:
+                      - strong [ref=e573]: 현재 GPAO-T는 “응답 가능하지만, 완전 정상/릴리즈 준비 상태는 아닙니다.”
+                    - heading "확인된 정상 상태" [level=3] [ref=e574]
+                    - list [ref=e575]:
+                      - listitem [ref=e576]: WebChat 현재 세션 응답 정상.
+                      - listitem [ref=e577]:
+                        - text: "GPAO-T 런타임 reachable:"
+                        - code [ref=e579] [cursor=pointer]: 127.0.0.1:18799
+                        - text: ", loopback 바인딩."
+                      - listitem [ref=e580]:
+                        - text: Telegram 채널 상태는 현재
+                        - code [ref=e581]: OK
+                        - text: .
+                      - listitem [ref=e582]: 스케줄러 cron 활성화, 등록 job 0개.
+                      - listitem [ref=e583]: FileVault 켜짐.
+                      - listitem [ref=e584]:
+                        - code [ref=e585]: npm run check
+                        - text: "통과: 문법/정적 체크는 정상."
+                    - heading "실제 문제/주의점" [level=3] [ref=e586]
+                    - list [ref=e587]:
+                      - listitem [ref=e588]:
+                        - paragraph [ref=e589]:
+                          - strong [ref=e590]: 전체 테스트 실패
+                        - list [ref=e591]:
+                          - listitem [ref=e592]:
+                            - code [ref=e593]: /Users/jyp/Developer/gpao-t
+                            - text: 에서
+                            - code [ref=e594]: npm test
+                            - text: 실행 결과 실패.
+                          - listitem [ref=e595]:
+                            - text: "실패 축:"
+                            - list [ref=e596]:
+                              - listitem [ref=e597]: namespace migration family
+                              - listitem [ref=e598]: standalone namespace rebuild family
+                              - listitem [ref=e599]: Owner Ops final local release candidate
+                              - listitem [ref=e600]: Owner Ops product axis 요약 테스트
+                      - listitem [ref=e601]:
+                        - paragraph [ref=e602]:
+                          - strong [ref=e603]: 런타임 설정 경고
+                        - list [ref=e604]:
+                          - listitem [ref=e605]:
+                            - code [ref=e606]: gpao-t doctor
+                            - text: 가 Codex runtime 선택 상태인데 Codex plugin disabled 경고.
+                          - listitem [ref=e607]:
+                            - text: Telegram routed agent에
+                            - code [ref=e608]: message
+                            - text: "tool unavailable 경고: 명시적 메시지/첨부/스레드 응답 기능이 실패할 수 있음."
+                      - listitem [ref=e609]:
+                        - paragraph [ref=e610]:
+                          - strong [ref=e611]: 보안/운영 경고
+                        - list [ref=e612]:
+                          - listitem [ref=e613]:
+                            - code [ref=e615] [cursor=pointer]: gpao-t.json
+                            - text: "에 plaintext secret-bearing config field 존재 경고:"
+                            - code [ref=e616]: gateway.auth.연결키
+                            - text: ","
+                            - code [ref=e617]: channels.telegram.botToken
+                            - text: .
+                          - listitem [ref=e618]: GPAO-T 런타임는 loopback이라 외부 노출은 낮지만, secret은 SecretRef로 옮기는 게 맞습니다.
+                          - listitem [ref=e619]: macOS Application Firewall 꺼져 있음.
+                          - listitem [ref=e620]: "GPAO-T 런타임 LaunchAgent 미설치: 지금은 수동 실행/앱 의존 상태라 재부팅 후 자동 상주 보장 안 됨."
+                      - listitem [ref=e621]:
+                        - paragraph [ref=e622]:
+                          - strong [ref=e623]: 경로 불일치
+                        - list [ref=e624]:
+                          - listitem [ref=e625]:
+                            - text: 문서/컨텍스트의 core repo 경로
+                            - code [ref=e626]: /Users/jyp/Documents/Playground 2/gpao-t
+                            - text: 는 실제로 없음.
+                          - listitem [ref=e627]:
+                            - text: 실제 repo는
+                            - code [ref=e628]: /Users/jyp/Developer/gpao-t
+                            - text: .
+                          - listitem [ref=e629]:
+                            - code [ref=e630]: /Users/jyp/Documents/Playground%202/gpao-t
+                            - text: 는 repo가 아니라
+                            - code [ref=e631]: .gpao-t
+                            - text: 만 있는 빈 구조입니다.
+                      - listitem [ref=e632]:
+                        - paragraph [ref=e633]:
+                          - strong [ref=e634]: 부수 관찰
+                        - list [ref=e635]:
+                          - listitem [ref=e636]:
+                            - text: Telegram 과거 기록에
+                            - code [ref=e637]: getUpdates conflict
+                            - text: "가 남아 있음: 중복 poller 가능성은 추가 확인 가치 있음."
+                          - listitem [ref=e638]:
+                            - code [ref=e639]: gpao-t doctor
+                            - text: 실행 중 shell completion cache가 재생성되었습니다.
+                    - heading "제 판단" [level=3] [ref=e640]
+                    - paragraph [ref=e641]:
+                      - text: 지금 상태는
+                      - strong [ref=e642]: 대화 복구/응답 검증은 성공
+                      - text: ", 하지만"
+                      - strong [ref=e643]: GPAO-T 제품/릴리즈 무결성은 테스트 실패 때문에 아직 green 상태가 아닙니다.
+                    - paragraph [ref=e644]: "추천 순서는:"
+                    - list [ref=e645]:
+                      - listitem [ref=e646]: 실패 테스트 4축 원인 수정
+                      - listitem [ref=e647]: repo 경로 기준 문서/런타임 컨텍스트 정리
+                      - listitem [ref=e648]: Codex plugin/runtime 및 Telegram message tool 허용 목록 정합성 복구
+                      - listitem [ref=e649]: secret config를 SecretRef로 이전
+                      - listitem [ref=e650]: 필요하면 LaunchAgent 설치/방화벽 정책 정리 입니다.
+                  - generic [ref=e651]:
+                    - generic [ref=e652]:
+                      - generic [ref=e653]: GPAO-T
+                      - group [ref=e654]:
+                        - generic "Message context for 2026년 7월 13일 월요일 오후 8시 49분 7초 GMT+9" [ref=e655]:
+                          - time [ref=e656]: 2026년 7월 13일 오후 8:49
+                    - generic [ref=e657]:
+                      - generic [ref=e659]:
+                        - generic:
+                          - button "Delete message"
+                      - generic [ref=e660]:
+                        - generic:
+                          - button "열기 in canvas"
+                      - generic [ref=e661]:
+                        - generic:
+                          - button "Copy as markdown"
+              - generic [ref=e667]:
+                - paragraph [ref=e670]: 우리 지금 뭐하는 중이지?
+                - generic [ref=e672]:
+                  - generic [ref=e674]:
+                    - generic:
+                      - button "Delete message"
+                  - generic [ref=e675]: 윤
+                  - time [ref=e676]: 2026년 7월 13일 오후 11:50
+              - generic [ref=e681]:
+                - button "▸ 메모리 검색 지금 GPAO-T 상태 점검 테스트 실패 repo 경로 Codex Telegram SecretRef LaunchAgent" [ref=e685]:
+                  - text: ▸
+                  - generic [ref=e689]: 메모리 검색
+                  - generic [ref=e690]: 지금 GPAO-T 상태 점검 테스트 실패 repo 경로 Codex Telegram SecretRef LaunchAgent
+                - generic [ref=e691]:
+                  - generic [ref=e692]:
+                    - generic [ref=e693]: Tool
+                    - group [ref=e694]:
+                      - generic "Message context for 2026년 7월 13일 월요일 오후 11시 50분 53초 GMT+9" [ref=e695]:
+                        - time [ref=e696]: 2026년 7월 13일 오후 11:50
+                  - generic [ref=e699]:
+                    - generic:
+                      - button "Delete message"
+              - generic [ref=e700]:
+                - img "GPAO-T" [ref=e701]
+                - generic [ref=e702]:
+                  - generic [ref=e704]:
+                    - paragraph [ref=e705]:
+                      - text: 윤님, 방금까지는
+                      - strong [ref=e706]: GPAO-T 복구 후 실제 동작 상태를 직접 점검하는 중
+                      - text: 이었습니다.
+                    - paragraph [ref=e707]:
+                      - text: "현재 결론은 이거였습니다:"
+                      - strong [ref=e708]: 대화 응답·런타임·웹챗은 살아났지만, GPAO-T repo 전체 테스트는 실패해서 릴리즈/완전 정상 상태는 아님
+                      - text: .
+                    - paragraph [ref=e709]: "제가 확인한 다음 작업축은:"
+                    - list [ref=e710]:
+                      - listitem [ref=e711]:
+                        - text: 실패한
+                        - code [ref=e712]: npm test
+                        - text: 원인 수정
+                      - listitem [ref=e713]:
+                        - text: 실제 repo 경로
+                        - code [ref=e714]: /Users/jyp/Developer/gpao-t
+                        - text: 기준으로 경로 불일치 정리
+                      - listitem [ref=e715]: Codex plugin/runtime, Telegram message tool 허용 목록 경고 정리
+                      - listitem [ref=e716]: plaintext secret 설정을 SecretRef로 이전 검토
+                      - listitem [ref=e717]: LaunchAgent/방화벽 등 운영 안정화 검토
+                    - paragraph [ref=e718]:
+                      - text: 참고로 장기 메모리 검색은 현재 인덱스 설정 불일치로 일시 중지 상태라, 이번 답은
+                      - strong [ref=e719]: 방금 이 세션에서 실제 점검한 결과 기준
+                      - text: 으로 정리했습니다.
+                  - generic [ref=e720]:
+                    - generic [ref=e721]:
+                      - generic [ref=e722]: GPAO-T
+                      - group [ref=e723]:
+                        - generic "Message context for 2026년 7월 13일 월요일 오후 11시 51분 1초 GMT+9" [ref=e724]:
+                          - time [ref=e725]: 2026년 7월 13일 오후 11:51
+                    - generic [ref=e726]:
+                      - generic [ref=e728]:
+                        - generic:
+                          - button "Delete message"
+                      - generic [ref=e729]:
+                        - generic:
+                          - button "열기 in canvas"
+                      - generic [ref=e730]:
+                        - generic:
+                          - button "Copy as markdown"
+              - generic [ref=e736]:
+                - paragraph [ref=e739]: GPAO-T 라이브 턴 QA야. 지금 현재 상태를 한 문장으로 짧게 말해줘.
+                - generic [ref=e741]:
+                  - generic [ref=e743]:
+                    - generic:
+                      - button "Delete message"
+                  - generic [ref=e744]: 윤
+                  - time [ref=e745]: 2026년 7월 14일 오전 12:05
+              - generic [ref=e746]:
+                - img "GPAO-T" [ref=e747]
+                - generic [ref=e748]:
+                  - paragraph [ref=e751]: 현재 GPAO-T는 웹챗 응답과 런타임는 정상이나, repo 전체 테스트 실패가 남아 있어 완전 정상 상태는 아닙니다.
+                  - generic [ref=e752]:
+                    - generic [ref=e753]:
+                      - generic [ref=e754]: GPAO-T
+                      - group [ref=e755]:
+                        - generic "Message context for 2026년 7월 14일 화요일 오전 12시 5분 13초 GMT+9" [ref=e756]:
+                          - time [ref=e757]: 2026년 7월 14일 오전 12:05
+                    - generic [ref=e758]:
+                      - generic [ref=e760]:
+                        - generic:
+                          - button "Delete message"
+                      - generic [ref=e761]:
+                        - generic:
+                          - button "열기 in canvas"
+                      - generic [ref=e762]:
+                        - generic:
+                          - button "Copy as markdown"
+          - generic [ref=e120]:
+            - generic [ref=e121]:
+              - group [ref=e122]:
+                - generic "첨부 파일 추가" [ref=e123]
+              - generic [ref=e125]:
+                - textbox "Message GPAO-T" [active] [ref=e126]
+                - status [ref=e127]
+              - button "음성 입력 시작" [ref=e764]
+            - generic [ref=e134]:
+              - generic [ref=e135]:
+                - button "채팅 설정" [ref=e138]
+                - group [ref=e144]:
+                  - 'generic "Chat model, 사고 수준: gpt-5.5 · openai · 보통" [ref=e185]': gpt-5.5 · openai · 보통
+              - group [ref=e188]:
+                - 'generic "세션 컨텍스트 사용량: 272k 중 38.6k (14%)" [ref=e768]': 14%
+      - button "분할 보기 열기" [ref=e151]

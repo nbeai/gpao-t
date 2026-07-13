@@ -2,13 +2,13 @@
 
 Status: review closed, execution authority still blocked
 
-Scope: Local Control Center / browser-local app-shell / Tauri substrate planning review before the next larger product stage.
+Scope: GPAO-T dashboard / browser-local app-shell / Tauri substrate planning review before the next larger product stage.
 
 This review is not an approval-record write gate, dry-run invocation gate, Tauri build gate, installer gate, update gate, rollback gate, IPC gate, connector gate, deployment gate, or automation gate. It is the stop-line that prevents GPAO-T from adding more meta-gates before returning to the user-facing product body.
 
 ## Closed Read-Only / Preview Surfaces
 
-- Local Control Center static reader: snapshot, summary, UI contract, UI snapshot, static HTML, responsive visual QA, no script, no external activation.
+- GPAO-T dashboard: snapshot, summary, UI contract, UI snapshot, static HTML, responsive visual QA, no script, no external activation.
 - Browser-local app-shell: `GET /health`, `GET /app-shell`, `GET /app-shell/contract`, `GET /app-shell/state`, `GET /app-shell/verify`, desktop/mobile screenshot baseline, POST blocked.
 - Read-mostly Tauri shell source slice: `src-tauri/*`, `tauri-shell/index.html`, `/app-shell/tauri-shell`, packaged-shell visual QA baseline, no build, no IPC, no packaging.
 - Install/update/rollback readiness: readiness gate, prerequisite doctor, dry-run plan/verify/preview, invocation approval contract, approval storage design, approval write-gate design.

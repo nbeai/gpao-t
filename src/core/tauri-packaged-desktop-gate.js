@@ -393,7 +393,7 @@ export function buildPackagedDesktopPlanningReview({
     status: findings.length ? "blocked" : "ready",
     reviewKind: "packaged_desktop_planning_review",
     goal:
-      "Summarize the Local Control Center, app-shell, and Tauri substrate before moving to the next larger product stage without opening execution authority.",
+      "Summarize the GPAO-T dashboard, app-shell, and Tauri substrate before moving to the next larger product stage without opening execution authority.",
     closedSurfaces: CLOSED_READ_ONLY_SURFACES,
     stillBlockedBoundaries: STILL_BLOCKED_DESKTOP_BOUNDARIES,
     evidenceFiles,

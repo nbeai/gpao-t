@@ -12,7 +12,7 @@ import {
 
 const ROOT = fileURLToPath(new URL("..", import.meta.url));
 const CLI = fileURLToPath(new URL("../bin/gpao-t.js", import.meta.url));
-const DESIGN_RECIPE = `${ROOT}/docs/LOCAL-CONTROL-CENTER-DESIGN-RECIPE.md`;
+const DESIGN_RECIPE = `${ROOT}/docs/GPAO-T-DASHBOARD-DESIGN-RECIPE.md`;
 const README = `${ROOT}/docs/README.md`;
 const PRINCIPLES = `${ROOT}/docs/DEVELOPMENT-PRINCIPLES.md`;
 const HUMAN_READABILITY_CHECK = `${ROOT}/docs/03-verification/CONTROL-CENTER-HUMAN-READABILITY-CHECK.md`;
@@ -21,12 +21,12 @@ const APP_SHELL_TECHNOLOGY_DECISION = `${ROOT}/docs/03-engineering/APP-SHELL-TEC
 const API_BOUNDARIES = `${ROOT}/docs/03-engineering/API-BOUNDARIES.md`;
 const SECURITY_NOTES = `${ROOT}/docs/03-engineering/SECURITY-NOTES.md`;
 
-describe("GPAO-T Local Control Center design recipe", () => {
+describe("GPAO-T dashboard design recipe", () => {
   it("adapts BEAI design.md into a GPAO-T UI implementation contract", () => {
     const text = readFileSync(DESIGN_RECIPE, "utf8");
 
     assert.match(text, /Source doctrine: `\/Users\/jyp\/Documents\/Playground 2\/beai-harness-for-codex\/design\.md`/);
-    assert.match(text, /Local Control Center is an operating desk/);
+    assert.match(text, /GPAO-T dashboard is an operating desk/);
     assert.match(text, /Work \/ Context \/ Evidence \/ Growth \/ Authority/);
     assert.match(text, /Current Work/);
     assert.match(text, /Context Mesh/);
@@ -52,10 +52,10 @@ describe("GPAO-T Local Control Center design recipe", () => {
     const readme = readFileSync(README, "utf8");
     const principles = readFileSync(PRINCIPLES, "utf8");
 
-    assert.match(readme, /LOCAL-CONTROL-CENTER-DESIGN-RECIPE\.md/);
+    assert.match(readme, /GPAO-T-DASHBOARD-DESIGN-RECIPE\.md/);
     assert.match(readme, /Work \/ Context \/ Evidence \/ Growth \/ Authority/);
     assert.match(principles, /BEAI Harness `design\.md`/);
-    assert.match(principles, /LOCAL-CONTROL-CENTER-DESIGN-RECIPE\.md/);
+    assert.match(principles, /GPAO-T-DASHBOARD-DESIGN-RECIPE\.md/);
   });
 
   it("keeps human-readability and app-shell decision gates explicit before implementation", () => {

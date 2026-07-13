@@ -1,0 +1,25 @@
+{
+  "schema": "gpao_t.live_standalone_namespace_rebuild_evidence_manifest.v0_1",
+  "status": "structured_receipt_present",
+  "generatedAt": "2026-07-13T13:05:00.000Z",
+  "family": "standalone_namespace_rebuild",
+  "tool": "tools/rebuild-gpao-t-standalone-namespace.mjs",
+  "readback": [
+    "npm run seal:namespace",
+    "npm run seal:routes",
+    "npm run seal:final"
+  ],
+  "rollback": "backup_manifest_restore",
+  "authorityBoundary": {
+    "liveMutationClaimedByThisReceipt": false,
+    "sourceReproducibilityReceiptOnly": true,
+    "requiresApplyTokenForLiveWrite": true,
+    "requiresBackupManifestForLiveWrite": true
+  },
+  "evidenceRefs": [
+    "docs/03-verification/evidence/gpao-t-final-supercar-seal-2026-07-12.json",
+    "docs/03-verification/evidence/GPAO-T-FINAL-SUPERCAR-SEAL-2026-07-12.md",
+    "docs/03-verification/evidence/NEXT-STAGE-BACKLOG-2026-07-12.md"
+  ],
+  "completionRule": "This manifest keeps the standalone namespace rebuild family reproducible and auditable. It is not a fresh live mutation receipt and cannot be used as user-visible completion evidence without a current live readback."
+}

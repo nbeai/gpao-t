@@ -258,6 +258,82 @@ function populateDistributionRoot(root) {
   }
 }
 
+function appendOwnerOpsStandardFieldTestRecord(root) {
+  appendOwnerOpsFieldTestRecord({
+    root,
+    approvalToken: "record-owner-ops-field-test-local-only",
+    record: {
+      stage: "first_owner_beta",
+      host: "codex",
+      testerRole: "first_owner_tester",
+      industry: "smartstore_shop",
+      dataMode: "sample_or_deidentified",
+      understoodNoAutoSend: true,
+      actualCustomerSendExecuted: false,
+      liveAccountConnected: false,
+      paymentRefundDeleteExecuted: false,
+      requestedTemplates: ["배송 문의", "교환/환불 문의"],
+    },
+  });
+}
+
+function appendOwnerOpsStandardBroaderTestingResult(root) {
+  appendOwnerOpsBroaderOwnerTestingResult({
+    root,
+    approvalToken: "record-owner-ops-broader-testing-local-only",
+    result: {
+      stage: "broader_owner_testing",
+      host: "codex",
+      testerRole: "supervised_owner_tester",
+      industry: "restaurant_cafe",
+      dataMode: "sample_or_deidentified",
+      understoodNoAutoSend: true,
+      actualCustomerSendExecuted: false,
+      liveAccountConnected: false,
+      paymentRefundDeleteExecuted: false,
+      credentialAccessUsed: false,
+      ratings: {
+        understandability: 4,
+        usefulness: 4,
+        trust: 4,
+        setupFriction: 2,
+      },
+      requestedTemplates: ["예약 문의", "부정 리뷰 답변"],
+    },
+  });
+}
+
+function prepareOwnerOpsProductAxisRoot() {
+  const root = tempRoot();
+  populateDistributionRoot(root);
+  writeOwnerOpsLocalPackageCandidate({
+    root,
+    confirmationToken: "confirm-local-owner-ops-package",
+  });
+  writeOwnerOpsTeamAlphaHandoffBundle({ root });
+  writeOwnerOpsFirstOwnerBetaHandoffBundle({ root });
+  writeOwnerOpsFirstOwnerBetaOperationalTestPackage({ root });
+  writeOwnerOpsFirstOwnerBetaResultReview({ root });
+  writeOwnerOpsMarketEvidenceBundle({ root });
+  writeOwnerOpsBetaFeedbackActionQueue({ root });
+  writeOwnerOpsPrePublicRepairBacklog({ root });
+  writeOwnerOpsPrePublicRepairCompletionEvidence({ root });
+  writeOwnerOpsReleaseReadinessEvidence({ root });
+  writeOwnerOpsHumanReviewApprovalPacket({ root });
+  writeOwnerOpsSignedPackageEvidence({ root });
+  writeOwnerOpsInstallUpdateRollbackProof({ root });
+  writeOwnerOpsDeploymentDryRunPlan({ root });
+  appendOwnerOpsStandardFieldTestRecord(root);
+  writeOwnerOpsFieldTestActionQueue({ root });
+  writeOwnerOpsFieldTestRepairCompletionEvidence({ root });
+  writeOwnerOpsBroaderOwnerTestingHandoff({ root });
+  appendOwnerOpsStandardBroaderTestingResult(root);
+  writeOwnerOpsBroaderOwnerTestingRepairQueue({ root });
+  writeOwnerOpsBroaderOwnerTestingRepairCompletionEvidence({ root });
+  writeOwnerOpsNextOwnerTestingLoop({ root });
+  return root;
+}
+
 describe("GPAO-T Owner Ops Pack", () => {
   it("defines the skill pack, field casebook, scenarios, and authority ladder", () => {
     const skillPack = buildOwnerOpsSkillPack();
@@ -382,20 +458,21 @@ describe("GPAO-T Owner Ops Pack", () => {
   });
 
   it("summarizes the Owner Ops product axis without opening release authority", () => {
-    const matrix = buildOwnerOpsProductAxisReadinessMatrix({ root: ROOT });
-    const check = verifyOwnerOpsProductAxisReadinessMatrix({ root: ROOT });
+    const root = prepareOwnerOpsProductAxisRoot();
+    const matrix = buildOwnerOpsProductAxisReadinessMatrix({ root });
+    const check = verifyOwnerOpsProductAxisReadinessMatrix({ root });
     const cliCheck = JSON.parse(execFileSync(process.execPath, [
       CLI,
       "owner-ops",
       "product-axis-readiness-check",
     ], {
-      cwd: ROOT,
+      cwd: root,
       encoding: "utf8",
     }));
     const gateway = handleGatewayRequest({
       method: "GET",
       path: "/owner-ops/product-axis-readiness/verify",
-      root: ROOT,
+      root,
     });
 
     assert.equal(matrix.schema, "gpao_t.owner_ops_product_axis_readiness_matrix.v0_1");

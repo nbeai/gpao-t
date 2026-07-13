@@ -12,9 +12,11 @@ async function handleMemoryCommand(subcommand, args) {
   const [
     { captureMemoryEntry, readMemoryWiki },
     { buildMemorySearchIndex, getMemorySearchStatus, readMemorySearchIndex, searchMemory },
+    { buildMemoryContextHeart, verifyMemoryContextHeart },
   ] = await Promise.all([
     import("../src/core/memory-wiki.js"),
     import("../src/core/memory-search.js"),
+    import("../src/core/memory-context-heart.js"),
   ]);
 
   if (subcommand === "capture") {
@@ -59,8 +61,17 @@ async function handleMemoryCommand(subcommand, args) {
     printJson(searchMemory({ query }));
     return;
   }
+  if (subcommand === "heart") {
+    printJson(buildMemoryContextHeart());
+    return;
+  }
+  if (subcommand === "heart-check") {
+    const heart = buildMemoryContextHeart();
+    printJson(verifyMemoryContextHeart({ heart }));
+    return;
+  }
 
-  throw new Error("memory command requires capture, list, status, index, index-info, or search");
+  throw new Error("memory command requires capture, list, status, index, index-info, search, heart, or heart-check");
 }
 
 function printJson(value) {

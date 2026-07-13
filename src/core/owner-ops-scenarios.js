@@ -6,6 +6,9 @@ import {
 } from "./owner-ops.js";
 import { handleOwnerOpsMcpMessage } from "./owner-ops-mcp-server.js";
 import { previewOwnerOpsTableTextIntake } from "./owner-ops-intake-connectors.js";
+import { mkdtempSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 
 const FIRST_OWNER_SCENARIO = {
   id: "smartstore_inquiry_csv_to_local_draft",
@@ -113,7 +116,8 @@ export function runOwnerOpsFirstOwnerScenario({ root, now = "2026-07-11T00:00:00
 
 export function verifyOwnerOpsFirstOwnerScenario({ root } = {}) {
   const fixture = buildOwnerOpsFirstOwnerScenarioFixture();
-  const run = runOwnerOpsFirstOwnerScenario({ root });
+  const verificationRoot = mkdtempSync(join(tmpdir(), "gpao-t-owner-ops-scenario-verify-"));
+  const run = runOwnerOpsFirstOwnerScenario({ root: verificationRoot });
   const findings = [...run.findings];
 
   if (fixture.status !== "ready") findings.push("fixture_not_ready");

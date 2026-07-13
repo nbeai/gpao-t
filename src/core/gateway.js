@@ -95,6 +95,11 @@ import {
   verifyFirstLocalWorkLoop,
 } from "./first-local-work-loop.js";
 import {
+  readGpaoTOsTurnRecords,
+  runGpaoTOsTurn,
+  verifyGpaoTOsTurn,
+} from "./first-real-os-turn-pipeline.js";
+import {
   buildGpaoTFirstCompletionAudit,
   verifyGpaoTFirstCompletionAudit,
   writeGpaoTFirstCompletionEvidence,
@@ -106,6 +111,10 @@ import {
   verifyAppliedContextMeshReplay,
 } from "./context-mesh-replay.js";
 import { runDoctor } from "./doctor.js";
+import {
+  buildDoctorRecoveryHeart,
+  verifyDoctorRecoveryHeart,
+} from "./doctor-recovery-heart.js";
 import {
   appendSelfGrowthProposal,
   buildSelfGrowthProposal,
@@ -370,6 +379,10 @@ import {
   verifyLiveTurnAbsorptionBridge,
 } from "./live-turn-absorption-bridge.js";
 import {
+  buildSessionEventHeart,
+  verifySessionEventHeart,
+} from "./session-event-heart.js";
+import {
   buildOpenClawLiveTurnHookReadinessGate,
   verifyOpenClawLiveTurnHookReadinessGate,
 } from "./openclaw-absorption-control.js";
@@ -385,6 +398,15 @@ import {
   invokeModelLocally,
   verifyModelInvocation,
 } from "./model-invocation.js";
+import {
+  buildProviderAuthRepairPlan,
+  inspectProviderAuthStores,
+  verifyProviderAuthHeart,
+} from "./provider-auth-heart.js";
+import {
+  buildMemoryContextHeart,
+  verifyMemoryContextHeart,
+} from "./memory-context-heart.js";
 import {
   buildLlmReadyPacketSurfaceState,
   buildLlmReadyTaskContextPacket,
@@ -409,6 +431,14 @@ import {
   verifyExecutionRuntimeInvocation,
   verifyExecutionRuntimePlan,
 } from "./execution-runtime.js";
+import {
+  buildToolAuthorityHeart,
+  verifyToolAuthorityHeart,
+} from "./tool-authority-heart.js";
+import {
+  buildRuntimeHeartHardening,
+  verifyRuntimeHeartHardening,
+} from "./runtime-heart-hardening.js";
 import {
   applySessionWorkspaceAction,
   readSessionWorkspaceState,
@@ -2905,6 +2935,125 @@ export function handleGatewayRequest({ method = "GET", path = "/", body = {}, ro
     };
   }
 
+  if (normalizedMethod === "GET" && path === "/runtime/provider-auth-heart") {
+    const inventory = inspectProviderAuthStores();
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: {
+        inventory,
+        repairPlan: buildProviderAuthRepairPlan({ inventory }),
+      },
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/runtime/provider-auth-heart/verify") {
+    const inventory = inspectProviderAuthStores();
+    const repairPlan = buildProviderAuthRepairPlan({ inventory });
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: verifyProviderAuthHeart({ inventory, repairPlan }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/runtime/doctor-recovery-heart") {
+    const providerAuthInventory = inspectProviderAuthStores();
+    const providerAuthRepairPlan = buildProviderAuthRepairPlan({ inventory: providerAuthInventory });
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: buildDoctorRecoveryHeart({
+        sourceDoctor: runDoctor({ root }),
+        providerAuthInventory,
+        providerAuthRepairPlan,
+      }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/runtime/doctor-recovery-heart/verify") {
+    const providerAuthInventory = inspectProviderAuthStores();
+    const providerAuthRepairPlan = buildProviderAuthRepairPlan({ inventory: providerAuthInventory });
+    const heart = buildDoctorRecoveryHeart({
+      sourceDoctor: runDoctor({ root }),
+      providerAuthInventory,
+      providerAuthRepairPlan,
+    });
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: verifyDoctorRecoveryHeart({ heart }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/runtime/session-event-heart") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: buildSessionEventHeart({ root }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/runtime/session-event-heart/verify") {
+    const heart = buildSessionEventHeart({ root });
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: verifySessionEventHeart({ heart }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/runtime/memory-context-heart") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: buildMemoryContextHeart({ root }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/runtime/memory-context-heart/verify") {
+    const heart = buildMemoryContextHeart({ root });
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: verifyMemoryContextHeart({ heart }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/runtime/tool-authority-heart") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: buildToolAuthorityHeart({ root }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/runtime/tool-authority-heart/verify") {
+    const heart = buildToolAuthorityHeart({ root });
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: verifyToolAuthorityHeart({ heart }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/runtime/heart") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: buildRuntimeHeartHardening({ root }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/runtime/heart/verify") {
+    const hardening = buildRuntimeHeartHardening({ root });
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: verifyRuntimeHeartHardening({ hardening }),
+    };
+  }
+
   if (normalizedMethod === "POST" && path === "/adapters/plan") {
     return {
       schema: "gpao_t.gateway_response.v0_1",
@@ -3316,6 +3465,42 @@ export function handleGatewayRequest({ method = "GET", path = "/", body = {}, ro
       schema: "gpao_t.gateway_response.v0_1",
       status: 200,
       body: runRuntimeTurn({ ...body, root }),
+    };
+  }
+
+  if (normalizedMethod === "POST" && path === "/turn/os") {
+    const record = runGpaoTOsTurn({
+      ...body,
+      root,
+      request: body.request || body.message || body.input,
+      sourceSurface: body.sourceSurface || "/work-surface",
+    });
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: record.status === "blocked" ? 409 : 200,
+      body: record,
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/turn/os/records") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: readGpaoTOsTurnRecords({ root, limit: body.limit }),
+    };
+  }
+
+  if (normalizedMethod === "POST" && path === "/turn/os/verify") {
+    const record = body.record || runGpaoTOsTurn({
+      root,
+      request: body.request || "GPAO-T OS turn verification smoke",
+      sourceSurface: body.sourceSurface || "/work-surface",
+      writeLocalRecords: body.writeLocalRecords !== false,
+    });
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: verifyGpaoTOsTurn({ record }),
     };
   }
 

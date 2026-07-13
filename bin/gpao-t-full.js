@@ -28,6 +28,7 @@ import {
   buildControlCenterServingContract,
   buildControlCenterUiContract,
   buildControlCenterUiSnapshot,
+  buildDoctorRecoveryHeart,
   buildApprovalAuditLocalRecordSubstrate,
   buildApprovalAuditReplay,
   buildConnectorGovernanceSummary,
@@ -37,6 +38,8 @@ import {
   applySessionWorkspaceAction,
   readSessionWorkspaceState,
   verifySessionWorkspaceBehavior,
+  buildSessionEventHeart,
+  verifySessionEventHeart,
   buildCodexStyleMultiChatWorkspace,
   verifyCodexStyleMultiChatWorkspace,
   buildMultiChatStageSixCompletion,
@@ -67,6 +70,8 @@ import {
   buildModelRouterPolicy,
   buildModelInvocationPacket,
   buildModelProviderRegistry,
+  buildProviderAuthRepairPlan,
+  inspectProviderAuthStores,
   buildOpenClawLiveTurnHookReadinessGate,
   verifyOpenClawLiveTurnHookReadinessGate,
   buildOperationsContractSummary,
@@ -212,7 +217,10 @@ import {
   buildTauriReadOnlyShellHtml,
   buildTauriReadOnlyShellSlice,
   buildExecutionRuntimePlan,
+  buildRuntimeHeartHardening,
+  buildToolAuthorityHeart,
   inspectReadOnlyConnector,
+  buildMemoryContextHeart,
   buildMemorySearchIndex,
   captureMemoryEntry,
   buildReplayRecoveryView,
@@ -264,6 +272,9 @@ import {
   verifyModelRouterBoundary,
   verifyModelRouterPolicy,
   verifyModelInvocation,
+  verifyProviderAuthHeart,
+  verifyMemoryContextHeart,
+  verifyDoctorRecoveryHeart,
   verifyOwnerOpsMcpReadiness,
   verifyOwnerOpsMcpServer,
   verifyOwnerOpsPack,
@@ -316,6 +327,8 @@ import {
   verifyProviderInvocationRuntime,
   verifyExecutionRuntimePlan,
   verifyExecutionRuntimeInvocation,
+  verifyRuntimeHeartHardening,
+  verifyToolAuthorityHeart,
   verifyStages5To8Completion,
   verifyTeamAlphaPackage,
   writeOwnerOpsTeamAlphaHandoffBundle,
@@ -366,6 +379,8 @@ function usage() {
     "  gpao-t replay-record <fixture.json>",
     "  gpao-t recovery history",
     "  gpao-t recovery summary",
+    "  gpao-t doctor-heart",
+    "  gpao-t doctor-heart-check",
     "  gpao-t auto-memory-growth policy",
     "  gpao-t auto-memory-growth classify <text>",
     "  gpao-t auto-memory-growth run <text>",
@@ -379,6 +394,8 @@ function usage() {
     "  gpao-t live-turn runs",
     "  gpao-t live-turn summary",
     "  gpao-t live-turn verify",
+    "  gpao-t runtime heart",
+    "  gpao-t runtime heart-check",
     "  gpao-t runtime live-turn-hook-readiness",
     "  gpao-t runtime live-turn-hook-readiness-check",
     "  gpao-t growth preview [target]",
@@ -582,6 +599,8 @@ function usage() {
     "  gpao-t connectors tool-governance-check",
     "  gpao-t connectors execution-runtime",
     "  gpao-t connectors execution-runtime-check",
+    "  gpao-t connectors authority-heart",
+    "  gpao-t connectors authority-heart-check",
     "  gpao-t connectors execution-dry-run [command-id]",
     "  gpao-t connectors execution-invocation-check",
     "  gpao-t connectors read-only-inspect [connector-id]",
@@ -628,6 +647,8 @@ function usage() {
     "  gpao-t adapters model-invocation-local [text]",
     "  gpao-t adapters model-invocation-check",
     "  gpao-t adapters model-provider-runtime-check",
+    "  gpao-t adapters provider-auth-heart",
+    "  gpao-t adapters provider-auth-heart-check",
     "  gpao-t adapters plan <text>",
     "  gpao-t control snapshot",
     "  gpao-t control summary",
@@ -648,6 +669,8 @@ function usage() {
     "  gpao-t control sessions",
     "  gpao-t control sessions-action <action> [session-id] [title/request]",
     "  gpao-t control sessions-check",
+    "  gpao-t control session-heart",
+    "  gpao-t control session-heart-check",
     "  gpao-t control multi-chat-workspace",
     "  gpao-t control multi-chat-workspace-check",
     "  gpao-t control multi-chat-stages-1-6",
@@ -705,6 +728,8 @@ function usage() {
     "  gpao-t memory status --index",
     "  gpao-t memory index --force",
     "  gpao-t memory search <text>",
+    "  gpao-t memory heart",
+    "  gpao-t memory heart-check",
     "  gpao-t mesh resolve <text>",
     "  gpao-t gateway <GET|POST> <path> [json-body]",
     "  gpao-t doctor",
@@ -728,6 +753,23 @@ try {
     printJson(initializeRuntimeState());
   } else if (command === "doctor") {
     printJson(runDoctor());
+  } else if (command === "doctor-heart") {
+    const providerAuthInventory = inspectProviderAuthStores();
+    const providerAuthRepairPlan = buildProviderAuthRepairPlan({ inventory: providerAuthInventory });
+    printJson(buildDoctorRecoveryHeart({
+      sourceDoctor: runDoctor(),
+      providerAuthInventory,
+      providerAuthRepairPlan,
+    }));
+  } else if (command === "doctor-heart-check") {
+    const providerAuthInventory = inspectProviderAuthStores();
+    const providerAuthRepairPlan = buildProviderAuthRepairPlan({ inventory: providerAuthInventory });
+    const heart = buildDoctorRecoveryHeart({
+      sourceDoctor: runDoctor(),
+      providerAuthInventory,
+      providerAuthRepairPlan,
+    });
+    printJson(verifyDoctorRecoveryHeart({ heart }));
   } else if (command === "state") {
     printJson(readRuntimeState());
   } else if (command === "events") {
@@ -751,10 +793,15 @@ try {
         throw new Error("memory search requires query text");
       }
       printJson(searchMemory({ query }));
+    } else if (subcommand === "heart") {
+      printJson(buildMemoryContextHeart());
+    } else if (subcommand === "heart-check") {
+      const heart = buildMemoryContextHeart();
+      printJson(verifyMemoryContextHeart({ heart }));
     } else if (subcommand === "index-info") {
       printJson(readMemorySearchIndex());
     } else {
-      throw new Error("memory command requires capture, list, status, index, index-info, or search");
+      throw new Error("memory command requires capture, list, status, index, index-info, search, heart, or heart-check");
     }
   } else if (command === "mesh") {
     const [subcommand, ...textParts] = args;
@@ -869,12 +916,17 @@ try {
     }
   } else if (command === "runtime") {
     const [subcommand] = args;
-    if (subcommand === "live-turn-hook-readiness") {
+    if (subcommand === "heart") {
+      printJson(buildRuntimeHeartHardening({ root: process.cwd() }));
+    } else if (subcommand === "heart-check") {
+      const hardening = buildRuntimeHeartHardening({ root: process.cwd() });
+      printJson(verifyRuntimeHeartHardening({ hardening }));
+    } else if (subcommand === "live-turn-hook-readiness") {
       printJson(buildOpenClawLiveTurnHookReadinessGate({ root: process.cwd() }));
     } else if (subcommand === "live-turn-hook-readiness-check") {
       printJson(verifyOpenClawLiveTurnHookReadinessGate({ root: process.cwd() }));
     } else {
-      throw new Error("runtime command requires live-turn-hook-readiness or live-turn-hook-readiness-check");
+      throw new Error("runtime command requires heart, heart-check, live-turn-hook-readiness, or live-turn-hook-readiness-check");
     }
   } else if (command === "growth") {
     const [subcommand, target, approvalStatus] = args;
@@ -1552,6 +1604,11 @@ try {
       printJson(verifyExecutionRuntimePlan({
         plan: buildExecutionRuntimePlan({ root: process.cwd() }),
       }));
+    } else if (subcommand === "authority-heart") {
+      printJson(buildToolAuthorityHeart({ root: process.cwd() }));
+    } else if (subcommand === "authority-heart-check") {
+      const heart = buildToolAuthorityHeart({ root: process.cwd() });
+      printJson(verifyToolAuthorityHeart({ heart }));
     } else if (subcommand === "execution-dry-run") {
       const commandId = connectorId || "model-invocation-check";
       printJson(invokeExecutionRuntimeDryRun({
@@ -1577,7 +1634,7 @@ try {
       }
       printJson(reviewConnectorPermission({ connectorId, action }));
     } else {
-      throw new Error("connectors command requires list, governance, tool-governance, tool-governance-check, execution-runtime, execution-runtime-check, execution-dry-run, execution-invocation-check, read-only-inspect, or review");
+      throw new Error("connectors command requires list, governance, tool-governance, tool-governance-check, execution-runtime, execution-runtime-check, authority-heart, authority-heart-check, execution-dry-run, execution-invocation-check, read-only-inspect, or review");
     }
   } else if (command === "approval") {
     const [subcommand, ...textParts] = args;
@@ -1706,6 +1763,16 @@ try {
       printJson(verifyModelInvocation());
     } else if (subcommand === "model-provider-runtime-check") {
       printJson(await verifyProviderInvocationRuntime());
+    } else if (subcommand === "provider-auth-heart") {
+      const inventory = inspectProviderAuthStores();
+      printJson({
+        inventory,
+        repairPlan: buildProviderAuthRepairPlan({ inventory }),
+      });
+    } else if (subcommand === "provider-auth-heart-check") {
+      const inventory = inspectProviderAuthStores();
+      const repairPlan = buildProviderAuthRepairPlan({ inventory });
+      printJson(verifyProviderAuthHeart({ inventory, repairPlan }));
     } else if (subcommand === "plan") {
       const text = textParts.join(" ").trim();
       if (!text) {
@@ -1713,7 +1780,7 @@ try {
       }
       printJson(runRuntimeTurn({ input: { text } }).adapterPlan);
     } else {
-      throw new Error("adapters command requires models, tools, model-router-boundary, model-router-boundary-check, model-router-policy, model-router-policy-check, model-providers, model-invocation, model-invocation-local, model-invocation-check, model-provider-runtime-check, or plan");
+      throw new Error("adapters command requires models, tools, model-router-boundary, model-router-boundary-check, model-router-policy, model-router-policy-check, model-providers, model-invocation, model-invocation-local, model-invocation-check, model-provider-runtime-check, provider-auth-heart, provider-auth-heart-check, or plan");
     }
   } else if (command === "control") {
     const [subcommand] = args;
@@ -1786,6 +1853,11 @@ try {
       }));
     } else if (subcommand === "sessions-check") {
       printJson(verifySessionWorkspaceBehavior());
+    } else if (subcommand === "session-heart") {
+      printJson(buildSessionEventHeart());
+    } else if (subcommand === "session-heart-check") {
+      const heart = buildSessionEventHeart();
+      printJson(verifySessionEventHeart({ heart }));
     } else if (subcommand === "multi-chat-workspace") {
       printJson(buildCodexStyleMultiChatWorkspace());
     } else if (subcommand === "multi-chat-workspace-check") {

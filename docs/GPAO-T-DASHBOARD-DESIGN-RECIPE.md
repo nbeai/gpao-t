@@ -1,13 +1,13 @@
-# GPAO-T Local Control Center Design Recipe
+# GPAO-T Dashboard Design Recipe
 
 Status: UI implementation input contract  
 Source doctrine: `/Users/jyp/Documents/Playground 2/beai-harness-for-codex/design.md`  
 Product: GPAO-T  
-Surface: Local Control Center  
+Surface: GPAO-T dashboard
 
 ## Purpose
 
-GPAO-T Local Control Center is an operating desk, not a marketing screen.
+GPAO-T dashboard is an operating desk, not a marketing screen.
 
 The first screen must let the user see:
 
@@ -28,7 +28,7 @@ surface:
   current_user_state: "The user wants a Codex-like local AI OS surface that is fast, calm, transparent, and safe."
   primary_decision: "What should GPAO-T do next, and what remains gated?"
   evidence_needed:
-    - Local Control Center snapshot
+    - GPAO-T dashboard snapshot
     - runtime doctor status
     - Memory Wiki / Context Mesh state
     - replay recovery state
@@ -171,7 +171,7 @@ Status must use text and color together. Color alone is never enough.
 
 ### First Interactive Reader
 
-The first interactive Local Control Center must stay inside a no-script local inspection boundary.
+The first interactive GPAO-T dashboard must stay inside a no-script local inspection boundary.
 
 Allowed interactions:
 
@@ -398,7 +398,7 @@ The first UI is a local visual reader for existing GPAO-T state.
 
 ## Quality Gate
 
-Before claiming a Local Control Center UI surface is ready, verify:
+Before claiming a GPAO-T dashboard surface is ready, verify:
 
 - first viewport shows actual GPAO-T state
 - current target and next safe action are visible
@@ -415,7 +415,7 @@ Before claiming a Local Control Center UI surface is ready, verify:
 
 ## Static UI Reader Contract
 
-The first static Local Control Center UI reader consumes the existing `buildControlCenterSnapshot()` data contract.
+The first official GPAO-T dashboard consumes the existing `buildControlCenterSnapshot()` data contract.
 
 Required surfaces:
 

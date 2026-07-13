@@ -59,7 +59,7 @@ Build as GPAO-T-owned kernel work:
 - authority and governance semantics
 - connector permission boundaries
 - install / update / rollback readiness
-- Local Control Center design contract
+- GPAO-T dashboard design contract
 - self-growth proposal and application gates
 - user-visible continuity and recovery
 - research-grounded skill ecosystem registry
@@ -78,7 +78,7 @@ Every new GPAO-T concept must map down to:
 
 If a concept cannot be inspected through runtime output, tests, replay evidence, audit evidence, or Control Center state, it is not yet implemented.
 
-If a UI concept cannot be mapped to `docs/LOCAL-CONTROL-CENTER-DESIGN-RECIPE.md`, it is not yet ready for visual implementation.
+If a UI concept cannot be mapped to `docs/GPAO-T-DASHBOARD-DESIGN-RECIPE.md`, it is not yet ready for visual implementation.
 
 If a skill concept cannot be mapped to `docs/04-skill-ecosystem/GPAO-T-SKILL-ECOSYSTEM-MASTER-PLAN-ko.md`, it is not yet ready for runtime attachment.
 

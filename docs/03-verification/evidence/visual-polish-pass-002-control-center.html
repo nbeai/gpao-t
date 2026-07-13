@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>GPAO-T Local Control Center</title>
+  <title>GPAO-T 대시보드</title>
   <style>
     :root {
       color-scheme: light;
@@ -30,6 +30,7 @@
       --red-soft: #fbe9e7;
       --violet-soft: #efecfa;
       --shadow: 0 1px 2px rgba(23, 33, 27, 0.05), 0 14px 36px rgba(23, 33, 27, 0.06);
+      --shadow-soft: 0 1px 1px rgba(23, 33, 27, 0.04), 0 8px 22px rgba(23, 33, 27, 0.045);
     }
     * { box-sizing: border-box; }
     html {
@@ -88,7 +89,7 @@
     }
     .layout {
       display: grid;
-      grid-template-columns: 196px minmax(0, 1fr) 336px;
+      grid-template-columns: 188px minmax(0, 1fr) 320px;
       min-height: 0;
       max-width: 100vw;
       overflow-x: hidden;
@@ -105,7 +106,7 @@
       font-size: 12px;
       font-weight: 700;
       margin: 0 0 10px;
-      text-transform: uppercase;
+      text-transform: none;
     }
     .nav-item {
       display: flex;
@@ -250,7 +251,7 @@
     .panel {
       padding: 18px;
       min-width: 0;
-      min-height: 142px;
+      min-height: 138px;
       scroll-margin-top: 78px;
       background: rgba(255, 255, 255, 0.92);
     }
@@ -321,7 +322,7 @@
       display: block;
       color: var(--muted);
       font-size: 10px;
-      text-transform: uppercase;
+      text-transform: none;
     }
     .state-pill span {
       display: block;
@@ -409,6 +410,83 @@
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
       gap: 8px;
+      margin-top: 10px;
+    }
+    .proposal-hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1.1fr) minmax(220px, 0.9fr);
+      gap: 10px;
+      margin-top: 10px;
+      align-items: stretch;
+    }
+    .proposal-card {
+      min-width: 0;
+      padding: 14px;
+      border: 1px solid #d8c8f0;
+      border-radius: 12px;
+      background: linear-gradient(180deg, #ffffff, var(--violet-soft));
+      box-shadow: var(--shadow-soft);
+      overflow-wrap: anywhere;
+      word-break: keep-all;
+    }
+    .proposal-card strong {
+      display: block;
+      font-size: 14px;
+      line-height: 1.4;
+    }
+    .proposal-card p {
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.55;
+    }
+    .proposal-meta {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+    .record-flow {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .record-flow > strong,
+    .compact-review-grid > strong {
+      grid-column: 1 / -1;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+    .record-step {
+      min-width: 0;
+      min-height: 82px;
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: var(--surface-warm);
+      overflow-wrap: anywhere;
+      word-break: keep-all;
+    }
+    .record-step strong {
+      display: block;
+      font-size: 12px;
+      line-height: 1.35;
+    }
+    .record-step span {
+      display: block;
+      margin-top: 5px;
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.45;
+    }
+    .compact-review-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .execution-review {
       margin-top: 10px;
     }
     .blocked-actions strong {
@@ -533,8 +611,11 @@
     }
     .inspector {
       margin-top: 10px;
-      border-top: 1px solid var(--line);
-      padding-top: 10px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 10px;
+      background: rgba(251, 252, 248, 0.88);
+      box-shadow: var(--shadow-soft);
       scroll-margin-top: 92px;
     }
     .inspector:target {
@@ -561,7 +642,7 @@
     }
     .inspector-row {
       display: grid;
-      grid-template-columns: 92px minmax(0, 1fr);
+      grid-template-columns: 108px minmax(0, 1fr);
       gap: 8px;
       font-size: 12px;
     }
@@ -662,6 +743,8 @@
       }
       .layout {
         padding-top: 140px;
+        width: 100vw;
+        max-width: 100vw;
       }
       .brand {
         align-items: flex-start;
@@ -679,14 +762,32 @@
       .topbar-action {
         display: -webkit-box;
         width: 100%;
+        max-width: 100%;
         max-height: 34px;
         overflow: hidden;
         color: var(--muted);
         font-size: 11px;
         line-height: 1.35;
         overflow-wrap: anywhere;
+        word-break: break-word;
         -webkit-box-orient: vertical;
         -webkit-line-clamp: 2;
+      }
+      .topbar,
+      .layout,
+      main,
+      nav,
+      aside,
+      .panel,
+      .work-composer,
+      .work-message,
+      .work-signal,
+      .blocked-action {
+        max-width: 100%;
+        min-width: 0;
+        white-space: normal;
+        overflow-wrap: anywhere;
+        word-break: break-word;
       }
       main,
       aside,
@@ -711,12 +812,12 @@
         background: var(--surface-muted);
       }
       .decision-strip {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-columns: 1fr;
         gap: 8px;
         margin-bottom: 10px;
       }
       .workflow-state-view {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-columns: 1fr;
         gap: 8px;
         margin-bottom: 10px;
       }
@@ -768,14 +869,21 @@
         gap: 6px;
       }
       .state-ribbon {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-columns: 1fr;
         gap: 6px;
       }
       .approval-flow {
         grid-template-columns: 1fr;
       }
+      .proposal-hero,
+      .record-flow {
+        grid-template-columns: 1fr;
+      }
+      .proposal-meta {
+        grid-template-columns: 1fr;
+      }
       .work-surface-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-columns: 1fr;
       }
       .approval-stage {
         min-height: 0;
@@ -784,7 +892,7 @@
         font-size: 11px;
       }
       .blocked-actions {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-columns: 1fr;
       }
       .panel-action {
         min-height: 34px;
@@ -839,88 +947,92 @@
   <div class="shell">
     <header class="topbar">
       <div class="brand">
-        <h1>GPAO-T Local Control Center</h1>
-        <span class="subtitle">정적 UI reader · 외부 활성화 없음</span>
+        <h1>GPAO-T 대시보드</h1>
+        <span class="subtitle">로컬 운영 화면 · 외부 활성화 없음</span>
       </div>
       <span class="topbar-action">다음 행동: 다음은 승인 전 프리뷰 흐름을 더 읽기 쉽게 다듬는 것이다. 실행, 쓰기, 빌드, 설치/업데이트/롤백, 외부 연결은 아직 열지 않는다.</span>
       <span class="status status-review">검토</span>
     </header>
     <div class="layout">
       <nav aria-label="GPAO-T information architecture">
-        <p class="nav-title">Operating Objects</p>
-        
-        <div class="nav-item"><span>Work</span><span>2</span></div>
-        <div class="nav-item"><span>Context</span><span>1</span></div>
-        <div class="nav-item"><span>Evidence</span><span>1</span></div>
-        <div class="nav-item"><span>Growth</span><span>1</span></div>
-        <div class="nav-item"><span>Authority</span><span>5</span></div>
-        <p class="nav-title nav-panel-title">Panels</p>
-        
-        <a class="nav-item" href="#panel-core-work-surface"><span>Work Surface</span><span>준비됨</span></a>
-        <a class="nav-item" href="#panel-runtime"><span>Runtime</span><span>준비됨</span></a>
-        <a class="nav-item" href="#panel-ops"><span>Install / Update / Rollback</span><span>준비됨</span></a>
-        <a class="nav-item" href="#panel-approval-preview"><span>Approval / Preview</span><span>검토</span></a>
-        <a class="nav-item" href="#panel-design-reference"><span>Design Reference</span><span>검토</span></a>
-        <a class="nav-item" href="#panel-execution-approval"><span>Execution Approval</span><span>검토</span></a>
-        <a class="nav-item" href="#panel-skill-ecosystem"><span>Skill Ecosystem</span><span>준비됨</span></a>
-        <a class="nav-item" href="#panel-memory"><span>Memory Wiki / Context Mesh</span><span>준비됨</span></a>
-        <a class="nav-item" href="#panel-recovery"><span>Replay Recovery</span><span>준비됨</span></a>
-        <a class="nav-item" href="#panel-growth"><span>Self-Growth Proposals</span><span>검토</span></a>
-        <a class="nav-item" href="#panel-adapters"><span>Model / Tool Adapters</span><span>준비됨</span></a>
-        <a class="nav-item" href="#panel-connectors"><span>Connectors</span><span>검토</span></a>
-        <a class="nav-item" href="#panel-authority"><span>Authority</span><span>준비됨</span></a>
+        <p class="nav-title">운영 영역</p>
+
+        <div class="nav-item"><span>작업</span><span>2</span></div>
+        <div class="nav-item"><span>맥락</span><span>1</span></div>
+        <div class="nav-item"><span>근거</span><span>1</span></div>
+        <div class="nav-item"><span>성장</span><span>1</span></div>
+        <div class="nav-item"><span>권한</span><span>5</span></div>
+        <p class="nav-title nav-panel-title">패널</p>
+
+        <a class="nav-item" href="#panel-first-completion"><span>1차 완료선</span><span>준비됨</span></a>
+        <a class="nav-item" href="#panel-runtime-workspace-welcome"><span>처음 설정</span><span>준비됨</span></a>
+        <a class="nav-item" href="#panel-core-work-surface"><span>작업 표면</span><span>준비됨</span></a>
+        <a class="nav-item" href="#panel-live-turn-absorption"><span>라이브 턴 흡수</span><span>준비됨</span></a>
+        <a class="nav-item" href="#panel-gpao-t-live-hook-readiness"><span>GPAO-T 라이브 연결 준비</span><span>검토</span></a>
+        <a class="nav-item" href="#panel-runtime"><span>로컬 런타임</span><span>준비됨</span></a>
+        <a class="nav-item" href="#panel-ops"><span>설치 / 업데이트 / 롤백</span><span>준비됨</span></a>
+        <a class="nav-item" href="#panel-approval-preview"><span>승인 / 미리보기</span><span>검토</span></a>
+        <a class="nav-item" href="#panel-design-reference"><span>디자인 기준</span><span>검토</span></a>
+        <a class="nav-item" href="#panel-execution-approval"><span>실행 전 확인</span><span>검토</span></a>
+        <a class="nav-item" href="#panel-skill-ecosystem"><span>스킬 생태계</span><span>준비됨</span></a>
+        <a class="nav-item" href="#panel-memory"><span>기억 / Context Mesh</span><span>검토</span></a>
+        <a class="nav-item" href="#panel-recovery"><span>리플레이 복구</span><span>검토</span></a>
+        <a class="nav-item" href="#panel-growth"><span>자가성장 제안</span><span>준비됨</span></a>
+        <a class="nav-item" href="#panel-adapters"><span>모델 / 도구 어댑터</span><span>준비됨</span></a>
+        <a class="nav-item" href="#panel-connectors"><span>커넥터</span><span>검토</span></a>
+        <a class="nav-item" href="#panel-authority"><span>권한</span><span>준비됨</span></a>
       </nav>
       <main>
-        <section class="focus-strip" aria-label="Control Center focus navigation">
+        <section class="focus-strip" aria-label="GPAO-T 대시보드 빠른 이동">
           <a class="focus-link" href="#decision-strip">상태</a>
           <a class="focus-link" href="#workflow-state-view">흐름</a>
           <a class="focus-link" href="#next-safe-action">다음 행동</a>
           <a class="focus-link" href="#authority-boundary">권한</a>
         </section>
         <section class="decision-strip" id="decision-strip" aria-label="Current operating state">
-          
+
           <div class="metric">
-            <b>13</b>
-            <span>Panels · visible OS surfaces</span>
+            <b>17</b>
+            <span>화면 · 현재 보이는 운영 표면</span>
           </div>
-          
+
           <div class="metric">
             <b>0</b>
-            <span>Blocked · requires recovery before action</span>
+            <span>잠김 · 행동 전 복구 필요</span>
           </div>
-          
+
           <div class="metric">
-            <b>5</b>
-            <span>Review · needs human-readable inspection</span>
+            <b>7</b>
+            <span>검토 · 사람이 읽고 확인</span>
           </div>
-          
+
           <div class="metric">
-            <b>2</b>
-            <span>Evidence · recorded replay signals</span>
+            <b>0</b>
+            <span>근거 · 기록된 재검토 신호</span>
           </div>
         </section>
         <section class="workflow-state-view" id="workflow-state-view" aria-label="Workflow, recovery, authority, and next action states">
-          
+
           <div class="state-card" data-state-card="workflow">
-            <strong>Workflow</strong>
-            <span>검토 흐름 · review 5</span>
-            <small>전체 Control Center 진행 상태</small>
+            <strong>작업 흐름</strong>
+            <span>검토 흐름 · 확인 7</span>
+            <small>전체 GPAO-T 대시보드 진행 상태</small>
           </div>
-          
+
           <div class="state-card" data-state-card="recovery">
-            <strong>Recovery</strong>
-            <span>검토 필요 · evidence 2</span>
+            <strong>복구 상태</strong>
+            <span>검토 필요 · 근거 0</span>
             <small>복구 우선순위와 검토 필요성</small>
           </div>
-          
+
           <div class="state-card" data-state-card="authority">
-            <strong>Authority</strong>
-            <span>외부 실행 차단 · blocked 15</span>
+            <strong>권한 경계</strong>
+            <span>외부 실행 차단 · 잠김 19</span>
             <small>외부 실행과 권한 경계</small>
           </div>
-          
+
           <div class="state-card" data-state-card="next">
-            <strong>Next</strong>
+            <strong>다음 행동</strong>
             <span>다음 안전 행동 표시됨</span>
             <small>지금 이어갈 안전 행동</small>
           </div>
@@ -929,46 +1041,339 @@
           <h2>다음 안전 행동</h2>
           <p class="next">다음은 승인 전 프리뷰 흐름을 더 읽기 쉽게 다듬는 것이다. 실행, 쓰기, 빌드, 설치/업데이트/롤백, 외부 연결은 아직 열지 않는다.</p>
         </section>
-        <section class="panel-grid" aria-label="Control Center panels">
-          
-          <section class="panel" id="panel-core-work-surface" data-panel="core-work-surface" data-group="Work">
+        <section class="panel-grid" aria-label="GPAO-T 대시보드 패널">
+
+          <section class="panel" id="panel-first-completion" data-panel="first-completion" data-group="작업">
             <div class="panel-head">
               <div>
-                <h3>Work Surface</h3>
-                <p class="headline">Work · GPAO-T에게 일을 맡기는 첫 작업 표면이다. 입력은 초안이고 실행은 아직 열리지 않는다.</p>
+                <h3>1차 완료선</h3>
+                <p class="headline">작업 · 6단계 1차 완료선 6/6 ready. 다음은 수정/보강이다.</p>
               </div>
               <span class="status status-ready">준비됨</span>
             </div>
-            <p class="next">local draft preview가 의도와 맞음, 수정 필요, 보류 중 어디에 해당하는지 읽기 판단한다. 실제 제출/모델/도구/커넥터/외부 실행은 계속 열지 않는다.</p>
-            <div class="state-ribbon" aria-label="Work Surface workflow state">
-              
+            <p class="next">Use this as the first completion anchor before live dashboard polish and deeper memory absorption.</p>
+            <div class="state-ribbon" aria-label="1차 완료선 workflow state">
+
               <div class="state-pill" data-state-pill="workflow">
-                <strong>Workflow</strong>
+                <strong>작업</strong>
                 <span>진행 가능</span>
               </div>
-              
+
               <div class="state-pill" data-state-pill="recovery">
-                <strong>Recovery</strong>
+                <strong>복구</strong>
                 <span>복구 대기 없음</span>
               </div>
-              
+
               <div class="state-pill" data-state-pill="authority">
-                <strong>Authority</strong>
+                <strong>권한</strong>
                 <span>로컬 검사</span>
               </div>
-              
+
               <div class="state-pill" data-state-pill="next">
-                <strong>Next</strong>
+                <strong>다음</strong>
                 <span>다음 행동 있음</span>
               </div>
             </div>
-            
-            <div class="work-thread-preview" data-core-work-surface="read-only">
-              <div class="work-composer" role="textbox" aria-readonly="true" data-composer-state="draft-not-sent" tabindex="0">
+
+
+
+
+
+            <div class="panel-actions" aria-label="1차 완료선 local drilldown actions">
+              <a class="panel-action" data-panel-action="inspect" href="#inspect-first-completion">인스펙터</a>
+              <a class="panel-action" data-panel-action="authority" href="#authority-boundary">권한</a>
+              <a class="panel-action" data-panel-action="next" href="#next-safe-action">다음 행동</a>
+            </div>
+            <details class="inspector" id="inspect-first-completion" data-panel-inspector="first-completion">
+              <summary>운영 드릴다운</summary>
+              <div class="inspector-grid" aria-label="GPAO-T 대시보드 패널 상세">
+
+                <div class="inspector-row">
+                  <strong>패널 ID</strong>
+                  <span>first-completion</span>
+                </div>
+
+                <div class="inspector-row">
+                  <strong>그룹</strong>
+                  <span>작업</span>
+                </div>
+
+                <div class="inspector-row">
+                  <strong>상태</strong>
+                  <span>준비됨</span>
+                </div>
+
+                <div class="inspector-row">
+                  <strong>요약</strong>
+                  <span>6단계 1차 완료선 6/6 ready. 다음은 수정/보강이다.</span>
+                </div>
+
+                <div class="inspector-row">
+                  <strong>다음 행동</strong>
+                  <span>Use this as the first completion anchor before live dashboard polish and deeper memory absorption.</span>
+                </div>
+
+                <div class="inspector-row">
+                  <strong>작업 상태</strong>
+                  <span>진행 가능</span>
+                </div>
+
+                <div class="inspector-row">
+                  <strong>복구 상태</strong>
+                  <span>복구 대기 없음</span>
+                </div>
+
+                <div class="inspector-row">
+                  <strong>권한 상태</strong>
+                  <span>로컬 검사</span>
+                </div>
+
+                <div class="inspector-row">
+                  <strong>다음 상태</strong>
+                  <span>다음 행동 있음</span>
+                </div>
+
+
+
+
+
+
+
+
+                <div class="inspector-row">
+                  <strong>권한 설명</strong>
+                  <span>로컬 검사만 허용하고 외부 계정, 모델, 도구 호출은 열지 않는다.</span>
+                </div>
+
+                <div class="inspector-row">
+                  <strong>근거</strong>
+                  <span>준비됨 상태와 다음 안전 행동을 함께 확인한다.</span>
+                </div>
+
+                <div class="inspector-row">
+                  <strong>돌아가기</strong>
+                  <span><a href="#panel-first-completion">패널</a> · <a href="#authority-boundary">권한 경계</a> · <a href="#next-safe-action">다음 행동</a></span>
+                </div>
+              </div>
+            </details>
+          </section>
+          <section class="panel" id="panel-runtime-workspace-welcome" data-panel="runtime-workspace-welcome" data-group="작업">
+            <div class="panel-head">
+              <div>
+                <h3>처음 설정</h3>
+                <p class="headline">작업 · 새 사용자가 이름, 말투, 기억 경계, 자동화 경계를 설정할 준비가 되어 있다.</p>
+              </div>
+              <span class="status status-ready">준비됨</span>
+            </div>
+            <p class="next">대시보드에서 웰컴 질문을 보여주고, 적용 전 draft를 먼저 보여준다.</p>
+            <div class="state-ribbon" aria-label="처음 설정 workflow state">
+
+              <div class="state-pill" data-state-pill="workflow">
+                <strong>작업</strong>
+                <span>진행 가능</span>
+              </div>
+
+              <div class="state-pill" data-state-pill="recovery">
+                <strong>복구</strong>
+                <span>복구 대기 없음</span>
+              </div>
+
+              <div class="state-pill" data-state-pill="authority">
+                <strong>권한</strong>
+                <span>로컬 검사</span>
+              </div>
+
+              <div class="state-pill" data-state-pill="next">
+                <strong>다음</strong>
+                <span>다음 행동 있음</span>
+              </div>
+            </div>
+
+
+            <div class="work-thread-preview" data-runtime-workspace-welcome="ready">
+              <div class="work-composer" role="note" aria-readonly="true" data-welcome-message="first-install">
+                <strong>첫 설정 메시지</strong>
+                안녕하세요. 저는 nBeAI. GPAO-T입니다. 지금은 당신과 함께 사용할 개인 AI 운영체제의 첫 설정을 하는 중입니다. 먼저 이름, 말투, 기억 방식, 자동화 경계를 정해볼게요.
+              </div>
+              <div class="work-surface-grid" aria-label="Welcome setup state">
+                <div class="work-signal"><strong>질문</strong>8</div>
+                <div class="work-signal"><strong>상태</strong>준비됨</div>
+                <div class="work-signal"><strong>draft</strong>준비됨</div>
+                <div class="work-signal"><strong>적용</strong>token required</div>
+              </div>
+              <div class="blocked-actions" aria-label="Welcome authority boundary">
+                <strong>처음 설정 경계</strong>
+                <span class="blocked-action"><span class="blocked-action-label">기억</span>지속 기억 승인 전까지 잠김<span class="blocked-action-detail">승인 없이는 후보만</span></span>
+                <span class="blocked-action"><span class="blocked-action-label">자가점검</span>heartbeat 승인 전까지 잠김<span class="blocked-action-detail">기본 비활성</span></span>
+                <span class="blocked-action"><span class="blocked-action-label">외부 행동</span>잠김<span class="blocked-action-detail">환영 중 전송 없음</span></span>
+              </div>
+              <div class="work-surface-grid" aria-label="Welcome questions">
+                <div class="work-signal"><strong>userName</strong>USER.md</div><div class="work-signal"><strong>userAddress</strong>USER.md</div><div class="work-signal"><strong>companionName</strong>IDENTITY.md</div><div class="work-signal"><strong>tone</strong>SOUL.md</div><div class="work-signal"><strong>rememberAutomatically</strong>MEMORY.md</div><div class="work-signal"><strong>neverRemember</strong>MEMORY.md</div><div class="work-signal"><strong>approvalActions</strong>AGENTS.md</div><div class="work-signal"><strong>heartbeatEnabled</strong>HEARTBEAT.md</div>
+              </div>
+            </div>
+
+
+
+            <div class="panel-actions" aria-label="처음 설정 local drilldown actions">
+              <a class="panel-action" data-panel-action="inspect" href="#inspect-runtime-workspace-welcome">인스펙터</a>
+              <a class="panel-action" data-panel-action="authority" href="#authority-boundary">권한</a>
+              <a class="panel-action" data-panel-action="next" href="#next-safe-action">다음 행동</a>
+            </div>
+            <details class="inspector" id="inspect-runtime-workspace-welcome" data-panel-inspector="runtime-workspace-welcome">
+              <summary>운영 드릴다운</summary>
+              <div class="inspector-grid" aria-label="GPAO-T 대시보드 패널 상세">
+
+                <div class="inspector-row">
+                  <strong>패널 ID</strong>
+                  <span>runtime-workspace-welcome</span>
+                </div>
+
+                <div class="inspector-row">
+                  <strong>그룹</strong>
+                  <span>작업</span>
+                </div>
+
+                <div class="inspector-row">
+                  <strong>상태</strong>
+                  <span>준비됨</span>
+                </div>
+
+                <div class="inspector-row">
+                  <strong>요약</strong>
+                  <span>새 사용자가 이름, 말투, 기억 경계, 자동화 경계를 설정할 준비가 되어 있다.</span>
+                </div>
+
+                <div class="inspector-row">
+                  <strong>다음 행동</strong>
+                  <span>대시보드에서 웰컴 질문을 보여주고, 적용 전 draft를 먼저 보여준다.</span>
+                </div>
+
+                <div class="inspector-row">
+                  <strong>작업 상태</strong>
+                  <span>진행 가능</span>
+                </div>
+
+                <div class="inspector-row">
+                  <strong>복구 상태</strong>
+                  <span>복구 대기 없음</span>
+                </div>
+
+                <div class="inspector-row">
+                  <strong>권한 상태</strong>
+                  <span>로컬 검사</span>
+                </div>
+
+                <div class="inspector-row">
+                  <strong>다음 상태</strong>
+                  <span>다음 행동 있음</span>
+                </div>
+
+
+
+
+
+                <div class="inspector-row">
+                  <strong>워크스페이스</strong>
+                  <span>/Users/jyp/Developer/gpao-t/runtime-workspace/gpao-t</span>
+                </div>
+                <div class="inspector-row">
+                  <strong>웰컴 상태</strong>
+                  <span>준비됨 · 준비됨</span>
+                </div>
+                <div class="inspector-row">
+                  <strong>질문 수</strong>
+                  <span>8</span>
+                </div>
+                <div class="inspector-row">
+                  <strong>누락 파일</strong>
+                  <span>없음</span>
+                </div>
+                <div class="inspector-row">
+                  <strong>draft 쓰기 후보</strong>
+                  <span>4</span>
+                </div>
+                <div class="inspector-row">
+                  <strong>기억 승격</strong>
+                  <span>지속 기억 승인 전까지 잠김</span>
+                </div>
+                <div class="inspector-row">
+                  <strong>heartbeat</strong>
+                  <span>heartbeat 승인 전까지 잠김</span>
+                </div>
+                <div class="inspector-row">
+                  <strong>적용 토큰</strong>
+                  <span>apply-gpao-t-welcome-settings</span>
+                </div>
+
+
+
+                <div class="inspector-row">
+                  <strong>권한 설명</strong>
+                  <span>로컬 검사만 허용하고 외부 계정, 모델, 도구 호출은 열지 않는다.</span>
+                </div>
+
+                <div class="inspector-row">
+                  <strong>근거</strong>
+                  <span>준비됨 상태와 다음 안전 행동을 함께 확인한다.</span>
+                </div>
+
+                <div class="inspector-row">
+                  <strong>돌아가기</strong>
+                  <span><a href="#panel-runtime-workspace-welcome">패널</a> · <a href="#authority-boundary">권한 경계</a> · <a href="#next-safe-action">다음 행동</a></span>
+                </div>
+              </div>
+            </details>
+          </section>
+          <section class="panel" id="panel-core-work-surface" data-panel="core-work-surface" data-group="작업">
+            <div class="panel-head">
+              <div>
+                <h3>작업 표면</h3>
+                <p class="headline">작업 · GPAO-T에게 일을 맡기는 첫 작업 표면이다. 입력은 초안이고 실행은 아직 열리지 않는다.</p>
+              </div>
+              <span class="status status-ready">준비됨</span>
+            </div>
+            <p class="next">실행 후보가 의도와 맞는지 확인한 뒤, 필요한 경우 로컬 승인/감사 기록만 남기고 replay/rollback 기준을 읽는다. 모델/도구/커넥터/외부 실행은 계속 열지 않는다.</p>
+            <div class="state-ribbon" aria-label="작업 표면 workflow state">
+
+              <div class="state-pill" data-state-pill="workflow">
+                <strong>작업</strong>
+                <span>진행 가능</span>
+              </div>
+
+              <div class="state-pill" data-state-pill="recovery">
+                <strong>복구</strong>
+                <span>복구 대기 없음</span>
+              </div>
+
+              <div class="state-pill" data-state-pill="authority">
+                <strong>권한</strong>
+                <span>로컬 검사</span>
+              </div>
+
+              <div class="state-pill" data-state-pill="next">
+                <strong>다음</strong>
+                <span>다음 행동 있음</span>
+              </div>
+            </div>
+
+            <div class="work-thread-preview" data-core-work-surface="interactive-local">
+              <div class="work-surface-grid" aria-label="Session workspace IA" data-session-workspace="session-based-local-ai-os">
+                <div class="work-signal"><strong>세션 레일</strong>3개 그룹 · 5개 안전 액션</div>
+                <div class="work-signal"><strong>활성 세션</strong>지금 맡긴 작업 · active</div>
+                <div class="work-signal"><strong>인스펙터</strong>8개 검토 영역</div>
+                <div class="work-signal"><strong>모바일</strong>시트 방식 · 3컬럼 강제 없음</div>
+              </div>
+              <div class="blocked-actions" aria-label="Session workspace recoverable actions">
+                <strong>세션 작업공간</strong>
+                <span class="blocked-action"><span class="blocked-action-label">구조</span>좌측 세션 레일 · 중앙 활성 작업 세션 · 우측 인스펙터<span class="blocked-action-detail">GPAO-T 대시보드는 운영 상태를 확인하는 정식 표면</span></span>
+                <span class="blocked-action"><span class="blocked-action-label">보관</span>보관된 세션은 복구 가능<span class="blocked-action-detail">영구 삭제 없음</span></span>
+                <span class="blocked-action"><span class="blocked-action-label">삭제 대기</span>삭제 대기 취소 가능<span class="blocked-action-detail">recoverable 상태</span></span>
+              </div>
+              <div class="work-composer" role="textbox" aria-readonly="false" data-composer-state="local-submission-enabled" tabindex="0">
                 <strong>작업 입력</strong>
                 GPAO-T 첫 작업 표면을 설계하고 다음 안전 행동을 정리해줘.
               </div>
-              
+
               <div class="work-message" data-work-message-role="user">
                 <strong>사용자 요청 · 초안 · 미전송</strong>
                 GPAO-T 첫 작업 표면을 설계하고 다음 안전 행동을 정리해줘.
@@ -978,16 +1383,16 @@
                 요청의 맥락을 복구했고 로컬 작업으로 진행할 수 있습니다.
               </div>
               <div class="work-surface-grid" aria-label="Core work surface state">
-                <div class="work-signal"><strong>Task</strong>준비됨</div>
-                <div class="work-signal"><strong>Context</strong>준비됨</div>
-                <div class="work-signal"><strong>Skill</strong>준비됨</div>
-                <div class="work-signal"><strong>Authority</strong>허용됨</div>
+                <div class="work-signal"><strong>작업 상태</strong>준비됨</div>
+                <div class="work-signal"><strong>맥락</strong>empty</div>
+                <div class="work-signal"><strong>스킬</strong>준비됨</div>
+                <div class="work-signal"><strong>권한</strong>허용됨</div>
               </div>
               <div class="work-surface-grid" aria-label="Core work surface route preview">
-                <div class="work-signal"><strong>Memory</strong>1</div>
-                <div class="work-signal"><strong>T-cells</strong>1</div>
-                <div class="work-signal"><strong>Packs</strong>3</div>
-                <div class="work-signal"><strong>Closed</strong>11</div>
+                <div class="work-signal"><strong>기억</strong>0</div>
+                <div class="work-signal"><strong>T-cell</strong>0</div>
+                <div class="work-signal"><strong>스킬 후보</strong>3</div>
+                <div class="work-signal"><strong>잠긴 행동</strong>11</div>
               </div>
               <div class="blocked-actions" aria-label="Core work surface closed authority actions" data-authority-boundary="closed">
                 <strong>닫힌 실행 경계</strong>
@@ -995,372 +1400,621 @@
                 <span class="blocked-action"><span class="blocked-action-label">잠김</span>외부 행동<span class="blocked-action-detail">미리보기만</span></span><span class="blocked-action"><span class="blocked-action-label">잠김</span>도구 실행<span class="blocked-action-detail">미리보기만</span></span><span class="blocked-action"><span class="blocked-action-label">잠김</span>모델 연결 실행<span class="blocked-action-detail">미리보기만</span></span><span class="blocked-action"><span class="blocked-action-label">잠김</span>커넥터 활성화<span class="blocked-action-detail">미리보기만</span></span><span class="blocked-action"><span class="blocked-action-label">잠김</span>승인 기록 쓰기<span class="blocked-action-detail">미리보기만</span></span><span class="blocked-action"><span class="blocked-action-label">잠김</span>미리보기 실행<span class="blocked-action-detail">미리보기만</span></span>
               </div>
               <div class="work-surface-grid" aria-label="Context and skill route anchors">
-                <div class="work-signal"><strong>Context Anchor</strong>release-file</div>
-                <div class="work-signal"><strong>Skill Pack</strong>gpao-core-thinking-pack</div>
-                <div class="work-signal"><strong>Model</strong>local.reasoning.stub</div>
-                <div class="work-signal"><strong>Tools</strong>1</div>
+                <div class="work-signal"><strong>맥락 근거</strong>없음</div>
+                <div class="work-signal"><strong>스킬 경로</strong>핵심 사고 정리 팩</div>
+                <div class="work-signal"><strong>모델 후보</strong>로컬 추론 후보</div>
+                <div class="work-signal"><strong>도구 후보</strong>1</div>
+              </div>
+              <div class="work-surface-grid" aria-label="First local work loop" data-first-local-work-loop="preview">
+                <div class="work-signal"><strong>첫 로컬 루프</strong>미리보기 준비</div>
+                <div class="work-signal"><strong>작업 패킷</strong>work.local.20260713132208.uwtc3w</div>
+                <div class="work-signal"><strong>기록 상태</strong>아직 저장 전</div>
+                <div class="work-signal"><strong>replay 기준</strong>preview.work.local.20260713132208.uwtc3w</div>
               </div>
             </div>
-            
-            
-            
-            <div class="panel-actions" aria-label="Work Surface local drilldown actions">
+
+
+
+
+            <div class="panel-actions" aria-label="작업 표면 local drilldown actions">
               <a class="panel-action" data-panel-action="inspect" href="#inspect-core-work-surface">인스펙터</a>
               <a class="panel-action" data-panel-action="authority" href="#authority-boundary">권한</a>
               <a class="panel-action" data-panel-action="next" href="#next-safe-action">다음 행동</a>
             </div>
             <details class="inspector" id="inspect-core-work-surface" data-panel-inspector="core-work-surface">
               <summary>운영 드릴다운</summary>
-              <div class="inspector-grid" aria-label="Control Center panel inspector">
-                
+              <div class="inspector-grid" aria-label="GPAO-T 대시보드 패널 상세">
+
                 <div class="inspector-row">
-                  <strong>Panel ID</strong>
+                  <strong>패널 ID</strong>
                   <span>core-work-surface</span>
                 </div>
-                
+
                 <div class="inspector-row">
-                  <strong>Group</strong>
-                  <span>Work</span>
+                  <strong>그룹</strong>
+                  <span>작업</span>
                 </div>
-                
+
                 <div class="inspector-row">
-                  <strong>Status</strong>
+                  <strong>상태</strong>
                   <span>준비됨</span>
                 </div>
-                
+
                 <div class="inspector-row">
-                  <strong>Headline</strong>
+                  <strong>요약</strong>
                   <span>GPAO-T에게 일을 맡기는 첫 작업 표면이다. 입력은 초안이고 실행은 아직 열리지 않는다.</span>
                 </div>
-                
+
                 <div class="inspector-row">
-                  <strong>Next</strong>
-                  <span>local draft preview가 의도와 맞음, 수정 필요, 보류 중 어디에 해당하는지 읽기 판단한다. 실제 제출/모델/도구/커넥터/외부 실행은 계속 열지 않는다.</span>
+                  <strong>다음 행동</strong>
+                  <span>실행 후보가 의도와 맞는지 확인한 뒤, 필요한 경우 로컬 승인/감사 기록만 남기고 replay/rollback 기준을 읽는다. 모델/도구/커넥터/외부 실행은 계속 열지 않는다.</span>
                 </div>
-                
+
                 <div class="inspector-row">
-                  <strong>Workflow State</strong>
+                  <strong>작업 상태</strong>
                   <span>진행 가능</span>
                 </div>
-                
+
                 <div class="inspector-row">
-                  <strong>Recovery State</strong>
+                  <strong>복구 상태</strong>
                   <span>복구 대기 없음</span>
                 </div>
-                
+
                 <div class="inspector-row">
-                  <strong>Authority State</strong>
+                  <strong>권한 상태</strong>
                   <span>로컬 검사</span>
                 </div>
-                
+
                 <div class="inspector-row">
-                  <strong>Next State</strong>
+                  <strong>다음 상태</strong>
                   <span>다음 행동 있음</span>
                 </div>
-                
-                
-                
-                
+
+
+
+
                 <div class="inspector-row">
-                  <strong>Input State</strong>
-                  <span>blocked_in_this_slice</span>
+                  <strong>입력 상태</strong>
+                  <span>local_submission_enabled</span>
                 </div>
                 <div class="inspector-row">
-                  <strong>Task State</strong>
-                  <span>ready · general_request</span>
+                  <strong>작업 상태</strong>
+                  <span>준비됨 · 일반 요청</span>
                 </div>
                 <div class="inspector-row">
-                  <strong>Context Preview</strong>
-                  <span>ready · 1 candidates</span>
+                  <strong>맥락 미리보기</strong>
+                  <span>empty · 후보 0</span>
                 </div>
                 <div class="inspector-row">
-                  <strong>Skill Route</strong>
-                  <span>gpao-core-thinking-pack · gpao-document-output-pack · gpao-visual-design-pack</span>
+                  <strong>스킬 경로</strong>
+                  <span>핵심 사고 정리 팩 · 문서 결과물 정리 팩 · GPAO Human Response Kernel Pack</span>
                 </div>
                 <div class="inspector-row">
-                  <strong>Authority Summary</strong>
-                  <span>external action · tool activation · model connector live execution · connector activation · approval record write · dry-run invocation · durable memory promotion · self-growth apply · deployment · messenger send · recurring automation</span>
+                  <strong>첫 로컬 루프</strong>
+                  <span>미리보기 준비 · work.local.20260713132208.uwtc3w</span>
                 </div>
-                
-                
-                
                 <div class="inspector-row">
-                  <strong>Authority</strong>
+                  <strong>로컬 기록/replay</strong>
+                  <span>아직 저장 전 · preview.work.local.20260713132208.uwtc3w</span>
+                </div>
+                <div class="inspector-row">
+                  <strong>권한 요약</strong>
+                  <span>외부 행동 · 도구 실행 · 모델 연결 실행 · 커넥터 활성화 · 승인 기록 쓰기 · 미리보기 실행 · 지속 기억 승격 · 자가성장 적용 · 배포 · 메신저 전송 · 반복 자동화</span>
+                </div>
+
+
+
+
+                <div class="inspector-row">
+                  <strong>권한 설명</strong>
                   <span>로컬 검사만 허용하고 외부 계정, 모델, 도구 호출은 열지 않는다.</span>
                 </div>
-                
+
                 <div class="inspector-row">
-                  <strong>Evidence</strong>
+                  <strong>근거</strong>
                   <span>준비됨 상태와 다음 안전 행동을 함께 확인한다.</span>
                 </div>
-                
+
                 <div class="inspector-row">
-                  <strong>Return</strong>
+                  <strong>돌아가기</strong>
                   <span><a href="#panel-core-work-surface">패널</a> · <a href="#authority-boundary">권한 경계</a> · <a href="#next-safe-action">다음 행동</a></span>
                 </div>
               </div>
             </details>
           </section>
-          <section class="panel" id="panel-runtime" data-panel="runtime" data-group="Work">
+          <section class="panel" id="panel-live-turn-absorption" data-panel="live-turn-absorption" data-group="작업">
             <div class="panel-head">
               <div>
-                <h3>Runtime</h3>
-                <p class="headline">Work · Local runtime skeleton files are present.</p>
+                <h3>라이브 턴 흡수</h3>
+                <p class="headline">작업 · 아직 라이브 턴 흡수 기록이 없다. 첫 연결 전 로컬 smoke가 필요하다.</p>
               </div>
               <span class="status status-ready">준비됨</span>
             </div>
-            <p class="next">Use control center panels to inspect state before adding UI or connectors.</p>
-            <div class="state-ribbon" aria-label="Runtime workflow state">
-              
+            <p class="next">Run a local live-turn absorption smoke before wiring the bridge into live OpenClaw.</p>
+            <div class="state-ribbon" aria-label="라이브 턴 흡수 workflow state">
+
               <div class="state-pill" data-state-pill="workflow">
-                <strong>Workflow</strong>
+                <strong>작업</strong>
                 <span>진행 가능</span>
               </div>
-              
+
               <div class="state-pill" data-state-pill="recovery">
-                <strong>Recovery</strong>
+                <strong>복구</strong>
                 <span>복구 대기 없음</span>
               </div>
-              
+
               <div class="state-pill" data-state-pill="authority">
-                <strong>Authority</strong>
+                <strong>권한</strong>
                 <span>로컬 검사</span>
               </div>
-              
+
               <div class="state-pill" data-state-pill="next">
-                <strong>Next</strong>
+                <strong>다음</strong>
                 <span>다음 행동 있음</span>
               </div>
             </div>
-            
-            
-            
-            
-            <div class="panel-actions" aria-label="Runtime local drilldown actions">
+
+
+
+
+
+            <div class="panel-actions" aria-label="라이브 턴 흡수 local drilldown actions">
+              <a class="panel-action" data-panel-action="inspect" href="#inspect-live-turn-absorption">인스펙터</a>
+              <a class="panel-action" data-panel-action="authority" href="#authority-boundary">권한</a>
+              <a class="panel-action" data-panel-action="next" href="#next-safe-action">다음 행동</a>
+            </div>
+            <details class="inspector" id="inspect-live-turn-absorption" data-panel-inspector="live-turn-absorption">
+              <summary>운영 드릴다운</summary>
+              <div class="inspector-grid" aria-label="GPAO-T 대시보드 패널 상세">
+
+                <div class="inspector-row">
+                  <strong>패널 ID</strong>
+                  <span>live-turn-absorption</span>
+                </div>
+
+                <div class="inspector-row">
+                  <strong>그룹</strong>
+                  <span>작업</span>
+                </div>
+
+                <div class="inspector-row">
+                  <strong>상태</strong>
+                  <span>준비됨</span>
+                </div>
+
+                <div class="inspector-row">
+                  <strong>요약</strong>
+                  <span>아직 라이브 턴 흡수 기록이 없다. 첫 연결 전 로컬 smoke가 필요하다.</span>
+                </div>
+
+                <div class="inspector-row">
+                  <strong>다음 행동</strong>
+                  <span>Run a local live-turn absorption smoke before wiring the bridge into live OpenClaw.</span>
+                </div>
+
+                <div class="inspector-row">
+                  <strong>작업 상태</strong>
+                  <span>진행 가능</span>
+                </div>
+
+                <div class="inspector-row">
+                  <strong>복구 상태</strong>
+                  <span>복구 대기 없음</span>
+                </div>
+
+                <div class="inspector-row">
+                  <strong>권한 상태</strong>
+                  <span>로컬 검사</span>
+                </div>
+
+                <div class="inspector-row">
+                  <strong>다음 상태</strong>
+                  <span>다음 행동 있음</span>
+                </div>
+
+
+
+
+
+
+
+
+                <div class="inspector-row">
+                  <strong>권한 설명</strong>
+                  <span>로컬 검사만 허용하고 외부 계정, 모델, 도구 호출은 열지 않는다.</span>
+                </div>
+
+                <div class="inspector-row">
+                  <strong>근거</strong>
+                  <span>준비됨 상태와 다음 안전 행동을 함께 확인한다.</span>
+                </div>
+
+                <div class="inspector-row">
+                  <strong>돌아가기</strong>
+                  <span><a href="#panel-live-turn-absorption">패널</a> · <a href="#authority-boundary">권한 경계</a> · <a href="#next-safe-action">다음 행동</a></span>
+                </div>
+              </div>
+            </details>
+          </section>
+          <section class="panel" id="panel-gpao-t-live-hook-readiness" data-panel="gpao-t-live-hook-readiness" data-group="작업">
+            <div class="panel-head">
+              <div>
+                <h3>GPAO-T 라이브 연결 준비</h3>
+                <p class="headline">작업 · 라이브 훅 적용 전 diff, backup, rollback, restart, visual QA 조건이 준비됐다. 실제 적용은 아직 승인 대기다.</p>
+              </div>
+              <span class="status status-review">검토</span>
+            </div>
+            <p class="next">Prepare a preview diff and rollback manifest; do not write live OpenClaw files until explicit apply approval.</p>
+            <div class="state-ribbon" aria-label="GPAO-T 라이브 연결 준비 workflow state">
+
+              <div class="state-pill" data-state-pill="workflow">
+                <strong>작업</strong>
+                <span>검토 흐름</span>
+              </div>
+
+              <div class="state-pill" data-state-pill="recovery">
+                <strong>복구</strong>
+                <span>검토 후 진행</span>
+              </div>
+
+              <div class="state-pill" data-state-pill="authority">
+                <strong>권한</strong>
+                <span>로컬 검사</span>
+              </div>
+
+              <div class="state-pill" data-state-pill="next">
+                <strong>다음</strong>
+                <span>다음 행동 있음</span>
+              </div>
+            </div>
+
+
+
+
+
+            <div class="panel-actions" aria-label="GPAO-T 라이브 연결 준비 local drilldown actions">
+              <a class="panel-action" data-panel-action="inspect" href="#inspect-gpao-t-live-hook-readiness">인스펙터</a>
+              <a class="panel-action" data-panel-action="authority" href="#authority-boundary">권한</a>
+              <a class="panel-action" data-panel-action="next" href="#next-safe-action">다음 행동</a>
+            </div>
+            <details class="inspector" id="inspect-gpao-t-live-hook-readiness" data-panel-inspector="gpao-t-live-hook-readiness">
+              <summary>운영 드릴다운</summary>
+              <div class="inspector-grid" aria-label="GPAO-T 대시보드 패널 상세">
+
+                <div class="inspector-row">
+                  <strong>패널 ID</strong>
+                  <span>gpao-t-live-hook-readiness</span>
+                </div>
+
+                <div class="inspector-row">
+                  <strong>그룹</strong>
+                  <span>작업</span>
+                </div>
+
+                <div class="inspector-row">
+                  <strong>상태</strong>
+                  <span>검토</span>
+                </div>
+
+                <div class="inspector-row">
+                  <strong>요약</strong>
+                  <span>라이브 훅 적용 전 diff, backup, rollback, restart, visual QA 조건이 준비됐다. 실제 적용은 아직 승인 대기다.</span>
+                </div>
+
+                <div class="inspector-row">
+                  <strong>다음 행동</strong>
+                  <span>Prepare a preview diff and rollback manifest; do not write live OpenClaw files until explicit apply approval.</span>
+                </div>
+
+                <div class="inspector-row">
+                  <strong>작업 상태</strong>
+                  <span>검토 흐름</span>
+                </div>
+
+                <div class="inspector-row">
+                  <strong>복구 상태</strong>
+                  <span>검토 후 진행</span>
+                </div>
+
+                <div class="inspector-row">
+                  <strong>권한 상태</strong>
+                  <span>로컬 검사</span>
+                </div>
+
+                <div class="inspector-row">
+                  <strong>다음 상태</strong>
+                  <span>다음 행동 있음</span>
+                </div>
+
+
+
+
+
+
+
+
+                <div class="inspector-row">
+                  <strong>권한 설명</strong>
+                  <span>로컬 검사만 허용하고 외부 계정, 모델, 도구 호출은 열지 않는다.</span>
+                </div>
+
+                <div class="inspector-row">
+                  <strong>근거</strong>
+                  <span>검토 상태와 다음 안전 행동을 함께 확인한다.</span>
+                </div>
+
+                <div class="inspector-row">
+                  <strong>돌아가기</strong>
+                  <span><a href="#panel-gpao-t-live-hook-readiness">패널</a> · <a href="#authority-boundary">권한 경계</a> · <a href="#next-safe-action">다음 행동</a></span>
+                </div>
+              </div>
+            </details>
+          </section>
+          <section class="panel" id="panel-runtime" data-panel="runtime" data-group="작업">
+            <div class="panel-head">
+              <div>
+                <h3>로컬 런타임</h3>
+                <p class="headline">작업 · 로컬 런타임 골격 파일이 준비되어 있다.</p>
+              </div>
+              <span class="status status-ready">준비됨</span>
+            </div>
+            <p class="next">UI나 커넥터를 더하기 전에 Control Center 패널에서 상태를 확인한다.</p>
+            <div class="state-ribbon" aria-label="로컬 런타임 workflow state">
+
+              <div class="state-pill" data-state-pill="workflow">
+                <strong>작업</strong>
+                <span>진행 가능</span>
+              </div>
+
+              <div class="state-pill" data-state-pill="recovery">
+                <strong>복구</strong>
+                <span>복구 대기 없음</span>
+              </div>
+
+              <div class="state-pill" data-state-pill="authority">
+                <strong>권한</strong>
+                <span>로컬 검사</span>
+              </div>
+
+              <div class="state-pill" data-state-pill="next">
+                <strong>다음</strong>
+                <span>다음 행동 있음</span>
+              </div>
+            </div>
+
+
+
+
+
+            <div class="panel-actions" aria-label="로컬 런타임 local drilldown actions">
               <a class="panel-action" data-panel-action="inspect" href="#inspect-runtime">인스펙터</a>
               <a class="panel-action" data-panel-action="authority" href="#authority-boundary">권한</a>
               <a class="panel-action" data-panel-action="next" href="#next-safe-action">다음 행동</a>
             </div>
             <details class="inspector" id="inspect-runtime" data-panel-inspector="runtime">
               <summary>운영 드릴다운</summary>
-              <div class="inspector-grid" aria-label="Control Center panel inspector">
-                
+              <div class="inspector-grid" aria-label="GPAO-T 대시보드 패널 상세">
+
                 <div class="inspector-row">
-                  <strong>Panel ID</strong>
+                  <strong>패널 ID</strong>
                   <span>runtime</span>
                 </div>
-                
+
                 <div class="inspector-row">
-                  <strong>Group</strong>
-                  <span>Work</span>
+                  <strong>그룹</strong>
+                  <span>작업</span>
                 </div>
-                
+
                 <div class="inspector-row">
-                  <strong>Status</strong>
+                  <strong>상태</strong>
                   <span>준비됨</span>
                 </div>
-                
+
                 <div class="inspector-row">
-                  <strong>Headline</strong>
-                  <span>Local runtime skeleton files are present.</span>
+                  <strong>요약</strong>
+                  <span>로컬 런타임 골격 파일이 준비되어 있다.</span>
                 </div>
-                
+
                 <div class="inspector-row">
-                  <strong>Next</strong>
-                  <span>Use control center panels to inspect state before adding UI or connectors.</span>
+                  <strong>다음 행동</strong>
+                  <span>UI나 커넥터를 더하기 전에 Control Center 패널에서 상태를 확인한다.</span>
                 </div>
-                
+
                 <div class="inspector-row">
-                  <strong>Workflow State</strong>
+                  <strong>작업 상태</strong>
                   <span>진행 가능</span>
                 </div>
-                
+
                 <div class="inspector-row">
-                  <strong>Recovery State</strong>
+                  <strong>복구 상태</strong>
                   <span>복구 대기 없음</span>
                 </div>
-                
+
                 <div class="inspector-row">
-                  <strong>Authority State</strong>
+                  <strong>권한 상태</strong>
                   <span>로컬 검사</span>
                 </div>
-                
+
                 <div class="inspector-row">
-                  <strong>Next State</strong>
+                  <strong>다음 상태</strong>
                   <span>다음 행동 있음</span>
                 </div>
-                
-                
-                
-                
-                
-                
-                
+
+
+
+
+
+
+
+
                 <div class="inspector-row">
-                  <strong>Authority</strong>
+                  <strong>권한 설명</strong>
                   <span>로컬 검사만 허용하고 외부 계정, 모델, 도구 호출은 열지 않는다.</span>
                 </div>
-                
+
                 <div class="inspector-row">
-                  <strong>Evidence</strong>
+                  <strong>근거</strong>
                   <span>준비됨 상태와 다음 안전 행동을 함께 확인한다.</span>
                 </div>
-                
+
                 <div class="inspector-row">
-                  <strong>Return</strong>
+                  <strong>돌아가기</strong>
                   <span><a href="#panel-runtime">패널</a> · <a href="#authority-boundary">권한 경계</a> · <a href="#next-safe-action">다음 행동</a></span>
                 </div>
               </div>
             </details>
           </section>
-          <section class="panel" id="panel-ops" data-panel="ops" data-group="Authority">
+          <section class="panel" id="panel-ops" data-panel="ops" data-group="권한">
             <div class="panel-head">
               <div>
-                <h3>Install / Update / Rollback</h3>
-                <p class="headline">Authority · Local data and operations contracts are inspectable before real executors exist.</p>
+                <h3>설치 / 업데이트 / 롤백</h3>
+                <p class="headline">권한 · 실제 실행기가 생기기 전에 로컬 데이터와 운영 계약을 먼저 확인할 수 있다.</p>
               </div>
               <span class="status status-ready">준비됨</span>
             </div>
             <p class="next">Review install/update/rollback readiness locally before any real installer, daemon, release channel, or rollback execution exists.</p>
-            <div class="state-ribbon" aria-label="Install / Update / Rollback workflow state">
-              
+            <div class="state-ribbon" aria-label="설치 / 업데이트 / 롤백 workflow state">
+
               <div class="state-pill" data-state-pill="workflow">
-                <strong>Workflow</strong>
+                <strong>작업</strong>
                 <span>진행 가능</span>
               </div>
-              
+
               <div class="state-pill" data-state-pill="recovery">
-                <strong>Recovery</strong>
+                <strong>복구</strong>
                 <span>복구 대기 없음</span>
               </div>
-              
+
               <div class="state-pill" data-state-pill="authority">
-                <strong>Authority</strong>
-                <span>권한 확인</span>
+                <strong>권한</strong>
+                <span>로컬 검사</span>
               </div>
-              
+
               <div class="state-pill" data-state-pill="next">
-                <strong>Next</strong>
+                <strong>다음</strong>
                 <span>다음 행동 있음</span>
               </div>
             </div>
-            
-            
-            
-            
-            <div class="panel-actions" aria-label="Install / Update / Rollback local drilldown actions">
+
+
+
+
+
+            <div class="panel-actions" aria-label="설치 / 업데이트 / 롤백 local drilldown actions">
               <a class="panel-action" data-panel-action="inspect" href="#inspect-ops">인스펙터</a>
               <a class="panel-action" data-panel-action="authority" href="#authority-boundary">권한</a>
               <a class="panel-action" data-panel-action="next" href="#next-safe-action">다음 행동</a>
             </div>
             <details class="inspector" id="inspect-ops" data-panel-inspector="ops">
               <summary>운영 드릴다운</summary>
-              <div class="inspector-grid" aria-label="Control Center panel inspector">
-                
+              <div class="inspector-grid" aria-label="GPAO-T 대시보드 패널 상세">
+
                 <div class="inspector-row">
-                  <strong>Panel ID</strong>
+                  <strong>패널 ID</strong>
                   <span>ops</span>
                 </div>
-                
+
                 <div class="inspector-row">
-                  <strong>Group</strong>
-                  <span>Authority</span>
+                  <strong>그룹</strong>
+                  <span>권한</span>
                 </div>
-                
+
                 <div class="inspector-row">
-                  <strong>Status</strong>
+                  <strong>상태</strong>
                   <span>준비됨</span>
                 </div>
-                
+
                 <div class="inspector-row">
-                  <strong>Headline</strong>
-                  <span>Local data and operations contracts are inspectable before real executors exist.</span>
+                  <strong>요약</strong>
+                  <span>실제 실행기가 생기기 전에 로컬 데이터와 운영 계약을 먼저 확인할 수 있다.</span>
                 </div>
-                
+
                 <div class="inspector-row">
-                  <strong>Next</strong>
+                  <strong>다음 행동</strong>
                   <span>Review install/update/rollback readiness locally before any real installer, daemon, release channel, or rollback execution exists.</span>
                 </div>
-                
+
                 <div class="inspector-row">
-                  <strong>Workflow State</strong>
+                  <strong>작업 상태</strong>
                   <span>진행 가능</span>
                 </div>
-                
+
                 <div class="inspector-row">
-                  <strong>Recovery State</strong>
+                  <strong>복구 상태</strong>
                   <span>복구 대기 없음</span>
                 </div>
-                
+
                 <div class="inspector-row">
-                  <strong>Authority State</strong>
-                  <span>권한 확인</span>
+                  <strong>권한 상태</strong>
+                  <span>로컬 검사</span>
                 </div>
-                
+
                 <div class="inspector-row">
-                  <strong>Next State</strong>
+                  <strong>다음 상태</strong>
                   <span>다음 행동 있음</span>
                 </div>
-                
-                
-                
-                
-                
-                
-                
+
+
+
+
+
+
+
+
                 <div class="inspector-row">
-                  <strong>Authority</strong>
+                  <strong>권한 설명</strong>
                   <span>권한 경계를 먼저 확인하고 외부 활성화는 차단한다.</span>
                 </div>
-                
+
                 <div class="inspector-row">
-                  <strong>Evidence</strong>
+                  <strong>근거</strong>
                   <span>준비됨 상태와 다음 안전 행동을 함께 확인한다.</span>
                 </div>
-                
+
                 <div class="inspector-row">
-                  <strong>Return</strong>
+                  <strong>돌아가기</strong>
                   <span><a href="#panel-ops">패널</a> · <a href="#authority-boundary">권한 경계</a> · <a href="#next-safe-action">다음 행동</a></span>
                 </div>
               </div>
             </details>
           </section>
-          <section class="panel" id="panel-approval-preview" data-panel="approval-preview" data-group="Authority">
+          <section class="panel" id="panel-approval-preview" data-panel="approval-preview" data-group="권한">
             <div class="panel-head">
               <div>
-                <h3>Approval / Preview</h3>
-                <p class="headline">Authority · 승인 전 프리뷰 단계다. 아직 실행된 것은 없고, dry-run/approval 흐름만 읽을 수 있다.</p>
+                <h3>승인 / 미리보기</h3>
+                <p class="headline">권한 · 승인 전 프리뷰 단계다. 아직 실행된 것은 없고, dry-run/approval 흐름만 읽을 수 있다.</p>
               </div>
               <span class="status status-review">검토</span>
             </div>
             <p class="next">다음은 승인 전 프리뷰 흐름을 더 읽기 쉽게 다듬는 것이다. 실행, 쓰기, 빌드, 설치/업데이트/롤백, 외부 연결은 아직 열지 않는다.</p>
-            <div class="state-ribbon" aria-label="Approval / Preview workflow state">
-              
+            <div class="state-ribbon" aria-label="승인 / 미리보기 workflow state">
+
               <div class="state-pill" data-state-pill="workflow">
-                <strong>Workflow</strong>
+                <strong>작업</strong>
                 <span>검토 흐름</span>
               </div>
-              
+
               <div class="state-pill" data-state-pill="recovery">
-                <strong>Recovery</strong>
+                <strong>복구</strong>
                 <span>검토 후 진행</span>
               </div>
-              
+
               <div class="state-pill" data-state-pill="authority">
-                <strong>Authority</strong>
-                <span>권한 확인</span>
+                <strong>권한</strong>
+                <span>로컬 검사</span>
               </div>
-              
+
               <div class="state-pill" data-state-pill="next">
-                <strong>Next</strong>
+                <strong>다음</strong>
                 <span>다음 행동 있음</span>
               </div>
             </div>
-            
-            
+
+
+
             <p class="approval-safe-note" data-approval-safe-note="preview-only">아직 실행된 것은 없음. 현재 상태는 승인 전 미리보기이며, 사용자가 흐름을 이해하도록 보여주는 단계다.</p>
             <div class="approval-flow" aria-label="Approval preview stages">
-              
+
               <div class="approval-stage" data-approval-stage="plan">
                 <span class="approval-stage-number" data-approval-step="1">1</span>
                 <strong>계획</strong>
@@ -1401,138 +2055,140 @@
               <strong>아직 잠겨 있는 행동</strong>
               <span class="blocked-action"><span class="blocked-action-label">잠김</span>승인 기록 쓰기<span class="blocked-action-detail">아직 저장하지 않음</span></span><span class="blocked-action"><span class="blocked-action-label">잠김</span>dry-run 호출<span class="blocked-action-detail">아직 실행하지 않음</span></span><span class="blocked-action"><span class="blocked-action-label">잠김</span>명령 실행<span class="blocked-action-detail">터미널 명령 없음</span></span><span class="blocked-action"><span class="blocked-action-label">잠김</span>파일 변경<span class="blocked-action-detail">소스/상태 파일 변경 없음</span></span><span class="blocked-action"><span class="blocked-action-label">잠김</span>Tauri 빌드<span class="blocked-action-detail">앱 빌드 안 함</span></span><span class="blocked-action"><span class="blocked-action-label">잠김</span>의존성 설치<span class="blocked-action-detail">패키지 설치 안 함</span></span><span class="blocked-action"><span class="blocked-action-label">잠김</span>설치/업데이트/롤백<span class="blocked-action-detail">실제 작업 안 함</span></span><span class="blocked-action"><span class="blocked-action-label">잠김</span>IPC<span class="blocked-action-detail">로컬 앱 명령 연결 안 함</span></span><span class="blocked-action"><span class="blocked-action-label">잠김</span>외부 네트워크<span class="blocked-action-detail">외부 호출 없음</span></span><span class="blocked-action"><span class="blocked-action-label">잠김</span>커넥터/모델/도구 활성화<span class="blocked-action-detail">외부 기능 연결 안 함</span></span>
             </div>
-            
-            
-            <div class="panel-actions" aria-label="Approval / Preview local drilldown actions">
+
+
+            <div class="panel-actions" aria-label="승인 / 미리보기 local drilldown actions">
               <a class="panel-action" data-panel-action="inspect" href="#inspect-approval-preview">인스펙터</a>
               <a class="panel-action" data-panel-action="authority" href="#authority-boundary">권한</a>
               <a class="panel-action" data-panel-action="next" href="#next-safe-action">다음 행동</a>
             </div>
             <details class="inspector" id="inspect-approval-preview" data-panel-inspector="approval-preview">
               <summary>운영 드릴다운</summary>
-              <div class="inspector-grid" aria-label="Control Center panel inspector">
-                
+              <div class="inspector-grid" aria-label="GPAO-T 대시보드 패널 상세">
+
                 <div class="inspector-row">
-                  <strong>Panel ID</strong>
+                  <strong>패널 ID</strong>
                   <span>approval-preview</span>
                 </div>
-                
+
                 <div class="inspector-row">
-                  <strong>Group</strong>
-                  <span>Authority</span>
+                  <strong>그룹</strong>
+                  <span>권한</span>
                 </div>
-                
+
                 <div class="inspector-row">
-                  <strong>Status</strong>
+                  <strong>상태</strong>
                   <span>검토</span>
                 </div>
-                
+
                 <div class="inspector-row">
-                  <strong>Headline</strong>
+                  <strong>요약</strong>
                   <span>승인 전 프리뷰 단계다. 아직 실행된 것은 없고, dry-run/approval 흐름만 읽을 수 있다.</span>
                 </div>
-                
+
                 <div class="inspector-row">
-                  <strong>Next</strong>
+                  <strong>다음 행동</strong>
                   <span>다음은 승인 전 프리뷰 흐름을 더 읽기 쉽게 다듬는 것이다. 실행, 쓰기, 빌드, 설치/업데이트/롤백, 외부 연결은 아직 열지 않는다.</span>
                 </div>
-                
+
                 <div class="inspector-row">
-                  <strong>Workflow State</strong>
+                  <strong>작업 상태</strong>
                   <span>검토 흐름</span>
                 </div>
-                
+
                 <div class="inspector-row">
-                  <strong>Recovery State</strong>
+                  <strong>복구 상태</strong>
                   <span>검토 후 진행</span>
                 </div>
-                
+
                 <div class="inspector-row">
-                  <strong>Authority State</strong>
-                  <span>권한 확인</span>
+                  <strong>권한 상태</strong>
+                  <span>로컬 검사</span>
                 </div>
-                
+
                 <div class="inspector-row">
-                  <strong>Next State</strong>
+                  <strong>다음 상태</strong>
                   <span>다음 행동 있음</span>
                 </div>
-                
+
                 <div class="inspector-row">
-                  <strong>Flow Mode</strong>
+                  <strong>흐름 모드</strong>
                   <span>control_center_preview_only_no_write_no_invocation</span>
                 </div>
                 <div class="inspector-row">
-                  <strong>Preview State</strong>
+                  <strong>미리보기 상태</strong>
                   <span>아직 실행된 것은 없음. 현재 상태는 승인 전 미리보기이며, 사용자가 흐름을 이해하도록 보여주는 단계다.</span>
                 </div>
                 <div class="inspector-row">
-                  <strong>Stages</strong>
-                  <span>계획:ready · 프리뷰:ready · 승인 범위:ready · 기록 위치:ready · 쓰기 게이트:ready</span>
+                  <strong>단계</strong>
+                  <span>계획:준비됨 · 프리뷰:준비됨 · 승인 범위:준비됨 · 기록 위치:준비됨 · 쓰기 게이트:준비됨</span>
                 </div>
                 <div class="inspector-row">
-                  <strong>Still Blocked</strong>
-                  <span>approval record write · dry-run invocation · command execution · file mutation · Tauri build · dependency install · install/update/rollback execution · IPC · external network · connector/model/tool activation</span>
+                  <strong>계속 잠김</strong>
+                  <span>승인 기록 쓰기 · 미리보기 실행 · command execution · file mutation · Tauri build · dependency install · install/update/rollback execution · IPC · external network · connector/model/tool activation</span>
                 </div>
-                
-                
-                
-                
-                
-                
+
+
+
+
+
+
+
                 <div class="inspector-row">
-                  <strong>Authority</strong>
+                  <strong>권한 설명</strong>
                   <span>권한 경계를 먼저 확인하고 외부 활성화는 차단한다.</span>
                 </div>
-                
+
                 <div class="inspector-row">
-                  <strong>Evidence</strong>
+                  <strong>근거</strong>
                   <span>검토 상태와 다음 안전 행동을 함께 확인한다.</span>
                 </div>
-                
+
                 <div class="inspector-row">
-                  <strong>Return</strong>
+                  <strong>돌아가기</strong>
                   <span><a href="#panel-approval-preview">패널</a> · <a href="#authority-boundary">권한 경계</a> · <a href="#next-safe-action">다음 행동</a></span>
                 </div>
               </div>
             </details>
           </section>
-          <section class="panel" id="panel-design-reference" data-panel="design-reference" data-group="Authority">
+          <section class="panel" id="panel-design-reference" data-panel="design-reference" data-group="권한">
             <div class="panel-head">
               <div>
-                <h3>Design Reference</h3>
-                <p class="headline">Authority · 모든 UI/UX slice는 Codex급 작업 리듬, Claude Code급 권한 UX, 한국어 제품감을 실제 화면 증거로 확인해야 한다.</p>
+                <h3>디자인 기준</h3>
+                <p class="headline">권한 · 모든 UI/UX slice는 Codex급 작업 리듬, Claude Code급 권한 UX, 한국어 제품감을 실제 화면 증거로 확인해야 한다.</p>
               </div>
               <span class="status status-review">검토</span>
             </div>
             <p class="next">다음 UI/UX slice는 이 gate의 화면 증거와 사람 눈 기준 평가를 남긴 뒤에만 닫는다. 실제 실행/쓰기/외부 연결은 별도 권한 gate 전까지 열지 않는다.</p>
-            <div class="state-ribbon" aria-label="Design Reference workflow state">
-              
+            <div class="state-ribbon" aria-label="디자인 기준 workflow state">
+
               <div class="state-pill" data-state-pill="workflow">
-                <strong>Workflow</strong>
+                <strong>작업</strong>
                 <span>검토 흐름</span>
               </div>
-              
+
               <div class="state-pill" data-state-pill="recovery">
-                <strong>Recovery</strong>
+                <strong>복구</strong>
                 <span>검토 후 진행</span>
               </div>
-              
+
               <div class="state-pill" data-state-pill="authority">
-                <strong>Authority</strong>
-                <span>권한 확인</span>
+                <strong>권한</strong>
+                <span>로컬 검사</span>
               </div>
-              
+
               <div class="state-pill" data-state-pill="next">
-                <strong>Next</strong>
+                <strong>다음</strong>
                 <span>다음 행동 있음</span>
               </div>
             </div>
-            
-            
-            
+
+
+
+
             <p class="approval-safe-note" data-design-reference-gate="required">다음 UI/UX slice는 이 gate의 화면 증거와 사람 눈 기준 평가를 남긴 뒤에만 닫는다. 실제 실행/쓰기/외부 연결은 별도 권한 gate 전까지 열지 않는다.</p>
             <div class="approval-flow" aria-label="GPAO-T design reference axes" data-design-reference-axes="required">
-              
+
               <div class="approval-stage" data-design-axis="codex_level_visual_conversation_ux">
                 <span class="approval-stage-number">1</span>
                 <strong>Codex급 시각/대화 UX</strong>
@@ -1566,7 +2222,7 @@
             </div>
             <div class="blocked-actions" aria-label="Required design evidence" data-design-evidence="required">
               <strong>다음부터 남길 evidence</strong>
-              
+
               <span class="blocked-action" data-design-evidence-item="desktop_screenshot">
                 <span class="blocked-action-label">desktop screenshot</span>데스크톱에서 실제 제품 화면이 답답하거나 헐겁지 않은지 확인합니다.
                 <span class="blocked-action-detail">required</span>
@@ -1610,7 +2266,7 @@
             </div>
             <div class="blocked-actions" aria-label="Visual assessment criteria" data-visual-assessment="required">
               <strong>사람 눈 기준 평가</strong>
-              
+
               <span class="blocked-action" data-visual-criterion="codex_work_chat_rhythm">
                 <span class="blocked-action-label">Codex급 work/chat 리듬</span>work/chat 중심성, 작은 상태 표시, 인라인 진행/결과, inspectable detail, reviewable result, safe next action
                 <span class="blocked-action-detail">visual review</span>
@@ -1634,7 +2290,7 @@
             </div>
             <div class="blocked-actions" aria-label="Design reference blocked actions" data-design-reference-boundary="no-execution">
               <strong>디자인 게이트가 열지 않는 것</strong>
-              
+
               <span class="blocked-action"><span class="blocked-action-label">잠김</span>actual approval record write<span class="blocked-action-detail">쓰기 없음 · 호출 없음</span></span>
               <span class="blocked-action"><span class="blocked-action-label">잠김</span>audit write<span class="blocked-action-detail">쓰기 없음 · 호출 없음</span></span>
               <span class="blocked-action"><span class="blocked-action-label">잠김</span>미리보기 실행<span class="blocked-action-detail">쓰기 없음 · 호출 없음</span></span>
@@ -1645,160 +2301,164 @@
               <span class="blocked-action"><span class="blocked-action-label">잠김</span>paid/destructive action<span class="blocked-action-detail">쓰기 없음 · 호출 없음</span></span>
               <span class="blocked-action"><span class="blocked-action-label">잠김</span>지속 기억 승격<span class="blocked-action-detail">쓰기 없음 · 호출 없음</span></span>
             </div>
-            
-            <div class="panel-actions" aria-label="Design Reference local drilldown actions">
+
+            <div class="panel-actions" aria-label="디자인 기준 local drilldown actions">
               <a class="panel-action" data-panel-action="inspect" href="#inspect-design-reference">인스펙터</a>
               <a class="panel-action" data-panel-action="authority" href="#authority-boundary">권한</a>
               <a class="panel-action" data-panel-action="next" href="#next-safe-action">다음 행동</a>
             </div>
             <details class="inspector" id="inspect-design-reference" data-panel-inspector="design-reference">
               <summary>운영 드릴다운</summary>
-              <div class="inspector-grid" aria-label="Control Center panel inspector">
-                
+              <div class="inspector-grid" aria-label="GPAO-T 대시보드 패널 상세">
+
                 <div class="inspector-row">
-                  <strong>Panel ID</strong>
+                  <strong>패널 ID</strong>
                   <span>design-reference</span>
                 </div>
-                
+
                 <div class="inspector-row">
-                  <strong>Group</strong>
-                  <span>Authority</span>
+                  <strong>그룹</strong>
+                  <span>권한</span>
                 </div>
-                
+
                 <div class="inspector-row">
-                  <strong>Status</strong>
+                  <strong>상태</strong>
                   <span>검토</span>
                 </div>
-                
+
                 <div class="inspector-row">
-                  <strong>Headline</strong>
+                  <strong>요약</strong>
                   <span>모든 UI/UX slice는 Codex급 작업 리듬, Claude Code급 권한 UX, 한국어 제품감을 실제 화면 증거로 확인해야 한다.</span>
                 </div>
-                
+
                 <div class="inspector-row">
-                  <strong>Next</strong>
+                  <strong>다음 행동</strong>
                   <span>다음 UI/UX slice는 이 gate의 화면 증거와 사람 눈 기준 평가를 남긴 뒤에만 닫는다. 실제 실행/쓰기/외부 연결은 별도 권한 gate 전까지 열지 않는다.</span>
                 </div>
-                
+
                 <div class="inspector-row">
-                  <strong>Workflow State</strong>
+                  <strong>작업 상태</strong>
                   <span>검토 흐름</span>
                 </div>
-                
+
                 <div class="inspector-row">
-                  <strong>Recovery State</strong>
+                  <strong>복구 상태</strong>
                   <span>검토 후 진행</span>
                 </div>
-                
+
                 <div class="inspector-row">
-                  <strong>Authority State</strong>
-                  <span>권한 확인</span>
+                  <strong>권한 상태</strong>
+                  <span>로컬 검사</span>
                 </div>
-                
+
                 <div class="inspector-row">
-                  <strong>Next State</strong>
+                  <strong>다음 상태</strong>
                   <span>다음 행동 있음</span>
                 </div>
-                
-                
+
+
                 <div class="inspector-row">
-                  <strong>Mode</strong>
+                  <strong>모드</strong>
                   <span>evidence_contract_only_no_execution</span>
                 </div>
                 <div class="inspector-row">
-                  <strong>Reference Axes</strong>
+                  <strong>기준 축</strong>
                   <span>Codex급 시각/대화 UX · Claude Code급 운영/권한 UX · 시각 디자인 전체 · 한국어 UI/UX · 톤앤매너 통일성</span>
                 </div>
                 <div class="inspector-row">
-                  <strong>Evidence Requirements</strong>
+                  <strong>필수 증거</strong>
                   <span>10</span>
                 </div>
                 <div class="inspector-row">
-                  <strong>Report Fields</strong>
+                  <strong>보고 항목</strong>
                   <span>appliedSurfaces · visualAdjustments · desktopMobileFindings · codexLevelFit · claudeCodeLevelFit · remainingAestheticRisks · userPerceivedQualityRisk</span>
                 </div>
                 <div class="inspector-row">
-                  <strong>Supported Surfaces</strong>
+                  <strong>적용 화면</strong>
                   <span>Work Surface · Control Center · Approval UX · Model Router · Connector Governance · Audit / Replay · Install / Update / Rollback</span>
                 </div>
                 <div class="inspector-row">
-                  <strong>Still Blocked</strong>
-                  <span>actual approval record write · audit write · dry-run invocation · tool/CLI/MCP execution · connector activation · credential access · external send · paid/destructive action · durable memory promotion</span>
+                  <strong>계속 잠김</strong>
+                  <span>actual approval record write · audit write · 미리보기 실행 · tool/CLI/MCP execution · 커넥터 활성화 · credential access · external send · paid/destructive action · 지속 기억 승격</span>
                 </div>
-                
-                
-                
-                
-                
+
+
+
+
+
+
                 <div class="inspector-row">
-                  <strong>Authority</strong>
+                  <strong>권한 설명</strong>
                   <span>권한 경계를 먼저 확인하고 외부 활성화는 차단한다.</span>
                 </div>
-                
+
                 <div class="inspector-row">
-                  <strong>Evidence</strong>
+                  <strong>근거</strong>
                   <span>검토 상태와 다음 안전 행동을 함께 확인한다.</span>
                 </div>
-                
+
                 <div class="inspector-row">
-                  <strong>Return</strong>
+                  <strong>돌아가기</strong>
                   <span><a href="#panel-design-reference">패널</a> · <a href="#authority-boundary">권한 경계</a> · <a href="#next-safe-action">다음 행동</a></span>
                 </div>
               </div>
             </details>
           </section>
-          <section class="panel" id="panel-execution-approval" data-panel="execution-approval" data-group="Authority">
+          <section class="panel" id="panel-execution-approval" data-panel="execution-approval" data-group="권한">
             <div class="panel-head">
               <div>
-                <h3>Execution Approval</h3>
-                <p class="headline">Authority · 실행 후보를 확인하고 승인/감사 기록만 로컬 JSONL에 남길 수 있다.</p>
+                <h3>실행 전 확인</h3>
+                <p class="headline">권한 · 실행 후보를 확인하고 승인/감사 기록만 로컬 JSONL에 남길 수 있다.</p>
               </div>
               <span class="status status-review">검토</span>
             </div>
             <p class="next">실행 제안을 확인한 뒤 승인/감사 기록만 로컬에 저장합니다.</p>
-            <div class="state-ribbon" aria-label="Execution Approval workflow state">
-              
+            <div class="state-ribbon" aria-label="실행 전 확인 workflow state">
+
               <div class="state-pill" data-state-pill="workflow">
-                <strong>Workflow</strong>
+                <strong>작업</strong>
                 <span>검토 흐름</span>
               </div>
-              
+
               <div class="state-pill" data-state-pill="recovery">
-                <strong>Recovery</strong>
+                <strong>복구</strong>
                 <span>검토 후 진행</span>
               </div>
-              
+
               <div class="state-pill" data-state-pill="authority">
-                <strong>Authority</strong>
-                <span>권한 확인</span>
+                <strong>권한</strong>
+                <span>로컬 검사</span>
               </div>
-              
+
               <div class="state-pill" data-state-pill="next">
-                <strong>Next</strong>
+                <strong>다음</strong>
                 <span>다음 행동 있음</span>
               </div>
             </div>
-            
-            
-            
-            
-            <div class="approval-flow" aria-label="Execution proposal confirmation" data-execution-proposal-confirmation="preview-only">
+
+
+
+
+
+            <div class="execution-review" aria-label="Execution proposal confirmation" data-execution-proposal-confirmation="preview-only">
               <p class="approval-safe-note" data-execution-no-write="true">아직 실행된 것은 없습니다. 무엇이 실행될 예정인지 확인하세요.</p>
-              <div class="approval-stage" data-execution-proposal="proposal.local_draft_preview">
-                <span class="approval-stage-number" data-authority-icon="scan">◇</span>
-                <strong>실행 전 확인할 제안</strong>
-                <span class="approval-stage-status">미리보기만</span>
-                <small>미리보기만: 작업 계획과 예상 결과를 로컬 preview로 보여줍니다.</small>
-              </div>
-              <div class="work-surface-grid" aria-label="Execution proposal fields">
-                <div class="work-signal"><strong>Tool</strong>로컬 명령 후보</div>
-                <div class="work-signal"><strong>Action</strong>미리보기 후보</div>
-                <div class="work-signal"><strong>Risk</strong>실제 실행은 없지만 사용자가 실행될 내용을 오해할 수 있습니다.</div>
-                <div class="work-signal"><strong>Rollback</strong>실제 변경이 없으므로 롤백 대신 preview 폐기만 필요합니다.</div>
+              <div class="proposal-hero">
+                <div class="proposal-card" data-execution-proposal="proposal.local_draft_preview">
+                  <span class="approval-stage-number" data-authority-icon="scan">◇</span>
+                  <strong>실행 전 확인할 제안</strong>
+                  <p>미리보기만: 작업 계획과 예상 결과를 로컬 preview로 보여줍니다.</p>
+                  <p>실제 실행은 없지만 사용자가 실행될 내용을 오해할 수 있습니다.</p>
+                </div>
+                <div class="proposal-meta" aria-label="Execution proposal summary">
+                  <div class="work-signal"><strong>행동 후보</strong>미리보기 후보</div>
+                  <div class="work-signal"><strong>권한 단계</strong>미리보기만</div>
+                  <div class="work-signal"><strong>예상 효과</strong>작업 계획과 예상 결과를 로컬 preview로 보여줍니다.</div>
+                  <div class="work-signal"><strong>되돌리기 기준</strong>실제 변경이 없으므로 롤백 대신 preview 폐기만 필요합니다.</div>
+                </div>
               </div>
               <div class="blocked-actions" aria-label="Korean authority levels" data-authority-levels="ko">
                 <strong>권한 단계</strong>
-                
+
                 <span class="blocked-action" data-authority-level="read_only" data-authority-tone="ready">
                   <span class="blocked-action-label">○</span>읽기 전용
                   <span class="blocked-action-detail">자료를 확인하지만 실행하거나 바꾸지 않습니다.</span>
@@ -1826,7 +2486,7 @@
               </div>
               <div class="blocked-actions" aria-label="Approval packet validation" data-approval-packet-validation="design-only">
                 <strong>승인 패킷 검증</strong>
-                
+
                 <span class="blocked-action">
                   <span class="blocked-action-label">필수 항목 확인</span>무엇을 실행하려는지 설명하는 필수 항목이 모두 있어야 합니다.
                   <span class="blocked-action-detail">검증 기준</span>
@@ -1844,23 +2504,23 @@
                   <span class="blocked-action-detail">검증 기준</span>
                 </span>
               </div>
-              <div class="blocked-actions" aria-label="Planned audit items" data-audit-preview="design-only">
+              <div class="compact-review-grid" aria-label="Planned audit items" data-audit-preview="design-only">
                 <strong>기록 예정 항목</strong>
-                
+
                 <span class="blocked-action" data-audit-item="proposal_id">
-                  <span class="blocked-action-label">제안 ID</span>proposal.local_draft_preview
+                  <span class="blocked-action-label">제안 ID</span>로컬 초안 제안
                   <span class="blocked-action-detail">어떤 실행 제안에서 나온 기록인지 구분합니다.</span>
                 </span>
                 <span class="blocked-action" data-audit-item="source">
-                  <span class="blocked-action-label">출처</span>model_skill_user_request_preview
+                  <span class="blocked-action-label">출처</span>모델/스킬/요청에서 나온 미리보기
                   <span class="blocked-action-detail">모델, 스킬, 사용자 요청 중 어디에서 제안이 시작됐는지 남깁니다.</span>
                 </span>
                 <span class="blocked-action" data-audit-item="requested_action">
-                  <span class="blocked-action-label">요청 행동</span>cli.dry_run
+                  <span class="blocked-action-label">요청 행동</span>로컬 명령 미리보기
                   <span class="blocked-action-detail">실제로 하려던 행동 종류를 짧게 남깁니다.</span>
                 </span>
                 <span class="blocked-action" data-audit-item="authority_level">
-                  <span class="blocked-action-label">권한 단계</span>미리보기만 · dry_run
+                  <span class="blocked-action-label">권한 단계</span>미리보기만
                   <span class="blocked-action-detail">읽기, 미리보기, 저장, 전송, 고위험, 비용 중 어떤 경계인지 남깁니다.</span>
                 </span>
                 <span class="blocked-action" data-audit-item="expected_effect">
@@ -1871,1084 +2531,1075 @@
                   <span class="blocked-action-label">위험</span>실제 실행은 없지만 사용자가 실행될 내용을 오해할 수 있습니다.
                   <span class="blocked-action-detail">위험을 숨기지 않고 짧고 차분한 문장으로 남깁니다.</span>
                 </span>
-                <span class="blocked-action" data-audit-item="rollback_reference">
-                  <span class="blocked-action-label">되돌리기 기준</span>실제 변경이 없으므로 롤백 대신 preview 폐기만 필요합니다.
-                  <span class="blocked-action-detail">문제가 생겼을 때 무엇을 기준으로 멈추거나 되돌릴지 남깁니다.</span>
-                </span>
-                <span class="blocked-action" data-audit-item="user_confirmation_state">
-                  <span class="blocked-action-label">사용자 확인</span>not_confirmed
-                  <span class="blocked-action-detail">사용자가 아직 확인하지 않았는지, 수정/보류인지 구분합니다.</span>
-                </span>
               </div>
-              <div class="blocked-actions" aria-label="Approval record write UX design" data-approval-record-write-ux="design-only">
+              <div class="record-flow" aria-label="Approval record write UX design" data-approval-record-write-ux="design-only">
                 <strong>승인 기록 저장 전 확인</strong>
-                
-                <span class="blocked-action" data-approval-record-stage="preview">
-                  <span class="blocked-action-label">1 · 미리보기</span>visible
-                  <span class="blocked-action-detail">무엇을 하려는지 먼저 봅니다.</span>
+
+                <span class="record-step" data-approval-record-stage="preview">
+                  <strong>1 · 미리보기</strong>
+                  <span>visible · 무엇을 하려는지 먼저 봅니다.</span>
                 </span>
-                <span class="blocked-action" data-approval-record-stage="confirmation">
-                  <span class="blocked-action-label">2 · 확인</span>not_confirmed
-                  <span class="blocked-action-detail">의도와 맞는지 사용자가 확인합니다.</span>
+                <span class="record-step" data-approval-record-stage="confirmation">
+                  <strong>2 · 확인</strong>
+                  <span>아직 확인 전 · 의도와 맞는지 사용자가 확인합니다.</span>
                 </span>
-                <span class="blocked-action" data-approval-record-stage="approval_packet">
-                  <span class="blocked-action-label">3 · 승인 패킷</span>검토 필요
-                  <span class="blocked-action-detail">저장 전에 필요한 항목이 모두 있는지 봅니다.</span>
+                <span class="record-step" data-approval-record-stage="approval_packet">
+                  <strong>3 · 승인 패킷</strong>
+                  <span>검토 필요 · 저장 전에 필요한 항목이 모두 있는지 봅니다.</span>
                 </span>
-                <span class="blocked-action" data-approval-record-stage="record_preview">
-                  <span class="blocked-action-label">4 · 기록 미리보기</span>저장 전 확인
-                  <span class="blocked-action-detail">저장될 기록의 모양만 보여줍니다.</span>
+                <span class="record-step" data-approval-record-stage="record_preview">
+                  <strong>4 · 기록 미리보기</strong>
+                  <span>저장 전 확인 · 저장될 기록의 모양만 보여줍니다.</span>
                 </span>
-                <span class="blocked-action" data-approval-record-stage="write_gate">
-                  <span class="blocked-action-label">5 · 쓰기 잠금</span>차단됨
-                  <span class="blocked-action-detail">이번 단계에서는 실제 저장하지 않습니다.</span>
+                <span class="record-step" data-approval-record-stage="write_gate">
+                  <strong>5 · 쓰기 잠금</strong>
+                  <span>차단됨 · 이번 단계에서는 실제 저장하지 않습니다.</span>
                 </span>
               </div>
-              <div class="blocked-actions" aria-label="Approval record preview items" data-approval-record-preview="no-write">
+              <div class="compact-review-grid" aria-label="Approval record preview items" data-approval-record-preview="no-write">
                 <strong>저장될 항목 미리보기</strong>
-                
+
                 <span class="blocked-action" data-approval-record-item="record_id">
-                  <span class="blocked-action-label">기록 ID</span>approval_record.preview_only
+                  <span class="blocked-action-label">기록 ID</span>승인 기록 미리보기
                   <span class="blocked-action-detail">어떤 승인 기록인지 구분합니다.</span>
                 </span>
                 <span class="blocked-action" data-approval-record-item="packet_id">
-                  <span class="blocked-action-label">승인 패킷</span>preview_packet_not_written
+                  <span class="blocked-action-label">승인 패킷</span>저장 전 승인 패킷
                   <span class="blocked-action-detail">어떤 승인 패킷에서 나온 기록인지 연결합니다.</span>
                 </span>
                 <span class="blocked-action" data-approval-record-item="proposal_id">
-                  <span class="blocked-action-label">실행 제안</span>proposal.local_draft_preview
+                  <span class="blocked-action-label">실행 제안</span>로컬 초안 제안
                   <span class="blocked-action-detail">무엇을 실행하려던 제안인지 연결합니다.</span>
                 </span>
                 <span class="blocked-action" data-approval-record-item="authority_level">
-                  <span class="blocked-action-label">권한 단계</span>미리보기만 · dry_run
+                  <span class="blocked-action-label">권한 단계</span>미리보기만
                   <span class="blocked-action-detail">저장 전 확인인지, 전송 전 확인인지 같은 경계를 남깁니다.</span>
                 </span>
                 <span class="blocked-action" data-approval-record-item="confirmation_state">
-                  <span class="blocked-action-label">확인 상태</span>not_confirmed
+                  <span class="blocked-action-label">확인 상태</span>아직 확인 전
                   <span class="blocked-action-detail">아직 확인 전인지, 수정/보류인지 보여줍니다.</span>
                 </span>
                 <span class="blocked-action" data-approval-record-item="scope">
-                  <span class="blocked-action-label">범위</span>local_preview_only
+                  <span class="blocked-action-label">범위</span>로컬 미리보기 한정
                   <span class="blocked-action-detail">이 기록이 어디까지 허용되는지 좁게 남깁니다.</span>
                 </span>
-                <span class="blocked-action" data-approval-record-item="expires_at">
-                  <span class="blocked-action-label">만료</span>preview_only_not_scheduled
-                  <span class="blocked-action-detail">오래된 승인이 재사용되지 않도록 기준을 둡니다.</span>
-                </span>
-                <span class="blocked-action" data-approval-record-item="audit_reference">
-                  <span class="blocked-action-label">감사 기준</span>.gpao-t/events/audit.jsonl
-                  <span class="blocked-action-detail">나중에 감사 기록과 연결될 위치입니다. 지금은 쓰지 않습니다.</span>
-                </span>
-                <span class="blocked-action" data-approval-record-item="replay_reference">
-                  <span class="blocked-action-label">리플레이 기준</span>replay.reference.required_before_write
-                  <span class="blocked-action-detail">나중에 같은 판단을 재검토할 기준입니다.</span>
-                </span>
-                <span class="blocked-action" data-approval-record-item="rollback_reference">
-                  <span class="blocked-action-label">되돌리기 기준</span>실제 변경이 없으므로 롤백 대신 preview 폐기만 필요합니다.
-                  <span class="blocked-action-detail">문제가 생겼을 때 멈추거나 되돌릴 기준입니다.</span>
-                </span>
               </div>
-              
+
               <div class="blocked-actions" aria-label="Local approval audit record substrate" data-local-record-substrate="v1">
                 <strong>로컬 승인/감사 기록</strong>
                 <span class="blocked-action">
-                  <span class="blocked-action-label">기록</span>승인 1 · 감사 1
+                  <span class="blocked-action-label">기록</span>승인 25 · 감사 25
                   <span class="blocked-action-detail">jsonl</span>
                 </span>
                 <span class="blocked-action">
-                  <span class="blocked-action-label">최근</span>approval.20260709071701.proposal.local_draft_preview
-                  <span class="blocked-action-detail">replay.for.approval.20260709071701.proposal.local_draft_preview</span>
+                  <span class="blocked-action-label">최근</span>approval.20260713132141.proposal.local_draft_preview
+                  <span class="blocked-action-detail">replay.for.approval.20260713132141.proposal.local_draft_preview</span>
                 </span>
                 <span class="blocked-action">
                   <span class="blocked-action-label">잠김</span>external send · paid action · destructive action · credential access
-                  <span class="blocked-action-detail">외부/비용/파괴/credential 차단</span>
+                  <span class="blocked-action-detail">외부/비용/파괴/인증 정보 차단</span>
                 </span>
               </div>
               <div class="blocked-actions" aria-label="Execution approval blocked actions" data-audit-write-design="no-write">
                 <strong>아직 열지 않음</strong>
-                
-                <span class="blocked-action"><span class="blocked-action-label">잠김</span>actual_tool_execution<span class="blocked-action-detail">외부 실행 없음</span></span>
+
+                <span class="blocked-action"><span class="blocked-action-label">잠김</span>실제 도구 실행<span class="blocked-action-detail">외부 실행 없음</span></span>
                 <span class="blocked-action"><span class="blocked-action-label">잠김</span>명령 실행<span class="blocked-action-detail">외부 실행 없음</span></span>
-                <span class="blocked-action"><span class="blocked-action-label">잠김</span>mcp_invocation<span class="blocked-action-detail">외부 실행 없음</span></span>
+                <span class="blocked-action"><span class="blocked-action-label">잠김</span>MCP 호출<span class="blocked-action-detail">외부 실행 없음</span></span>
                 <span class="blocked-action"><span class="blocked-action-label">잠김</span>connector_activation<span class="blocked-action-detail">외부 실행 없음</span></span>
-                <span class="blocked-action"><span class="blocked-action-label">잠김</span>external_network_or_send<span class="blocked-action-detail">외부 실행 없음</span></span>
-                <span class="blocked-action"><span class="blocked-action-label">잠김</span>credential_read_or_write<span class="blocked-action-detail">외부 실행 없음</span></span>
-                <span class="blocked-action"><span class="blocked-action-label">잠김</span>paid_action<span class="blocked-action-detail">외부 실행 없음</span></span>
-                <span class="blocked-action"><span class="blocked-action-label">잠김</span>destructive_action<span class="blocked-action-detail">외부 실행 없음</span></span>
+                <span class="blocked-action"><span class="blocked-action-label">잠김</span>외부 전송<span class="blocked-action-detail">외부 실행 없음</span></span>
+                <span class="blocked-action"><span class="blocked-action-label">잠김</span>인증 정보 접근<span class="blocked-action-detail">외부 실행 없음</span></span>
+                <span class="blocked-action"><span class="blocked-action-label">잠김</span>비용 발생 가능<span class="blocked-action-detail">외부 실행 없음</span></span>
+                <span class="blocked-action"><span class="blocked-action-label">잠김</span>되돌리기 어려운 행동<span class="blocked-action-detail">외부 실행 없음</span></span>
               </div>
             </div>
-            <div class="panel-actions" aria-label="Execution Approval local drilldown actions">
+            <div class="panel-actions" aria-label="실행 전 확인 local drilldown actions">
               <a class="panel-action" data-panel-action="inspect" href="#inspect-execution-approval">인스펙터</a>
               <a class="panel-action" data-panel-action="authority" href="#authority-boundary">권한</a>
               <a class="panel-action" data-panel-action="next" href="#next-safe-action">다음 행동</a>
             </div>
             <details class="inspector" id="inspect-execution-approval" data-panel-inspector="execution-approval">
               <summary>운영 드릴다운</summary>
-              <div class="inspector-grid" aria-label="Control Center panel inspector">
-                
+              <div class="inspector-grid" aria-label="GPAO-T 대시보드 패널 상세">
+
                 <div class="inspector-row">
-                  <strong>Panel ID</strong>
+                  <strong>패널 ID</strong>
                   <span>execution-approval</span>
                 </div>
-                
+
                 <div class="inspector-row">
-                  <strong>Group</strong>
-                  <span>Authority</span>
+                  <strong>그룹</strong>
+                  <span>권한</span>
                 </div>
-                
+
                 <div class="inspector-row">
-                  <strong>Status</strong>
+                  <strong>상태</strong>
                   <span>검토</span>
                 </div>
-                
+
                 <div class="inspector-row">
-                  <strong>Headline</strong>
+                  <strong>요약</strong>
                   <span>실행 후보를 확인하고 승인/감사 기록만 로컬 JSONL에 남길 수 있다.</span>
                 </div>
-                
+
                 <div class="inspector-row">
-                  <strong>Next</strong>
+                  <strong>다음 행동</strong>
                   <span>실행 제안을 확인한 뒤 승인/감사 기록만 로컬에 저장합니다.</span>
                 </div>
-                
+
                 <div class="inspector-row">
-                  <strong>Workflow State</strong>
+                  <strong>작업 상태</strong>
                   <span>검토 흐름</span>
                 </div>
-                
+
                 <div class="inspector-row">
-                  <strong>Recovery State</strong>
+                  <strong>복구 상태</strong>
                   <span>검토 후 진행</span>
                 </div>
-                
+
                 <div class="inspector-row">
-                  <strong>Authority State</strong>
-                  <span>권한 확인</span>
+                  <strong>권한 상태</strong>
+                  <span>로컬 검사</span>
                 </div>
-                
+
                 <div class="inspector-row">
-                  <strong>Next State</strong>
+                  <strong>다음 상태</strong>
                   <span>다음 행동 있음</span>
                 </div>
-                
-                
-                
+
+
+
                 <div class="inspector-row">
-                  <strong>Proposal</strong>
-                  <span>cli · dry_run · dry_run</span>
+                  <strong>제안</strong>
+                  <span>로컬 명령 후보 · 미리보기 후보 · 미리보기 후보</span>
                 </div>
                 <div class="inspector-row">
-                  <strong>Expected Effect</strong>
+                  <strong>예상 효과</strong>
                   <span>작업 계획과 예상 결과를 로컬 preview로 보여줍니다.</span>
                 </div>
                 <div class="inspector-row">
-                  <strong>Risk</strong>
+                  <strong>위험</strong>
                   <span>실제 실행은 없지만 사용자가 실행될 내용을 오해할 수 있습니다.</span>
                 </div>
                 <div class="inspector-row">
-                  <strong>Rollback</strong>
+                  <strong>되돌리기</strong>
                   <span>실제 변경이 없으므로 롤백 대신 preview 폐기만 필요합니다.</span>
                 </div>
                 <div class="inspector-row">
-                  <strong>Approval Fields</strong>
+                  <strong>승인 필드</strong>
                   <span>15</span>
                 </div>
                 <div class="inspector-row">
-                  <strong>Validation Rules</strong>
+                  <strong>검증 규칙</strong>
                   <span>6</span>
                 </div>
                 <div class="inspector-row">
-                  <strong>Audit Items</strong>
+                  <strong>감사 항목</strong>
                   <span>8</span>
                 </div>
                 <div class="inspector-row">
-                  <strong>Audit Write</strong>
+                  <strong>감사 기록</strong>
                   <span>로컬 JSONL 기록 가능</span>
                 </div>
                 <div class="inspector-row">
-                  <strong>Approval Record UX</strong>
+                  <strong>승인 기록</strong>
                   <span>로컬 JSONL 기록 가능</span>
                 </div>
                 <div class="inspector-row">
-                  <strong>Approval Record Items</strong>
+                  <strong>저장 항목</strong>
                   <span>10</span>
                 </div>
                 <div class="inspector-row">
-                  <strong>Local Records</strong>
-                  <span>승인 1 · 감사 1</span>
+                  <strong>로컬 기록</strong>
+                  <span>승인 25 · 감사 25</span>
                 </div>
                 <div class="inspector-row">
-                  <strong>Replay</strong>
-                  <span>replay.for.approval.20260709071701.proposal.local_draft_preview</span>
+                  <strong>리플레이</strong>
+                  <span>replay.for.approval.20260713132141.proposal.local_draft_preview</span>
                 </div>
                 <div class="inspector-row">
-                  <strong>UX Locale</strong>
+                  <strong>언어</strong>
                   <span>ko-KR</span>
                 </div>
-                
-                
-                
-                
+
+
+
+
+
                 <div class="inspector-row">
-                  <strong>Authority</strong>
+                  <strong>권한 설명</strong>
                   <span>권한 경계를 먼저 확인하고 외부 활성화는 차단한다.</span>
                 </div>
-                
+
                 <div class="inspector-row">
-                  <strong>Evidence</strong>
+                  <strong>근거</strong>
                   <span>검토 상태와 다음 안전 행동을 함께 확인한다.</span>
                 </div>
-                
+
                 <div class="inspector-row">
-                  <strong>Return</strong>
+                  <strong>돌아가기</strong>
                   <span><a href="#panel-execution-approval">패널</a> · <a href="#authority-boundary">권한 경계</a> · <a href="#next-safe-action">다음 행동</a></span>
                 </div>
               </div>
             </details>
           </section>
-          <section class="panel" id="panel-skill-ecosystem" data-panel="skill-ecosystem" data-group="Work">
+          <section class="panel" id="panel-skill-ecosystem" data-panel="skill-ecosystem" data-group="작업">
             <div class="panel-head">
               <div>
-                <h3>Skill Ecosystem</h3>
-                <p class="headline">Work · Skill packs now produce local execution evidence and growth signals.</p>
+                <h3>스킬 생태계</h3>
+                <p class="headline">작업 · 리서치 기반 기본 스킬 팩은 등록되어 있고, 첫 실행 근거를 기다리는 상태다.</p>
               </div>
               <span class="status status-ready">준비됨</span>
             </div>
-            <p class="next">Review the latest skill execution evidence and convert repeated growth signals into proposals only after replay coverage.</p>
-            <div class="state-ribbon" aria-label="Skill Ecosystem workflow state">
-              
+            <p class="next">로컬 스킬 실행 기록을 남겨 산출물, 품질, 리플레이, 성장 근거를 확인한다.</p>
+            <div class="state-ribbon" aria-label="스킬 생태계 workflow state">
+
               <div class="state-pill" data-state-pill="workflow">
-                <strong>Workflow</strong>
+                <strong>작업</strong>
                 <span>진행 가능</span>
               </div>
-              
+
               <div class="state-pill" data-state-pill="recovery">
-                <strong>Recovery</strong>
+                <strong>복구</strong>
                 <span>복구 대기 없음</span>
               </div>
-              
+
               <div class="state-pill" data-state-pill="authority">
-                <strong>Authority</strong>
+                <strong>권한</strong>
                 <span>로컬 검사</span>
               </div>
-              
+
               <div class="state-pill" data-state-pill="next">
-                <strong>Next</strong>
+                <strong>다음</strong>
                 <span>다음 행동 있음</span>
               </div>
             </div>
-            
-            
-            
-            
-            <div class="panel-actions" aria-label="Skill Ecosystem local drilldown actions">
+
+
+
+
+
+            <div class="panel-actions" aria-label="스킬 생태계 local drilldown actions">
               <a class="panel-action" data-panel-action="inspect" href="#inspect-skill-ecosystem">인스펙터</a>
               <a class="panel-action" data-panel-action="authority" href="#authority-boundary">권한</a>
               <a class="panel-action" data-panel-action="next" href="#next-safe-action">다음 행동</a>
             </div>
             <details class="inspector" id="inspect-skill-ecosystem" data-panel-inspector="skill-ecosystem">
               <summary>운영 드릴다운</summary>
-              <div class="inspector-grid" aria-label="Control Center panel inspector">
-                
+              <div class="inspector-grid" aria-label="GPAO-T 대시보드 패널 상세">
+
                 <div class="inspector-row">
-                  <strong>Panel ID</strong>
+                  <strong>패널 ID</strong>
                   <span>skill-ecosystem</span>
                 </div>
-                
+
                 <div class="inspector-row">
-                  <strong>Group</strong>
-                  <span>Work</span>
+                  <strong>그룹</strong>
+                  <span>작업</span>
                 </div>
-                
+
                 <div class="inspector-row">
-                  <strong>Status</strong>
+                  <strong>상태</strong>
                   <span>준비됨</span>
                 </div>
-                
+
                 <div class="inspector-row">
-                  <strong>Headline</strong>
-                  <span>Skill packs now produce local execution evidence and growth signals.</span>
+                  <strong>요약</strong>
+                  <span>리서치 기반 기본 스킬 팩은 등록되어 있고, 첫 실행 근거를 기다리는 상태다.</span>
                 </div>
-                
+
                 <div class="inspector-row">
-                  <strong>Next</strong>
-                  <span>Review the latest skill execution evidence and convert repeated growth signals into proposals only after replay coverage.</span>
+                  <strong>다음 행동</strong>
+                  <span>로컬 스킬 실행 기록을 남겨 산출물, 품질, 리플레이, 성장 근거를 확인한다.</span>
                 </div>
-                
+
                 <div class="inspector-row">
-                  <strong>Workflow State</strong>
+                  <strong>작업 상태</strong>
                   <span>진행 가능</span>
                 </div>
-                
+
                 <div class="inspector-row">
-                  <strong>Recovery State</strong>
+                  <strong>복구 상태</strong>
                   <span>복구 대기 없음</span>
                 </div>
-                
+
                 <div class="inspector-row">
-                  <strong>Authority State</strong>
+                  <strong>권한 상태</strong>
                   <span>로컬 검사</span>
                 </div>
-                
+
                 <div class="inspector-row">
-                  <strong>Next State</strong>
+                  <strong>다음 상태</strong>
                   <span>다음 행동 있음</span>
                 </div>
-                
-                
-                
-                
-                
-                
-                
+
+
+
+
+
+
+
+
                 <div class="inspector-row">
-                  <strong>Authority</strong>
+                  <strong>권한 설명</strong>
                   <span>로컬 검사만 허용하고 외부 계정, 모델, 도구 호출은 열지 않는다.</span>
                 </div>
-                
+
                 <div class="inspector-row">
-                  <strong>Evidence</strong>
+                  <strong>근거</strong>
                   <span>준비됨 상태와 다음 안전 행동을 함께 확인한다.</span>
                 </div>
-                
+
                 <div class="inspector-row">
-                  <strong>Return</strong>
+                  <strong>돌아가기</strong>
                   <span><a href="#panel-skill-ecosystem">패널</a> · <a href="#authority-boundary">권한 경계</a> · <a href="#next-safe-action">다음 행동</a></span>
                 </div>
               </div>
             </details>
           </section>
-          <section class="panel" id="panel-memory" data-panel="memory" data-group="Context">
+          <section class="panel" id="panel-memory" data-panel="memory" data-group="맥락">
             <div class="panel-head">
               <div>
-                <h3>Memory Wiki / Context Mesh</h3>
-                <p class="headline">Context · Memory candidates are available for Context Mesh admission.</p>
+                <h3>기억 / Context Mesh</h3>
+                <p class="headline">맥락 · 아직 사용할 T-cell 후보가 없다.</p>
               </div>
-              <span class="status status-ready">준비됨</span>
+              <span class="status status-review">검토</span>
             </div>
-            <p class="next">Resolve current requests through Context Mesh before admission.</p>
-            <div class="state-ribbon" aria-label="Memory Wiki / Context Mesh workflow state">
-              
+            <p class="next">기억 연속성에 기대기 전에 출처가 연결된 Memory Wiki 항목을 남긴다.</p>
+            <div class="state-ribbon" aria-label="기억 / Context Mesh workflow state">
+
               <div class="state-pill" data-state-pill="workflow">
-                <strong>Workflow</strong>
-                <span>진행 가능</span>
+                <strong>작업</strong>
+                <span>검토 흐름</span>
               </div>
-              
+
               <div class="state-pill" data-state-pill="recovery">
-                <strong>Recovery</strong>
-                <span>복구 대기 없음</span>
+                <strong>복구</strong>
+                <span>검토 후 진행</span>
               </div>
-              
+
               <div class="state-pill" data-state-pill="authority">
-                <strong>Authority</strong>
+                <strong>권한</strong>
                 <span>로컬 검사</span>
               </div>
-              
+
               <div class="state-pill" data-state-pill="next">
-                <strong>Next</strong>
+                <strong>다음</strong>
                 <span>다음 행동 있음</span>
               </div>
             </div>
-            
-            
-            
-            
-            <div class="panel-actions" aria-label="Memory Wiki / Context Mesh local drilldown actions">
+
+
+
+
+
+            <div class="panel-actions" aria-label="기억 / Context Mesh local drilldown actions">
               <a class="panel-action" data-panel-action="inspect" href="#inspect-memory">인스펙터</a>
               <a class="panel-action" data-panel-action="authority" href="#authority-boundary">권한</a>
               <a class="panel-action" data-panel-action="next" href="#next-safe-action">다음 행동</a>
             </div>
             <details class="inspector" id="inspect-memory" data-panel-inspector="memory">
               <summary>운영 드릴다운</summary>
-              <div class="inspector-grid" aria-label="Control Center panel inspector">
-                
+              <div class="inspector-grid" aria-label="GPAO-T 대시보드 패널 상세">
+
                 <div class="inspector-row">
-                  <strong>Panel ID</strong>
+                  <strong>패널 ID</strong>
                   <span>memory</span>
                 </div>
-                
+
                 <div class="inspector-row">
-                  <strong>Group</strong>
-                  <span>Context</span>
+                  <strong>그룹</strong>
+                  <span>맥락</span>
                 </div>
-                
+
                 <div class="inspector-row">
-                  <strong>Status</strong>
-                  <span>준비됨</span>
+                  <strong>상태</strong>
+                  <span>검토</span>
                 </div>
-                
+
                 <div class="inspector-row">
-                  <strong>Headline</strong>
-                  <span>Memory candidates are available for Context Mesh admission.</span>
+                  <strong>요약</strong>
+                  <span>아직 사용할 T-cell 후보가 없다.</span>
                 </div>
-                
+
                 <div class="inspector-row">
-                  <strong>Next</strong>
-                  <span>Resolve current requests through Context Mesh before admission.</span>
+                  <strong>다음 행동</strong>
+                  <span>기억 연속성에 기대기 전에 출처가 연결된 Memory Wiki 항목을 남긴다.</span>
                 </div>
-                
+
                 <div class="inspector-row">
-                  <strong>Workflow State</strong>
-                  <span>진행 가능</span>
+                  <strong>작업 상태</strong>
+                  <span>검토 흐름</span>
                 </div>
-                
+
                 <div class="inspector-row">
-                  <strong>Recovery State</strong>
-                  <span>복구 대기 없음</span>
+                  <strong>복구 상태</strong>
+                  <span>검토 후 진행</span>
                 </div>
-                
+
                 <div class="inspector-row">
-                  <strong>Authority State</strong>
+                  <strong>권한 상태</strong>
                   <span>로컬 검사</span>
                 </div>
-                
+
                 <div class="inspector-row">
-                  <strong>Next State</strong>
+                  <strong>다음 상태</strong>
                   <span>다음 행동 있음</span>
                 </div>
-                
-                
-                
-                
-                
-                
-                
+
+
+
+
+
+
+
+
                 <div class="inspector-row">
-                  <strong>Authority</strong>
+                  <strong>권한 설명</strong>
                   <span>로컬 검사만 허용하고 외부 계정, 모델, 도구 호출은 열지 않는다.</span>
                 </div>
-                
+
                 <div class="inspector-row">
-                  <strong>Evidence</strong>
-                  <span>준비됨 상태와 다음 안전 행동을 함께 확인한다.</span>
+                  <strong>근거</strong>
+                  <span>검토 상태와 다음 안전 행동을 함께 확인한다.</span>
                 </div>
-                
+
                 <div class="inspector-row">
-                  <strong>Return</strong>
+                  <strong>돌아가기</strong>
                   <span><a href="#panel-memory">패널</a> · <a href="#authority-boundary">권한 경계</a> · <a href="#next-safe-action">다음 행동</a></span>
                 </div>
               </div>
             </details>
           </section>
-          <section class="panel" id="panel-recovery" data-panel="recovery" data-group="Evidence">
+          <section class="panel" id="panel-recovery" data-panel="recovery" data-group="근거">
             <div class="panel-head">
               <div>
-                <h3>Replay Recovery</h3>
-                <p class="headline">Evidence · Replay recovery evidence is available.</p>
+                <h3>리플레이 복구</h3>
+                <p class="headline">근거 · 아직 기록된 리플레이 복구 근거가 없다.</p>
               </div>
-              <span class="status status-ready">준비됨</span>
+              <span class="status status-review">검토</span>
             </div>
-            <p class="next">Review repeated targets and promote only replay-proven improvements through explicit gates.</p>
-            <div class="state-ribbon" aria-label="Replay Recovery workflow state">
-              
+            <p class="next">Record a replay recovery view before looking for recovery patterns.</p>
+            <div class="state-ribbon" aria-label="리플레이 복구 workflow state">
+
               <div class="state-pill" data-state-pill="workflow">
-                <strong>Workflow</strong>
-                <span>진행 가능</span>
+                <strong>작업</strong>
+                <span>검토 흐름</span>
               </div>
-              
+
               <div class="state-pill" data-state-pill="recovery">
-                <strong>Recovery</strong>
-                <span>복구 대기 없음</span>
+                <strong>복구</strong>
+                <span>검토 후 진행</span>
               </div>
-              
+
               <div class="state-pill" data-state-pill="authority">
-                <strong>Authority</strong>
+                <strong>권한</strong>
                 <span>로컬 검사</span>
               </div>
-              
+
               <div class="state-pill" data-state-pill="next">
-                <strong>Next</strong>
+                <strong>다음</strong>
                 <span>다음 행동 있음</span>
               </div>
             </div>
-            
-            
-            
-            
-            <div class="panel-actions" aria-label="Replay Recovery local drilldown actions">
+
+
+
+
+
+            <div class="panel-actions" aria-label="리플레이 복구 local drilldown actions">
               <a class="panel-action" data-panel-action="inspect" href="#inspect-recovery">인스펙터</a>
               <a class="panel-action" data-panel-action="authority" href="#authority-boundary">권한</a>
               <a class="panel-action" data-panel-action="next" href="#next-safe-action">다음 행동</a>
             </div>
             <details class="inspector" id="inspect-recovery" data-panel-inspector="recovery">
               <summary>운영 드릴다운</summary>
-              <div class="inspector-grid" aria-label="Control Center panel inspector">
-                
+              <div class="inspector-grid" aria-label="GPAO-T 대시보드 패널 상세">
+
                 <div class="inspector-row">
-                  <strong>Panel ID</strong>
+                  <strong>패널 ID</strong>
                   <span>recovery</span>
                 </div>
-                
+
                 <div class="inspector-row">
-                  <strong>Group</strong>
-                  <span>Evidence</span>
+                  <strong>그룹</strong>
+                  <span>근거</span>
                 </div>
-                
+
                 <div class="inspector-row">
-                  <strong>Status</strong>
-                  <span>준비됨</span>
+                  <strong>상태</strong>
+                  <span>검토</span>
                 </div>
-                
+
                 <div class="inspector-row">
-                  <strong>Headline</strong>
-                  <span>Replay recovery evidence is available.</span>
+                  <strong>요약</strong>
+                  <span>아직 기록된 리플레이 복구 근거가 없다.</span>
                 </div>
-                
+
                 <div class="inspector-row">
-                  <strong>Next</strong>
-                  <span>Review repeated targets and promote only replay-proven improvements through explicit gates.</span>
+                  <strong>다음 행동</strong>
+                  <span>Record a replay recovery view before looking for recovery patterns.</span>
                 </div>
-                
+
                 <div class="inspector-row">
-                  <strong>Workflow State</strong>
-                  <span>진행 가능</span>
+                  <strong>작업 상태</strong>
+                  <span>검토 흐름</span>
                 </div>
-                
+
                 <div class="inspector-row">
-                  <strong>Recovery State</strong>
-                  <span>복구 대기 없음</span>
+                  <strong>복구 상태</strong>
+                  <span>검토 후 진행</span>
                 </div>
-                
+
                 <div class="inspector-row">
-                  <strong>Authority State</strong>
+                  <strong>권한 상태</strong>
                   <span>로컬 검사</span>
                 </div>
-                
+
                 <div class="inspector-row">
-                  <strong>Next State</strong>
+                  <strong>다음 상태</strong>
                   <span>다음 행동 있음</span>
                 </div>
-                
-                
-                
-                
-                
-                
-                
+
+
+
+
+
+
+
+
                 <div class="inspector-row">
-                  <strong>Authority</strong>
+                  <strong>권한 설명</strong>
                   <span>로컬 검사만 허용하고 외부 계정, 모델, 도구 호출은 열지 않는다.</span>
                 </div>
-                
+
                 <div class="inspector-row">
-                  <strong>Evidence</strong>
-                  <span>준비됨 상태와 다음 안전 행동을 함께 확인한다.</span>
+                  <strong>근거</strong>
+                  <span>검토 상태와 다음 안전 행동을 함께 확인한다.</span>
                 </div>
-                
+
                 <div class="inspector-row">
-                  <strong>Return</strong>
+                  <strong>돌아가기</strong>
                   <span><a href="#panel-recovery">패널</a> · <a href="#authority-boundary">권한 경계</a> · <a href="#next-safe-action">다음 행동</a></span>
                 </div>
               </div>
             </details>
           </section>
-          <section class="panel" id="panel-growth" data-panel="growth" data-group="Growth">
+          <section class="panel" id="panel-growth" data-panel="growth" data-group="성장">
             <div class="panel-head">
               <div>
-                <h3>Self-Growth Proposals</h3>
-                <p class="headline">Growth · Review-only growth proposals are waiting for replay and approval gates.</p>
+                <h3>자가성장 제안</h3>
+                <p class="headline">성장 · 대기 중인 성장 제안은 없다.</p>
               </div>
-              <span class="status status-review">검토</span>
+              <span class="status status-ready">준비됨</span>
             </div>
-            <p class="next">Review proposals, add replay coverage, and keep application blocked until approval gates exist.</p>
-            <div class="state-ribbon" aria-label="Self-Growth Proposals workflow state">
-              
+            <p class="next">반복된 리플레이 복구 근거에서만 제안을 만든다.</p>
+            <div class="state-ribbon" aria-label="자가성장 제안 workflow state">
+
               <div class="state-pill" data-state-pill="workflow">
-                <strong>Workflow</strong>
-                <span>검토 흐름</span>
+                <strong>작업</strong>
+                <span>진행 가능</span>
               </div>
-              
+
               <div class="state-pill" data-state-pill="recovery">
-                <strong>Recovery</strong>
-                <span>검토 후 진행</span>
+                <strong>복구</strong>
+                <span>복구 대기 없음</span>
               </div>
-              
+
               <div class="state-pill" data-state-pill="authority">
-                <strong>Authority</strong>
+                <strong>권한</strong>
                 <span>로컬 검사</span>
               </div>
-              
+
               <div class="state-pill" data-state-pill="next">
-                <strong>Next</strong>
+                <strong>다음</strong>
                 <span>다음 행동 있음</span>
               </div>
             </div>
-            
-            
-            
-            
-            <div class="panel-actions" aria-label="Self-Growth Proposals local drilldown actions">
+
+
+
+
+
+            <div class="panel-actions" aria-label="자가성장 제안 local drilldown actions">
               <a class="panel-action" data-panel-action="inspect" href="#inspect-growth">인스펙터</a>
               <a class="panel-action" data-panel-action="authority" href="#authority-boundary">권한</a>
               <a class="panel-action" data-panel-action="next" href="#next-safe-action">다음 행동</a>
             </div>
             <details class="inspector" id="inspect-growth" data-panel-inspector="growth">
               <summary>운영 드릴다운</summary>
-              <div class="inspector-grid" aria-label="Control Center panel inspector">
-                
+              <div class="inspector-grid" aria-label="GPAO-T 대시보드 패널 상세">
+
                 <div class="inspector-row">
-                  <strong>Panel ID</strong>
+                  <strong>패널 ID</strong>
                   <span>growth</span>
                 </div>
-                
+
                 <div class="inspector-row">
-                  <strong>Group</strong>
-                  <span>Growth</span>
+                  <strong>그룹</strong>
+                  <span>성장</span>
                 </div>
-                
+
                 <div class="inspector-row">
-                  <strong>Status</strong>
-                  <span>검토</span>
+                  <strong>상태</strong>
+                  <span>준비됨</span>
                 </div>
-                
+
                 <div class="inspector-row">
-                  <strong>Headline</strong>
-                  <span>Review-only growth proposals are waiting for replay and approval gates.</span>
+                  <strong>요약</strong>
+                  <span>대기 중인 성장 제안은 없다.</span>
                 </div>
-                
+
                 <div class="inspector-row">
-                  <strong>Next</strong>
-                  <span>Review proposals, add replay coverage, and keep application blocked until approval gates exist.</span>
+                  <strong>다음 행동</strong>
+                  <span>반복된 리플레이 복구 근거에서만 제안을 만든다.</span>
                 </div>
-                
+
                 <div class="inspector-row">
-                  <strong>Workflow State</strong>
-                  <span>검토 흐름</span>
+                  <strong>작업 상태</strong>
+                  <span>진행 가능</span>
                 </div>
-                
+
                 <div class="inspector-row">
-                  <strong>Recovery State</strong>
-                  <span>검토 후 진행</span>
+                  <strong>복구 상태</strong>
+                  <span>복구 대기 없음</span>
                 </div>
-                
+
                 <div class="inspector-row">
-                  <strong>Authority State</strong>
+                  <strong>권한 상태</strong>
                   <span>로컬 검사</span>
                 </div>
-                
+
                 <div class="inspector-row">
-                  <strong>Next State</strong>
+                  <strong>다음 상태</strong>
                   <span>다음 행동 있음</span>
                 </div>
-                
-                
-                
-                
-                
-                
-                
+
+
+
+
+
+
+
+
                 <div class="inspector-row">
-                  <strong>Authority</strong>
+                  <strong>권한 설명</strong>
                   <span>로컬 검사만 허용하고 외부 계정, 모델, 도구 호출은 열지 않는다.</span>
                 </div>
-                
+
                 <div class="inspector-row">
-                  <strong>Evidence</strong>
-                  <span>검토 상태와 다음 안전 행동을 함께 확인한다.</span>
+                  <strong>근거</strong>
+                  <span>준비됨 상태와 다음 안전 행동을 함께 확인한다.</span>
                 </div>
-                
+
                 <div class="inspector-row">
-                  <strong>Return</strong>
+                  <strong>돌아가기</strong>
                   <span><a href="#panel-growth">패널</a> · <a href="#authority-boundary">권한 경계</a> · <a href="#next-safe-action">다음 행동</a></span>
                 </div>
               </div>
             </details>
           </section>
-          <section class="panel" id="panel-adapters" data-panel="adapters" data-group="Authority">
+          <section class="panel" id="panel-adapters" data-panel="adapters" data-group="권한">
             <div class="panel-head">
               <div>
-                <h3>Model / Tool Adapters</h3>
-                <p class="headline">Authority · Local preview adapters are visible and external adapters are blocked.</p>
+                <h3>모델 / 도구 어댑터</h3>
+                <p class="headline">권한 · 로컬 미리보기 어댑터는 보이고, 외부 어댑터는 잠겨 있다.</p>
               </div>
               <span class="status status-ready">준비됨</span>
             </div>
             <p class="next">Use this policy as the last read-only Model Router gate before connector/tool governance; keep provider and tool execution blocked.</p>
-            <div class="state-ribbon" aria-label="Model / Tool Adapters workflow state">
-              
+            <div class="state-ribbon" aria-label="모델 / 도구 어댑터 workflow state">
+
               <div class="state-pill" data-state-pill="workflow">
-                <strong>Workflow</strong>
+                <strong>작업</strong>
                 <span>진행 가능</span>
               </div>
-              
+
               <div class="state-pill" data-state-pill="recovery">
-                <strong>Recovery</strong>
+                <strong>복구</strong>
                 <span>복구 대기 없음</span>
               </div>
-              
+
               <div class="state-pill" data-state-pill="authority">
-                <strong>Authority</strong>
-                <span>권한 확인</span>
+                <strong>권한</strong>
+                <span>로컬 검사</span>
               </div>
-              
+
               <div class="state-pill" data-state-pill="next">
-                <strong>Next</strong>
+                <strong>다음</strong>
                 <span>다음 행동 있음</span>
               </div>
             </div>
-            
-            
-            
-            
-            <div class="panel-actions" aria-label="Model / Tool Adapters local drilldown actions">
+
+
+
+
+
+            <div class="panel-actions" aria-label="모델 / 도구 어댑터 local drilldown actions">
               <a class="panel-action" data-panel-action="inspect" href="#inspect-adapters">인스펙터</a>
               <a class="panel-action" data-panel-action="authority" href="#authority-boundary">권한</a>
               <a class="panel-action" data-panel-action="next" href="#next-safe-action">다음 행동</a>
             </div>
             <details class="inspector" id="inspect-adapters" data-panel-inspector="adapters">
               <summary>운영 드릴다운</summary>
-              <div class="inspector-grid" aria-label="Control Center panel inspector">
-                
+              <div class="inspector-grid" aria-label="GPAO-T 대시보드 패널 상세">
+
                 <div class="inspector-row">
-                  <strong>Panel ID</strong>
+                  <strong>패널 ID</strong>
                   <span>adapters</span>
                 </div>
-                
+
                 <div class="inspector-row">
-                  <strong>Group</strong>
-                  <span>Authority</span>
+                  <strong>그룹</strong>
+                  <span>권한</span>
                 </div>
-                
+
                 <div class="inspector-row">
-                  <strong>Status</strong>
+                  <strong>상태</strong>
                   <span>준비됨</span>
                 </div>
-                
+
                 <div class="inspector-row">
-                  <strong>Headline</strong>
-                  <span>Local preview adapters are visible and external adapters are blocked.</span>
+                  <strong>요약</strong>
+                  <span>로컬 미리보기 어댑터는 보이고, 외부 어댑터는 잠겨 있다.</span>
                 </div>
-                
+
                 <div class="inspector-row">
-                  <strong>Next</strong>
+                  <strong>다음 행동</strong>
                   <span>Use this policy as the last read-only Model Router gate before connector/tool governance; keep provider and tool execution blocked.</span>
                 </div>
-                
+
                 <div class="inspector-row">
-                  <strong>Workflow State</strong>
+                  <strong>작업 상태</strong>
                   <span>진행 가능</span>
                 </div>
-                
+
                 <div class="inspector-row">
-                  <strong>Recovery State</strong>
+                  <strong>복구 상태</strong>
                   <span>복구 대기 없음</span>
                 </div>
-                
+
                 <div class="inspector-row">
-                  <strong>Authority State</strong>
-                  <span>권한 확인</span>
+                  <strong>권한 상태</strong>
+                  <span>로컬 검사</span>
                 </div>
-                
+
                 <div class="inspector-row">
-                  <strong>Next State</strong>
+                  <strong>다음 상태</strong>
                   <span>다음 행동 있음</span>
                 </div>
-                
-                
-                
-                
-                
+
+
+
+
+
+
                 <div class="inspector-row">
-                  <strong>Model Router</strong>
-                  <span>balanced_reasoning · local.reasoning.stub</span>
+                  <strong>모델 라우터</strong>
+                  <span>균형 추론 · 로컬 추론 후보</span>
                 </div>
                 <div class="inspector-row">
-                  <strong>Provider Boundary</strong>
-                  <span>blocked_until_provider_setup_task_approval_and_audit</span>
+                  <strong>제공자 경계</strong>
+                  <span>제공자 설정, 작업 승인, 감사 전까지 잠김</span>
                 </div>
                 <div class="inspector-row">
-                  <strong>Latency / Cost</strong>
-                  <span>medium · prefer_local_then_metered_after_approval</span>
+                  <strong>속도/비용</strong>
+                  <span>medium · 로컬 우선 · 승인 후 비용 모델</span>
                 </div>
                 <div class="inspector-row">
-                  <strong>Fallback</strong>
-                  <span>local.fast.stub · local.reasoning.stub</span>
+                  <strong>대체 경로</strong>
+                  <span>로컬 빠른 후보 · 로컬 추론 후보</span>
                 </div>
                 <div class="inspector-row">
-                  <strong>Route Profiles</strong>
-                  <span>fast_context_recovery · balanced_reasoning · private_summary · deep_design_review</span>
+                  <strong>라우트 프로필</strong>
+                  <span>빠른 맥락 복구 · 균형 추론 · 민감 요약 · 깊은 디자인 검토</span>
                 </div>
                 <div class="inspector-row">
-                  <strong>Failure States</strong>
-                  <span>no_safe_adapter · context_not_admitted · privacy_boundary · provider_unconfigured · tool_execution_requested</span>
+                  <strong>실패 상태</strong>
+                  <span>안전한 어댑터 없음 · 맥락 미채택 · 개인정보 경계 · 제공자 미설정 · 도구 실행 요청됨</span>
                 </div>
                 <div class="inspector-row">
-                  <strong>Task Packet Conditions</strong>
-                  <span>admitted_context_only · authority_boundary_attached · active_target_visible · skill_route_preview_only</span>
+                  <strong>입력 조건</strong>
+                  <span>채택된 맥락만 · 권한 경계 포함 · 현재 대상 표시 · 스킬 경로 미리보기만</span>
                 </div>
                 <div class="inspector-row">
-                  <strong>Output Boundary</strong>
-                  <span>blocked_until_preview_approval_replay_and_audit</span>
+                  <strong>출력 경계</strong>
+                  <span>미리보기, 승인, 리플레이, 감사 전까지 잠김</span>
                 </div>
                 <div class="inspector-row">
-                  <strong>Replay Criteria</strong>
+                  <strong>재검토 기준</strong>
                   <span>6</span>
                 </div>
                 <div class="inspector-row">
-                  <strong>Blocked Model Actions</strong>
-                  <span>live model call · provider credential read · provider credential write · external network request · paid token spend · model output persistence · durable memory promotion · tool execution from model output</span>
+                  <strong>잠긴 모델 행동</strong>
+                  <span>실시간 모델 호출 · 제공자 인증 정보 읽기 · 제공자 인증 정보 쓰기 · 외부 네트워크 요청 · 토큰 비용 발생 · 모델 출력 저장 · 지속 기억 승격 · 모델 출력 기반 도구 실행</span>
                 </div>
-                
-                
+
+
                 <div class="inspector-row">
-                  <strong>Authority</strong>
+                  <strong>권한 설명</strong>
                   <span>권한 경계를 먼저 확인하고 외부 활성화는 차단한다.</span>
                 </div>
-                
+
                 <div class="inspector-row">
-                  <strong>Evidence</strong>
+                  <strong>근거</strong>
                   <span>준비됨 상태와 다음 안전 행동을 함께 확인한다.</span>
                 </div>
-                
+
                 <div class="inspector-row">
-                  <strong>Return</strong>
+                  <strong>돌아가기</strong>
                   <span><a href="#panel-adapters">패널</a> · <a href="#authority-boundary">권한 경계</a> · <a href="#next-safe-action">다음 행동</a></span>
                 </div>
               </div>
             </details>
           </section>
-          <section class="panel" id="panel-connectors" data-panel="connectors" data-group="Authority">
+          <section class="panel" id="panel-connectors" data-panel="connectors" data-group="권한">
             <div class="panel-head">
               <div>
-                <h3>Connectors</h3>
-                <p class="headline">Authority · Tool, CLI, MCP, and connector candidates are visible, but execution stays blocked.</p>
+                <h3>커넥터</h3>
+                <p class="headline">권한 · 도구, 명령, MCP, 커넥터 후보는 보이지만 실행은 잠겨 있다.</p>
               </div>
               <span class="status status-review">검토</span>
             </div>
-            <p class="next">Use this governance contract as the execution-candidate boundary before designing any live tool, CLI, MCP, or connector invocation.</p>
-            <div class="state-ribbon" aria-label="Connectors workflow state">
-              
+            <p class="next">실제 도구, 명령, MCP, 커넥터 실행을 설계하기 전에 이 권한 경계를 먼저 확인한다.</p>
+            <div class="state-ribbon" aria-label="커넥터 workflow state">
+
               <div class="state-pill" data-state-pill="workflow">
-                <strong>Workflow</strong>
+                <strong>작업</strong>
                 <span>검토 흐름</span>
               </div>
-              
+
               <div class="state-pill" data-state-pill="recovery">
-                <strong>Recovery</strong>
+                <strong>복구</strong>
                 <span>검토 후 진행</span>
               </div>
-              
+
               <div class="state-pill" data-state-pill="authority">
-                <strong>Authority</strong>
-                <span>권한 확인</span>
+                <strong>권한</strong>
+                <span>로컬 검사</span>
               </div>
-              
+
               <div class="state-pill" data-state-pill="next">
-                <strong>Next</strong>
+                <strong>다음</strong>
                 <span>다음 행동 있음</span>
               </div>
             </div>
-            
-            
-            
-            
-            <div class="panel-actions" aria-label="Connectors local drilldown actions">
+
+
+
+
+
+            <div class="panel-actions" aria-label="커넥터 local drilldown actions">
               <a class="panel-action" data-panel-action="inspect" href="#inspect-connectors">인스펙터</a>
               <a class="panel-action" data-panel-action="authority" href="#authority-boundary">권한</a>
               <a class="panel-action" data-panel-action="next" href="#next-safe-action">다음 행동</a>
             </div>
             <details class="inspector" id="inspect-connectors" data-panel-inspector="connectors">
               <summary>운영 드릴다운</summary>
-              <div class="inspector-grid" aria-label="Control Center panel inspector">
-                
+              <div class="inspector-grid" aria-label="GPAO-T 대시보드 패널 상세">
+
                 <div class="inspector-row">
-                  <strong>Panel ID</strong>
+                  <strong>패널 ID</strong>
                   <span>connectors</span>
                 </div>
-                
+
                 <div class="inspector-row">
-                  <strong>Group</strong>
-                  <span>Authority</span>
+                  <strong>그룹</strong>
+                  <span>권한</span>
                 </div>
-                
+
                 <div class="inspector-row">
-                  <strong>Status</strong>
+                  <strong>상태</strong>
                   <span>검토</span>
                 </div>
-                
+
                 <div class="inspector-row">
-                  <strong>Headline</strong>
-                  <span>Tool, CLI, MCP, and connector candidates are visible, but execution stays blocked.</span>
+                  <strong>요약</strong>
+                  <span>도구, 명령, MCP, 커넥터 후보는 보이지만 실행은 잠겨 있다.</span>
                 </div>
-                
+
                 <div class="inspector-row">
-                  <strong>Next</strong>
-                  <span>Use this governance contract as the execution-candidate boundary before designing any live tool, CLI, MCP, or connector invocation.</span>
+                  <strong>다음 행동</strong>
+                  <span>실제 도구, 명령, MCP, 커넥터 실행을 설계하기 전에 이 권한 경계를 먼저 확인한다.</span>
                 </div>
-                
+
                 <div class="inspector-row">
-                  <strong>Workflow State</strong>
+                  <strong>작업 상태</strong>
                   <span>검토 흐름</span>
                 </div>
-                
+
                 <div class="inspector-row">
-                  <strong>Recovery State</strong>
+                  <strong>복구 상태</strong>
                   <span>검토 후 진행</span>
                 </div>
-                
+
                 <div class="inspector-row">
-                  <strong>Authority State</strong>
-                  <span>권한 확인</span>
+                  <strong>권한 상태</strong>
+                  <span>로컬 검사</span>
                 </div>
-                
+
                 <div class="inspector-row">
-                  <strong>Next State</strong>
+                  <strong>다음 상태</strong>
                   <span>다음 행동 있음</span>
                 </div>
-                
-                
-                
-                
-                
-                
+
+
+
+
+
+
+
                 <div class="inspector-row">
-                  <strong>Candidate Classes</strong>
-                  <span>tool.local_read · cli.local_dry_run · mcp.read_only · connector.read · connector.write · external.send · destructive.action</span>
+                  <strong>실행 후보</strong>
+                  <span>도구 읽기 · 로컬 명령 미리보기 · MCP 읽기 · 커넥터 읽기 · 커넥터 쓰기 · 외부 전송 · 되돌리기 어려운 행동</span>
                 </div>
                 <div class="inspector-row">
-                  <strong>Authority Tiers</strong>
-                  <span>read_only:preview_candidate_allowed · dry_run:preview_candidate_allowed · write:blocked · external_send:blocked · destructive:blocked · paid_action:blocked</span>
+                  <strong>권한 단계</strong>
+                  <span>읽기 전용:미리보기 후보 허용 · 미리보기 후보:미리보기 후보 허용 · 저장 전 확인:잠김 · 외부 전송 전 확인:잠김 · 되돌리기 어려움:잠김 · 비용 발생 가능:잠김</span>
                 </div>
                 <div class="inspector-row">
-                  <strong>Model Output Boundary</strong>
-                  <span>proposal only</span>
+                  <strong>모델 출력 경계</strong>
+                  <span>제안만 가능</span>
                 </div>
                 <div class="inspector-row">
-                  <strong>Approval Boundary</strong>
+                  <strong>승인 경계</strong>
                   <span>preview_confirmation_approval_replay_audit_and_rollback_references_exist</span>
                 </div>
                 <div class="inspector-row">
-                  <strong>Audit / Replay / Rollback</strong>
+                  <strong>감사/재검토/되돌리기</strong>
                   <span>future_event_log_entry_required_before_invocation · replay_case_required_for_write_external_or_destructive_tiers · rollback_or_compensation_plan_required_before_mutation</span>
                 </div>
                 <div class="inspector-row">
-                  <strong>Blocked Execution</strong>
-                  <span>actual_tool_execution · cli_command_execution · mcp_invocation · connector_activation · external_network_or_send · credential_read_or_write · paid_action · destructive_action · durable_memory_promotion</span>
+                  <strong>잠긴 실행</strong>
+                  <span>실제 도구 실행 · 명령 실행 · MCP 호출 · connector_activation · 외부 전송 · 인증 정보 접근 · 비용 발생 가능 · 되돌리기 어려운 행동 · durable_memory_promotion</span>
                 </div>
-                
+
                 <div class="inspector-row">
-                  <strong>Authority</strong>
+                  <strong>권한 설명</strong>
                   <span>권한 경계를 먼저 확인하고 외부 활성화는 차단한다.</span>
                 </div>
-                
+
                 <div class="inspector-row">
-                  <strong>Evidence</strong>
+                  <strong>근거</strong>
                   <span>검토 상태와 다음 안전 행동을 함께 확인한다.</span>
                 </div>
-                
+
                 <div class="inspector-row">
-                  <strong>Return</strong>
+                  <strong>돌아가기</strong>
                   <span><a href="#panel-connectors">패널</a> · <a href="#authority-boundary">권한 경계</a> · <a href="#next-safe-action">다음 행동</a></span>
                 </div>
               </div>
             </details>
           </section>
-          <section class="panel" id="panel-authority" data-panel="authority" data-group="Authority">
+          <section class="panel" id="panel-authority" data-panel="authority" data-group="권한">
             <div class="panel-head">
               <div>
-                <h3>Authority</h3>
-                <p class="headline">Authority · Authority boundaries default to local preview only.</p>
+                <h3>권한</h3>
+                <p class="headline">권한 · 권한 경계는 기본적으로 로컬 미리보기만 허용한다.</p>
               </div>
               <span class="status status-ready">준비됨</span>
             </div>
-            <p class="next">Ask for explicit approval only at external, destructive, secret, deployment, or durable mutation boundaries.</p>
-            <div class="state-ribbon" aria-label="Authority workflow state">
-              
+            <p class="next">외부 행동, 파괴적 변경, 인증 정보, 배포, 지속 변경 경계에서만 명시적 승인을 요청한다.</p>
+            <div class="state-ribbon" aria-label="권한 workflow state">
+
               <div class="state-pill" data-state-pill="workflow">
-                <strong>Workflow</strong>
+                <strong>작업</strong>
                 <span>진행 가능</span>
               </div>
-              
+
               <div class="state-pill" data-state-pill="recovery">
-                <strong>Recovery</strong>
+                <strong>복구</strong>
                 <span>복구 대기 없음</span>
               </div>
-              
+
               <div class="state-pill" data-state-pill="authority">
-                <strong>Authority</strong>
-                <span>권한 확인</span>
+                <strong>권한</strong>
+                <span>로컬 검사</span>
               </div>
-              
+
               <div class="state-pill" data-state-pill="next">
-                <strong>Next</strong>
+                <strong>다음</strong>
                 <span>다음 행동 있음</span>
               </div>
             </div>
-            
-            
-            
-            
-            <div class="panel-actions" aria-label="Authority local drilldown actions">
+
+
+
+
+
+            <div class="panel-actions" aria-label="권한 local drilldown actions">
               <a class="panel-action" data-panel-action="inspect" href="#inspect-authority">인스펙터</a>
               <a class="panel-action" data-panel-action="authority" href="#authority-boundary">권한</a>
               <a class="panel-action" data-panel-action="next" href="#next-safe-action">다음 행동</a>
             </div>
             <details class="inspector" id="inspect-authority" data-panel-inspector="authority">
               <summary>운영 드릴다운</summary>
-              <div class="inspector-grid" aria-label="Control Center panel inspector">
-                
+              <div class="inspector-grid" aria-label="GPAO-T 대시보드 패널 상세">
+
                 <div class="inspector-row">
-                  <strong>Panel ID</strong>
+                  <strong>패널 ID</strong>
                   <span>authority</span>
                 </div>
-                
+
                 <div class="inspector-row">
-                  <strong>Group</strong>
-                  <span>Authority</span>
+                  <strong>그룹</strong>
+                  <span>권한</span>
                 </div>
-                
+
                 <div class="inspector-row">
-                  <strong>Status</strong>
+                  <strong>상태</strong>
                   <span>준비됨</span>
                 </div>
-                
+
                 <div class="inspector-row">
-                  <strong>Headline</strong>
-                  <span>Authority boundaries default to local preview only.</span>
+                  <strong>요약</strong>
+                  <span>권한 경계는 기본적으로 로컬 미리보기만 허용한다.</span>
                 </div>
-                
+
                 <div class="inspector-row">
-                  <strong>Next</strong>
-                  <span>Ask for explicit approval only at external, destructive, secret, deployment, or durable mutation boundaries.</span>
+                  <strong>다음 행동</strong>
+                  <span>외부 행동, 파괴적 변경, 인증 정보, 배포, 지속 변경 경계에서만 명시적 승인을 요청한다.</span>
                 </div>
-                
+
                 <div class="inspector-row">
-                  <strong>Workflow State</strong>
+                  <strong>작업 상태</strong>
                   <span>진행 가능</span>
                 </div>
-                
+
                 <div class="inspector-row">
-                  <strong>Recovery State</strong>
+                  <strong>복구 상태</strong>
                   <span>복구 대기 없음</span>
                 </div>
-                
+
                 <div class="inspector-row">
-                  <strong>Authority State</strong>
-                  <span>권한 확인</span>
+                  <strong>권한 상태</strong>
+                  <span>로컬 검사</span>
                 </div>
-                
+
                 <div class="inspector-row">
-                  <strong>Next State</strong>
+                  <strong>다음 상태</strong>
                   <span>다음 행동 있음</span>
                 </div>
-                
-                
-                
-                
-                
-                
-                
+
+
+
+
+
+
+
+
                 <div class="inspector-row">
-                  <strong>Authority</strong>
+                  <strong>권한 설명</strong>
                   <span>권한 경계를 먼저 확인하고 외부 활성화는 차단한다.</span>
                 </div>
-                
+
                 <div class="inspector-row">
-                  <strong>Evidence</strong>
+                  <strong>근거</strong>
                   <span>준비됨 상태와 다음 안전 행동을 함께 확인한다.</span>
                 </div>
-                
+
                 <div class="inspector-row">
-                  <strong>Return</strong>
+                  <strong>돌아가기</strong>
                   <span><a href="#panel-authority">패널</a> · <a href="#authority-boundary">권한 경계</a> · <a href="#next-safe-action">다음 행동</a></span>
                 </div>
               </div>
@@ -2964,102 +3615,130 @@
         <section class="side-section" id="authority-boundary">
           <h2>권한 경계</h2>
           <div class="side-list">
-            
+
             <div class="authority-row">
-              <strong>externalModelCall</strong>
-              <span>blocked_until_configured_and_approved</span>
+              <strong>외부 모델 호출</strong>
+              <span>설정과 승인 전까지 잠김</span>
             </div>
             <div class="authority-row">
-              <strong>modelRouterBoundary</strong>
-              <span>blocked_until_provider_setup_task_approval_and_audit</span>
+              <strong>모델 라우터 경계</strong>
+              <span>제공자 설정, 작업 승인, 감사 전까지 잠김</span>
             </div>
             <div class="authority-row">
-              <strong>externalToolAction</strong>
-              <span>blocked_until_explicit_approval</span>
+              <strong>외부 도구 행동</strong>
+              <span>명시적 승인 전까지 잠김</span>
             </div>
             <div class="authority-row">
-              <strong>installExecution</strong>
-              <span>blocked_until_user_approval</span>
+              <strong>설치 실행</strong>
+              <span>사용자 승인 전까지 잠김</span>
             </div>
             <div class="authority-row">
-              <strong>updateExecution</strong>
-              <span>blocked_until_user_approval</span>
+              <strong>업데이트 실행</strong>
+              <span>사용자 승인 전까지 잠김</span>
             </div>
             <div class="authority-row">
-              <strong>destructiveRollback</strong>
-              <span>blocked_until_explicit_approval</span>
+              <strong>되돌리기 어려운 롤백</strong>
+              <span>명시적 승인 전까지 잠김</span>
             </div>
             <div class="authority-row">
-              <strong>approvalPreviewFlow</strong>
-              <span>local_preview_only_no_write_no_invocation</span>
+              <strong>승인 미리보기 흐름</strong>
+              <span>로컬 미리보기만 · 쓰기/호출 없음</span>
             </div>
             <div class="authority-row">
-              <strong>designReferenceGate</strong>
-              <span>required_for_every_ui_ux_slice</span>
+              <strong>디자인 기준 게이트</strong>
+              <span>모든 UI/UX slice 필수</span>
             </div>
             <div class="authority-row">
-              <strong>executionApprovalPacket</strong>
-              <span>preview_validation_only_no_write_no_invocation</span>
+              <strong>실행 승인 패킷</strong>
+              <span>검증 미리보기만 · 쓰기/호출 없음</span>
             </div>
             <div class="authority-row">
-              <strong>auditWriteDesign</strong>
-              <span>local_jsonl_write_available</span>
+              <strong>감사 기록 설계</strong>
+              <span>로컬 JSONL 기록 가능</span>
             </div>
             <div class="authority-row">
-              <strong>approvalRecordWriteUx</strong>
-              <span>local_jsonl_write_available</span>
+              <strong>승인 기록 화면</strong>
+              <span>로컬 JSONL 기록 가능</span>
             </div>
             <div class="authority-row">
-              <strong>approvalRecordWrite</strong>
-              <span>local_jsonl_only</span>
+              <strong>승인 기록 저장</strong>
+              <span>로컬 JSONL 한정</span>
             </div>
             <div class="authority-row">
-              <strong>dryRunInvocation</strong>
-              <span>blocked</span>
+              <strong>미리보기 실행</strong>
+              <span>잠김</span>
             </div>
             <div class="authority-row">
-              <strong>tauriBuild</strong>
-              <span>blocked</span>
+              <strong>Tauri 빌드</strong>
+              <span>잠김</span>
             </div>
             <div class="authority-row">
-              <strong>dependencyInstall</strong>
-              <span>blocked</span>
+              <strong>의존성 설치</strong>
+              <span>잠김</span>
             </div>
             <div class="authority-row">
-              <strong>connectorActivation</strong>
-              <span>blocked_until_explicit_approval</span>
+              <strong>커넥터 활성화</strong>
+              <span>명시적 승인 전까지 잠김</span>
             </div>
             <div class="authority-row">
-              <strong>connectorWriteAccess</strong>
-              <span>blocked_until_task_approval</span>
+              <strong>커넥터 쓰기 권한</strong>
+              <span>작업 승인 전까지 잠김</span>
             </div>
             <div class="authority-row">
-              <strong>connectorExternalSend</strong>
-              <span>blocked_until_explicit_approval</span>
+              <strong>커넥터 외부 전송</strong>
+              <span>명시적 승인 전까지 잠김</span>
             </div>
             <div class="authority-row">
-              <strong>toolCliMcpExecution</strong>
+              <strong>도구/명령/MCP 실행</strong>
               <span>preview_confirmation_approval_replay_audit_and_rollback_references_exist</span>
             </div>
             <div class="authority-row">
-              <strong>growthApplication</strong>
-              <span>blocked_in_this_slice</span>
+              <strong>성장 규칙 적용</strong>
+              <span>이번 단계에서는 미전송</span>
             </div>
             <div class="authority-row">
-              <strong>durableMemoryPromotion</strong>
-              <span>blocked</span>
+              <strong>liveTurnAbsorption</strong>
+              <span>잠김</span>
             </div>
             <div class="authority-row">
-              <strong>publicRelease</strong>
-              <span>blocked</span>
+              <strong>openClawLiveHook</strong>
+              <span>아니오</span>
             </div>
             <div class="authority-row">
-              <strong>localPreview</strong>
-              <span>allowed</span>
+              <strong>지속 기억 승격</strong>
+              <span>잠김</span>
             </div>
             <div class="authority-row">
-              <strong>secrets</strong>
-              <span>not_stored</span>
+              <strong>공개 배포</strong>
+              <span>잠김</span>
+            </div>
+            <div class="authority-row">
+              <strong>로컬 미리보기</strong>
+              <span>허용됨</span>
+            </div>
+            <div class="authority-row">
+              <strong>firstCompletionLine</strong>
+              <span>준비됨</span>
+            </div>
+            <div class="authority-row">
+              <strong>runtimeWorkspaceWelcomeApply</strong>
+              <span>apply-gpao-t-welcome-settings</span>
+            </div>
+            <div class="authority-row">
+              <strong>runtimeWorkspaceWelcomeExternalActions</strong>
+              <span>잠김</span>
+            </div>
+            <div class="authority-row">
+              <strong>runtimeWorkspaceWelcomeDurableMemory</strong>
+              <span>지속 기억 승인 전까지 잠김</span>
+            </div>
+            <div class="authority-row">
+              <strong>runtimeWorkspaceWelcomeHeartbeat</strong>
+              <span>heartbeat 승인 전까지 잠김</span>
+            </div>
+            <div class="authority-row">
+              <strong>인증 정보</strong>
+              <span>저장하지 않음</span>
             </div>
           </div>
         </section>
@@ -3068,8 +3747,8 @@
           <ul class="quality">
             <li>first_viewport_shows_actual_gpao_t_state</li><li>current_target_and_next_safe_action_visible</li><li>work_context_evidence_growth_authority_represented</li><li>status_layers_are_distinct</li><li>direct_evidence_outranks_generated_support</li><li>authority_boundaries_visible_before_dangerous_actions</li>
           </ul>
-          <p class="footer-note">Interaction: no-script local inspection · panel anchors, focus navigation, and inspectors only.</p>
-          <p class="footer-note">Source: docs/LOCAL-CONTROL-CENTER-DESIGN-RECIPE.md · schema gpao_t.control_center_snapshot.v0_1</p>
+          <p class="footer-note">상호작용: 스크립트 없는 로컬 검사 · 패널 이동 · 인스펙터만 허용.</p>
+          <p class="footer-note">기준: docs/GPAO-T-DASHBOARD-DESIGN-RECIPE.md · schema gpao_t.control_center_snapshot.v0_1</p>
         </section>
       </aside>
     </div>

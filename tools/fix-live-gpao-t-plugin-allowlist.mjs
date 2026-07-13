@@ -127,6 +127,9 @@ async function main() {
   });
 
   if (!apply) {
+    const dryRunDir = join(evidenceRoot, `plugin-allowlist-${isoStamp()}`);
+    await mkdir(dryRunDir, { recursive: true });
+    await writeFile(join(dryRunDir, "dry-run-manifest.json"), `${JSON.stringify(manifest, null, 2)}\n`);
     console.log(JSON.stringify(manifest, null, 2));
     return;
   }

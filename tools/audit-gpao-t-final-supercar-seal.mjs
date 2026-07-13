@@ -14,7 +14,7 @@ import { runGpaoTDashboardRouteCrawl } from "./run-gpao-t-dashboard-route-crawl.
 
 const REPO_ROOT = fileURLToPath(new URL("..", import.meta.url));
 const PACKAGE_ROOT = join(REPO_ROOT, ".gpao-t", "packages");
-const PACKAGE_BASE = "gpao-t-owner-ops-0.1.0-local-candidate";
+const PACKAGE_BASE = "gpao-t-0.1.0-test-team.1";
 
 function readArg(name, fallback = "") {
   const index = process.argv.indexOf(name);

@@ -61,8 +61,8 @@ const FAMILIES = [
       "tools/repair-live-gpao-t-runtime.mjs",
       "tools/rollback-live-gpao-t-runtime-repair.mjs",
     ],
-    evidenceDirs: ["docs/03-verification/evidence/live-runtime-repair-2026-07-12"],
-    readback: ["node tools/repair-live-gpao-t-runtime.mjs --no-write"],
+    evidenceDirs: ["docs/03-verification/evidence/live-runtime-repair-overlays"],
+    readback: ["node tools/repair-live-gpao-t-runtime.mjs"],
     rollback: "tokened_rollback_tool",
   },
   {

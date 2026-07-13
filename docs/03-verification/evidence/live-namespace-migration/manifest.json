@@ -1,0 +1,23 @@
+{
+  "schema": "gpao_t.live_namespace_migration_evidence_manifest.v0_1",
+  "status": "structured_receipt_present",
+  "generatedAt": "2026-07-13T13:05:00.000Z",
+  "family": "runtime_namespace",
+  "tool": "tools/migrate-gpao-t-runtime-namespace.mjs",
+  "readback": [
+    "npm run seal:namespace"
+  ],
+  "rollback": "backup_manifest_restore",
+  "authorityBoundary": {
+    "liveMutationClaimedByThisReceipt": false,
+    "sourceReproducibilityReceiptOnly": true,
+    "requiresApplyTokenForLiveWrite": true,
+    "requiresBackupManifestForLiveWrite": true
+  },
+  "evidenceRefs": [
+    "docs/03-verification/evidence/GPAO-T-COMPLETE-SEAL-CLOSURE-2026-07-12.md",
+    "docs/03-verification/evidence/gpao-t-live-patch-reproducibility-audit-2026-07-12.json",
+    "docs/03-verification/evidence/gpao-t-final-supercar-seal-2026-07-12.json"
+  ],
+  "completionRule": "This manifest keeps the namespace migration family reproducible and auditable. It is not a fresh live mutation receipt and cannot be used as user-visible completion evidence without a current live readback."
+}

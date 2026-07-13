@@ -772,5 +772,5 @@ function buildNextSafeAction({ blockedPanels, reviewPanels }) {
     if (approvalPreviewPanel) return approvalPreviewPanel.nextSafeAction;
     return `Review panel before applying changes: ${reviewPanels[0].label}.`;
   }
-  return "Use this snapshot as the Local Control Center data source before building the visual UI.";
+  return "Use this snapshot as the GPAO-T dashboard data source before building the visual UI.";
 }

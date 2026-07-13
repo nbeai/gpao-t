@@ -31,6 +31,10 @@ import {
   verifyLiveTurnIdentityMap,
 } from "./core/live-turn-identity-mapping.js";
 import {
+  buildSessionEventHeart,
+  verifySessionEventHeart,
+} from "./core/session-event-heart.js";
+import {
   buildBrowserLocalAppShellContract,
   buildBrowserLocalAppShellHtml,
   buildBrowserLocalAppShellState,
@@ -96,6 +100,10 @@ import {
 } from "./core/context-mesh-replay.js";
 import { runDoctor } from "./core/doctor.js";
 import {
+  buildDoctorRecoveryHeart,
+  verifyDoctorRecoveryHeart,
+} from "./core/doctor-recovery-heart.js";
+import {
   buildApprovalAuditLocalRecordSubstrate,
   buildApprovalAuditReplay,
   readApprovalRecords,
@@ -115,6 +123,11 @@ import {
   buildFirstLocalWorkLoop,
   verifyFirstLocalWorkLoop,
 } from "./core/first-local-work-loop.js";
+import {
+  readGpaoTOsTurnRecords,
+  runGpaoTOsTurn,
+  verifyGpaoTOsTurn,
+} from "./core/first-real-os-turn-pipeline.js";
 import {
   buildGpaoTFirstCompletionAudit,
   verifyGpaoTFirstCompletionAudit,
@@ -157,6 +170,10 @@ import {
   readMemorySearchIndex,
   searchMemory,
 } from "./core/memory-search.js";
+import {
+  buildMemoryContextHeart,
+  verifyMemoryContextHeart,
+} from "./core/memory-context-heart.js";
 import {
   appendAnswerReplayEvaluation,
   appendChatPreflightPacket,
@@ -211,6 +228,12 @@ import {
   verifyModelInvocation,
 } from "./core/model-invocation.js";
 import {
+  buildProviderAuthHeartContract,
+  buildProviderAuthRepairPlan,
+  inspectProviderAuthStores,
+  verifyProviderAuthHeart,
+} from "./core/provider-auth-heart.js";
+import {
   buildDashboardForkMap,
   buildLabUiSlicePackage,
   buildMemoryKnowledgeControlArchitecture,
@@ -228,6 +251,14 @@ import {
   verifyExecutionRuntimeInvocation,
   verifyExecutionRuntimePlan,
 } from "./core/execution-runtime.js";
+import {
+  buildToolAuthorityHeart,
+  verifyToolAuthorityHeart,
+} from "./core/tool-authority-heart.js";
+import {
+  buildRuntimeHeartHardening,
+  verifyRuntimeHeartHardening,
+} from "./core/runtime-heart-hardening.js";
 import {
   applySessionWorkspaceAction,
   deriveSessionTitleFromRequest,
@@ -610,6 +641,7 @@ export {
   buildControlCenterServingContract,
   buildControlCenterUiContract,
   buildControlCenterUiSnapshot,
+  buildDoctorRecoveryHeart,
   buildApprovalAuditLocalRecordSubstrate,
   buildApprovalAuditReplay,
   buildGrowthApplicationGate,
@@ -660,8 +692,10 @@ export {
   buildPackagedDesktopPlanningReview,
   buildRecoveryHistorySummary,
   buildRuntimeDataContract,
+  buildRuntimeHeartHardening,
   buildAuthorityDecision,
   buildContextRuntime,
+  buildSessionEventHeart,
   buildAppliedReplayInspectorState,
   classifyContextCandidateUse,
   classifyRequestTarget,
@@ -669,6 +703,8 @@ export {
   buildAuditWriteDesignProof,
   buildExecutionApprovalPreview,
   buildFirstLocalWorkLoop,
+  readGpaoTOsTurnRecords,
+  runGpaoTOsTurn,
   buildGpaoTFirstCompletionAudit,
   buildRecentReferentLedger,
   buildSessionContinuityHandoff,
@@ -692,6 +728,7 @@ export {
   buildStage4ProductionHardening,
   buildStage4ProductionHardeningHtml,
   buildToolPlan,
+  buildToolAuthorityHeart,
   buildTauriInstallDryRunPlan,
   buildTauriInstallDryRunApprovalRecordStorageDesign,
   buildTauriInstallDryRunApprovalRecordWriteGateDesign,
@@ -707,6 +744,7 @@ export {
   buildReadOnlyMemoryReplay,
   buildSelfGrowthProposal,
   buildMemorySearchIndex,
+  buildMemoryContextHeart,
   captureMemoryEntry,
   getSkillPack,
   handleGatewayRequest,
@@ -747,6 +785,9 @@ export {
   reviewConnectorPermission,
   routeSkillPacks,
   routeModel,
+  buildProviderAuthHeartContract,
+  buildProviderAuthRepairPlan,
+  inspectProviderAuthStores,
   invokeModelLocally,
   invokeModelProvider,
   invokeMemoryLocalContextMeshApply,
@@ -757,14 +798,18 @@ export {
   verifyCodexStyleMultiChatWorkspace,
   verifyMultiChatStageSixCompletion,
   verifySessionContinuityHandoff,
+  verifySessionEventHeart,
   verifyStage4ProductionHardening,
   verifyModelRouterBoundary,
   verifyModelRouterPolicy,
   verifyModelInvocation,
+  verifyProviderAuthHeart,
+  verifyDoctorRecoveryHeart,
   verifyMemoryApplyGateState,
   verifyLlmReadyTaskContextPacket,
   verifyMemoryLocalApplyInvocationContract,
   verifyMemoryReviewQueue,
+  verifyMemoryContextHeart,
   verifyMemorySelfGrowthApprovalUx,
   verifyOpenClawLiveTurnHookReadinessGate,
   verifyOwnerOpsMcpReadiness,
@@ -775,6 +820,8 @@ export {
   verifyProviderInvocationRuntime,
   verifyExecutionRuntimeInvocation,
   verifyExecutionRuntimePlan,
+  verifyRuntimeHeartHardening,
+  verifyToolAuthorityHeart,
   verifyStages5To8Completion,
   verifyTeamAlphaPackage,
   verifyConnectorToolGovernance,
@@ -784,6 +831,7 @@ export {
   verifyAuditWriteDesignProof,
   verifyExecutionApprovalPreview,
   verifyFirstLocalWorkLoop,
+  verifyGpaoTOsTurn,
   verifyGpaoTFirstCompletionAudit,
   renderControlCenterHtml,
   renderTauriInstallDryRunPreview,

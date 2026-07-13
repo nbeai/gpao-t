@@ -31,6 +31,8 @@ docs/03-verification/evidence/live-plugin-allowlist/**
 docs/03-verification/evidence/live-hook-preview/**
 docs/03-verification/evidence/live-patch-stage/**
 docs/03-verification/evidence/live-namespace-migration/**
+!docs/03-verification/evidence/live-namespace-migration/
+!docs/03-verification/evidence/live-namespace-migration/manifest.json
 docs/03-verification/evidence/runtime-workspace-absorption-*/backups/**
 docs/03-verification/evidence/**/*.before
 
@@ -38,6 +40,8 @@ docs/03-verification/evidence/**/*.before
 # root-level Markdown/JSON evidence and screenshots when they are intentionally
 # referenced by release notes.
 docs/03-verification/evidence/live-standalone-namespace-rebuild/**
+!docs/03-verification/evidence/live-standalone-namespace-rebuild/
+!docs/03-verification/evidence/live-standalone-namespace-rebuild/manifest.json
 docs/03-verification/evidence/live-chat-layout-recovery-hotfix/**
 docs/03-verification/evidence/live-dashboard-cache-bust-hotfix/**
 docs/03-verification/evidence/final-stage-6-visual-qa-*/runtime-lock-recovery/**

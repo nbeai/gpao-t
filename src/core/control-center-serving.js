@@ -36,6 +36,10 @@ import {
   verifySessionWorkspaceBehavior,
 } from "./session-workspace.js";
 import {
+  buildSessionEventHeart,
+  verifySessionEventHeart,
+} from "./session-event-heart.js";
+import {
   buildCodexStyleMultiChatWorkspace,
   verifyCodexStyleMultiChatWorkspace,
 } from "./multi-chat-workspace.js";
@@ -63,6 +67,10 @@ import {
   verifyGpaoTDesignReferenceGate,
 } from "./design-contract.js";
 import { runDoctor } from "./doctor.js";
+import {
+  buildDoctorRecoveryHeart,
+  verifyDoctorRecoveryHeart,
+} from "./doctor-recovery-heart.js";
 import {
   buildPackagedDesktopPlanningReview,
   buildTauriPackagedDesktopGate,
@@ -107,8 +115,20 @@ import {
   verifyModelInvocation,
 } from "./model-invocation.js";
 import {
+  buildProviderAuthRepairPlan,
+  inspectProviderAuthStores,
+  verifyProviderAuthHeart,
+} from "./provider-auth-heart.js";
+import {
+  buildMemoryContextHeart,
+  verifyMemoryContextHeart,
+} from "./memory-context-heart.js";
+import {
   buildFirstLocalWorkLoop,
 } from "./first-local-work-loop.js";
+import {
+  runGpaoTOsTurn,
+} from "./first-real-os-turn-pipeline.js";
 import {
   buildExecutionRuntimePlan,
   inspectReadOnlyConnector,
@@ -116,6 +136,14 @@ import {
   verifyExecutionRuntimeInvocation,
   verifyExecutionRuntimePlan,
 } from "./execution-runtime.js";
+import {
+  buildToolAuthorityHeart,
+  verifyToolAuthorityHeart,
+} from "./tool-authority-heart.js";
+import {
+  buildRuntimeHeartHardening,
+  verifyRuntimeHeartHardening,
+} from "./runtime-heart-hardening.js";
 
 const DEFAULT_HOST = "127.0.0.1";
 const DEFAULT_PORT = 0;
@@ -222,7 +250,7 @@ export function buildControlCenterServingContract({
         { label: "mobile", width: 390, height: 844 },
       ],
       requiredVisibleText: [
-        "GPAO-T Local Control Center",
+        "GPAO-T 대시보드",
         "다음 안전 행동",
         "권한 경계",
         "디자인 게이트",
@@ -321,6 +349,16 @@ export async function startControlCenterPreviewServer({
         writeLocalRecords: true,
         now,
       });
+      const osTurn = runGpaoTOsTurn({
+        root,
+        request: requestText,
+        sessionKey: "work-surface:main",
+        sourceSurface: "/work-surface/submit",
+        source: "work_surface",
+        providerMode: "local_fallback",
+        now,
+        writeLocalRecords: true,
+      });
       const modelResult = invokeModelLocally({ request: requestText, now });
       const sessionResult = applySessionWorkspaceAction({
         root,
@@ -335,6 +373,7 @@ export async function startControlCenterPreviewServer({
         request: requestText,
         sessionResult,
         loop,
+        osTurn,
         modelResult,
         externalModelCall: false,
         toolExecution: false,
@@ -502,6 +541,89 @@ export async function startControlCenterPreviewServer({
 
     if (url.pathname === "/adapters/model-invocation/verify") {
       respondJson(response, 200, verifyModelInvocation());
+      return;
+    }
+
+    if (url.pathname === "/runtime/provider-auth-heart") {
+      const inventory = inspectProviderAuthStores();
+      respondJson(response, 200, {
+        inventory,
+        repairPlan: buildProviderAuthRepairPlan({ inventory }),
+      });
+      return;
+    }
+
+    if (url.pathname === "/runtime/provider-auth-heart/verify") {
+      const inventory = inspectProviderAuthStores();
+      const repairPlan = buildProviderAuthRepairPlan({ inventory });
+      respondJson(response, 200, verifyProviderAuthHeart({ inventory, repairPlan }));
+      return;
+    }
+
+    if (url.pathname === "/runtime/doctor-recovery-heart") {
+      const providerAuthInventory = inspectProviderAuthStores();
+      const providerAuthRepairPlan = buildProviderAuthRepairPlan({ inventory: providerAuthInventory });
+      respondJson(response, 200, buildDoctorRecoveryHeart({
+        sourceDoctor: runDoctor({ root }),
+        providerAuthInventory,
+        providerAuthRepairPlan,
+      }));
+      return;
+    }
+
+    if (url.pathname === "/runtime/doctor-recovery-heart/verify") {
+      const providerAuthInventory = inspectProviderAuthStores();
+      const providerAuthRepairPlan = buildProviderAuthRepairPlan({ inventory: providerAuthInventory });
+      const heart = buildDoctorRecoveryHeart({
+        sourceDoctor: runDoctor({ root }),
+        providerAuthInventory,
+        providerAuthRepairPlan,
+      });
+      respondJson(response, 200, verifyDoctorRecoveryHeart({ heart }));
+      return;
+    }
+
+    if (url.pathname === "/runtime/session-event-heart") {
+      respondJson(response, 200, buildSessionEventHeart({ root }));
+      return;
+    }
+
+    if (url.pathname === "/runtime/session-event-heart/verify") {
+      const heart = buildSessionEventHeart({ root });
+      respondJson(response, 200, verifySessionEventHeart({ heart }));
+      return;
+    }
+
+    if (url.pathname === "/runtime/memory-context-heart") {
+      respondJson(response, 200, buildMemoryContextHeart({ root }));
+      return;
+    }
+
+    if (url.pathname === "/runtime/memory-context-heart/verify") {
+      const heart = buildMemoryContextHeart({ root });
+      respondJson(response, 200, verifyMemoryContextHeart({ heart }));
+      return;
+    }
+
+    if (url.pathname === "/runtime/tool-authority-heart") {
+      respondJson(response, 200, buildToolAuthorityHeart({ root }));
+      return;
+    }
+
+    if (url.pathname === "/runtime/tool-authority-heart/verify") {
+      const heart = buildToolAuthorityHeart({ root });
+      respondJson(response, 200, verifyToolAuthorityHeart({ heart }));
+      return;
+    }
+
+    if (url.pathname === "/runtime/heart") {
+      respondJson(response, 200, buildRuntimeHeartHardening({ root }));
+      return;
+    }
+
+    if (url.pathname === "/runtime/heart/verify") {
+      const hardening = buildRuntimeHeartHardening({ root });
+      respondJson(response, 200, verifyRuntimeHeartHardening({ hardening }));
       return;
     }
 
@@ -1412,6 +1534,19 @@ function renderWorkSurfaceSubmitResultHtml({ result, requestText }) {
     || loop.approvalAudit?.writeResult?.auditRecord?.id
     || "기록 확인 필요";
   const modelText = model.output?.text || "로컬 모델 초안을 만들지 못했습니다.";
+  const osTurn = result.osTurn || {};
+  const osStateItems = Array.isArray(osTurn.userVisibleOsState?.items)
+    ? osTurn.userVisibleOsState.items
+    : [];
+  const osStateHtml = osStateItems.length
+    ? osStateItems.map((item) => `
+        <div class="item">
+          <strong>${escapeHtml(item.label)}</strong>
+          <span>${escapeHtml(item.state)}</span>
+          <p>${escapeHtml(item.technicalMeaning)}</p>
+        </div>
+      `).join("")
+    : `<div class="item"><strong>GPAO-T 처리 흐름</strong><span>기록 확인 필요</span></div>`;
   return `<!doctype html>
 <html lang="ko">
 <head>
@@ -1510,10 +1645,18 @@ function renderWorkSurfaceSubmitResultHtml({ result, requestText }) {
       <p>${escapeHtml(modelText)}</p>
     </section>
     <section>
+      <h2>이번 요청의 GPAO-T 처리 흐름</h2>
+      <div class="grid">
+        ${osStateHtml}
+      </div>
+    </section>
+    <section>
       <h2>작업 패킷 / 기록</h2>
       <div class="grid">
         <div class="item"><strong>Task Packet</strong><span>${escapeHtml(loop.packet?.id || "생성 안 됨")}</span></div>
+        <div class="item"><strong>OS Turn</strong><span>${escapeHtml(osTurn.id || "생성 안 됨")}</span></div>
         <div class="item"><strong>Model Route</strong><span>${escapeHtml(loop.modelRoute?.selectedProvider || loop.modelRoute?.route || "local.deterministic")}</span></div>
+        <div class="item"><strong>Replay</strong><span>${escapeHtml(osTurn.replay?.status || "기록 확인 필요")}</span></div>
         <div class="item"><strong>Approval Record</strong><span>${escapeHtml(approvalId)}</span></div>
         <div class="item"><strong>Audit Record</strong><span>${escapeHtml(auditId)}</span></div>
       </div>

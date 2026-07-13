@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
 import { existsSync, mkdtempSync, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { basename, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, it } from "node:test";
 import {
@@ -140,6 +140,13 @@ const WORK_SURFACE_CONFIRMATION_QA_DOC = fileURLToPath(new URL(
   "../docs/03-verification/evidence/WORK-SURFACE-CONFIRMATION-UX-QA-2026-07-09.md",
   import.meta.url,
 ));
+
+function evidenceFilePath(filePath) {
+  if (existsSync(filePath)) return filePath;
+  if (!filePath.startsWith("/")) return join(ROOT, filePath);
+  const repoLocalPath = join(ROOT, "docs/03-verification/evidence", basename(filePath));
+  return repoLocalPath;
+}
 const WORK_SURFACE_LOCAL_DRAFT_QA_JSON = fileURLToPath(new URL(
   "../docs/03-verification/evidence/work-surface-local-draft-preview-qa-2026-07-09.json",
   import.meta.url,
@@ -157,7 +164,7 @@ function tempRoot() {
   return mkdtempSync(join(tmpdir(), "gpao-t-control-center-"));
 }
 
-describe("GPAO-T Local Control Center readiness", () => {
+describe("GPAO-T dashboard readiness", () => {
   it("builds an inspectable empty-state snapshot without starting a daemon", () => {
     const root = tempRoot();
     const snapshot = buildControlCenterSnapshot({ root });
@@ -423,7 +430,7 @@ describe("GPAO-T Local Control Center readiness", () => {
     assert.equal(uiSnapshot.schema, "gpao_t.control_center_ui_snapshot.v0_1");
     assert.equal(uiSnapshot.sourceSnapshotSchema, "gpao_t.control_center_snapshot.v0_1");
     assert.equal(uiSnapshot.sourceDesignSchema, "gpao_t.local_control_center_design_contract.v0_1");
-    assert.equal(uiSnapshot.firstViewport.title, "GPAO-T Local Control Center");
+    assert.equal(uiSnapshot.firstViewport.title, "GPAO-T 대시보드");
     assert.equal(uiSnapshot.firstViewport.counts.panels, snapshot.counts.panels);
     assert.equal(uiSnapshot.panels.some((panel) => panel.id === "core-work-surface" && panel.group === "Work"), true);
     assert.equal(uiSnapshot.panels.some((panel) => panel.id === "memory" && panel.group === "Context"), true);
@@ -496,7 +503,7 @@ describe("GPAO-T Local Control Center readiness", () => {
     assert.equal(welcomeApplyBlocked.body.applied, false);
   });
 
-  it("renders a static Local Control Center UI reader without external activation", () => {
+  it("renders the official GPAO-T dashboard without external activation", () => {
     const root = tempRoot();
     const now = "2026-07-08T00:03:00.000Z";
     const snapshot = buildControlCenterSnapshot({ root, now });
@@ -509,8 +516,8 @@ describe("GPAO-T Local Control Center readiness", () => {
     });
     const renderedHtml = readFileSync(render.outputPath, "utf8");
 
-    assert.match(html, /GPAO-T Local Control Center/);
-    assert.match(html, /정적 UI reader/);
+    assert.match(html, /GPAO-T 대시보드/);
+    assert.match(html, /로컬 운영 화면/);
     assert.match(html, /data-panel="core-work-surface"/);
     assert.match(html, /data-core-work-surface="interactive-local"/);
     assert.match(html, /data-composer-state="local-submission-enabled"/);
@@ -562,7 +569,7 @@ describe("GPAO-T Local Control Center readiness", () => {
     assert.match(html, /<summary>운영 드릴다운<\/summary>/);
     assert.match(html, /data-panel-action="authority" href="#authority-boundary"/);
     assert.match(html, /data-panel-action="next" href="#next-safe-action"/);
-    assert.match(html, /aria-label="Control Center panel inspector"/);
+    assert.match(html, /aria-label="GPAO-T 대시보드 패널 상세"/);
     assert.match(html, /상호작용: 스크립트 없는 로컬 검사/);
     assert.match(html, /status-blocked/);
     assert.doesNotMatch(html, /<script/i);
@@ -623,7 +630,7 @@ describe("GPAO-T Local Control Center readiness", () => {
     assert.match(html, /href="#panel-runtime"/);
     assert.match(html, /href="#panel-skill-ecosystem"/);
     assert.match(html, /href="#panel-authority"/);
-    assert.match(html, /aria-label="Control Center focus navigation"/);
+    assert.match(html, /aria-label="GPAO-T 대시보드 빠른 이동"/);
     assert.match(html, /href="#decision-strip"/);
     assert.match(html, /href="#workflow-state-view"/);
     assert.match(html, /href="#next-safe-action"/);
@@ -1434,8 +1441,10 @@ describe("GPAO-T Local Control Center readiness", () => {
   it("keeps app-shell-specific screenshot QA baseline evidence separate and replayable", () => {
     const baseline = JSON.parse(readFileSync(APP_SHELL_BASELINE_JSON, "utf8"));
     const baselineDoc = readFileSync(APP_SHELL_BASELINE_DOC, "utf8");
-    const desktopBytes = readFileSync(baseline.evidenceFiles.desktop);
-    const mobileBytes = readFileSync(baseline.evidenceFiles.mobile);
+    const desktopPath = evidenceFilePath(baseline.evidenceFiles.desktop);
+    const mobilePath = evidenceFilePath(baseline.evidenceFiles.mobile);
+    const desktopBytes = readFileSync(desktopPath);
+    const mobileBytes = readFileSync(mobilePath);
 
     assert.equal(baseline.schema, "gpao_t.app_shell_screenshot_qa_baseline.v0_1");
     assert.equal(baseline.status, "ready");
@@ -1460,8 +1469,8 @@ describe("GPAO-T Local Control Center readiness", () => {
     assert.equal(baseline.checks.every((check) => check.noHorizontalOverflow), true);
     assert.equal(baseline.checks.every((check) => check.noTopbarOverlap), true);
     assert.equal(baseline.checks.every((check) => !check.hasScript && !check.hasForm), true);
-    assert.equal(existsSync(baseline.evidenceFiles.desktop), true);
-    assert.equal(existsSync(baseline.evidenceFiles.mobile), true);
+    assert.equal(existsSync(desktopPath), true);
+    assert.equal(existsSync(mobilePath), true);
     assert.equal(desktopBytes[0], 0xff);
     assert.equal(desktopBytes[1], 0xd8);
     assert.equal(mobileBytes[0], 0xff);
@@ -1474,8 +1483,10 @@ describe("GPAO-T Local Control Center readiness", () => {
   it("keeps packaged-shell visual QA baseline evidence separate and replayable", () => {
     const baseline = JSON.parse(readFileSync(TAURI_SHELL_BASELINE_JSON, "utf8"));
     const baselineDoc = readFileSync(TAURI_SHELL_BASELINE_DOC, "utf8");
-    const desktopBytes = readFileSync(baseline.evidenceFiles.desktop);
-    const mobileBytes = readFileSync(baseline.evidenceFiles.mobile);
+    const desktopPath = evidenceFilePath(baseline.evidenceFiles.desktop);
+    const mobilePath = evidenceFilePath(baseline.evidenceFiles.mobile);
+    const desktopBytes = readFileSync(desktopPath);
+    const mobileBytes = readFileSync(mobilePath);
 
     assert.equal(baseline.schema, "gpao_t.tauri_shell_visual_qa_baseline.v0_1");
     assert.equal(baseline.status, "ready");
@@ -1507,8 +1518,8 @@ describe("GPAO-T Local Control Center readiness", () => {
     assert.equal(baseline.checks.every((check) => check.noHorizontalOverflow), true);
     assert.equal(baseline.checks.every((check) => !check.hasScript && !check.hasForm), true);
     assert.equal(baseline.checks.every((check) => check.externalLinks.length === 0), true);
-    assert.equal(existsSync(baseline.evidenceFiles.desktop), true);
-    assert.equal(existsSync(baseline.evidenceFiles.mobile), true);
+    assert.equal(existsSync(desktopPath), true);
+    assert.equal(existsSync(mobilePath), true);
     assert.equal(desktopBytes[0], 0xff);
     assert.equal(desktopBytes[1], 0xd8);
     assert.equal(mobileBytes[0], 0xff);
@@ -1522,7 +1533,7 @@ describe("GPAO-T Local Control Center readiness", () => {
     const qa = JSON.parse(readFileSync(WORK_SURFACE_VISUAL_QA_JSON, "utf8"));
     const qaDoc = readFileSync(WORK_SURFACE_VISUAL_QA_DOC, "utf8");
     const verifyDoc = readFileSync(VERIFY_DOC_PATH, "utf8");
-    const screenshots = Object.values(qa.evidenceFiles).map((filePath) => readFileSync(filePath));
+    const screenshots = Object.values(qa.evidenceFiles).map((filePath) => readFileSync(evidenceFilePath(filePath)));
 
     assert.equal(qa.schema, "gpao_t.work_surface_visual_qa_baseline.v0_1");
     assert.equal(qa.status, "ready");
@@ -1562,7 +1573,7 @@ describe("GPAO-T Local Control Center readiness", () => {
     assert.equal(qa.checks.some((check) => check.id === "mobile-viewport" && check.viewport.width === 390), true);
     assert.equal(qa.blockedActionsRemainClosed.includes("model connector live execution"), true);
     assert.equal(qa.blockedActionsRemainClosed.includes("recurring automation"), true);
-    assert.equal(Object.values(qa.evidenceFiles).every((filePath) => existsSync(filePath)), true);
+    assert.equal(Object.values(qa.evidenceFiles).every((filePath) => existsSync(evidenceFilePath(filePath))), true);
     assert.equal(screenshots.every((bytes) => bytes[0] === 0xff && bytes[1] === 0xd8), true);
     assert.match(qaDoc, /Work Surface Visual QA Baseline/);
     assert.match(qaDoc, /work-surface-visual-qa-2026-07-09-desktop-viewport-1440x960\.jpg/);
@@ -1682,7 +1693,7 @@ describe("GPAO-T Local Control Center readiness", () => {
     const qa = JSON.parse(readFileSync(CONTROL_APPROVAL_PREVIEW_QA_JSON, "utf8"));
     const qaDoc = readFileSync(CONTROL_APPROVAL_PREVIEW_QA_DOC, "utf8");
     const verifyDoc = readFileSync(VERIFY_DOC_PATH, "utf8");
-    const screenshotPaths = Object.values(qa.evidenceFiles);
+    const screenshotPaths = Object.values(qa.evidenceFiles).map((filePath) => evidenceFilePath(filePath));
     const screenshots = screenshotPaths.map((filePath) => readFileSync(filePath));
     const focusedChecks = qa.checks.filter((check) => check.id.endsWith("focused"));
 
@@ -2169,7 +2180,7 @@ describe("GPAO-T Local Control Center readiness", () => {
       assert.equal(health.status, 200);
       assert.equal(health.body.status, "ready");
       assert.equal(page.status, 200);
-      assert.match(page.body, /GPAO-T Local Control Center/);
+      assert.match(page.body, /GPAO-T 대시보드/);
       assert.match(page.body, /data-core-work-surface="interactive-local"/);
       assert.match(page.body, /다음 안전 행동/);
       assert.doesNotMatch(page.body, /<script/i);

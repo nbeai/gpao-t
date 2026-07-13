@@ -1,7 +1,7 @@
 # Control Center Human Readability Check
 
 Status: passed  
-Scope: no-script Local Control Center reader after state/workflow views  
+Scope: no-script GPAO-T dashboard after state/workflow views
 Evidence baseline: `aef4c58 feat: add control center state workflow views`  
 Next gate: `docs/03-engineering/APP-SHELL-DECISION-GATE.md`
 
@@ -20,7 +20,7 @@ A first-time user should be able to answer these questions from the rendered Con
 
 ## Pass Criteria
 
-- First viewport is nonblank and identifies the surface as `GPAO-T Local Control Center`.
+- First viewport is nonblank and identifies the surface as `GPAO-T 대시보드`.
 - Panel navigation exposes the major operating areas without script.
 - State/workflow view separates workflow state, recovery state, authority state, and next action state.
 - Each panel inspector exposes status, evidence, authority, recovery, and return path.

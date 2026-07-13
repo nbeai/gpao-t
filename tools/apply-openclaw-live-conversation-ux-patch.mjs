@@ -168,6 +168,8 @@ async function main() {
       "dashboard visual check for compact progress lane",
     ],
   };
+  await mkdir(BACKUP_ROOT, { recursive: true });
+  await writeFile(join(BACKUP_ROOT, apply ? "apply-result.json" : "dry-run-result.json"), `${JSON.stringify(report, null, 2)}\n`);
   console.log(JSON.stringify(report, null, 2));
 }
 

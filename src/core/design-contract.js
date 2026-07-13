@@ -1,4 +1,4 @@
-const DESIGN_RECIPE_PATH = "docs/LOCAL-CONTROL-CENTER-DESIGN-RECIPE.md";
+const DESIGN_RECIPE_PATH = "docs/GPAO-T-DASHBOARD-DESIGN-RECIPE.md";
 const README_PATH = "docs/README.md";
 const SOURCE_DOCTRINE_PATH = "/Users/jyp/Documents/Playground 2/beai-harness-for-codex/design.md";
 const CODEX_REFERENCE_PATH = "docs/02-design/CODEX-LEVEL-DESIGN-REFERENCE.md";
@@ -184,7 +184,7 @@ export function buildLocalControlCenterDesignContract() {
       "screenshot_or_render_evidence_required_for_visual_claims",
     ],
     nextSafeAction:
-      "Build a static Local Control Center UI reader from buildControlCenterSnapshot() before adding interactivity, daemon behavior, or external activation.",
+      "Build the official GPAO-T dashboard from buildControlCenterSnapshot() before adding interactivity, daemon behavior, or external activation.",
   };
 }
 
