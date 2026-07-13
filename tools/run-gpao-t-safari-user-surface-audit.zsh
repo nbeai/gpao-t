@@ -81,6 +81,9 @@ for route in "${routes[@]}"; do
         "openclaw",
         "Gateway 상태",
         "Open session menu",
+        "session menu",
+        "열기 session menu",
+        "Message GPAO-T",
         "Assistant",
         "assistant",
         "Assistants",
@@ -93,7 +96,11 @@ for route in "${routes[@]}"; do
         "replay",
         "Replay",
         "rollback",
-        "OpenClaw session row"
+        "OpenClaw session row",
+        "GatewayRequestError",
+        "GatewayClientRequestError",
+        "Node service not 설치됨 as LaunchAgent",
+        "service/Node service not 설치됨 as LaunchAgent"
       ];
       const roots = [];
       const collect = (root) => {

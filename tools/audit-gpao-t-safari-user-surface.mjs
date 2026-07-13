@@ -21,6 +21,9 @@ const DEFAULT_FORBIDDEN = [
   "openclaw",
   "Gateway 상태",
   "Open session menu",
+  "session menu",
+  "열기 session menu",
+  "Message GPAO-T",
   "Assistant",
   "assistant",
   "Assistants",
@@ -34,6 +37,10 @@ const DEFAULT_FORBIDDEN = [
   "Replay",
   "rollback",
   "OpenClaw session row",
+  "GatewayRequestError",
+  "GatewayClientRequestError",
+  "Node service not 설치됨 as LaunchAgent",
+  "service/Node service not 설치됨 as LaunchAgent",
 ];
 
 function readArg(name, fallback = "") {

@@ -74,9 +74,15 @@ test("patchControlUiIndexHtmlSource cache-busts the user screen CSS", () => {
 
   assert.match(patched, /gpao_user_screen=2026071203/);
   assert.match(patched, /gpao_t_user_screen_css_cache_bust_v0_1/);
-  assert.match(patched, /gpao_t_telegram_direct_communication_rail_v0_6/);
+  assert.match(patched, /gpao_t_telegram_direct_communication_rail_v0_7/);
   assert.match(patched, /Telegram 전용 소통 세션 열기/);
   assert.match(patched, /소통/);
+  assert.match(patched, /GPAO-T에게 메시지 입력/);
+  assert.match(patched, /대화 메뉴 열기/);
+  assert.match(patched, /현재 GPAO-T는 이 Mac 안에서만 안전하게 열려 있습니다/);
+  assert.match(patched, /모바일 연결 준비가 아직 완료되지 않았습니다/);
+  assert.match(patched, /백그라운드 자동 실행이 아직 설정되지 않았습니다/);
+  assert.match(patched, /색상 모드: 밝게/);
   assert.match(patched, /연결 주소/);
   assert.match(patched, /연결키 \(필요할 때만\)/);
   assert.match(patched, /GPAO-T 로컬 런타임에 연결하지 못했습니다/);
@@ -102,6 +108,13 @@ test("patchControlUiIndexHtmlSource cache-busts the user screen CSS", () => {
   assert.match(patched, /기능과 도구/);
   assert.match(patched, /GPAO-T 지능/);
   assert.match(patched, /hiddenSettingLabels/);
+  assert.match(patched, /작업공간 요약/);
+  assert.match(patched, /고급 파일/);
+  assert.match(patched, /이번 답변의 작동 근거/);
+  assert.match(patched, /기억 후보/);
+  assert.match(patched, /성장 제안/);
+  assert.match(patched, /RUNTIME-MANIFEST/);
+  assert.match(patched, /telegramRows\.slice\(1\)/);
   assert.match(patched, /"MCP"/);
   assert.match(patched, /"Worktree"/);
   assert.match(patched, /런타임 상태/);
@@ -140,7 +153,7 @@ test("patchControlUiIndexHtmlSource replaces older telegram rail script", () => 
   const patched = patchControlUiIndexHtmlSource(html);
 
   assert.doesNotMatch(patched, /gpao_t_telegram_direct_communication_rail_v0_5/);
-  assert.match(patched, /gpao_t_telegram_direct_communication_rail_v0_6/);
+  assert.match(patched, /gpao_t_telegram_direct_communication_rail_v0_7/);
 });
 
 test("patchNodesPageSource turns node operations copy into user-facing GPAO-T copy", () => {

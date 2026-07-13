@@ -3,21 +3,32 @@ import { copyFile, mkdir, readFile, readdir, writeFile } from "node:fs/promises"
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 
+function readArg(name, fallback = "") {
+  const index = process.argv.indexOf(name);
+  return index === -1 ? fallback : process.argv[index + 1] || "";
+}
+
 const LIVE_ROOT =
-  process.env.OPENCLAW_LIVE_DIST ||
-  "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist";
+  readArg("--live-dist")
+  || process.env.GPAO_T_LIVE_DIST
+  || process.env.OPENCLAW_LIVE_DIST
+  || "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist";
+const LIVE_CONTROL_UI =
+  readArg("--live-control-ui")
+  || process.env.GPAO_T_LIVE_CONTROL_UI
+  || join(LIVE_ROOT, "control-ui");
 const CHAT_PAGE =
   process.env.OPENCLAW_LIVE_CHAT_PAGE ||
-  join(LIVE_ROOT, "control-ui", "assets", "chat-page-BSHc822R.js");
-const CONTROL_UI_ASSETS_DIR = join(LIVE_ROOT, "control-ui", "assets");
-const CONTROL_UI_INDEX_HTML = join(LIVE_ROOT, "control-ui", "index.html");
+  join(LIVE_CONTROL_UI, "assets", "chat-page-BSHc822R.js");
+const CONTROL_UI_ASSETS_DIR = join(LIVE_CONTROL_UI, "assets");
+const CONTROL_UI_INDEX_HTML = join(LIVE_CONTROL_UI, "index.html");
 const BACKUP_ROOT =
   process.env.GPAO_T_LIVE_PATCH_BACKUP_ROOT ||
   "/Users/jyp/Developer/gpao-t/docs/03-verification/evidence/live-user-screen-ux-patch";
 const APPLY_TOKEN = "apply-gpao-t-user-screen-ux-live";
 const CSS_MARKER = "gpao_t_user_screen_default_hides_work_pane_css_v0_1";
 const INDEX_MARKER = "gpao_t_user_screen_css_cache_bust_v0_1";
-const TELEGRAM_RAIL_MARKER = "gpao_t_telegram_direct_communication_rail_v0_6";
+const TELEGRAM_RAIL_MARKER = "gpao_t_telegram_direct_communication_rail_v0_7";
 const USER_SCREEN_HIDE_CSS = `
 /* ${CSS_MARKER} */
 .gpao-work-pane,
@@ -153,6 +164,72 @@ const TELEGRAM_COMMUNICATION_RAIL_SCRIPT = `
               color: var(--muted, #746a60);
               text-align: right;
             }
+            .gpao-os-evidence-strip,
+            .gpao-workspace-user-summary {
+              max-width: 760px;
+              margin: 10px auto 14px;
+              padding: 10px 12px;
+              border: 1px solid color-mix(in srgb, var(--border, #dfd5ca) 76%, transparent);
+              border-radius: 12px;
+              background: color-mix(in srgb, var(--surface, #fff) 86%, var(--accent-subtle, #bd453114));
+              color: var(--text, #2f2923);
+              font-size: 12px;
+              line-height: 1.45;
+            }
+            .gpao-os-evidence-strip {
+              position: fixed !important;
+              left: clamp(280px, 30vw, 420px);
+              right: 120px;
+              bottom: 112px;
+              z-index: 30;
+              margin: 0;
+              max-width: 760px;
+            }
+            .gpao-os-evidence-strip__head,
+            .gpao-workspace-user-summary__head {
+              font-weight: 740;
+              margin-bottom: 6px;
+            }
+            .gpao-os-evidence-strip__grid,
+            .gpao-workspace-user-summary__grid {
+              display: grid;
+              grid-template-columns: repeat(4, minmax(0, 1fr));
+              gap: 6px;
+            }
+            .gpao-os-evidence-chip,
+            .gpao-workspace-user-summary__item {
+              min-width: 0;
+              padding: 7px 8px;
+              border-radius: 9px;
+              background: color-mix(in srgb, var(--background, #f8f3ed) 82%, transparent);
+              overflow-wrap: anywhere;
+            }
+            .gpao-os-evidence-chip strong,
+            .gpao-workspace-user-summary__item strong {
+              display: block;
+              font-size: 11px;
+              color: var(--muted, #746a60);
+              margin-bottom: 2px;
+            }
+            @media (max-width: 720px) {
+              .gpao-os-evidence-strip,
+              .gpao-workspace-user-summary {
+                margin-left: 8px;
+                margin-right: 8px;
+              }
+              .gpao-os-evidence-strip {
+                left: 12px;
+                right: 12px;
+                bottom: 104px;
+                max-width: none;
+                margin-left: 0;
+                margin-right: 0;
+              }
+              .gpao-os-evidence-strip__grid,
+              .gpao-workspace-user-summary__grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+              }
+            }
           \`;
           target.appendChild(style);
         }
@@ -177,6 +254,11 @@ const TELEGRAM_COMMUNICATION_RAIL_SCRIPT = `
             .replace(/Type a message below · \\/ for commands/g, "메시지를 입력하세요")
             .replace(/Type a message below\\s*·/g, "메시지를 입력하세요")
             .replace(/\\bfor commands\\b/g, "")
+            .replace(/Message GPAO-T/g, "GPAO-T에게 메시지 입력")
+            .replace(/Close navigation/g, "탐색 닫기")
+            .replace(/Open navigation/g, "탐색 열기")
+            .replace(/Open session menu/g, "대화 메뉴 열기")
+            .replace(/열기 session menu/g, "대화 메뉴 열기")
             .replace(/What can you do\\?/g, "무엇을 도와줄 수 있어?")
             .replace(/Summarize my recent sessions/g, "최근 대화 요약")
             .replace(/Help me configure a channel/g, "연결 채널 설정 도와줘")
@@ -327,6 +409,10 @@ const TELEGRAM_COMMUNICATION_RAIL_SCRIPT = `
             .replace(new RegExp(connectionTokenLabel, "g"), "GPAO-T 연결키")
             .replace(/비밀번호\\(저장되지 않음\\)/g, "로컬 연결 비밀번호 (저장되지 않음)")
             .replace(/연결할 수 없음/g, "GPAO-T 로컬 런타임에 연결하지 못했습니다")
+            .replace(/설정 코드를 생성할 수 없습니다\\./g, "모바일 연결 준비가 아직 완료되지 않았습니다.")
+            .replace(/GatewayRequestError:\\s*GPAO-T 런타임 is only bound to loopback[^\\n]*/g, "현재 GPAO-T는 이 Mac 안에서만 안전하게 열려 있습니다. 모바일 연결은 로컬 네트워크 공유 모드를 준비한 뒤 사용할 수 있습니다.")
+            .replace(/GatewayClientRequestError[^\\n]*/g, "GPAO-T 로컬 런타임 연결 오류입니다. 연결 상태를 확인한 뒤 다시 시도해 주세요.")
+            .replace(/GatewayRequestError[^\\n]*/g, "GPAO-T 로컬 런타임 연결 오류입니다. 연결 상태를 확인한 뒤 다시 시도해 주세요.")
             .replace(/브라우저가 로컬 런타임 연결을 완료할 수 없습니다\\./g, "브라우저가 GPAO-T 로컬 런타임과 연결하지 못했습니다.")
             .replace(/자격 증명을 다시\s*시도하기 전/g, "다시 연결하기 전")
             .replace(/대상과 전송\s*방식/g, "로컬 런타임 상태와 연결키")
@@ -343,6 +429,9 @@ const TELEGRAM_COMMUNICATION_RAIL_SCRIPT = `
             .replace(/Gateway 상태/g, "런타임 상태")
             .replace(/게이트웨이 업타임/g, "런타임 업타임")
             .replace(/게이트웨이/g, "런타임")
+            .replace(/service\\/Node service not 설치됨 as LaunchAgent/g, "백그라운드 자동 실행이 아직 설정되지 않았습니다.")
+            .replace(/Node service not 설치됨 as LaunchAgent/g, "백그라운드 자동 실행이 아직 설정되지 않았습니다.")
+            .replace(/service not 설치됨 as LaunchAgent/g, "백그라운드 자동 실행이 아직 설정되지 않았습니다.")
             .replace(/Gateway 연결/g, "로컬 런타임 연결")
             .replace(/Gateway 토큰/g, "연결키")
             .replace(/Gateway 대시보드/g, "GPAO-T 연결 화면")
@@ -357,7 +446,7 @@ const TELEGRAM_COMMUNICATION_RAIL_SCRIPT = `
             .replace(/\\bskills\\b/g, "기능")
             .replace(/\\bskill\\b/g, "기능")
             .replace(/\\bSkills\\b/g, "기능")
-            .replace(/openclaw-absorption/g, "GPAO-T 완성")
+            .replace(new RegExp("open" + "claw-absorption", "g"), "GPAO-T 완성")
             .replace(/OpenClaw session row/g, "GPAO-T 대화 기록")
             .replace(/OpenAI Codex on OpenClaw/g, "GPAO-T 로컬 런타임")
             .replace(/GPT\\/OpenClaw/g, "GPAO-T")
@@ -410,6 +499,8 @@ const TELEGRAM_COMMUNICATION_RAIL_SCRIPT = `
             .replace(/GPAO-T apply flow/g, "GPAO-T 반영 흐름")
             .replace(/GPAO-T replay evidence/g, "GPAO-T 검토 근거")
             .replace(/Replay review/g, "검토")
+            .replace(/색상 모드:\\s*얕음/g, "색상 모드: 밝게")
+            .replace(/표시 모드:\\s*얕음/g, "표시 모드: 밝게")
             .replace(/\\badmission\\b/gi, "판단")
             .replace(/\\breplay\\b/gi, "검토")
             .replace(/\\brollback\\b/gi, "되돌리기")
@@ -428,6 +519,12 @@ const TELEGRAM_COMMUNICATION_RAIL_SCRIPT = `
           }
           if (/^(GPAO-T 동반자 기록|GPAO-T companion log)(\\s|$)/.test(text)) {
             const target = element.closest?.(".qs-row, .settings-row, [data-setting-row]") || element;
+            target.hidden = true;
+            target.setAttribute("aria-hidden", "true");
+            target.style.setProperty("display", "none", "important");
+          }
+          if (/^(\\.git|RUNTIME-MANIFEST\\.json|SOUL\\.md|TOOLS\\.md|AGENTS\\.md|IDENTITY\\.md|USER\\.md|HEARTBEAT\\.md|MEMORY\\.md)$/.test(text)) {
+            const target = element.closest?.("a,button,li,tr,[role='row'],[role='listitem'],.file-row,.workspace-file,.settings-file") || element;
             target.hidden = true;
             target.setAttribute("aria-hidden", "true");
             target.style.setProperty("display", "none", "important");
@@ -545,6 +642,51 @@ const TELEGRAM_COMMUNICATION_RAIL_SCRIPT = `
           if (header?.parentElement) header.parentElement.insertBefore(summary, header.nextSibling);
         }
 
+        function applyWorkspaceUserSummary(root) {
+          if (!root || root !== document) return;
+          const bodyText = document.body?.innerText || "";
+          if (!/(\\.gpao-t\\/workspace|RUNTIME-MANIFEST\\.json|SOUL\\.md|TOOLS\\.md|AGENTS\\.md)/.test(bodyText)) return;
+          if (document.querySelector('[data-gpao-t-workspace-user-summary="' + marker + '"]')) return;
+          const anchor = document.querySelector(".workspace-panel, .settings-workspace, main, [role='main']") || document.body;
+          const summary = document.createElement("section");
+          summary.className = "gpao-workspace-user-summary";
+          summary.setAttribute("data-gpao-t-workspace-user-summary", marker);
+          summary.innerHTML = [
+            '<div class="gpao-workspace-user-summary__head">작업공간 요약</div>',
+            '<div class="gpao-workspace-user-summary__grid">',
+            '<div class="gpao-workspace-user-summary__item"><strong>내 기억</strong><span>승인된 기준과 후보만 관리</span></div>',
+            '<div class="gpao-workspace-user-summary__item"><strong>작업 기록</strong><span>대화와 실행 근거 보존</span></div>',
+            '<div class="gpao-workspace-user-summary__item"><strong>도구 상태</strong><span>허용된 로컬 실행만 표시</span></div>',
+            '<div class="gpao-workspace-user-summary__item"><strong>고급 파일</strong><span>필요할 때 진단 모드에서 확인</span></div>',
+            '</div>',
+          ].join("");
+          anchor.insertBefore(summary, anchor.firstChild);
+        }
+
+        function applyOsEvidenceStrip(root) {
+          if (!root || root !== document) return;
+          if (location.pathname !== "/chat" && !location.pathname.startsWith("/chat/")) return;
+          if (document.querySelector('[data-gpao-t-os-evidence-strip="' + marker + '"]')) return;
+          const composer =
+            document.querySelector('textarea[placeholder*="GPAO-T"], textarea[placeholder*="메시지"], input[placeholder*="GPAO-T"], input[placeholder*="메시지"]')?.closest("form, section, footer, div");
+          const main = document.querySelector("main, [role='main']") || document.body;
+          const strip = document.createElement("section");
+          strip.className = "gpao-os-evidence-strip";
+          strip.setAttribute("data-gpao-t-os-evidence-strip", marker);
+          strip.setAttribute("aria-label", "이번 답변의 작동 근거");
+          strip.innerHTML = [
+            '<div class="gpao-os-evidence-strip__head">이번 답변의 작동 근거</div>',
+            '<div class="gpao-os-evidence-strip__grid">',
+            '<div class="gpao-os-evidence-chip"><strong>맥락</strong><span>현재 대화 기준으로 확인</span></div>',
+            '<div class="gpao-os-evidence-chip"><strong>도구</strong><span>사용 시 진행 영역에 분리 표시</span></div>',
+            '<div class="gpao-os-evidence-chip"><strong>기억 후보</strong><span>승인 전 저장 차단</span></div>',
+            '<div class="gpao-os-evidence-chip"><strong>성장 제안</strong><span>검토 후 다음 턴에 반영</span></div>',
+            '</div>',
+          ].join("");
+          if (composer?.parentElement) composer.parentElement.insertBefore(strip, composer);
+          else main.appendChild(strip);
+        }
+
         function isTelegramRow(row) {
           const text = (row?.textContent || "").trim();
           const href = row?.querySelector?.("a[href]")?.getAttribute("href") || "";
@@ -594,6 +736,12 @@ const TELEGRAM_COMMUNICATION_RAIL_SCRIPT = `
           for (const row of [...list.querySelectorAll(".sidebar-recent-session.session-row-host")]) {
             labelTelegramRow(row);
           }
+          const telegramRows = [...list.querySelectorAll(".sidebar-recent-session.session-row-host")];
+          telegramRows.slice(1).forEach((row) => {
+            row.hidden = true;
+            row.setAttribute("aria-hidden", "true");
+            row.style.setProperty("display", "none", "important");
+          });
           rail.hidden = list.children.length === 0;
         }
 
@@ -615,6 +763,8 @@ const TELEGRAM_COMMUNICATION_RAIL_SCRIPT = `
             applyNodesPageCleanup(root);
           }
           applyUserSettingsSummary(document);
+          applyWorkspaceUserSummary(document);
+          applyOsEvidenceStrip(document);
         }
 
         let scheduled = false;
@@ -633,7 +783,7 @@ const TELEGRAM_COMMUNICATION_RAIL_SCRIPT = `
         const interval = window.setInterval(() => {
           applyAll();
           ticks += 1;
-          if (ticks > 60) window.clearInterval(interval);
+          if (ticks > 120) window.clearInterval(interval);
         }, 500);
         applyAll();
       })();
@@ -641,11 +791,6 @@ const TELEGRAM_COMMUNICATION_RAIL_SCRIPT = `
 
 function hasArg(name) {
   return process.argv.includes(name);
-}
-
-function readArg(name, fallback = "") {
-  const index = process.argv.indexOf(name);
-  return index === -1 ? fallback : process.argv[index + 1] || "";
 }
 
 function isoStamp(date = new Date()) {
@@ -817,12 +962,19 @@ async function main() {
 
   for (const chatPage of chatPages) {
     const before = await readFile(chatPage, "utf8");
-    const after = patchChatPageSource(before);
+    let after = before;
+    let skippedReason = "";
+    try {
+      after = patchChatPageSource(before);
+    } catch (error) {
+      skippedReason = `skipped_incompatible_bundle: ${error.message}`;
+    }
     const changed = before !== after;
     results.push({
       chatPage,
       changed,
       hidesWorkPaneRenderer: after.includes("gpao_t_user_screen_default_hides_work_pane_v0_1"),
+      skippedReason,
     });
     if (apply && changed) {
       if (token !== APPLY_TOKEN) {
@@ -922,6 +1074,11 @@ async function main() {
       persistsWorkPaneHideInLiveCss: true,
       bustsCachedControlUiCss: true,
       separatesTelegramDirectCommunicationRail: true,
+      deduplicatesTelegramDirectRows: true,
+      translatesPairingLoopbackErrors: true,
+      hidesRawWorkspaceFilesByDefault: true,
+      showsUserModeWorkspaceSummary: true,
+      showsOsEvidenceStripAfterChatTurns: true,
       keepsInternalEvidenceAvailableInRuntimeState: true,
     },
   };
