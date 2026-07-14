@@ -94,7 +94,20 @@ export class StateWriterClient {
     try { await this.call("close", {}, this.closeTimeoutMs); } catch {}
     this.closed = true;
     try { child.disconnect(); } catch {}
-    try { child.kill(); } catch {}
+    if (child.exitCode === null && child.signalCode === null) {
+      try { child.kill("SIGTERM"); } catch {}
+      try { child.kill("SIGCONT"); } catch {}
+      try { child.kill("SIGKILL"); } catch {}
+      await new Promise(resolve => {
+        if (child.exitCode !== null || child.signalCode !== null) return resolve();
+        const timer = setTimeout(resolve, this.closeTimeoutMs);
+        timer.unref();
+        child.once("exit", () => {
+          clearTimeout(timer);
+          resolve();
+        });
+      });
+    }
     this.child = null;
     this.started = false;
   }
