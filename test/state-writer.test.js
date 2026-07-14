@@ -90,7 +90,35 @@ test("writer makes queue backpressure atomic without dropping the first accepted
   try {
     const first = await runtime.submitTurn({ principalId: "owner:a", requestId: "first", payload: { input: "first", delayMs: 500 } });
     await assert.rejects(() => runtime.submitTurn({ principalId: "owner:a", requestId: "second", payload: { input: "second" } }), error => error instanceof RuntimeError && error.code === "backpressure");
+    const duplicate = await runtime.submitTurn({ principalId: "owner:a", requestId: "first", payload: { input: "first", delayMs: 500 } });
+    assert.equal(duplicate.deduplicated, true);
     assert.equal((await runtime.getTurn("owner:a", first.commandId)).status, "running");
+  } finally {
+    await runtime.stop();
+  }
+});
+
+test("writer rejects terminal results from an old generation", async () => {
+  const runtime = await new NativeRuntime({ stateDir: tempState() }).start();
+  try {
+    const accepted = await runtime.submitTurn({ principalId: "owner:a", requestId: "generation-fence", payload: { input: "fence", delayMs: 500 } });
+    await eventually(async () => (await runtime.getTurn("owner:a", accepted.commandId))?.status === "running");
+    await assert.rejects(() => runtime.writer.call("markTerminal", { commandId: accepted.commandId, principalId: "owner:a", generation: runtime.generation - 1, status: "succeeded", result: { forged: true } }), error => error instanceof RuntimeError && error.code === "stale_generation");
+    assert.equal((await runtime.getTurn("owner:a", accepted.commandId)).receipt, null);
+  } finally {
+    await runtime.stop();
+  }
+});
+
+test("the same runtime object can stop and start again", async () => {
+  const runtime = new NativeRuntime({ stateDir: tempState() });
+  await runtime.start();
+  await runtime.stop();
+  await runtime.start();
+  try {
+    assert.equal(runtime.health().status, "ready");
+    const accepted = await runtime.submitTurn({ principalId: "owner:a", requestId: "same-object-restart", payload: { input: "ok" } });
+    await eventually(async () => (await runtime.getTurn("owner:a", accepted.commandId))?.status === "succeeded");
   } finally {
     await runtime.stop();
   }
@@ -133,5 +161,18 @@ test("state-writer failure fails closed instead of reporting ready", async () =>
     await assert.rejects(() => runtime.submitTurn({ principalId: "owner:a", requestId: "writer-down", payload: { input: "blocked" } }), error => error instanceof RuntimeError && error.code === "runtime_not_ready");
   } finally {
     await runtime.stop();
+  }
+});
+
+test("state-writer IPC timeout and shutdown remain bounded", async () => {
+  const runtime = await new NativeRuntime({ stateDir: tempState(), writerRequestTimeoutMs: 100, writerCloseTimeoutMs: 100 }).start();
+  try {
+    runtime.writer.child.kill("SIGSTOP");
+    await assert.rejects(() => runtime.writer.call("verifyIntegrity"), error => error instanceof RuntimeError && error.code === "state_writer_timeout");
+    const started = performance.now();
+    await runtime.stop();
+    assert.ok(performance.now() - started < 500, "shutdown exceeded the writer close deadline");
+  } finally {
+    runtime.writer?.child?.kill("SIGKILL");
   }
 });

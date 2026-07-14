@@ -49,6 +49,10 @@ test("HTTP health is public, work is owner-authenticated, and turn state is scop
   assert.equal(doctor.readOnly, true);
   assert.equal(doctor.integrity.ok, true);
 
+  runtime.handleWriterUnavailable({ code: "test" });
+  assert.equal((await fetch(`${base}/health`)).status, 200);
+  assert.equal((await fetch(`${base}/ready`)).status, 503);
+
   await new Promise(resolve => server.close(resolve));
   await runtime.stop();
 });

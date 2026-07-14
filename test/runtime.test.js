@@ -76,6 +76,19 @@ test("worker crash after dispatch becomes unknown and is not retried", async () 
   await runtime.stop();
 });
 
+test("worker crash loop trips a restart breaker instead of churning", async () => {
+  const runtime = await new NativeRuntime({ stateDir: tempState(), maxWorkerRestarts: 1, workerStableWindowMs: 500 }).start();
+  try {
+    await runtime.submitTurn({ principalId: "owner:a", requestId: "crash-loop-1", payload: { mode: "crash-after-dispatch" } });
+    await eventually(async () => runtime.health().workerStatus === "ready" && runtime.health().workerCrashAttempts === 1, 2000);
+    await runtime.submitTurn({ principalId: "owner:a", requestId: "crash-loop-2", payload: { mode: "crash-after-dispatch" } });
+    await eventually(async () => runtime.health().status === "failed" && runtime.health().workerStatus === "crash-loop", 2000);
+    await assert.rejects(() => runtime.submitTurn({ principalId: "owner:a", requestId: "crash-loop-3", payload: { input: "blocked" } }), error => error instanceof RuntimeError && error.code === "runtime_not_ready");
+  } finally {
+    await runtime.stop();
+  }
+});
+
 test("worker result timeout prevents an unresponsive task from staying running", async () => {
   const runtime = await new NativeRuntime({ stateDir: tempState(), workerResultTimeoutMs: 100 }).start();
   const result = await runtime.submitTurn({ principalId: "owner:a", requestId: "blackhole", payload: { mode: "blackhole" } });
@@ -89,6 +102,36 @@ test("worker result timeout prevents an unresponsive task from staying running",
   } finally {
     await runtime.stop();
   }
+});
+
+test("worker timeout frees the inflight slot for the next queued turn", async () => {
+  const runtime = await new NativeRuntime({ stateDir: tempState(), maxInflight: 1, workerResultTimeoutMs: 100 }).start();
+  try {
+    const first = await runtime.submitTurn({ principalId: "owner:a", requestId: "timeout-first", payload: { mode: "blackhole" } });
+    const second = await runtime.submitTurn({ principalId: "owner:a", requestId: "timeout-second", payload: { input: "next" } });
+    await eventually(async () => (await runtime.getTurn("owner:a", first.commandId))?.status === "uncertain", 2000);
+    await eventually(async () => (await runtime.getTurn("owner:a", second.commandId))?.status === "succeeded", 2000);
+  } finally {
+    await runtime.stop();
+  }
+});
+
+test("runtime lock release never removes a newer owner lock", async () => {
+  const stateDir = tempState();
+  const first = await new NativeRuntime({ stateDir }).start();
+  const lockPath = path.join(stateDir, "runtime.lock");
+  fs.writeFileSync(lockPath, JSON.stringify({ pid: process.pid, token: "new-owner", startedAt: Date.now() }));
+  await first.stop();
+  assert.equal(JSON.parse(fs.readFileSync(lockPath, "utf8")).token, "new-owner");
+  await assert.rejects(() => new NativeRuntime({ stateDir }).start(), error => error instanceof RuntimeError && error.code === "runtime_already_running");
+  fs.unlinkSync(lockPath);
+});
+
+test("dead owner lock is safely reclaimed", async () => {
+  const stateDir = tempState();
+  fs.writeFileSync(path.join(stateDir, "runtime.lock"), JSON.stringify({ pid: 99_999_999, token: "dead-owner", startedAt: Date.now() }));
+  const runtime = await new NativeRuntime({ stateDir }).start();
+  await runtime.stop();
 });
 
 test("old generation results are ignored", async () => {

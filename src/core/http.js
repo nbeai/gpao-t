@@ -25,8 +25,10 @@ export function createHttpServer(runtime, { host = "127.0.0.1", port = 18899 } =
   const server = http.createServer(async (request, response) => {
     try {
       const url = new URL(request.url, `http://${host}:${port}`);
-      if (request.method === "GET" && (url.pathname === "/health" || url.pathname === "/ready")) {
-        return send(response, 200, runtime.health());
+      if (request.method === "GET" && url.pathname === "/health") return send(response, 200, runtime.health());
+      if (request.method === "GET" && url.pathname === "/ready") {
+        const health = runtime.health();
+        return send(response, health.status === "ready" ? 200 : 503, health);
       }
       if (bearer(request) !== runtime.ownerToken) throw new RuntimeError("unauthorized", "Owner authentication required", 401);
       const principalId = "owner:local";

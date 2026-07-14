@@ -4,10 +4,12 @@ import crypto from "node:crypto";
 import { RuntimeError } from "./errors.js";
 
 export class StateWriterClient {
-  constructor({ stateDir, writerPath = path.resolve(new URL("./state-writer.js", import.meta.url).pathname), maxPending = 256, onUnavailable } = {}) {
+  constructor({ stateDir, writerPath = path.resolve(new URL("./state-writer.js", import.meta.url).pathname), maxPending = 256, requestTimeoutMs = 5_000, closeTimeoutMs = 1_000, onUnavailable } = {}) {
     this.stateDir = stateDir;
     this.writerPath = writerPath;
     this.maxPending = maxPending;
+    this.requestTimeoutMs = requestTimeoutMs;
+    this.closeTimeoutMs = closeTimeoutMs;
     this.pending = new Map();
     this.child = null;
     this.started = false;
@@ -45,12 +47,22 @@ export class StateWriterClient {
     return this;
   }
 
-  call(op, args = {}) {
+  call(op, args = {}, timeoutMs = this.requestTimeoutMs) {
     if (!this.started || !this.child || this.closed) return Promise.reject(new RuntimeError("state_writer_unavailable", "Native Runtime state writer is not available", 503, { retryable: true }));
     if (this.pending.size >= this.maxPending) return Promise.reject(new RuntimeError("state_writer_backpressure", "Native Runtime state writer queue is full", 429, { retryable: true, maxPending: this.maxPending }));
     const id = crypto.randomUUID();
     return new Promise((resolve, reject) => {
-      this.pending.set(id, { resolve, reject });
+      const timer = setTimeout(() => {
+        const entry = this.pending.get(id);
+        if (!entry) return;
+        this.pending.delete(id);
+        entry.reject(new RuntimeError("state_writer_timeout", "Native Runtime state writer did not respond before the deadline", 503, { retryable: true, outcome: "unknown", operation: op }));
+      }, timeoutMs);
+      timer.unref();
+      this.pending.set(id, {
+        resolve: value => { clearTimeout(timer); resolve(value); },
+        reject: error => { clearTimeout(timer); reject(error); }
+      });
       try {
         this.child.send({ id, op, args }, error => {
           if (!error) return;
@@ -79,7 +91,7 @@ export class StateWriterClient {
     if (!this.child) return;
     const child = this.child;
     this.closing = true;
-    try { await this.call("close"); } catch {}
+    try { await this.call("close", {}, this.closeTimeoutMs); } catch {}
     this.closed = true;
     try { child.disconnect(); } catch {}
     try { child.kill(); } catch {}

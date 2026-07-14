@@ -144,6 +144,8 @@ export class StateStore {
 
   acceptCommand(command, runtimeGeneration, maxQueue = 64) {
     return this.transaction(() => {
+      const currentGeneration = Number(this.getMeta("runtime_generation") || 0);
+      if (currentGeneration !== runtimeGeneration) throw new RuntimeError("stale_generation", "Command belongs to an old runtime generation", 409, { currentGeneration, runtimeGeneration });
       const existing = this.findByRequest(command.principalId, command.requestId);
       if (existing) {
         if (existing.request_digest !== command.requestDigest) throw new RuntimeError("idempotency_conflict", "Request id was already used with a different payload", 409);
@@ -186,6 +188,7 @@ export class StateStore {
   }
 
   lease(commandId, generation) {
+    if (Number(this.getMeta("runtime_generation") || 0) !== generation) return false;
     const now = Date.now();
     const row = this.db.prepare("SELECT * FROM outbox WHERE command_id = ? AND state = 'pending'").get(commandId);
     if (!row) return false;
@@ -196,7 +199,11 @@ export class StateStore {
 
   markUncertain(commandId, principalId, generation, reason) {
     const now = Date.now();
-    this.db.prepare("UPDATE outbox SET state = 'uncertain', updated_at = ? WHERE command_id = ? AND state = 'leased'").run(now, commandId);
+    const row = this.db.prepare("SELECT generation FROM outbox WHERE command_id = ? AND state = 'leased'").get(commandId);
+    if (!row) return false;
+    if (reason !== "runtime_restart" && row.generation !== generation) throw new RuntimeError("stale_generation", "Outcome belongs to an old runtime generation", 409, { rowGeneration: row.generation, runtimeGeneration: generation });
+    const changedOutbox = this.db.prepare("UPDATE outbox SET state = 'uncertain', updated_at = ? WHERE command_id = ? AND state = 'leased'").run(now, commandId);
+    if (changedOutbox.changes !== 1) return false;
     this.db.prepare("UPDATE commands SET status = 'uncertain', updated_at = ? WHERE id = ? AND principal_id = ? AND status = 'running'").run(now, commandId, principalId);
     this.appendEvent({ commandId, principalId, type: "turn.outcome.unknown", payload: { reason }, runtimeGeneration: generation });
     this.addProgress(commandId, principalId, "outcome_unknown", { reason });
@@ -205,6 +212,8 @@ export class StateStore {
   markTerminal(commandId, principalId, generation, status, result) {
     const now = Date.now();
     const outboxState = status === "succeeded" ? "completed" : "failed";
+    const row = this.db.prepare("SELECT generation FROM outbox WHERE command_id = ? AND state = 'leased' AND generation = ?").get(commandId, generation);
+    if (!row) throw new RuntimeError("stale_generation", "Terminal result belongs to an old or non-leased command", 409, { runtimeGeneration: generation });
     this.db.prepare("UPDATE outbox SET state = ?, updated_at = ? WHERE command_id = ? AND state = 'leased' AND generation = ?").run(outboxState, now, commandId, generation);
     const changed = this.db.prepare("UPDATE commands SET status = ?, updated_at = ? WHERE id = ? AND principal_id = ? AND status = 'running'").run(status, now, commandId, principalId);
     if (changed.changes !== 1) return false;

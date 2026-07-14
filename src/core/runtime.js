@@ -12,7 +12,7 @@ function requestDigest(payload) {
 }
 
 export class NativeRuntime {
-  constructor({ stateDir, workerPath = path.resolve(new URL("./worker.js", import.meta.url).pathname), writerPath = path.resolve(new URL("./state-writer.js", import.meta.url).pathname), maxInflight = 4, maxQueue = 64, workerDispatchTimeoutMs = 250, workerResultTimeoutMs = 30_000 } = {}) {
+  constructor({ stateDir, workerPath = path.resolve(new URL("./worker.js", import.meta.url).pathname), writerPath = path.resolve(new URL("./state-writer.js", import.meta.url).pathname), maxInflight = 4, maxQueue = 64, workerDispatchTimeoutMs = 250, workerResultTimeoutMs = 30_000, writerRequestTimeoutMs = 5_000, writerCloseTimeoutMs = 1_000, maxWorkerRestarts = 5, workerRestartWindowMs = 10_000, workerRestartBaseDelayMs = 25, workerStableWindowMs = 1_000 } = {}) {
     this.stateDir = assertSafeStateDir(stateDir);
     this.workerPath = workerPath;
     this.writerPath = writerPath;
@@ -20,6 +20,12 @@ export class NativeRuntime {
     this.maxQueue = maxQueue;
     this.workerDispatchTimeoutMs = workerDispatchTimeoutMs;
     this.workerResultTimeoutMs = workerResultTimeoutMs;
+    this.writerRequestTimeoutMs = writerRequestTimeoutMs;
+    this.writerCloseTimeoutMs = writerCloseTimeoutMs;
+    this.maxWorkerRestarts = maxWorkerRestarts;
+    this.workerRestartWindowMs = workerRestartWindowMs;
+    this.workerRestartBaseDelayMs = workerRestartBaseDelayMs;
+    this.workerStableWindowMs = workerStableWindowMs;
     this.accepting = false;
     this.stopping = false;
     this.pending = new Map();
@@ -32,10 +38,14 @@ export class NativeRuntime {
     this.progressClients = new Set();
     this.worker = null;
     this.respawning = false;
+    this.workerRestartAttempts = 0;
+    this.workerRestartWindowStarted = 0;
+    this.workerStableTimer = null;
     this.generation = 0;
     this.instanceId = null;
     this.ownerToken = null;
     this.lockFd = null;
+    this.lockToken = null;
     this.lockPath = path.join(this.stateDir, "runtime.lock");
     this.readyAt = null;
     this.writer = null;
@@ -44,11 +54,13 @@ export class NativeRuntime {
 
   async start() {
     if (this.accepting) return this;
+    this.stopping = false;
+    this.respawning = false;
     this.acquireLock();
     try {
       this.ownerToken = this.loadOwnerToken();
       this.instanceId = crypto.randomUUID();
-      this.writer = new StateWriterClient({ stateDir: this.stateDir, writerPath: this.writerPath, onUnavailable: details => this.handleWriterUnavailable(details) });
+      this.writer = new StateWriterClient({ stateDir: this.stateDir, writerPath: this.writerPath, requestTimeoutMs: this.writerRequestTimeoutMs, closeTimeoutMs: this.writerCloseTimeoutMs, onUnavailable: details => this.handleWriterUnavailable(details) });
       await this.writer.start();
       await this.writer.call("verifyCheckpoint");
       this.generation = (await this.writer.call("bootstrapRuntime", { instanceId: this.instanceId })).generation;
@@ -73,10 +85,26 @@ export class NativeRuntime {
 
   acquireLock() {
     try {
+      this.lockToken = crypto.randomUUID();
       this.lockFd = fs.openSync(this.lockPath, "wx", 0o600);
-      fs.writeFileSync(this.lockFd, JSON.stringify({ pid: process.pid, startedAt: Date.now() }));
+      fs.writeFileSync(this.lockFd, JSON.stringify({ pid: process.pid, token: this.lockToken, startedAt: Date.now() }));
     } catch (error) {
-      if (error.code === "EEXIST") throw new RuntimeError("runtime_already_running", "Another Native Runtime instance owns this state", 409);
+      if (error.code === "EEXIST") {
+        let owner = null;
+        try { owner = JSON.parse(fs.readFileSync(this.lockPath, "utf8")); } catch {}
+        let alive = true;
+        if (Number.isInteger(owner?.pid) && owner.pid > 0) {
+          try { process.kill(owner.pid, 0); } catch (probeError) { alive = probeError.code !== "ESRCH"; }
+        }
+        if (!alive) {
+          try {
+            const current = JSON.parse(fs.readFileSync(this.lockPath, "utf8"));
+            if (current?.token === owner?.token) fs.unlinkSync(this.lockPath);
+          } catch {}
+          return this.acquireLock();
+        }
+        throw new RuntimeError("runtime_already_running", "Another Native Runtime instance owns this state", 409, { ownerPid: owner?.pid ?? null, stale: false });
+      }
       throw error;
     }
   }
@@ -85,7 +113,11 @@ export class NativeRuntime {
     if (this.lockFd !== null) {
       try { fs.closeSync(this.lockFd); } catch {}
       this.lockFd = null;
-      try { fs.unlinkSync(this.lockPath); } catch {}
+      try {
+        const current = JSON.parse(fs.readFileSync(this.lockPath, "utf8"));
+        if (current.token === this.lockToken) fs.unlinkSync(this.lockPath);
+      } catch {}
+      this.lockToken = null;
     }
   }
 
@@ -98,19 +130,44 @@ export class NativeRuntime {
   }
 
   spawnWorker() {
-    if (this.stopping || this.worker || this.respawning) return;
+    if (this.stopping || this.worker || this.respawning || this.healthSnapshot.status === "failed") return;
     this.respawning = true;
     const child = fork(this.workerPath, [], { execArgv: [], env: { ...process.env, GPAO_T_PERMIT_SECRET: this.ownerToken }, stdio: ["ignore", "ignore", "pipe", "ipc"] });
     this.worker = child;
     child.on("message", message => { void this.handleWorkerMessage(message); });
     child.on("error", () => {});
-    child.once("spawn", () => { this.respawning = false; void this.pump().catch(() => {}); });
+    child.once("spawn", () => {
+      this.respawning = false;
+      clearTimeout(this.workerStableTimer);
+      this.workerStableTimer = setTimeout(() => {
+        if (this.worker === child) {
+          this.workerRestartAttempts = 0;
+          this.workerRestartWindowStarted = Date.now();
+        }
+      }, this.workerStableWindowMs);
+      this.workerStableTimer.unref();
+      void this.pump().catch(() => {});
+    });
     child.once("exit", () => {
       if (this.worker === child) this.worker = null;
       this.respawning = false;
+      clearTimeout(this.workerStableTimer);
+      this.workerStableTimer = null;
       if (this.stopping) return;
-      void this.markInflightUncertain("worker_exit");
-      setTimeout(() => this.spawnWorker(), 25).unref();
+      void this.markInflightUncertain("worker_exit").catch(() => {});
+      const now = Date.now();
+      if (!this.workerRestartWindowStarted || now - this.workerRestartWindowStarted > this.workerRestartWindowMs) {
+        this.workerRestartWindowStarted = now;
+        this.workerRestartAttempts = 0;
+      }
+      this.workerRestartAttempts += 1;
+      if (this.workerRestartAttempts > this.maxWorkerRestarts) {
+        this.accepting = false;
+        this.healthSnapshot = { ...this.healthSnapshot, status: "failed", state: "degraded", workerStatus: "crash-loop", workerCrashAttempts: this.workerRestartAttempts };
+        return;
+      }
+      const delay = Math.min(this.workerRestartBaseDelayMs * (2 ** (this.workerRestartAttempts - 1)), 2_000);
+      setTimeout(() => this.spawnWorker(), delay).unref();
     });
   }
 
@@ -130,8 +187,6 @@ export class NativeRuntime {
     if (!principalId || !requestId) throw new RuntimeError("invalid_request", "principalId and requestId are required", 400);
     const serialized = JSON.stringify(payload);
     if (Buffer.byteLength(serialized) > 64 * 1024) throw new RuntimeError("payload_too_large", "Turn payload exceeds 64 KiB", 413);
-    const active = await this.writer.call("countActiveOutbox");
-    if (active >= this.maxQueue) throw new RuntimeError("backpressure", "Native Runtime queue is full", 429, { maxQueue: this.maxQueue, retryable: true });
     const command = { id: crypto.randomUUID(), principalId, requestId, requestDigest: requestDigest(payload), payload, createdAt: Date.now() };
     const result = await this.writer.call("acceptCommand", { command, runtimeGeneration: this.generation, maxQueue: this.maxQueue });
     await this.emitProgress(result.commandId, principalId);
@@ -188,6 +243,7 @@ export class NativeRuntime {
     await this.writer.call("markUncertain", { commandId, principalId, generation: this.generation, reason });
     this.healthSnapshot.inflight = this.pending.size + this.finalizationQueue.size;
     await this.emitProgress(commandId, principalId);
+    void this.pump().catch(() => {});
   }
 
   async handleWorkerMessage(message) {
@@ -295,7 +351,7 @@ export class NativeRuntime {
     }
   }
 
-  health() { return { ...this.healthSnapshot, instanceId: this.instanceId, readyAt: this.readyAt, stateDir: this.stateDir, stateWriter: "separate-process", stateWriterStatus: this.writer?.started ? "ready" : "unavailable" }; }
+  health() { return { ...this.healthSnapshot, instanceId: this.instanceId, readyAt: this.readyAt, stateDir: this.stateDir, stateWriter: "separate-process", stateWriterStatus: this.writer?.started ? "ready" : "unavailable", workerStatus: this.worker?.connected ? "ready" : (this.healthSnapshot.workerStatus || "unavailable"), workerCrashAttempts: this.workerRestartAttempts }; }
 
   async doctor() { return { ...this.health(), integrity: await this.writer.call("verifyIntegrity"), readOnly: true, worker: Boolean(this.worker && this.worker.connected), ownerTokenMode: "0600" }; }
 
