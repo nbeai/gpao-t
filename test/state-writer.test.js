@@ -77,3 +77,21 @@ test("writer makes queue backpressure atomic without dropping the first accepted
     await runtime.stop();
   }
 });
+
+test("restart preserves durable receipts and advances the runtime generation", async () => {
+  const stateDir = tempState();
+  const firstRuntime = await new NativeRuntime({ stateDir }).start();
+  const accepted = await firstRuntime.submitTurn({ principalId: "owner:a", requestId: "restart", payload: { input: "restart" } });
+  await eventually(async () => (await firstRuntime.getTurn("owner:a", accepted.commandId))?.status === "succeeded");
+  const firstGeneration = firstRuntime.generation;
+  await firstRuntime.stop();
+
+  const secondRuntime = await new NativeRuntime({ stateDir }).start();
+  try {
+    assert.equal(secondRuntime.generation, firstGeneration + 1);
+    assert.equal((await secondRuntime.getTurn("owner:a", accepted.commandId)).receipt.result.echo, "restart");
+    assert.equal((await secondRuntime.doctor()).integrity.ok, true);
+  } finally {
+    await secondRuntime.stop();
+  }
+});
