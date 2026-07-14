@@ -11,6 +11,10 @@ function requestDigest(payload) {
   return crypto.createHash("sha256").update(JSON.stringify(payload)).digest("hex");
 }
 
+function isDatabaseBusy(error) {
+  return error?.code === "ERR_SQLITE_ERROR" && /database is locked|database is busy/i.test(error.message || "");
+}
+
 export class NativeRuntime {
   constructor({ stateDir, workerPath = path.resolve(new URL("./worker.js", import.meta.url).pathname), maxInflight = 4, maxQueue = 64 } = {}) {
     this.stateDir = assertSafeStateDir(stateDir);
@@ -20,6 +24,9 @@ export class NativeRuntime {
     this.accepting = false;
     this.stopping = false;
     this.pending = new Map();
+    this.finalizationQueue = new Map();
+    this.finalizationRetryTimer = null;
+    this.pumpRetryTimer = null;
     this.progressClients = new Set();
     this.worker = null;
     this.respawning = false;
@@ -128,11 +135,16 @@ export class NativeRuntime {
       return { commandId: existing.id, status: existing.status, deduplicated: true };
     }
     const command = { id: crypto.randomUUID(), principalId, requestId, requestDigest: requestDigestValue, payload, createdAt: Date.now() };
-    this.store.transaction(() => {
-      this.store.createCommand(command);
-      this.store.appendEvent({ commandId: command.id, principalId, type: "turn.accepted", payload: { requestId }, runtimeGeneration: this.generation });
-      this.store.addProgress(command.id, principalId, "accepted", { requestId });
-    });
+    try {
+      this.store.transaction(() => {
+        this.store.createCommand(command);
+        this.store.appendEvent({ commandId: command.id, principalId, type: "turn.accepted", payload: { requestId }, runtimeGeneration: this.generation });
+        this.store.addProgress(command.id, principalId, "accepted", { requestId });
+      });
+    } catch (error) {
+      if (isDatabaseBusy(error)) throw new RuntimeError("state_busy", "Native Runtime state is temporarily busy; please retry", 503, { retryable: true });
+      throw error;
+    }
     this.emitProgress(command.id, principalId);
     this.pump();
     return { commandId: command.id, status: "accepted", deduplicated: false };
@@ -143,14 +155,23 @@ export class NativeRuntime {
     while (this.pending.size < this.maxInflight) {
       const row = this.store.pendingOutbox(1)[0];
       if (!row) break;
-      const leased = this.store.transaction(() => {
-        if (!this.store.lease(row.command_id, this.generation)) return null;
-        const command = this.store.getCommand(row.command_id, row.principal_id);
-        const permit = createPermit(this.ownerToken, { commandId: command.id, principalId: command.principalId, requestDigest: requestDigest(command.payload), generation: this.generation });
-        this.store.appendEvent({ commandId: command.id, principalId: command.principalId, type: "turn.dispatched", payload: { generation: this.generation }, runtimeGeneration: this.generation });
-        this.store.addProgress(command.id, command.principalId, "running", { generation: this.generation });
-        return { command, permit };
-      });
+      let leased;
+      try {
+        leased = this.store.transaction(() => {
+          if (!this.store.lease(row.command_id, this.generation)) return null;
+          const command = this.store.getCommand(row.command_id, row.principal_id);
+          const permit = createPermit(this.ownerToken, { commandId: command.id, principalId: command.principalId, requestDigest: requestDigest(command.payload), generation: this.generation });
+          this.store.appendEvent({ commandId: command.id, principalId: command.principalId, type: "turn.dispatched", payload: { generation: this.generation }, runtimeGeneration: this.generation });
+          this.store.addProgress(command.id, command.principalId, "running", { generation: this.generation });
+          return { command, permit };
+        });
+      } catch (error) {
+        if (isDatabaseBusy(error)) {
+          this.schedulePumpRetry();
+          return;
+        }
+        throw error;
+      }
       if (!leased) break;
       this.pending.set(leased.command.id, { commandId: leased.command.id, principalId: leased.command.principalId, generation: this.generation, permit: leased.permit });
       this.healthSnapshot.inflight = this.pending.size;
@@ -175,12 +196,58 @@ export class NativeRuntime {
     const pending = this.pending.get(message.commandId);
     if (!pending || message.generation !== this.generation || message.permitSignature !== pending.permit.signature) return;
     this.pending.delete(message.commandId);
+    const completion = { message, pending };
+    if (!this.persistCompletion(completion)) {
+      this.finalizationQueue.set(message.commandId, completion);
+      this.healthSnapshot.inflight = this.pending.size + this.finalizationQueue.size;
+      this.scheduleFinalizationRetry();
+    }
+  }
+
+  persistCompletion({ message, pending }) {
     const status = message.status === "succeeded" ? "succeeded" : "failed";
     const result = status === "succeeded" ? message.result : { error: message.error || { code: "worker_failed", message: "Worker failed" } };
-    this.store.transaction(() => this.store.markTerminal(message.commandId, pending.principalId, this.generation, status, result));
-    this.healthSnapshot.inflight = this.pending.size;
+    try {
+      this.store.transaction(() => this.store.markTerminal(message.commandId, pending.principalId, this.generation, status, result));
+    } catch {
+      return false;
+    }
+    this.finalizationQueue.delete(message.commandId);
+    this.healthSnapshot.inflight = this.pending.size + this.finalizationQueue.size;
     this.emitProgress(message.commandId, pending.principalId);
     this.pump();
+    return true;
+  }
+
+  scheduleFinalizationRetry() {
+    if (this.finalizationRetryTimer || this.stopping) return;
+    this.finalizationRetryTimer = setTimeout(() => {
+      this.finalizationRetryTimer = null;
+      for (const [commandId, completion] of [...this.finalizationQueue]) {
+        if (this.persistCompletion(completion)) this.finalizationQueue.delete(commandId);
+      }
+      if (this.finalizationQueue.size) this.scheduleFinalizationRetry();
+    }, 25);
+    this.finalizationRetryTimer.unref();
+  }
+
+  schedulePumpRetry() {
+    if (this.pumpRetryTimer || this.stopping) return;
+    this.pumpRetryTimer = setTimeout(() => {
+      this.pumpRetryTimer = null;
+      this.pump();
+    }, 50);
+    this.pumpRetryTimer.unref();
+  }
+
+  markFinalizationsUncertain(reason) {
+    const entries = [...this.finalizationQueue.values()];
+    this.finalizationQueue.clear();
+    if (!entries.length) return;
+    this.store.transaction(() => {
+      for (const { pending } of entries) this.store.markUncertain(pending.commandId, pending.principalId, this.generation, reason);
+    });
+    for (const { pending } of entries) this.emitProgress(pending.commandId, pending.principalId);
   }
 
   getTurn(principalId, commandId) {
@@ -246,6 +313,11 @@ export class NativeRuntime {
     this.accepting = false;
     this.healthSnapshot = { ...this.healthSnapshot, status: "stopping", state: "draining" };
     this.markInflightUncertain("runtime_shutdown");
+    if (this.finalizationRetryTimer) clearTimeout(this.finalizationRetryTimer);
+    this.finalizationRetryTimer = null;
+    if (this.pumpRetryTimer) clearTimeout(this.pumpRetryTimer);
+    this.pumpRetryTimer = null;
+    this.markFinalizationsUncertain("runtime_shutdown");
     for (const client of this.progressClients) {
       try { client.response.end(); } catch {}
     }
