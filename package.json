@@ -6,8 +6,8 @@
   "description": "Isolated GPAO-T Native Runtime production foundation laboratory.",
   "engines": { "node": ">=24" },
   "scripts": {
-    "check": "node --check src/index.js && node --check src/core/runtime.js && node --check src/core/store.js && node --check src/core/http.js && node --check src/core/worker.js && node --check test/runtime.test.js && node --check test/http.test.js && node --check tools/hold-sqlite-lock.mjs && node --check tools/benchmark-foundation.mjs",
-    "test": "node --test test/runtime.test.js test/http.test.js --test-concurrency=1 --test-timeout=30000 --test-reporter=spec",
+    "check": "node --check src/index.js && node --check src/core/runtime.js && node --check src/core/store.js && node --check src/core/http.js && node --check src/core/worker.js && node --check src/core/state-writer.js && node --check src/core/state-writer-client.js && node --check test/runtime.test.js && node --check test/http.test.js && node --check test/state-writer.test.js && node --check tools/hold-sqlite-lock.mjs && node --check tools/benchmark-foundation.mjs",
+    "test": "node --test test/runtime.test.js test/http.test.js test/state-writer.test.js --test-concurrency=1 --test-timeout=30000 --test-reporter=spec",
     "start": "node src/index.js start",
     "doctor": "node src/index.js doctor",
     "bench": "node tools/bench.mjs",

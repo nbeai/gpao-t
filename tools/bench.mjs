@@ -5,11 +5,11 @@ import { performance } from "node:perf_hooks";
 import { NativeRuntime } from "../src/core/runtime.js";
 
 const stateDir = fs.mkdtempSync(path.join(os.tmpdir(), "gpao-t-native-bench-"));
-const runtime = new NativeRuntime({ stateDir, maxInflight: 4 }).start();
+const runtime = await new NativeRuntime({ stateDir, maxInflight: 4 }).start();
 const samples = [];
 for (let index = 0; index < 500; index += 1) {
   const start = performance.now();
-  runtime.submitTurn({ principalId: "bench", requestId: `r-${index}`, payload: { input: index } });
+  await runtime.submitTurn({ principalId: "bench", requestId: `r-${index}`, payload: { input: index } });
   samples.push(performance.now() - start);
 }
 samples.sort((a, b) => a - b);

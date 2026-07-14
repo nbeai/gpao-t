@@ -142,6 +142,21 @@ export class StateStore {
     this.db.prepare("INSERT INTO outbox(id, command_id, principal_id, state, generation, attempts, created_at, updated_at) VALUES(?, ?, ?, 'pending', NULL, 0, ?, ?)").run(crypto.randomUUID(), command.id, command.principalId, command.createdAt, command.createdAt);
   }
 
+  acceptCommand(command, runtimeGeneration, maxQueue = 64) {
+    return this.transaction(() => {
+      const existing = this.findByRequest(command.principalId, command.requestId);
+      if (existing) {
+        if (existing.request_digest !== command.requestDigest) throw new RuntimeError("idempotency_conflict", "Request id was already used with a different payload", 409);
+        return { commandId: existing.id, status: existing.status, deduplicated: true };
+      }
+      if (this.countActiveOutbox() >= maxQueue) throw new RuntimeError("backpressure", "Native Runtime queue is full", 429, { maxQueue });
+      this.createCommand(command);
+      this.appendEvent({ commandId: command.id, principalId: command.principalId, type: "turn.accepted", payload: { requestId: command.requestId }, runtimeGeneration });
+      this.addProgress(command.id, command.principalId, "accepted", { requestId: command.requestId });
+      return { commandId: command.id, status: "accepted", deduplicated: false };
+    });
+  }
+
   findByRequest(principalId, requestId) {
     return this.db.prepare("SELECT * FROM commands WHERE principal_id = ? AND request_id = ?").get(principalId, requestId);
   }

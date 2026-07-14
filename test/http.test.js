@@ -24,7 +24,7 @@ async function eventually(url, predicate, init) {
 }
 
 test("HTTP health is public, work is owner-authenticated, and turn state is scoped", async () => {
-  const runtime = new NativeRuntime({ stateDir: tempState() }).start();
+  const runtime = await new NativeRuntime({ stateDir: tempState() }).start();
   const { server } = createHttpServer(runtime, { port: 0 });
   await new Promise(resolve => server.listen(0, "127.0.0.1", resolve));
   const port = server.address().port;

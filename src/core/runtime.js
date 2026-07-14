@@ -5,20 +5,17 @@ import { fork } from "node:child_process";
 import { assertFileMode, assertSafeStateDir } from "./paths.js";
 import { RuntimeError } from "./errors.js";
 import { createPermit } from "./permit.js";
-import { StateStore } from "./store.js";
+import { StateWriterClient } from "./state-writer-client.js";
 
 function requestDigest(payload) {
   return crypto.createHash("sha256").update(JSON.stringify(payload)).digest("hex");
 }
 
-function isDatabaseBusy(error) {
-  return error?.code === "ERR_SQLITE_ERROR" && /database is locked|database is busy/i.test(error.message || "");
-}
-
 export class NativeRuntime {
-  constructor({ stateDir, workerPath = path.resolve(new URL("./worker.js", import.meta.url).pathname), maxInflight = 4, maxQueue = 64 } = {}) {
+  constructor({ stateDir, workerPath = path.resolve(new URL("./worker.js", import.meta.url).pathname), writerPath = path.resolve(new URL("./state-writer.js", import.meta.url).pathname), maxInflight = 4, maxQueue = 64 } = {}) {
     this.stateDir = assertSafeStateDir(stateDir);
     this.workerPath = workerPath;
+    this.writerPath = writerPath;
     this.maxInflight = maxInflight;
     this.maxQueue = maxQueue;
     this.accepting = false;
@@ -27,6 +24,7 @@ export class NativeRuntime {
     this.finalizationQueue = new Map();
     this.finalizationRetryTimer = null;
     this.pumpRetryTimer = null;
+    this.pumpPromise = null;
     this.progressClients = new Set();
     this.worker = null;
     this.respawning = false;
@@ -36,30 +34,28 @@ export class NativeRuntime {
     this.lockFd = null;
     this.lockPath = path.join(this.stateDir, "runtime.lock");
     this.readyAt = null;
+    this.writer = null;
     this.healthSnapshot = { status: "stopped", state: "offline", generation: 0, inflight: 0 };
   }
 
-  start() {
+  async start() {
     if (this.accepting) return this;
     this.acquireLock();
     try {
       this.ownerToken = this.loadOwnerToken();
-      this.store = new StateStore(this.stateDir);
-      this.store.verifyCheckpoint();
-      const priorGeneration = Number(this.store.getMeta("runtime_generation") || 0);
-      this.generation = priorGeneration + 1;
       this.instanceId = crypto.randomUUID();
-      this.store.transaction(() => {
-        this.store.setMeta("runtime_generation", String(this.generation));
-        this.store.setMeta("runtime_instance_id", this.instanceId);
-        this.store.markAllLeasedUncertain(this.generation, "runtime_restart");
-      });
+      this.writer = new StateWriterClient({ stateDir: this.stateDir, writerPath: this.writerPath });
+      await this.writer.start();
+      await this.writer.call("verifyCheckpoint");
+      this.generation = (await this.writer.call("bootstrapRuntime", { instanceId: this.instanceId })).generation;
       this.accepting = true;
       this.healthSnapshot = { status: "ready", state: "online", generation: this.generation, inflight: 0 };
       this.readyAt = Date.now();
       this.spawnWorker();
       return this;
     } catch (error) {
+      await this.writer?.close();
+      this.writer = null;
       this.releaseLock();
       throw error;
     }
@@ -94,128 +90,106 @@ export class NativeRuntime {
   spawnWorker() {
     if (this.stopping || this.worker || this.respawning) return;
     this.respawning = true;
-    // The worker is a separate runtime boundary. Never inherit test/eval flags
-    // such as --test or --input-type from the parent process.
     const child = fork(this.workerPath, [], { execArgv: [], env: { ...process.env, GPAO_T_PERMIT_SECRET: this.ownerToken }, stdio: ["ignore", "ignore", "pipe", "ipc"] });
     this.worker = child;
-    child.on("message", message => this.handleWorkerMessage(message));
+    child.on("message", message => { void this.handleWorkerMessage(message); });
     child.on("error", () => {});
-    child.once("spawn", () => { this.respawning = false; this.pump(); });
+    child.once("spawn", () => { this.respawning = false; void this.pump().catch(() => {}); });
     child.once("exit", () => {
       if (this.worker === child) this.worker = null;
       this.respawning = false;
       if (this.stopping) return;
-      this.markInflightUncertain("worker_exit");
+      void this.markInflightUncertain("worker_exit");
       setTimeout(() => this.spawnWorker(), 25).unref();
     });
   }
 
-  markInflightUncertain(reason) {
+  async markInflightUncertain(reason) {
     const entries = [...this.pending.values()];
     this.pending.clear();
     if (!entries.length) return;
-    this.store.transaction(() => {
-      for (const entry of entries) this.store.markUncertain(entry.commandId, entry.principalId, this.generation, reason);
-    });
-    for (const entry of entries) this.emitProgress(entry.commandId, entry.principalId);
-    this.healthSnapshot.inflight = 0;
+    for (const entry of entries) {
+      await this.writer.call("markUncertain", { commandId: entry.commandId, principalId: entry.principalId, generation: this.generation, reason });
+      await this.emitProgress(entry.commandId, entry.principalId);
+    }
+    this.healthSnapshot.inflight = this.pending.size + this.finalizationQueue.size;
   }
 
-  submitTurn({ principalId, requestId, payload = {} }) {
+  async submitTurn({ principalId, requestId, payload = {} }) {
     if (!this.accepting) throw new RuntimeError("runtime_not_ready", "Native Runtime is not accepting work", 503);
     if (!principalId || !requestId) throw new RuntimeError("invalid_request", "principalId and requestId are required", 400);
     const serialized = JSON.stringify(payload);
     if (Buffer.byteLength(serialized) > 64 * 1024) throw new RuntimeError("payload_too_large", "Turn payload exceeds 64 KiB", 413);
-    const active = this.store.countActiveOutbox();
+    const active = await this.writer.call("countActiveOutbox");
     if (active >= this.maxQueue) throw new RuntimeError("backpressure", "Native Runtime queue is full", 429, { maxQueue: this.maxQueue });
-    const requestDigestValue = requestDigest(payload);
-    const existing = this.store.findByRequest(principalId, requestId);
-    if (existing) {
-      if (existing.request_digest !== requestDigestValue) throw new RuntimeError("idempotency_conflict", "Request id was already used with a different payload", 409);
-      return { commandId: existing.id, status: existing.status, deduplicated: true };
-    }
-    const command = { id: crypto.randomUUID(), principalId, requestId, requestDigest: requestDigestValue, payload, createdAt: Date.now() };
-    try {
-      this.store.transaction(() => {
-        this.store.createCommand(command);
-        this.store.appendEvent({ commandId: command.id, principalId, type: "turn.accepted", payload: { requestId }, runtimeGeneration: this.generation });
-        this.store.addProgress(command.id, principalId, "accepted", { requestId });
-      });
-    } catch (error) {
-      if (isDatabaseBusy(error)) throw new RuntimeError("state_busy", "Native Runtime state is temporarily busy; please retry", 503, { retryable: true });
-      throw error;
-    }
-    this.emitProgress(command.id, principalId);
-    this.pump();
-    return { commandId: command.id, status: "accepted", deduplicated: false };
+    const command = { id: crypto.randomUUID(), principalId, requestId, requestDigest: requestDigest(payload), payload, createdAt: Date.now() };
+    const result = await this.writer.call("acceptCommand", { command, runtimeGeneration: this.generation, maxQueue: this.maxQueue });
+    await this.emitProgress(result.commandId, principalId);
+    void this.pump().catch(() => {});
+    return result;
   }
 
-  pump() {
-    if (!this.accepting || !this.worker || !this.worker.connected) return;
-    while (this.pending.size < this.maxInflight) {
-      const row = this.store.pendingOutbox(1)[0];
-      if (!row) break;
-      let leased;
-      try {
-        leased = this.store.transaction(() => {
-          if (!this.store.lease(row.command_id, this.generation)) return null;
-          const command = this.store.getCommand(row.command_id, row.principal_id);
-          const permit = createPermit(this.ownerToken, { commandId: command.id, principalId: command.principalId, requestDigest: requestDigest(command.payload), generation: this.generation });
-          this.store.appendEvent({ commandId: command.id, principalId: command.principalId, type: "turn.dispatched", payload: { generation: this.generation }, runtimeGeneration: this.generation });
-          this.store.addProgress(command.id, command.principalId, "running", { generation: this.generation });
-          return { command, permit };
-        });
-      } catch (error) {
-        if (isDatabaseBusy(error)) {
-          this.schedulePumpRetry();
-          return;
+  async pump() {
+    if (this.pumpPromise) return this.pumpPromise;
+    this.pumpPromise = (async () => {
+      if (!this.accepting || !this.worker || !this.worker.connected) return;
+      while (this.pending.size < this.maxInflight) {
+        const row = (await this.writer.call("pendingOutbox", { limit: 1 }))[0];
+        if (!row) break;
+        const command = await this.writer.call("leaseCommand", { commandId: row.command_id, principalId: row.principal_id, generation: this.generation });
+        if (!command) continue;
+        const permit = createPermit(this.ownerToken, { commandId: command.id, principalId: command.principalId, requestDigest: requestDigest(command.payload), generation: this.generation });
+        try {
+          await this.writer.call("recordDispatch", { commandId: command.id, principalId: command.principalId, generation: this.generation });
+        } catch (error) {
+          await this.markOneUncertain(command.id, command.principalId, "dispatch_record_failed");
+          throw error;
         }
-        throw error;
+        this.pending.set(command.id, { commandId: command.id, principalId: command.principalId, generation: this.generation, permit });
+        this.healthSnapshot.inflight = this.pending.size + this.finalizationQueue.size;
+        await this.emitProgress(command.id, command.principalId);
+        try {
+          this.worker.send({ type: "execute", permit, payload: command.payload });
+        } catch {
+          await this.markOneUncertain(command.id, command.principalId, "worker_send_failed");
+        }
       }
-      if (!leased) break;
-      this.pending.set(leased.command.id, { commandId: leased.command.id, principalId: leased.command.principalId, generation: this.generation, permit: leased.permit });
-      this.healthSnapshot.inflight = this.pending.size;
-      this.emitProgress(leased.command.id, leased.command.principalId);
-      try {
-        this.worker.send({ type: "execute", permit: leased.permit, payload: leased.command.payload });
-      } catch {
-        this.markOneUncertain(leased.command.id, leased.command.principalId, "worker_send_failed");
-      }
-    }
+    })().finally(() => { this.pumpPromise = null; });
+    return this.pumpPromise;
   }
 
-  markOneUncertain(commandId, principalId, reason) {
+  async markOneUncertain(commandId, principalId, reason) {
     this.pending.delete(commandId);
-    this.store.transaction(() => this.store.markUncertain(commandId, principalId, this.generation, reason));
-    this.healthSnapshot.inflight = this.pending.size;
-    this.emitProgress(commandId, principalId);
+    await this.writer.call("markUncertain", { commandId, principalId, generation: this.generation, reason });
+    this.healthSnapshot.inflight = this.pending.size + this.finalizationQueue.size;
+    await this.emitProgress(commandId, principalId);
   }
 
-  handleWorkerMessage(message) {
+  async handleWorkerMessage(message) {
     if (!message || message.type !== "result") return;
     const pending = this.pending.get(message.commandId);
     if (!pending || message.generation !== this.generation || message.permitSignature !== pending.permit.signature) return;
     this.pending.delete(message.commandId);
     const completion = { message, pending };
-    if (!this.persistCompletion(completion)) {
+    if (!await this.persistCompletion(completion)) {
       this.finalizationQueue.set(message.commandId, completion);
       this.healthSnapshot.inflight = this.pending.size + this.finalizationQueue.size;
       this.scheduleFinalizationRetry();
     }
   }
 
-  persistCompletion({ message, pending }) {
+  async persistCompletion({ message, pending }) {
     const status = message.status === "succeeded" ? "succeeded" : "failed";
     const result = status === "succeeded" ? message.result : { error: message.error || { code: "worker_failed", message: "Worker failed" } };
     try {
-      this.store.transaction(() => this.store.markTerminal(message.commandId, pending.principalId, this.generation, status, result));
+      await this.writer.call("markTerminal", { commandId: message.commandId, principalId: pending.principalId, generation: this.generation, status, result });
     } catch {
       return false;
     }
     this.finalizationQueue.delete(message.commandId);
     this.healthSnapshot.inflight = this.pending.size + this.finalizationQueue.size;
-    this.emitProgress(message.commandId, pending.principalId);
-    this.pump();
+    await this.emitProgress(message.commandId, pending.principalId);
+    void this.pump().catch(() => {});
     return true;
   }
 
@@ -223,50 +197,39 @@ export class NativeRuntime {
     if (this.finalizationRetryTimer || this.stopping) return;
     this.finalizationRetryTimer = setTimeout(() => {
       this.finalizationRetryTimer = null;
-      for (const [commandId, completion] of [...this.finalizationQueue]) {
-        if (this.persistCompletion(completion)) this.finalizationQueue.delete(commandId);
-      }
-      if (this.finalizationQueue.size) this.scheduleFinalizationRetry();
+      void (async () => {
+        for (const completion of [...this.finalizationQueue.values()]) if (await this.persistCompletion(completion)) this.finalizationQueue.delete(completion.message.commandId);
+        if (this.finalizationQueue.size) this.scheduleFinalizationRetry();
+      })();
     }, 25);
     this.finalizationRetryTimer.unref();
   }
 
-  schedulePumpRetry() {
-    if (this.pumpRetryTimer || this.stopping) return;
-    this.pumpRetryTimer = setTimeout(() => {
-      this.pumpRetryTimer = null;
-      this.pump();
-    }, 50);
-    this.pumpRetryTimer.unref();
-  }
-
-  markFinalizationsUncertain(reason) {
+  async markFinalizationsUncertain(reason) {
     const entries = [...this.finalizationQueue.values()];
     this.finalizationQueue.clear();
     if (!entries.length) return;
-    this.store.transaction(() => {
-      for (const { pending } of entries) this.store.markUncertain(pending.commandId, pending.principalId, this.generation, reason);
-    });
-    for (const { pending } of entries) this.emitProgress(pending.commandId, pending.principalId);
+    for (const { pending } of entries) {
+      await this.writer.call("markUncertain", { commandId: pending.commandId, principalId: pending.principalId, generation: this.generation, reason });
+      await this.emitProgress(pending.commandId, pending.principalId);
+    }
   }
 
-  getTurn(principalId, commandId) {
-    return this.store.getCommand(commandId, principalId);
-  }
+  async getTurn(principalId, commandId) { return this.writer.call("getCommand", { commandId, principalId }); }
 
-  getProgress(principalId, commandId) {
-    const turn = this.getTurn(principalId, commandId);
+  async getProgress(principalId, commandId) {
+    const turn = await this.getTurn(principalId, commandId);
     if (!turn) return null;
-    return this.store.getProgress(commandId, principalId);
+    return this.writer.call("getProgress", { commandId, principalId });
   }
 
-  subscribeProgress(principalId, commandId, response) {
-    const progress = this.getProgress(principalId, commandId);
+  async subscribeProgress(principalId, commandId, response) {
+    const progress = await this.getProgress(principalId, commandId);
     if (!progress) return false;
     if (this.progressClients.size >= 16) throw new RuntimeError("progress_capacity", "Progress stream capacity is full", 429);
     response.write(`event: snapshot\ndata: ${JSON.stringify(progress)}\n\n`);
-    const turn = this.getTurn(principalId, commandId);
-    if (turn.status === "succeeded" || turn.status === "failed" || turn.status === "uncertain") {
+    const turn = await this.getTurn(principalId, commandId);
+    if (["succeeded", "failed", "uncertain"].includes(turn.status)) {
       response.end();
       return true;
     }
@@ -276,11 +239,11 @@ export class NativeRuntime {
     return true;
   }
 
-  emitProgress(commandId, principalId) {
+  async emitProgress(commandId, principalId) {
     const clients = [...this.progressClients].filter(client => client.commandId === commandId && client.principalId === principalId);
     if (!clients.length) return;
-    const progress = this.store.getProgress(commandId, principalId);
-    const turn = this.getTurn(principalId, commandId);
+    const progress = await this.writer.call("getProgress", { commandId, principalId });
+    const turn = await this.getTurn(principalId, commandId);
     const payload = JSON.stringify(progress.at(-1));
     for (const client of clients) {
       try {
@@ -299,35 +262,31 @@ export class NativeRuntime {
     }
   }
 
-  health() {
-    return { ...this.healthSnapshot, instanceId: this.instanceId, readyAt: this.readyAt, stateDir: this.stateDir };
-  }
+  health() { return { ...this.healthSnapshot, instanceId: this.instanceId, readyAt: this.readyAt, stateDir: this.stateDir, stateWriter: "separate-process" }; }
 
-  doctor() {
-    return { ...this.health(), integrity: this.store.verifyIntegrity(), readOnly: true, worker: Boolean(this.worker && this.worker.connected), ownerTokenMode: "0600" };
-  }
+  async doctor() { return { ...this.health(), integrity: await this.writer.call("verifyIntegrity"), readOnly: true, worker: Boolean(this.worker && this.worker.connected), ownerTokenMode: "0600" }; }
 
   async stop() {
-    if (!this.store) return;
+    if (!this.writer) return;
     this.stopping = true;
     this.accepting = false;
     this.healthSnapshot = { ...this.healthSnapshot, status: "stopping", state: "draining" };
-    this.markInflightUncertain("runtime_shutdown");
+    await this.markInflightUncertain("runtime_shutdown");
     if (this.finalizationRetryTimer) clearTimeout(this.finalizationRetryTimer);
     this.finalizationRetryTimer = null;
-    if (this.pumpRetryTimer) clearTimeout(this.pumpRetryTimer);
-    this.pumpRetryTimer = null;
-    this.markFinalizationsUncertain("runtime_shutdown");
-    for (const client of this.progressClients) {
-      try { client.response.end(); } catch {}
-    }
+    for (const client of this.progressClients) { try { client.response.end(); } catch {} }
     this.progressClients.clear();
     if (this.worker) {
       try { this.worker.disconnect(); } catch {}
       try { this.worker.kill(); } catch {}
       this.worker = null;
     }
-    this.store.close();
+    if (this.pumpPromise) {
+      try { await this.pumpPromise; } catch {}
+    }
+    await this.markFinalizationsUncertain("runtime_shutdown");
+    await this.writer.close();
+    this.writer = null;
     this.releaseLock();
     this.healthSnapshot = { ...this.healthSnapshot, status: "stopped", state: "offline", inflight: 0 };
   }

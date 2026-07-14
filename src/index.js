@@ -12,11 +12,11 @@ const stateDir = arg("--state-dir", defaultStateDir());
 const port = Number(arg("--port", "18899"));
 
 if (command === "doctor") {
-  const runtime = new NativeRuntime({ stateDir }).start();
-  console.log(JSON.stringify(runtime.doctor(), null, 2));
+  const runtime = await new NativeRuntime({ stateDir }).start();
+  console.log(JSON.stringify(await runtime.doctor(), null, 2));
   await runtime.stop();
 } else if (command === "start") {
-  const runtime = new NativeRuntime({ stateDir }).start();
+  const runtime = await new NativeRuntime({ stateDir }).start();
   const { server } = createHttpServer(runtime, { port });
   server.listen(port, "127.0.0.1", () => console.log(`GPAO-T Native Runtime listening on http://127.0.0.1:${port}`));
   const shutdown = async () => { server.close(); await runtime.stop(); process.exit(0); };

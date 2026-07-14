@@ -30,21 +30,21 @@ export function createHttpServer(runtime, { host = "127.0.0.1", port = 18899 } =
       }
       if (bearer(request) !== runtime.ownerToken) throw new RuntimeError("unauthorized", "Owner authentication required", 401);
       const principalId = "owner:local";
-      if (request.method === "GET" && url.pathname === "/v1/doctor") return send(response, 200, runtime.doctor());
+      if (request.method === "GET" && url.pathname === "/v1/doctor") return send(response, 200, await runtime.doctor());
       if (request.method === "POST" && url.pathname === "/v1/turns") {
         const body = await readJson(request);
-        return send(response, 202, runtime.submitTurn({ principalId, requestId: body.requestId, payload: body.payload || {} }));
+        return send(response, 202, await runtime.submitTurn({ principalId, requestId: body.requestId, payload: body.payload || {} }));
       }
       const turnMatch = url.pathname.match(/^\/v1\/turns\/([^/]+)$/);
       if (request.method === "GET" && turnMatch) {
-        const turn = runtime.getTurn(principalId, turnMatch[1]);
+        const turn = await runtime.getTurn(principalId, turnMatch[1]);
         return turn ? send(response, 200, turn) : send(response, 404, { code: "not_found" });
       }
       const progressMatch = url.pathname.match(/^\/v1\/progress\/([^/]+)$/);
       if (request.method === "GET" && progressMatch) {
-        if (!runtime.getProgress(principalId, progressMatch[1])) return send(response, 404, { code: "not_found" });
+        if (!await runtime.getProgress(principalId, progressMatch[1])) return send(response, 404, { code: "not_found" });
         response.writeHead(200, { "content-type": "text/event-stream; charset=utf-8", "cache-control": "no-cache", connection: "keep-alive" });
-        runtime.subscribeProgress(principalId, progressMatch[1], response);
+        await runtime.subscribeProgress(principalId, progressMatch[1], response);
         return;
       }
       return send(response, 404, { code: "not_found" });

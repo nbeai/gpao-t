@@ -22,40 +22,41 @@ function waitForLine(child, expected) {
 }
 
 const stateDir = fs.mkdtempSync(path.join(os.tmpdir(), "gpao-t-native-benchmark-"));
-const runtime = new NativeRuntime({ stateDir }).start();
-const seed = runtime.submitTurn({ principalId: "benchmark", requestId: "seed", payload: { input: "seed" } });
-while (runtime.getTurn("benchmark", seed.commandId)?.status !== "succeeded") await new Promise(resolve => setTimeout(resolve, 5));
+const runtime = await new NativeRuntime({ stateDir }).start();
+const seed = await runtime.submitTurn({ principalId: "benchmark", requestId: "seed", payload: { input: "seed" } });
+while ((await runtime.getTurn("benchmark", seed.commandId))?.status !== "succeeded") await new Promise(resolve => setTimeout(resolve, 5));
 const holder = spawn(process.execPath, [path.resolve("tools/hold-sqlite-lock.mjs"), path.join(stateDir, "runtime.sqlite"), "80"], { stdio: ["ignore", "pipe", "inherit"], env: { ...process.env, NODE_NO_WARNINGS: "1" } });
 await waitForLine(holder, "locked");
+const holderExit = new Promise(resolve => holder.once("exit", resolve));
 let maxDelayMs = 0;
 const timerExpected = Date.now() + 10;
 const timer = setTimeout(() => { maxDelayMs = Date.now() - timerExpected; }, 10);
 const started = performance.now();
 let submitError = null;
 try {
-  runtime.submitTurn({ principalId: "benchmark", requestId: "lock-probe", payload: { input: "lock" } });
+  await runtime.submitTurn({ principalId: "benchmark", requestId: "lock-probe", payload: { input: "lock" } });
 } catch (error) {
   submitError = { code: error.code || "sqlite_error", message: error.message };
 }
 const submitDurationMs = performance.now() - started;
 clearTimeout(timer);
-await new Promise(resolve => holder.once("exit", resolve));
+await holderExit;
 await runtime.stop();
 fs.rmSync(stateDir, { recursive: true, force: true });
 
 const receipt = {
   schema: "gpao_t.native_foundation_benchmark.v1",
-  stateWriter: "node:sqlite DatabaseSync on runtime process",
+  stateWriter: "dedicated child process with bounded busy retry",
   lockHoldMs: 80,
   submitDurationMs,
   timerDelayMs: maxDelayMs,
   submitError,
   gate: maxDelayMs >= 20 || submitError ? "blocked" : "pass",
   interpretation: maxDelayMs >= 20
-    ? "SQLite writer contention can delay the runtime event loop; move durable writes behind an asynchronous boundary before G4 promotion."
+    ? "SQLite writer contention can delay the runtime event loop; continue investigating the writer boundary before G4 promotion."
     : submitError
-      ? "The runtime stayed alive but durable submission was rejected during writer contention; close the asynchronous state-writer/backpressure contract before G4 promotion."
-      : "This probe did not observe a 20ms event-loop stall; continue with broader load and restart measurements."
+      ? "The dedicated state writer could not complete durable submission within its bounded retry window."
+      : "The dedicated state writer completed durable submission without a material runtime event-loop stall. Continue with broader load and restart measurements."
 };
 console.log(JSON.stringify(receipt, null, 2));
 if (receipt.gate === "blocked") process.exitCode = 1;
