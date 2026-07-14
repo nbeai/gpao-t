@@ -95,3 +95,13 @@ test("restart preserves durable receipts and advances the runtime generation", a
     await secondRuntime.stop();
   }
 });
+
+test("shutdown drains writer operations within the bounded local deadline", async () => {
+  const runtime = await new NativeRuntime({ stateDir: tempState(), maxInflight: 1, maxQueue: 16 }).start();
+  for (let index = 0; index < 8; index += 1) {
+    await runtime.submitTurn({ principalId: "owner:a", requestId: `shutdown-${index}`, payload: { input: index, delayMs: 250 } });
+  }
+  const started = performance.now();
+  await runtime.stop();
+  assert.ok(performance.now() - started < 2_000, "shutdown exceeded the bounded local deadline");
+});
