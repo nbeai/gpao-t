@@ -210,6 +210,14 @@ export class StateStore {
     return value ? JSON.parse(value) : { seq: 0, hash: "GENESIS" };
   }
 
+  verifyCheckpoint() {
+    const checkpoint = this.getCheckpoint();
+    const last = this.db.prepare("SELECT seq, hash FROM events ORDER BY seq DESC LIMIT 1").get();
+    const actual = last ? { seq: last.seq, hash: last.hash } : { seq: 0, hash: "GENESIS" };
+    if (actual.seq !== checkpoint.seq || actual.hash !== checkpoint.hash) throw new RuntimeError("event_checkpoint_drift", "Event checkpoint does not match the event tail", 500, { checkpoint, actual });
+    return { ok: true, checkpoint };
+  }
+
   verifyIntegrity() {
     let previous = "GENESIS";
     let lastSeq = 0;

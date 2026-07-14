@@ -38,6 +38,7 @@ export class NativeRuntime {
     try {
       this.ownerToken = this.loadOwnerToken();
       this.store = new StateStore(this.stateDir);
+      this.store.verifyCheckpoint();
       const priorGeneration = Number(this.store.getMeta("runtime_generation") || 0);
       this.generation = priorGeneration + 1;
       this.instanceId = crypto.randomUUID();
@@ -86,7 +87,9 @@ export class NativeRuntime {
   spawnWorker() {
     if (this.stopping || this.worker || this.respawning) return;
     this.respawning = true;
-    const child = fork(this.workerPath, [], { env: { ...process.env, GPAO_T_PERMIT_SECRET: this.ownerToken }, stdio: ["ignore", "ignore", "ignore", "ipc"] });
+    // The worker is a separate runtime boundary. Never inherit test/eval flags
+    // such as --test or --input-type from the parent process.
+    const child = fork(this.workerPath, [], { execArgv: [], env: { ...process.env, GPAO_T_PERMIT_SECRET: this.ownerToken }, stdio: ["ignore", "ignore", "pipe", "ipc"] });
     this.worker = child;
     child.on("message", message => this.handleWorkerMessage(message));
     child.on("error", () => {});
