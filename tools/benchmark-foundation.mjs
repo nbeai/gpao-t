@@ -28,9 +28,9 @@ while ((await runtime.getTurn("benchmark", seed.commandId))?.status !== "succeed
 const holder = spawn(process.execPath, [path.resolve("tools/hold-sqlite-lock.mjs"), path.join(stateDir, "runtime.sqlite"), "80"], { stdio: ["ignore", "pipe", "inherit"], env: { ...process.env, NODE_NO_WARNINGS: "1" } });
 await waitForLine(holder, "locked");
 const holderExit = new Promise(resolve => holder.once("exit", resolve));
-let maxDelayMs = 0;
-const timerExpected = Date.now() + 10;
-const timer = setTimeout(() => { maxDelayMs = Date.now() - timerExpected; }, 10);
+let maxDelayMs = null;
+const timerExpected = performance.now() + 10;
+const timer = setTimeout(() => { maxDelayMs = Math.max(0, performance.now() - timerExpected); }, 10);
 const started = performance.now();
 let submitError = null;
 try {
@@ -40,6 +40,7 @@ try {
 }
 const submitDurationMs = performance.now() - started;
 clearTimeout(timer);
+if (maxDelayMs === null) maxDelayMs = 0;
 await holderExit;
 await runtime.stop();
 fs.rmSync(stateDir, { recursive: true, force: true });
