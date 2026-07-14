@@ -67,6 +67,24 @@ test("writer lock does not stall the runtime loop and durable submit waits safel
   }
 });
 
+test("writer lock during worker completion preserves the final receipt", async () => {
+  const stateDir = tempState();
+  const runtime = await new NativeRuntime({ stateDir }).start();
+  let holder;
+  try {
+    const accepted = await runtime.submitTurn({ principalId: "owner:a", requestId: "completion-lock", payload: { input: "completion", delayMs: 25 } });
+    holder = spawn(process.execPath, [path.resolve("tools/hold-sqlite-lock.mjs"), path.join(stateDir, "runtime.sqlite"), "80"], { stdio: ["ignore", "pipe", "inherit"], env: { ...process.env, NODE_NO_WARNINGS: "1" } });
+    await waitForLine(holder, "locked");
+    const holderExit = new Promise(resolve => holder.once("exit", resolve));
+    await eventually(async () => (await runtime.getTurn("owner:a", accepted.commandId))?.status === "succeeded");
+    await holderExit;
+    assert.equal((await runtime.getTurn("owner:a", accepted.commandId)).receipt.result.echo, "completion");
+  } finally {
+    if (holder && holder.exitCode === null) holder.kill();
+    await runtime.stop();
+  }
+});
+
 test("writer makes queue backpressure atomic without dropping the first accepted turn", async () => {
   const runtime = await new NativeRuntime({ stateDir: tempState(), maxQueue: 1, maxInflight: 1 }).start();
   try {
