@@ -123,3 +123,15 @@ test("shutdown drains writer operations within the bounded local deadline", asyn
   await runtime.stop();
   assert.ok(performance.now() - started < 2_000, "shutdown exceeded the bounded local deadline");
 });
+
+test("state-writer failure fails closed instead of reporting ready", async () => {
+  const runtime = await new NativeRuntime({ stateDir: tempState() }).start();
+  try {
+    runtime.writer.child.kill("SIGKILL");
+    await eventually(async () => runtime.health().status === "failed");
+    assert.equal(runtime.health().stateWriterStatus, "unavailable");
+    await assert.rejects(() => runtime.submitTurn({ principalId: "owner:a", requestId: "writer-down", payload: { input: "blocked" } }), error => error instanceof RuntimeError && error.code === "runtime_not_ready");
+  } finally {
+    await runtime.stop();
+  }
+});

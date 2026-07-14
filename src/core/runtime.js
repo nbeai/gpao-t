@@ -12,17 +12,21 @@ function requestDigest(payload) {
 }
 
 export class NativeRuntime {
-  constructor({ stateDir, workerPath = path.resolve(new URL("./worker.js", import.meta.url).pathname), writerPath = path.resolve(new URL("./state-writer.js", import.meta.url).pathname), maxInflight = 4, maxQueue = 64 } = {}) {
+  constructor({ stateDir, workerPath = path.resolve(new URL("./worker.js", import.meta.url).pathname), writerPath = path.resolve(new URL("./state-writer.js", import.meta.url).pathname), maxInflight = 4, maxQueue = 64, workerDispatchTimeoutMs = 250, workerResultTimeoutMs = 30_000 } = {}) {
     this.stateDir = assertSafeStateDir(stateDir);
     this.workerPath = workerPath;
     this.writerPath = writerPath;
     this.maxInflight = maxInflight;
     this.maxQueue = maxQueue;
+    this.workerDispatchTimeoutMs = workerDispatchTimeoutMs;
+    this.workerResultTimeoutMs = workerResultTimeoutMs;
     this.accepting = false;
     this.stopping = false;
     this.pending = new Map();
     this.finalizationQueue = new Map();
     this.finalizationRetryTimer = null;
+    this.dispatchTimers = new Map();
+    this.resultTimers = new Map();
     this.pumpRetryTimer = null;
     this.pumpPromise = null;
     this.progressClients = new Set();
@@ -44,7 +48,7 @@ export class NativeRuntime {
     try {
       this.ownerToken = this.loadOwnerToken();
       this.instanceId = crypto.randomUUID();
-      this.writer = new StateWriterClient({ stateDir: this.stateDir, writerPath: this.writerPath });
+      this.writer = new StateWriterClient({ stateDir: this.stateDir, writerPath: this.writerPath, onUnavailable: details => this.handleWriterUnavailable(details) });
       await this.writer.start();
       await this.writer.call("verifyCheckpoint");
       this.generation = (await this.writer.call("bootstrapRuntime", { instanceId: this.instanceId })).generation;
@@ -59,6 +63,12 @@ export class NativeRuntime {
       this.releaseLock();
       throw error;
     }
+  }
+
+  handleWriterUnavailable(details) {
+    if (this.stopping || !this.accepting) return;
+    this.accepting = false;
+    this.healthSnapshot = { ...this.healthSnapshot, status: "failed", state: "degraded", stateWriterStatus: "unavailable", writerFailure: details };
   }
 
   acquireLock() {
@@ -121,7 +131,7 @@ export class NativeRuntime {
     const serialized = JSON.stringify(payload);
     if (Buffer.byteLength(serialized) > 64 * 1024) throw new RuntimeError("payload_too_large", "Turn payload exceeds 64 KiB", 413);
     const active = await this.writer.call("countActiveOutbox");
-    if (active >= this.maxQueue) throw new RuntimeError("backpressure", "Native Runtime queue is full", 429, { maxQueue: this.maxQueue });
+    if (active >= this.maxQueue) throw new RuntimeError("backpressure", "Native Runtime queue is full", 429, { maxQueue: this.maxQueue, retryable: true });
     const command = { id: crypto.randomUUID(), principalId, requestId, requestDigest: requestDigest(payload), payload, createdAt: Date.now() };
     const result = await this.writer.call("acceptCommand", { command, runtimeGeneration: this.generation, maxQueue: this.maxQueue });
     await this.emitProgress(result.commandId, principalId);
@@ -148,8 +158,22 @@ export class NativeRuntime {
         this.pending.set(command.id, { commandId: command.id, principalId: command.principalId, generation: this.generation, permit });
         this.healthSnapshot.inflight = this.pending.size + this.finalizationQueue.size;
         await this.emitProgress(command.id, command.principalId);
+        const dispatchTimer = setTimeout(() => {
+          if (this.pending.has(command.id)) void this.markOneUncertain(command.id, command.principalId, "worker_dispatch_timeout").catch(() => {});
+        }, this.workerDispatchTimeoutMs);
+        dispatchTimer.unref();
+        this.dispatchTimers.set(command.id, dispatchTimer);
+        const resultTimer = setTimeout(() => {
+          if (this.pending.has(command.id)) void this.markOneUncertain(command.id, command.principalId, "worker_result_timeout").catch(() => {});
+        }, this.workerResultTimeoutMs);
+        resultTimer.unref();
+        this.resultTimers.set(command.id, resultTimer);
         try {
-          this.worker.send({ type: "execute", permit, payload: command.payload });
+          this.worker.send({ type: "execute", permit, payload: command.payload }, error => {
+            clearTimeout(this.dispatchTimers.get(command.id));
+            this.dispatchTimers.delete(command.id);
+            if (error && this.pending.has(command.id)) void this.markOneUncertain(command.id, command.principalId, "worker_send_failed").catch(() => {});
+          });
         } catch {
           await this.markOneUncertain(command.id, command.principalId, "worker_send_failed");
         }
@@ -160,6 +184,7 @@ export class NativeRuntime {
 
   async markOneUncertain(commandId, principalId, reason) {
     this.pending.delete(commandId);
+    this.clearWorkerTimers(commandId);
     await this.writer.call("markUncertain", { commandId, principalId, generation: this.generation, reason });
     this.healthSnapshot.inflight = this.pending.size + this.finalizationQueue.size;
     await this.emitProgress(commandId, principalId);
@@ -170,6 +195,7 @@ export class NativeRuntime {
     const pending = this.pending.get(message.commandId);
     if (!pending || message.generation !== this.generation || message.permitSignature !== pending.permit.signature) return;
     this.pending.delete(message.commandId);
+    this.clearWorkerTimers(message.commandId);
     const completion = { message, pending };
     if (!await this.persistCompletion(completion)) {
       this.finalizationQueue.set(message.commandId, completion);
@@ -191,6 +217,13 @@ export class NativeRuntime {
     await this.emitProgress(message.commandId, pending.principalId);
     void this.pump().catch(() => {});
     return true;
+  }
+
+  clearWorkerTimers(commandId) {
+    clearTimeout(this.dispatchTimers.get(commandId));
+    clearTimeout(this.resultTimers.get(commandId));
+    this.dispatchTimers.delete(commandId);
+    this.resultTimers.delete(commandId);
   }
 
   scheduleFinalizationRetry() {
@@ -262,7 +295,7 @@ export class NativeRuntime {
     }
   }
 
-  health() { return { ...this.healthSnapshot, instanceId: this.instanceId, readyAt: this.readyAt, stateDir: this.stateDir, stateWriter: "separate-process" }; }
+  health() { return { ...this.healthSnapshot, instanceId: this.instanceId, readyAt: this.readyAt, stateDir: this.stateDir, stateWriter: "separate-process", stateWriterStatus: this.writer?.started ? "ready" : "unavailable" }; }
 
   async doctor() { return { ...this.health(), integrity: await this.writer.call("verifyIntegrity"), readOnly: true, worker: Boolean(this.worker && this.worker.connected), ownerTokenMode: "0600" }; }
 
@@ -271,9 +304,13 @@ export class NativeRuntime {
     this.stopping = true;
     this.accepting = false;
     this.healthSnapshot = { ...this.healthSnapshot, status: "stopping", state: "draining" };
-    await this.markInflightUncertain("runtime_shutdown");
+    try { await this.markInflightUncertain("runtime_shutdown"); } catch {}
     if (this.finalizationRetryTimer) clearTimeout(this.finalizationRetryTimer);
     this.finalizationRetryTimer = null;
+    for (const timer of this.dispatchTimers.values()) clearTimeout(timer);
+    for (const timer of this.resultTimers.values()) clearTimeout(timer);
+    this.dispatchTimers.clear();
+    this.resultTimers.clear();
     for (const client of this.progressClients) { try { client.response.end(); } catch {} }
     this.progressClients.clear();
     if (this.worker) {
@@ -284,7 +321,7 @@ export class NativeRuntime {
     if (this.pumpPromise) {
       try { await this.pumpPromise; } catch {}
     }
-    await this.markFinalizationsUncertain("runtime_shutdown");
+    try { await this.markFinalizationsUncertain("runtime_shutdown"); } catch {}
     await this.writer.close();
     this.writer = null;
     this.releaseLock();

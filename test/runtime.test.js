@@ -76,6 +76,21 @@ test("worker crash after dispatch becomes unknown and is not retried", async () 
   await runtime.stop();
 });
 
+test("worker result timeout prevents an unresponsive task from staying running", async () => {
+  const runtime = await new NativeRuntime({ stateDir: tempState(), workerResultTimeoutMs: 100 }).start();
+  const result = await runtime.submitTurn({ principalId: "owner:a", requestId: "blackhole", payload: { mode: "blackhole" } });
+  try {
+    const turn = await eventually(async () => {
+      const current = await runtime.getTurn("owner:a", result.commandId);
+      return current?.status === "uncertain" && current;
+    }, 2000);
+    assert.equal(turn.receipt, null);
+    assert.equal((await runtime.getProgress("owner:a", result.commandId)).at(-1).phase, "outcome_unknown");
+  } finally {
+    await runtime.stop();
+  }
+});
+
 test("old generation results are ignored", async () => {
   const runtime = await new NativeRuntime({ stateDir: tempState() }).start();
   const result = await runtime.submitTurn({ principalId: "owner:a", requestId: "fence", payload: { input: "real" } });

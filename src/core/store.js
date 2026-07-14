@@ -149,7 +149,7 @@ export class StateStore {
         if (existing.request_digest !== command.requestDigest) throw new RuntimeError("idempotency_conflict", "Request id was already used with a different payload", 409);
         return { commandId: existing.id, status: existing.status, deduplicated: true };
       }
-      if (this.countActiveOutbox() >= maxQueue) throw new RuntimeError("backpressure", "Native Runtime queue is full", 429, { maxQueue });
+      if (this.countActiveOutbox() >= maxQueue) throw new RuntimeError("backpressure", "Native Runtime queue is full", 429, { maxQueue, retryable: true });
       this.createCommand(command);
       this.appendEvent({ commandId: command.id, principalId: command.principalId, type: "turn.accepted", payload: { requestId: command.requestId }, runtimeGeneration });
       this.addProgress(command.id, command.principalId, "accepted", { requestId: command.requestId });

@@ -14,6 +14,7 @@ process.on("message", async message => {
     return;
   }
   if (payload?.mode === "crash-after-dispatch") process.exit(77);
+  if (payload?.mode === "blackhole") return;
   await delay(payload?.delayMs);
   if (payload?.mode === "fail") {
     process.send?.({ type: "result", commandId: permit.commandId, principalId: permit.principalId, generation: permit.generation, permitSignature: permit.signature, status: "failed", error: { code: "simulated_failure", message: "Simulated capability failure" } });

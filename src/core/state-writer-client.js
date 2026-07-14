@@ -4,7 +4,7 @@ import crypto from "node:crypto";
 import { RuntimeError } from "./errors.js";
 
 export class StateWriterClient {
-  constructor({ stateDir, writerPath = path.resolve(new URL("./state-writer.js", import.meta.url).pathname), maxPending = 256 } = {}) {
+  constructor({ stateDir, writerPath = path.resolve(new URL("./state-writer.js", import.meta.url).pathname), maxPending = 256, onUnavailable } = {}) {
     this.stateDir = stateDir;
     this.writerPath = writerPath;
     this.maxPending = maxPending;
@@ -12,19 +12,26 @@ export class StateWriterClient {
     this.child = null;
     this.started = false;
     this.closed = false;
+    this.closing = false;
+    this.onUnavailable = onUnavailable;
   }
 
   async start() {
     if (this.started) return this;
+    this.closed = false;
+    this.closing = false;
     this.child = fork(this.writerPath, [this.stateDir], { execArgv: [], stdio: ["ignore", "ignore", "pipe", "ipc"] });
     this.child.on("message", message => this.handleMessage(message));
     this.child.on("error", () => {});
-    this.child.once("exit", () => {
+    this.child.once("exit", (code, signal) => {
       this.started = false;
       const error = new RuntimeError("state_writer_unavailable", "Native Runtime state writer stopped", 503, { retryable: true });
       for (const entry of this.pending.values()) entry.reject(error);
       this.pending.clear();
       this.child = null;
+      if (!this.closing) {
+        try { this.onUnavailable?.({ code, signal }); } catch {}
+      }
     });
     await new Promise((resolve, reject) => {
       const child = this.child;
@@ -71,6 +78,7 @@ export class StateWriterClient {
   async close() {
     if (!this.child) return;
     const child = this.child;
+    this.closing = true;
     try { await this.call("close"); } catch {}
     this.closed = true;
     try { child.disconnect(); } catch {}
