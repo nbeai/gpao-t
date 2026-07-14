@@ -6,13 +6,14 @@ import { assertFileMode, assertSafeStateDir } from "./paths.js";
 import { RuntimeError } from "./errors.js";
 import { createPermit } from "./permit.js";
 import { StateWriterClient } from "./state-writer-client.js";
+import { ProviderRegistry } from "./provider.js";
 
 function requestDigest(payload) {
   return crypto.createHash("sha256").update(JSON.stringify(payload)).digest("hex");
 }
 
 export class NativeRuntime {
-  constructor({ stateDir, workerPath = path.resolve(new URL("./worker.js", import.meta.url).pathname), writerPath = path.resolve(new URL("./state-writer.js", import.meta.url).pathname), maxInflight = 4, maxQueue = 64, workerDispatchTimeoutMs = 250, workerResultTimeoutMs = 30_000, writerRequestTimeoutMs = 5_000, writerCloseTimeoutMs = 1_000, maxWorkerRestarts = 5, workerRestartWindowMs = 10_000, workerRestartBaseDelayMs = 25, workerStableWindowMs = 1_000 } = {}) {
+  constructor({ stateDir, providerRegistry = new ProviderRegistry(), workerPath = path.resolve(new URL("./worker.js", import.meta.url).pathname), writerPath = path.resolve(new URL("./state-writer.js", import.meta.url).pathname), maxInflight = 4, maxQueue = 64, workerDispatchTimeoutMs = 250, workerResultTimeoutMs = 30_000, writerRequestTimeoutMs = 5_000, writerCloseTimeoutMs = 1_000, maxWorkerRestarts = 5, workerRestartWindowMs = 10_000, workerRestartBaseDelayMs = 25, workerStableWindowMs = 1_000 } = {}) {
     this.stateDir = assertSafeStateDir(stateDir);
     this.workerPath = workerPath;
     this.writerPath = writerPath;
@@ -22,6 +23,7 @@ export class NativeRuntime {
     this.workerResultTimeoutMs = workerResultTimeoutMs;
     this.writerRequestTimeoutMs = writerRequestTimeoutMs;
     this.writerCloseTimeoutMs = writerCloseTimeoutMs;
+    this.providerRegistry = providerRegistry;
     this.maxWorkerRestarts = maxWorkerRestarts;
     this.workerRestartWindowMs = workerRestartWindowMs;
     this.workerRestartBaseDelayMs = workerRestartBaseDelayMs;
@@ -351,9 +353,23 @@ export class NativeRuntime {
     }
   }
 
-  health() { return { ...this.healthSnapshot, instanceId: this.instanceId, readyAt: this.readyAt, stateDir: this.stateDir, stateWriter: "separate-process", stateWriterStatus: this.writer?.started ? "ready" : "unavailable", workerStatus: this.worker?.connected ? "ready" : (this.healthSnapshot.workerStatus || "unavailable"), workerCrashAttempts: this.workerRestartAttempts }; }
+  providerStatus() { return this.providerRegistry.snapshot(); }
 
-  async doctor() { return { ...this.health(), integrity: await this.writer.call("verifyIntegrity"), readOnly: true, worker: Boolean(this.worker && this.worker.connected), ownerTokenMode: "0600" }; }
+  health() {
+    return {
+      ...this.healthSnapshot,
+      instanceId: this.instanceId,
+      readyAt: this.readyAt,
+      stateDir: this.stateDir,
+      stateWriter: "separate-process",
+      stateWriterStatus: this.writer?.started ? "ready" : "unavailable",
+      workerStatus: this.worker?.connected ? "ready" : (this.healthSnapshot.workerStatus || "unavailable"),
+      workerCrashAttempts: this.workerRestartAttempts,
+      providerRegistry: { ready: true, count: this.providerRegistry.entries.size }
+    };
+  }
+
+  async doctor() { return { ...this.health(), provider: this.providerStatus(), integrity: await this.writer.call("verifyIntegrity"), readOnly: true, worker: Boolean(this.worker && this.worker.connected), ownerTokenMode: "0600" }; }
 
   async stop() {
     if (!this.writer) return;

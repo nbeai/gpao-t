@@ -33,6 +33,12 @@ export function createHttpServer(runtime, { host = "127.0.0.1", port = 18899 } =
       if (bearer(request) !== runtime.ownerToken) throw new RuntimeError("unauthorized", "Owner authentication required", 401);
       const principalId = "owner:local";
       if (request.method === "GET" && url.pathname === "/v1/doctor") return send(response, 200, await runtime.doctor());
+      if (request.method === "GET" && url.pathname === "/v1/providers") return send(response, 200, runtime.providerStatus());
+      const providerMatch = url.pathname.match(/^\/v1\/providers\/([^/]+)$/);
+      if (request.method === "GET" && providerMatch) {
+        const provider = runtime.providerStatus().providers.find(entry => entry.id === providerMatch[1]);
+        return provider ? send(response, 200, provider) : send(response, 404, { code: "not_found" });
+      }
       if (request.method === "POST" && url.pathname === "/v1/turns") {
         const body = await readJson(request);
         return send(response, 202, await runtime.submitTurn({ principalId, requestId: body.requestId, payload: body.payload || {} }));

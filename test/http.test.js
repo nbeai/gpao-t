@@ -34,6 +34,10 @@ test("HTTP health is public, work is owner-authenticated, and turn state is scop
   assert.equal(health.status, "ready");
   const unauthorized = await fetch(`${base}/v1/doctor`);
   assert.equal(unauthorized.status, 401);
+  const providers = await fetch(`${base}/v1/providers`, { headers: { authorization: `Bearer ${runtime.ownerToken}` } }).then(response => response.json());
+  assert.equal(providers.schema, "gpao_t.provider_registry.v1");
+  assert.equal(providers.providers[0].auth.state, "configured");
+  assert.equal((await fetch(`${base}/v1/providers/gpao-t-emulator`, { headers: { authorization: `Bearer ${runtime.ownerToken}` } })).status, 200);
 
   const accepted = await fetch(`${base}/v1/turns`, {
     method: "POST",
