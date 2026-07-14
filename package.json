@@ -1,0 +1,15 @@
+{
+  "name": "gpao-t-native-runtime-lab",
+  "version": "0.1.0-native-foundation",
+  "private": true,
+  "type": "module",
+  "description": "Isolated GPAO-T Native Runtime production foundation laboratory.",
+  "engines": { "node": ">=24" },
+  "scripts": {
+    "check": "node --check src/index.js && node --check src/core/runtime.js && node --check src/core/store.js && node --check src/core/http.js && node --check src/core/worker.js && node --check test/runtime.test.js",
+    "test": "node --test test/runtime.test.js --test-concurrency=1 --test-timeout=30000 --test-reporter=spec",
+    "start": "node src/index.js start",
+    "doctor": "node src/index.js doctor",
+    "bench": "node tools/bench.mjs"
+  }
+}
