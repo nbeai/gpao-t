@@ -32,14 +32,14 @@ const CSS_MARKER = "gpao_t_user_screen_default_hides_work_pane_css_v0_1";
 const INDEX_MARKER = "gpao_t_user_screen_css_cache_bust_v0_1";
 const CACHE_REFRESH_MARKER = "gpao_t_user_screen_cache_refresh_v0_15";
 const SERVICE_WORKER_MARKER = "gpao_t_user_screen_network_first_assets_v0_15";
-const TELEGRAM_RAIL_MARKER = "gpao_t_telegram_direct_communication_rail_v0_21";
+const MESSENGER_RAIL_MARKER = "gpao_t_messenger_direct_communication_rail_v0_23";
 const MAIN_BUNDLE_MARKER = "gpao_t_main_bundle_runtime_guard_v0_1";
 const PREVIOUS_CHATS_MARKER = "gpao_t_sidebar_previous_chats_disclosure_v0_1";
 const SIDEBAR_SESSION_STACK_MARKER = "gpao_t_sidebar_session_stack_no_overlap_v0_1";
 const KOREAN_SESSION_MENU_MARKER = "gpao_t_korean_session_menu_complete_v0_1";
 const PREVIOUS_CHATS_STORAGE_KEY = "gpao-t:sidebar:previous-chats-expanded";
 const CLIENT_INFO_MARKER = "gpao_t_gateway_client_identity_contract_v0_1";
-const LIVE_ASSET_CACHE_BUST = "2026071421";
+const LIVE_ASSET_CACHE_BUST = "2026071523";
 
 export function loadGpaoTPreviousChatsExpanded(storage) {
   try {
@@ -134,9 +134,9 @@ const SIDEBAR_SESSION_STACK_CSS = `
 }
 `;
 const TELEGRAM_COMMUNICATION_RAIL_SCRIPT = `
-    <script data-gpao-t="${TELEGRAM_RAIL_MARKER}">
+    <script data-gpao-t="${MESSENGER_RAIL_MARKER}">
       (() => {
-        const marker = "${TELEGRAM_RAIL_MARKER}";
+        const marker = "${MESSENGER_RAIL_MARKER}";
         if (window[marker]) return;
         window[marker] = true;
 
@@ -951,11 +951,46 @@ const TELEGRAM_COMMUNICATION_RAIL_SCRIPT = `
           }
         }
 
+        function rewriteCompatibilityLeakText(value) {
+          return String(value || "")
+            .replace(/Agent failed before reply:\\s*/g, "모델 연결이 아직 완료되지 않았습니다: ")
+            .replace(/No API key found for provider "openai"\\.?/g, "OpenAI 연결 정보가 없습니다.")
+            .replace(/Auth store:\\s*[^|\\n]+/g, "모델 연결 저장소를 확인해 주세요")
+            .replace(/Configure auth for this agent \\([^)]*\\) or copy only portable static auth profiles from the main agentDir\\./g, "모델 연결 설정에서 OpenAI API Key 또는 ChatGPT/Codex OAuth 연결을 완료해 주세요.")
+            .replace(/\\|\\s*missing-provider-auth\\.?/g, "")
+            .replace(/Logs:\\s*openclaw logs --follow/g, "로그 확인: gpao-t logs --follow")
+            .replace(/\\bOpenClaw\\b/g, "GPAO-T")
+            .replace(/\\bopenclaw-agent\\.sqlite\\b/g, "gpao-t-agent.sqlite")
+            .replace(/\\bopenclaw\\b/g, "gpao-t");
+        }
+
+        function cleanupCompatibilityLeakTextNodes(root) {
+          if (!root || typeof document.createTreeWalker !== "function") return;
+          const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+            acceptNode(node) {
+              const parent = node.parentElement;
+              if (!parent) return NodeFilter.FILTER_REJECT;
+              if (parent.closest?.("script,style,textarea,input")) return NodeFilter.FILTER_REJECT;
+              const text = node.nodeValue || "";
+              return /openclaw|OpenClaw|Agent failed before reply|No API key found for provider|missing-provider-auth/.test(text)
+                ? NodeFilter.FILTER_ACCEPT
+                : NodeFilter.FILTER_REJECT;
+            },
+          });
+          const nodes = [];
+          while (walker.nextNode()) nodes.push(walker.currentNode);
+          for (const node of nodes) {
+            const next = rewriteCompatibilityLeakText(node.nodeValue || "");
+            if (next !== node.nodeValue) node.nodeValue = next;
+          }
+        }
+
         function applyUserSurfaceCleanup(root) {
           if (!root || typeof root.querySelectorAll !== "function") return;
           ensureStyle(root);
           for (const element of root.querySelectorAll("*")) cleanupElement(element);
           cleanupTextNodes(root);
+          cleanupCompatibilityLeakTextNodes(root);
         }
 
         function applyUserSettingsSummary(root) {
@@ -1062,49 +1097,87 @@ const TELEGRAM_COMMUNICATION_RAIL_SCRIPT = `
           if (header?.parentElement) header.parentElement.insertBefore(summary, header.nextSibling);
         }
 
-        function isTelegramRow(row) {
+        const DIRECT_MESSENGER_CHANNELS = [
+          { id: "telegram", label: "Telegram", href: "/chat?session=telegram", pattern: /telegram|session=telegram/i },
+          { id: "slack", label: "Slack", href: "/chat?session=slack", pattern: /slack|session=slack/i },
+          { id: "discord", label: "Discord", href: "/chat?session=discord", pattern: /discord|session=discord/i },
+          { id: "signal", label: "Signal", href: "/chat?session=signal", pattern: /signal|session=signal/i },
+          { id: "whatsapp", label: "WhatsApp", href: "/chat?session=whatsapp", pattern: /whatsapp|session=whatsapp/i },
+          { id: "imessage", label: "iMessage", href: "/chat?session=imessage", pattern: /imessage|message|session=imessage/i },
+        ];
+
+        function detectMessengerChannel(row) {
           const text = (row?.textContent || "").trim();
           const href = row?.querySelector?.("a[href]")?.getAttribute("href") || "";
-          return /^telegram:/i.test(text) || /telegram%3A|telegram:/i.test(href);
+          const identity = text + " " + href;
+          return DIRECT_MESSENGER_CHANNELS.find((channel) => channel.pattern.test(identity)) || null;
+        }
+
+        function upsertDirectChannelLink(list, channel, href) {
+          let link = list.querySelector('[data-gpao-t-direct-channel="' + channel.id + '"]');
+          if (!link) {
+            link = document.createElement("a");
+            link.className = "gpao-telegram-direct-link gpao-messenger-direct-link";
+            link.setAttribute("data-gpao-t-direct-channel", channel.id);
+            list.appendChild(link);
+          }
+          link.textContent = channel.label;
+          link.setAttribute("aria-label", channel.label + " 전용 소통 세션 열기");
+          if (link.getAttribute("href") !== href) link.setAttribute("href", href);
+          return link;
         }
 
         function applyRail(root) {
           if (!root || typeof root.querySelector !== "function") return;
           const sessions = root.querySelector(".sidebar-sessions");
           const recent = root.querySelector(".sidebar-recent-sessions");
-          if (!sessions || !recent) return;
+          if (!sessions && !recent) return;
           ensureStyle(root);
 
-          let rail = root.querySelector('[data-gpao-t-telegram-rail="' + marker + '"]');
+          let rail = root.querySelector('[data-gpao-t-messenger-rail="' + marker + '"]') || root.querySelector('[data-gpao-t-telegram-rail]');
           if (!rail) {
             rail = document.createElement("section");
-            rail.className = "gpao-telegram-direct-rail";
-            rail.setAttribute("data-gpao-t-telegram-rail", marker);
+            rail.className = "gpao-telegram-direct-rail gpao-messenger-direct-rail";
             rail.setAttribute("aria-label", "소통");
             rail.innerHTML = '<div class="gpao-telegram-direct-rail__head"><span class="gpao-telegram-direct-rail__title">소통</span><span class="gpao-telegram-direct-rail__status">전용</span></div><div class="gpao-telegram-direct-rail__list"></div>';
-            recent.parentElement?.insertBefore(rail, recent);
+            const anchor = recent || sessions;
+            anchor.parentElement?.insertBefore(rail, anchor);
           }
+          rail.setAttribute("data-gpao-t-messenger-rail", marker);
+          rail.removeAttribute("data-gpao-t-telegram-rail");
 
           const list = rail.querySelector(".gpao-telegram-direct-rail__list");
           if (!list) return;
-          const rows = [...root.querySelectorAll(".sidebar-recent-session.session-row-host")]
-            .filter((row) => !rail.contains(row) && isTelegramRow(row));
+          const seen = new Map();
+          const rows = [...root.querySelectorAll(".sidebar-recent-session.session-row-host")];
           for (const row of rows) {
+            if (rail.contains(row)) continue;
+            const channel = detectMessengerChannel(row);
+            if (!channel) continue;
             row.hidden = true;
             row.setAttribute("aria-hidden", "true");
             row.style.setProperty("display", "none", "important");
+            if (!seen.has(channel.id)) {
+              seen.set(channel.id, row.querySelector("a[href]")?.getAttribute("href") || channel.href);
+            }
           }
-          const href = rows[0]?.querySelector("a[href]")?.getAttribute("href") || "";
-          let directLink = list.querySelector(".gpao-telegram-direct-link");
-          if (href && !directLink) {
-            directLink = document.createElement("a");
-            directLink.className = "gpao-telegram-direct-link";
-            directLink.textContent = "Telegram";
-            directLink.setAttribute("aria-label", "Telegram 전용 소통 세션 열기");
-            list.appendChild(directLink);
+          if (seen.size === 0) {
+            const enabledByConfig = window.__gpaoTEnabledDirectChannels;
+            if (Array.isArray(enabledByConfig)) {
+              for (const id of enabledByConfig) {
+                const channel = DIRECT_MESSENGER_CHANNELS.find((item) => item.id === id);
+                if (channel) seen.set(channel.id, channel.href);
+              }
+            }
           }
-          if (directLink && directLink.getAttribute("href") !== href) directLink.setAttribute("href", href);
-          rail.hidden = !href;
+          for (const [id, href] of seen) {
+            const channel = DIRECT_MESSENGER_CHANNELS.find((item) => item.id === id);
+            if (channel) upsertDirectChannelLink(list, channel, href);
+          }
+          for (const link of [...list.querySelectorAll("[data-gpao-t-direct-channel]")]) {
+            if (!seen.has(link.getAttribute("data-gpao-t-direct-channel"))) link.remove();
+          }
+          rail.hidden = seen.size === 0;
         }
 
         function applyNodesPageCleanup(root) {
@@ -1435,7 +1508,7 @@ export function patchControlUiCssSource(source) {
 export function stripControlUiInjectedScripts(source) {
   return source
     .replace(
-      /\n?    <script data-gpao-t="gpao_t_telegram_direct_communication_rail_v0_[0-9]+">[\s\S]*?<\/script>/g,
+      /\n?    <script data-gpao-t="gpao_t_(?:telegram|messenger)_direct_communication_rail_v0_[0-9]+">[\s\S]*?<\/script>/g,
       "",
     )
     .replace(
@@ -1478,7 +1551,7 @@ export function patchControlUiIndexHtmlSource(source) {
     "  </body>",
     `${TELEGRAM_COMMUNICATION_RAIL_SCRIPT}
   </body>`,
-    TELEGRAM_RAIL_MARKER,
+    MESSENGER_RAIL_MARKER,
     "control-ui telegram communication rail script",
   );
   return next;
@@ -1872,7 +1945,7 @@ async function main() {
       htmlFile: CONTROL_UI_INDEX_HTML,
       changed,
       cssCacheBust: after.includes(INDEX_MARKER),
-      telegramCommunicationRail: after.includes(TELEGRAM_RAIL_MARKER),
+      messengerDirectCommunicationRail: after.includes(MESSENGER_RAIL_MARKER),
     });
     if (apply && changed) {
       if (token !== APPLY_TOKEN) {
@@ -1964,8 +2037,8 @@ async function main() {
       persistsPreviousChatsDisclosure: true,
       preventsSidebarSessionOverlap: true,
       keepsSessionMenuFullyKorean: true,
-      separatesTelegramDirectCommunicationRail: true,
-      deduplicatesTelegramDirectRows: true,
+      separatesMessengerDirectCommunicationRail: true,
+      deduplicatesMessengerDirectRows: true,
       translatesPairingLoopbackErrors: true,
       hidesRawWorkspaceFilesByDefault: true,
       hidesUnsupportedWorktreeChatAction: true,

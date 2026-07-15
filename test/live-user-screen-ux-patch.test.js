@@ -227,22 +227,35 @@ test("patchControlUiIndexHtmlSource cache-busts the user screen CSS", () => {
   const html = '<html><head><link rel="stylesheet" crossorigin href="./assets/index-DnZhFp1V.css"><script type="module" crossorigin src="./assets/index-C30DXdRd.js"></script></head><body>\n  </body></html>';
   const patched = patchControlUiIndexHtmlSource(html);
 
-  assert.match(patched, /gpao_user_screen=2026071421/);
+  assert.match(patched, /gpao_user_screen=2026071523/);
   assert.match(patched, /gpao_t_user_screen_css_cache_bust_v0_1/);
   assert.match(patched, /gpao_t_user_screen_cache_refresh_v0_15/);
   assert.match(patched, /gpao-t\.ui-build/);
   assert.match(patched, /gpao-t\.ui-build-reloaded/);
-  assert.match(patched, /const build = "2026071421"/);
-  assert.match(patched, /index-C30DXdRd\.js\?gpao_user_screen=2026071421/);
+  assert.match(patched, /const build = "2026071523"/);
+  assert.match(patched, /index-C30DXdRd\.js\?gpao_user_screen=2026071523/);
   assert.match(patched, /openclaw\.ui-build/);
   assert.doesNotMatch(patched, /user-screen-v3/);
   assert.match(patched, /window\.location\.reload/);
   assert.match(patched, /gpao-t-control-\|\^openclaw-control-/);
-  assert.match(patched, /gpao_t_telegram_direct_communication_rail_v0_21/);
+  assert.match(patched, /gpao_t_messenger_direct_communication_rail_v0_23/);
   assert.match(patched, /최근 대화 상태를 확인합니다/);
-  assert.match(patched, /gpao-telegram-direct-link/);
+  assert.match(patched, /gpao-messenger-direct-link/);
   assert.doesNotMatch(patched, /list\.appendChild\(row\)/);
-  assert.match(patched, /Telegram 전용 소통 세션 열기/);
+  assert.match(patched, /label: "Telegram"/);
+  assert.match(patched, /label: "Slack"/);
+  assert.match(patched, /label: "Discord"/);
+  assert.match(patched, /channel.label \+ " 전용 소통 세션 열기"/);
+  assert.match(patched, /\/chat\?session=slack/);
+  assert.match(patched, /DIRECT_MESSENGER_CHANNELS/);
+  assert.match(patched, /rail.hidden = seen.size === 0/);
+  assert.match(patched, /Agent failed before reply:\\s\*/);
+  assert.match(patched, /Auth store:\\s\*\[\^\|\\n\]\+/);
+  assert.match(patched, /Logs:\\s\*openclaw logs --follow/);
+  assert.match(patched, /\\bOpenClaw\\b/);
+  assert.doesNotMatch(patched, /Agent failed before reply:s\*/);
+  assert.doesNotMatch(patched, /Auth store:s\*/);
+  assert.doesNotMatch(patched, /Logs:s\*openclaw logs --follow/);
   assert.match(patched, /소통/);
   assert.match(patched, /GPAO-T에게 메시지 입력/);
   assert.match(patched, /대화 메뉴 열기/);
@@ -286,7 +299,7 @@ test("patchControlUiIndexHtmlSource cache-busts the user screen CSS", () => {
   assert.match(patched, /hiddenSettingLabels/);
   assert.doesNotMatch(patched, /작업공간 요약/);
   assert.doesNotMatch(patched, /gpao-workspace-user-summary/);
-  assert.match(patched, /gpao_t_telegram_direct_communication_rail_v0_21/);
+  assert.match(patched, /gpao_t_messenger_direct_communication_rail_v0_23/);
   assert.match(patched, /도구 확인 필요/);
   assert.match(patched, /일부 도구 확인 필요/);
   assert.match(patched, /작업 기록: \$1개 도구/);
@@ -454,8 +467,8 @@ test("patchMainBundleSource keeps fresh GPAO-T browser sessions on the live runt
   assert.match(patched, /placeholder="ws:\/\/127\.0\.0\.1:18799"/);
   assert.match(patched, /mode:`ui`/);
   assert.match(patched, /http:\/\/127\.0\.0\.1:18799\./);
-  assert.match(patched, /display-DFvXipLJ\.js\?gpao_live=2026071421/);
-  assert.match(patched, /chat-page-DSCCRkzA\.js\?gpao_live=2026071421/);
+  assert.match(patched, /display-DFvXipLJ\.js\?gpao_live=2026071523/);
+  assert.match(patched, /chat-page-DSCCRkzA\.js\?gpao_live=2026071523/);
   assert.doesNotMatch(patched, /18789/);
   assert.doesNotMatch(patched, /mode:`webchat`/);
 });
@@ -725,7 +738,7 @@ test("patchControlUiIndexHtmlSource is idempotent", () => {
   assert.equal(twice, once);
 });
 
-test("patchControlUiIndexHtmlSource replaces older telegram rail script", () => {
+test("patchControlUiIndexHtmlSource replaces older messenger rail script", () => {
   const html = [
     '<html><head><link rel="stylesheet" crossorigin href="./assets/index-DnZhFp1V.css"><script type="module" crossorigin src="./assets/index-C30DXdRd.js"></script></head><body>',
     '    <script data-gpao-t="gpao_t_telegram_direct_communication_rail_v0_5">old()</script>',
@@ -734,7 +747,8 @@ test("patchControlUiIndexHtmlSource replaces older telegram rail script", () => 
   const patched = patchControlUiIndexHtmlSource(html);
 
   assert.doesNotMatch(patched, /gpao_t_telegram_direct_communication_rail_v0_5/);
-  assert.match(patched, /gpao_t_telegram_direct_communication_rail_v0_21/);
+  assert.match(patched, /gpao_t_messenger_direct_communication_rail_v0_23/);
+  assert.doesNotMatch(patched, /data-gpao-t-telegram-rail=\"gpao_t_telegram_direct_communication_rail_v0_5\"/);
 });
 
 test("patchNodesPageSource turns node operations copy into user-facing GPAO-T copy", () => {

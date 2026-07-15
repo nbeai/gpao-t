@@ -38,6 +38,31 @@ test("Telegram direct turns map to one dedicated GPAO-T session without external
   });
 });
 
+test("Slack direct turns map to a Slack dedicated GPAO-T session without colliding with Telegram", () => {
+  const identityMap = buildLiveTurnIdentityMap({
+    sourceKind: "slack_direct",
+    agentId: "main",
+    sessionKey: "agent:main:slack:C123",
+    sourceIdentity: {
+      channel: "slack",
+      channelId: "C123",
+      userId: "U456",
+      conversationLabel: "Slack",
+      messageId: "slack-message-readback",
+    },
+  });
+
+  assert.equal(identityMap.sourceKind, "slack_direct");
+  assert.equal(identityMap.channel, "slack");
+  assert.equal(identityMap.gpao.directSessionPolicy, "single_dedicated_direct_session");
+  assert.equal(identityMap.gpao.sessionKey, "agent:main:slack:direct:gpao-t-direct");
+  assert.equal(identityMap.gpao.threadId, "thread.slack.direct");
+  assert.equal(identityMap.gpao.sessionId, "session.slack.direct");
+  assert.notEqual(identityMap.gpao.sessionId, "session.telegram.direct");
+  assert.equal(identityMap.authority.externalSend, "blocked");
+  assert.equal(verifyLiveTurnIdentityMap(identityMap).status, "passed");
+});
+
 test("webchat turns keep their own session identity instead of colliding with Telegram direct", () => {
   const identityMap = buildLiveTurnIdentityMap({
     sourceKind: "openclaw_web",

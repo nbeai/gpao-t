@@ -15,8 +15,47 @@ test("Session/Event Heart separates Telegram direct from webchat session identit
   assert.notEqual(heart.identities.telegramDirect.sessionId, heart.identities.webchat.sessionId);
   assert.equal(heart.identities.telegramDirect.directSessionPolicy, "single_dedicated_direct_session");
   assert.equal(heart.identities.webchat.directSessionPolicy, "source_session_identity_preserved");
-  assert.equal(heart.authorityBoundary.telegramExternalSend, "blocked");
+  assert.equal(heart.authorityBoundary.messengerExternalSend, "blocked");
   assert.equal(heart.authorityBoundary.durableMemoryPromotion, "blocked");
+  assert.equal(verifySessionEventHeart({ heart }).status, "ready");
+});
+
+test("Session/Event Heart accepts multiple messenger direct sessions without treating Telegram as the only channel", () => {
+  const slackIdentity = {
+    schema: "gpao_t.live_turn_identity_map.v0_1",
+    sourceKind: "slack_direct",
+    host: "gpao-t-compatibility-runtime",
+    agentId: "main",
+    channel: "slack",
+    gpao: {
+      directSessionPolicy: "single_dedicated_direct_session",
+      sessionKey: "agent:main:slack:direct:gpao-t-direct",
+      threadId: "thread.slack.direct",
+      sessionId: "session.slack.direct",
+      contextPacketId: "context.session.slack.direct",
+      memoryScope: {
+        thread: "thread.slack.direct",
+        durablePromotion: "blocked",
+        compatibilityMemoryWrite: "blocked",
+        automaticAdmission: "blocked",
+      },
+    },
+    authority: {
+      localTraceWrite: "allowed",
+      openClawSessionMetaWrite: "blocked",
+      compatibilityMemoryWrite: "blocked",
+      durableMemoryPromotion: "blocked",
+      externalSend: "blocked",
+    },
+  };
+  const heart = buildSessionEventHeart({
+    messengerIdentities: [slackIdentity],
+    liveTurnRuns: [{ createdAt: "2026-07-13T00:00:00.000Z" }],
+    progressEvents: [{ createdAt: "2026-07-13T00:00:01.000Z" }],
+  });
+
+  assert.equal(heart.identities.messengerDirect[0].channel, "slack");
+  assert.equal(heart.identities.messengerDirect[0].sessionId, "session.slack.direct");
   assert.equal(verifySessionEventHeart({ heart }).status, "ready");
 });
 

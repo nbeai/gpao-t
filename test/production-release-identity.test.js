@@ -7,7 +7,7 @@ import {
 } from "../src/core/release-contract.js";
 
 test("GPAO-T production release identity is date-based and public-source-prep", () => {
-  assert.equal(GPAO_T_RELEASE_CONTRACT.version, "2026.07.15-r1");
+  assert.equal(GPAO_T_RELEASE_CONTRACT.version, "2026.07.15-r2");
   assert.equal(GPAO_T_RELEASE_CONTRACT.distributionChannel, "public-source-prep");
   assert.equal(GPAO_T_RELEASE_CONTRACT.intendedAudience, "public");
   assert.equal(GPAO_T_RELEASE_CONTRACT.sourceVisibilityTarget, "public");

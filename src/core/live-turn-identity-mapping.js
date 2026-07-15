@@ -1,6 +1,4 @@
-const TELEGRAM_DIRECT_THREAD_ID = "thread.telegram.direct";
-const TELEGRAM_DIRECT_SESSION_ID = "session.telegram.direct";
-const TELEGRAM_DIRECT_CONTEXT_PACKET_ID = "context.session.telegram.direct";
+const DIRECT_MESSENGER_CHANNELS = new Set(["telegram", "slack", "discord", "signal", "whatsapp", "imessage"]);
 
 export function buildLiveTurnIdentityMap({
   sourceKind = "controlled_smoke",
@@ -9,8 +7,9 @@ export function buildLiveTurnIdentityMap({
   sourceIdentity = {},
 } = {}) {
   const normalizedSourceKind = String(sourceKind || "controlled_smoke");
-  if (normalizedSourceKind === "telegram_direct") {
-    return buildTelegramDirectIdentityMap({ agentId, sessionKey, sourceIdentity });
+  const directChannel = parseDirectMessengerChannel(normalizedSourceKind, sourceIdentity);
+  if (directChannel) {
+    return buildMessengerDirectIdentityMap({ channel: directChannel, sourceKind: normalizedSourceKind, agentId, sessionKey, sourceIdentity });
   }
   return buildDefaultIdentityMap({ sourceKind: normalizedSourceKind, agentId, sessionKey, sourceIdentity });
 }
@@ -20,18 +19,17 @@ export function verifyLiveTurnIdentityMap(identityMap) {
   if (!identityMap || identityMap.schema !== "gpao_t.live_turn_identity_map.v0_1") {
     findings.push("invalid_identity_map");
   }
-  if (identityMap?.sourceKind === "telegram_direct") {
-    if (identityMap.gpao?.directSessionPolicy !== "single_dedicated_direct_session") {
-      findings.push("telegram_direct_session_policy_missing");
+  if (identityMap?.gpao?.directSessionPolicy === "single_dedicated_direct_session") {
+    const channel = identityMap.channel;
+    if (!DIRECT_MESSENGER_CHANNELS.has(channel)) findings.push("messenger_direct_channel_unknown");
+    if (identityMap.gpao?.threadId !== `thread.${channel}.direct`) {
+      findings.push("messenger_direct_thread_not_canonical");
     }
-    if (identityMap.gpao?.threadId !== TELEGRAM_DIRECT_THREAD_ID) {
-      findings.push("telegram_direct_thread_not_canonical");
-    }
-    if (identityMap.gpao?.sessionId !== TELEGRAM_DIRECT_SESSION_ID) {
-      findings.push("telegram_direct_session_not_canonical");
+    if (identityMap.gpao?.sessionId !== `session.${channel}.direct`) {
+      findings.push("messenger_direct_session_not_canonical");
     }
     if (identityMap.gpao?.memoryScope?.durablePromotion !== "blocked") {
-      findings.push("telegram_direct_durable_promotion_open");
+      findings.push("messenger_direct_durable_promotion_open");
     }
   }
   if (identityMap?.authority?.openClawSessionMetaWrite !== "blocked") {
@@ -44,30 +42,32 @@ export function verifyLiveTurnIdentityMap(identityMap) {
   };
 }
 
-function buildTelegramDirectIdentityMap({ agentId, sessionKey, sourceIdentity }) {
-  const canonicalSessionKey = `agent:${safePart(agentId)}:telegram:direct:gpao-t-direct`;
+function buildMessengerDirectIdentityMap({ channel, sourceKind, agentId, sessionKey, sourceIdentity }) {
+  const threadId = `thread.${channel}.direct`;
+  const sessionId = `session.${channel}.direct`;
+  const canonicalSessionKey = `agent:${safePart(agentId)}:${channel}:direct:gpao-t-direct`;
   return {
     schema: "gpao_t.live_turn_identity_map.v0_1",
-    sourceKind: "telegram_direct",
-    host: "openclaw",
+    sourceKind,
+    host: "gpao-t-compatibility-runtime",
     agentId,
-    channel: "telegram",
+    channel,
     accountId: sourceIdentity.accountId || "default",
     openClawSessionKey: sessionKey,
-    openClawConversationId: sourceIdentity.conversationId || sourceIdentity.chatId || null,
+    openClawConversationId: sourceIdentity.conversationId || sourceIdentity.chatId || sourceIdentity.channelId || null,
     openClawThreadId: sourceIdentity.threadId || null,
     messageId: sourceIdentity.messageId || null,
     gpao: {
       directSessionPolicy: "single_dedicated_direct_session",
       sessionKey: canonicalSessionKey,
-      threadId: TELEGRAM_DIRECT_THREAD_ID,
-      sessionId: TELEGRAM_DIRECT_SESSION_ID,
-      contextPacketId: TELEGRAM_DIRECT_CONTEXT_PACKET_ID,
-      memoryScope: blockedMemoryScope(TELEGRAM_DIRECT_THREAD_ID),
+      threadId,
+      sessionId,
+      contextPacketId: `context.${sessionId}`,
+      memoryScope: blockedMemoryScope(threadId),
     },
     provenance: {
-      rawChatId: sourceIdentity.chatId || null,
-      rawSenderId: sourceIdentity.senderId || null,
+      rawChatId: sourceIdentity.chatId || sourceIdentity.channelId || null,
+      rawSenderId: sourceIdentity.senderId || sourceIdentity.userId || null,
       rawRouteSessionKey: sessionKey,
       rawConversationLabel: sourceIdentity.conversationLabel || null,
     },
@@ -81,7 +81,7 @@ function buildDefaultIdentityMap({ sourceKind, agentId, sessionKey, sourceIdenti
   return {
     schema: "gpao_t.live_turn_identity_map.v0_1",
     sourceKind,
-    host: "openclaw",
+    host: "gpao-t-compatibility-runtime",
     agentId,
     channel: sourceIdentity.channel || inferChannel(sourceKind),
     accountId: sourceIdentity.accountId || null,
@@ -126,9 +126,19 @@ function blockedIdentityAuthority() {
   };
 }
 
+function parseDirectMessengerChannel(sourceKind, sourceIdentity = {}) {
+  const explicit = String(sourceIdentity.channel || "").toLowerCase();
+  if (DIRECT_MESSENGER_CHANNELS.has(explicit) && /_direct$/.test(sourceKind)) return explicit;
+  const match = String(sourceKind || "").match(/^([a-z0-9_-]+)_direct$/i);
+  const channel = match?.[1]?.toLowerCase();
+  return DIRECT_MESSENGER_CHANNELS.has(channel) ? channel : "";
+}
+
 function inferChannel(sourceKind) {
   if (sourceKind === "openclaw_web") return "webchat";
   if (sourceKind === "gateway_chat") return "gateway";
+  const direct = parseDirectMessengerChannel(sourceKind);
+  if (direct) return direct;
   return "controlled_smoke";
 }
 

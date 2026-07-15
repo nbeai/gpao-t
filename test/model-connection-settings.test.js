@@ -4,6 +4,7 @@ import {
   buildModelConnectionSettingsState,
   handleGatewayRequest,
   renderModelConnectionSettingsHtml,
+  saveOpenAiApiKeyConnection,
   verifyModelConnectionSettingsState,
 } from "../src/index.js";
 import {
@@ -35,7 +36,7 @@ test("model connection settings gives users a visible provider setup surface wit
   assert.equal(state.title, "모델 연결 설정");
   assert.equal(state.providerAuth.secretValuesExposed, false);
   assert.equal(state.dashboardRoutes.modelConnection, "/settings/model-connection");
-  assert.equal(state.dashboardRoutes.apiKeyManagement, "/skills");
+  assert.equal(state.dashboardRoutes.apiKeyManagement, "/settings/model-connection");
   assert.equal(state.dashboardRoutes.runtimeConfig, "/settings/general");
   assert.equal(state.connectionModes.some((mode) => mode.id === "oauth_session" && mode.status === "available"), true);
   assert.equal(state.connectionModes.some((mode) => mode.id === "api_key" && mode.status === "available"), true);
@@ -45,7 +46,9 @@ test("model connection settings gives users a visible provider setup surface wit
   assert.match(html, /ChatGPT \/ Codex OAuth/);
   assert.match(html, /OAuth \/ Account Session/);
   assert.match(html, /OpenAI/);
-  assert.match(html, /기능\/API 키 관리/);
+  assert.match(html, /OpenAI API Key 저장/);
+  assert.match(html, /action="\/settings\/model-connection\/openai-api-key\/save"/);
+  assert.match(html, /gpao-t models auth login --provider openai --device-code --set-default/);
   assert.match(html, /런타임 설정/);
   assert.doesNotMatch(html, /sk-[A-Za-z0-9]/);
   assert.equal(verification.status, "ready");
@@ -56,6 +59,16 @@ test("gateway exposes model connection settings page, state, and verification ro
   const alias = handleGatewayRequest({ method: "GET", path: "/model-connection" });
   const state = handleGatewayRequest({ method: "GET", path: "/settings/model-connection/state" });
   const check = handleGatewayRequest({ method: "GET", path: "/settings/model-connection/verify" });
+  const oauth = handleGatewayRequest({ method: "POST", path: "/settings/model-connection/openai-oauth" });
+  const save = handleGatewayRequest({
+    method: "POST",
+    path: "/settings/model-connection/openai-api-key/save",
+    body: {
+      apiKey: "sk-test_secret_value_123456",
+      cliEntry: "/tmp/gpao-t.mjs",
+      runCommand: () => Buffer.from("Updated config"),
+    },
+  });
 
   assert.equal(page.status, 200);
   assert.equal(page.headers["content-type"], "text/html; charset=utf-8");
@@ -64,6 +77,9 @@ test("gateway exposes model connection settings page, state, and verification ro
   assert.equal(state.body.schema, "gpao_t.model_connection_settings.v1");
   assert.equal(check.body.schema, "gpao_t.model_connection_settings.v1.verification");
   assert.equal(check.body.status, "ready");
+  assert.equal(oauth.body.status, "manual_user_approval_required");
+  assert.equal(save.body.status, "saved");
+  assert.doesNotMatch(JSON.stringify(save.body), /sk-test_secret/);
 });
 
 test("control UI model connection panel exposes OAuth and API key lanes", () => {
@@ -79,8 +95,33 @@ test("control UI model connection panel exposes OAuth and API key lanes", () => 
   const { source: patched } = patchIndexBundle(source);
 
   assert.match(patched, /ChatGPT \/ Codex OAuth/);
-  assert.match(patched, /OpenAI API key/);
+  assert.match(patched, /OpenAI API Key/);
   assert.match(patched, /OAuth 토큰과 API 키 원문은 화면이나 로그에 다시 표시하지 않습니다/);
+  assert.match(patched, /settings\/model-connection\/openai-api-key\/save/);
+  const modelRouteOnly = patched.slice(0, patched.indexOf("$o=N({id:`skills`"));
+  assert.doesNotMatch(modelRouteOnly, /<gpao-t-skills-page/);
+});
+
+test("model connection saves OpenAI API keys through official CLI without exposing the key", () => {
+  const calls = [];
+  const result = saveOpenAiApiKeyConnection({
+    apiKey: "sk-test_secret_value_123456",
+    cliEntry: "/tmp/gpao-t.mjs",
+    nodePath: "node",
+    env: { GPAO_T_STATE_DIR: "/private/tmp/gpao-t-missing-store" },
+    runCommand: (node, args, options) => {
+      calls.push({ node, args, input: options.input });
+      return Buffer.from("Updated config");
+    },
+    now: "2026-07-15T00:00:00.000Z",
+  });
+
+  assert.equal(result.status, "saved");
+  assert.equal(result.secretValuesExposed, false);
+  assert.doesNotMatch(JSON.stringify(result), /sk-test_secret/);
+  assert.equal(calls.length, 1);
+  assert.deepEqual(calls[0].args.slice(1), ["models", "auth", "paste-api-key", "--provider", "openai", "--profile-id", "openai:manual"]);
+  assert.match(calls[0].input, /sk-test_secret_value_123456/);
 });
 
 test("control UI public assets stay rooted on settings subroutes", () => {

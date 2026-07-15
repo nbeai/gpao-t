@@ -1,9 +1,15 @@
+import { execFileSync } from "node:child_process";
+import { copyFileSync, existsSync, mkdirSync, statSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { homedir } from "node:os";
 import { inspectProviderAuthStores, buildProviderAuthRepairPlan } from "./provider-auth-heart.js";
 import { buildModelProviderRegistry } from "./model-invocation.js";
 
 const SCHEMA = "gpao_t.model_connection_settings.v1";
 const MODEL_CONNECTION_ROUTE = "/settings/model-connection";
-const API_KEY_MANAGEMENT_ROUTE = "/skills";
+const API_KEY_MANAGEMENT_ROUTE = "/settings/model-connection";
+const OPENAI_API_KEY_SAVE_ROUTE = "/settings/model-connection/openai-api-key/save";
+const OPENAI_OAUTH_HELP_ROUTE = "/settings/model-connection/openai-oauth";
 const CONFIG_ROUTE = "/settings/general";
 const PROVIDER_AUTH_STATE_ROUTE = "/runtime/provider-auth-heart";
 const PROVIDER_AUTH_VERIFY_ROUTE = "/runtime/provider-auth-heart/verify";
@@ -110,10 +116,18 @@ export function buildModelConnectionSettingsState({
         href: MODEL_CONNECTION_ROUTE,
       },
       {
-        id: "open_api_key_management",
-        label: "기능/API 키 관리 열기",
-        href: API_KEY_MANAGEMENT_ROUTE,
+        id: "save_openai_api_key",
+        label: "OpenAI API Key 저장",
+        href: OPENAI_API_KEY_SAVE_ROUTE,
+        method: "POST",
         secretHandling: "secret_value_never_echoed",
+      },
+      {
+        id: "openai_oauth_help",
+        label: "ChatGPT / Codex OAuth 연결 방법",
+        href: OPENAI_OAUTH_HELP_ROUTE,
+        method: "POST",
+        secretHandling: "oauth_token_never_echoed",
       },
       {
         id: "open_runtime_config",
@@ -134,6 +148,43 @@ export function buildModelConnectionSettingsState({
   };
 }
 
+
+export function saveOpenAiApiKeyConnection({
+  apiKey,
+  provider = "openai",
+  profileId = "openai:manual",
+  cliEntry = process.argv[1],
+  nodePath = process.execPath,
+  env = process.env,
+  runCommand = execFileSync,
+  now = new Date().toISOString(),
+} = {}) {
+  const normalizedProvider = normalizeProvider(provider);
+  const key = String(apiKey || "").trim();
+  const profile = String(profileId || normalizedProvider + ":manual").trim() || normalizedProvider + ":manual";
+  const findings = [];
+  if (!key) findings.push("api_key_required");
+  if (!isSupportedApiKeyProvider(normalizedProvider)) findings.push("unsupported_provider");
+  if (!cliEntry || (!String(cliEntry).endsWith(".mjs") && !String(cliEntry).endsWith(".js"))) findings.push("cli_entry_unavailable");
+  if (findings.length) return { schema: SCHEMA + ".api_key_save_result", status: "blocked", provider: normalizedProvider, profileId: profile, findings, secretValuesExposed: false, message: "API 키 저장에 필요한 입력이 부족합니다." };
+  try {
+    runCommand(nodePath, [cliEntry, "models", "auth", "paste-api-key", "--provider", normalizedProvider, "--profile-id", profile], {
+      input: key + "\n",
+      env,
+      stdio: ["pipe", "pipe", "pipe"],
+      timeout: 30000,
+    });
+    const authStoreMirror = mirrorProductNamedAuthStore({ env });
+    return { schema: SCHEMA + ".api_key_save_result", status: "saved", provider: normalizedProvider, profileId: profile, savedAt: now, secretValuesExposed: false, authStoreMirror, nextSafeAction: "새 대화에서 실제 모델 응답을 확인하세요.", message: providerLabel(normalizedProvider) + " API 키를 저장했습니다. 키 원문은 다시 표시하지 않습니다." };
+  } catch (error) {
+    return { schema: SCHEMA + ".api_key_save_result", status: "failed", provider: normalizedProvider, profileId: profile, findings: ["auth_cli_save_failed"], secretValuesExposed: false, message: "API 키 저장 중 오류가 발생했습니다. 키 값은 기록하지 않았습니다.", detail: redactAuthCommandOutput(error?.stderr?.toString?.() || error?.message || "unknown_error") };
+  }
+}
+
+export function buildOpenAiOAuthConnectionHelp() {
+  return { schema: SCHEMA + ".oauth_help", status: "manual_user_approval_required", provider: "openai", label: "ChatGPT / Codex OAuth", command: "gpao-t models auth login --provider openai --device-code --set-default", secretValuesExposed: false, message: "OAuth는 브라우저 또는 device-code 계정 승인이 필요합니다. GPAO-T가 사용자 계정 승인을 몰래 대신 수행하지 않습니다." };
+}
+
 export function verifyModelConnectionSettingsState(state = buildModelConnectionSettingsState()) {
   const findings = [];
   if (state.schema !== SCHEMA) findings.push("invalid_schema");
@@ -144,8 +195,8 @@ export function verifyModelConnectionSettingsState(state = buildModelConnectionS
   if (state.dashboardRoutes?.apiKeyManagement !== API_KEY_MANAGEMENT_ROUTE) {
     findings.push("missing_api_key_management_route");
   }
-  if (!state.setupActions?.some((action) => action.href === API_KEY_MANAGEMENT_ROUTE)) {
-    findings.push("missing_api_key_management_action");
+  if (!state.setupActions?.some((action) => action.href === OPENAI_API_KEY_SAVE_ROUTE && action.method === "POST")) {
+    findings.push("missing_openai_api_key_save_action");
   }
   if (state.providerAuth?.secretValuesExposed !== false) findings.push("secret_value_exposure_open");
   if (!state.providers?.some((provider) => provider.id === "openai_api_key" && provider.recommended)) {
@@ -199,6 +250,12 @@ export function renderModelConnectionSettingsHtml(state = buildModelConnectionSe
       .pill { flex:0 0 auto; border:1px solid var(--line); border-radius:999px; padding:6px 10px; color:var(--muted); font-size:13px; }
       .pill.ready { color:var(--ok); border-color:rgba(23,114,69,.35); background:rgba(23,114,69,.07); }
       .actions { display:flex; flex-wrap:wrap; gap:10px; margin-top:22px; }
+      form { border:1px solid var(--line); background:#fff; border-radius:8px; padding:16px; margin-top:14px; }
+      label { display:block; font-weight:700; margin-bottom:8px; }
+      input { width:100%; box-sizing:border-box; min-height:42px; border:1px solid var(--line); border-radius:7px; padding:0 12px; font:inherit; background:#fff; color:var(--text); }
+      .field { margin:12px 0; }
+      button { min-height:42px; border-radius:7px; border:1px solid var(--accent); background:var(--accent); color:white; font-weight:750; padding:0 14px; cursor:pointer; }
+      .notice { border:1px solid rgba(216,77,63,.25); background:rgba(216,77,63,.06); border-radius:8px; padding:14px 16px; margin-top:14px; }
       a.button { display:inline-flex; align-items:center; min-height:40px; padding:0 14px; border-radius:7px; text-decoration:none; font-weight:650; border:1px solid var(--line); color:var(--text); background:#fff; }
       a.primary { color:#fff; border-color:var(--accent); background:var(--accent); }
       code { background:#fff; border:1px solid var(--line); border-radius:6px; padding:2px 6px; }
@@ -236,10 +293,30 @@ ${(state.connectionModes || []).map((mode) => `
         </div>
       </section>
       <section>
+        <h2>OpenAI API Key 연결</h2>
+        <form method="post" action="${OPENAI_API_KEY_SAVE_ROUTE}">
+          <div class="field">
+            <label for="openai-api-key">OpenAI API Key</label>
+            <input id="openai-api-key" name="apiKey" type="password" autocomplete="off" placeholder="sk-..." required>
+          </div>
+          <input type="hidden" name="provider" value="openai">
+          <input type="hidden" name="profileId" value="openai:manual">
+          <button type="submit">OpenAI API Key 저장</button>
+          <p style="margin-top:10px">저장 후 키 원문은 다시 표시하지 않습니다. 저장이 끝나면 새 대화에서 실제 응답을 확인합니다.</p>
+        </form>
+        <form method="post" action="${OPENAI_OAUTH_HELP_ROUTE}">
+          <button type="submit">ChatGPT / Codex OAuth 연결 방법 보기</button>
+        </form>
+        <div class="notice">
+          <strong>ChatGPT / Codex OAuth</strong>
+          <p>OAuth는 브라우저 또는 device-code 계정 승인이 필요합니다. 터미널에서 <code>gpao-t models auth login --provider openai --device-code --set-default</code>를 실행해 계정 승인을 완료한 뒤 이 화면을 새로고침하세요.</p>
+        </div>
+      </section>
+      <section>
         <h2>설정 방법</h2>
         <ul>
           <li><strong>OAuth / Account Session</strong>은 ChatGPT 또는 Codex 계정 승인으로 GPT 모델을 연결하는 방식입니다.</li>
-          <li><strong>API Key</strong>는 <strong>기능/API 키 관리</strong>에서 사용할 provider 또는 skill의 API 키 칸을 열어 저장합니다.</li>
+          <li><strong>API Key</strong>는 이 화면의 OpenAI API Key 입력칸에 붙여넣고 저장합니다. 저장 후 키 원문은 다시 표시하지 않습니다.</li>
           <li>필요하면 <strong>런타임 설정</strong>에서 provider 관련 설정을 확인합니다.</li>
           <li>API 키와 토큰 값은 이 화면이나 로그에 다시 표시하지 않습니다.</li>
           <li>현재 버전은 로컬 실행 환경의 안전 설정 저장소와 <code>GPAO-T doctor</code> 진단을 기준으로 연결 상태를 확인합니다.</li>
@@ -248,12 +325,40 @@ ${(state.connectionModes || []).map((mode) => `
       </section>
       <div class="actions">
         <a class="button primary" href="${MODEL_CONNECTION_ROUTE}">모델 연결 설정</a>
-        <a class="button" href="${API_KEY_MANAGEMENT_ROUTE}">기능/API 키 관리</a>
         <a class="button" href="${CONFIG_ROUTE}">런타임 설정</a>
       </div>
     </main>
   </body>
 </html>`;
+}
+
+function mirrorProductNamedAuthStore({ env = process.env } = {}) {
+  try {
+    const stateDir = resolveStateDir(env);
+    const agentDir = join(stateDir, "agents", "main", "agent");
+    const activeRuntimeStore = join(agentDir, "openclaw-agent.sqlite");
+    const productNamedMirror = join(agentDir, "gpao-t-agent.sqlite");
+    if (!existsSync(activeRuntimeStore)) {
+      return { status: "skipped", reason: "active_runtime_store_missing", productNamedMirror: "gpao-t-agent.sqlite" };
+    }
+    mkdirSync(agentDir, { recursive: true });
+    copyFileSync(activeRuntimeStore, productNamedMirror);
+    const activeSize = statSync(activeRuntimeStore).size;
+    const mirrorSize = statSync(productNamedMirror).size;
+    return {
+      status: activeSize === mirrorSize ? "synced" : "size_mismatch",
+      activeRuntimeStore: "gpao-t-runtime-auth-store",
+      productNamedMirror: "gpao-t-agent.sqlite",
+    };
+  } catch (error) {
+    return { status: "failed", reason: redactAuthCommandOutput(error?.message || "auth_store_mirror_failed") };
+  }
+}
+
+function resolveStateDir(env = process.env) {
+  if (env.GPAO_T_STATE_DIR) return String(env.GPAO_T_STATE_DIR);
+  if (env.GPAO_T_CONFIG_PATH) return dirname(String(env.GPAO_T_CONFIG_PATH));
+  return join(homedir(), ".gpao-t");
 }
 
 function statusLabel(status) {
@@ -269,4 +374,19 @@ function escapeHtml(value = "") {
     .replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#39;");
+}
+
+function normalizeProvider(provider) {
+  const value = String(provider || "openai").trim().toLowerCase();
+  if (value === "google" || value === "gemini") return "google";
+  return value || "openai";
+}
+function isSupportedApiKeyProvider(provider) { return ["openai", "anthropic", "google"].includes(provider); }
+function providerLabel(provider) {
+  if (provider === "anthropic") return "Anthropic";
+  if (provider === "google") return "Google Gemini";
+  return "OpenAI";
+}
+function redactAuthCommandOutput(value) {
+  return String(value || "").replace(/sk-[A-Za-z0-9_-]+/g, "[REDACTED_API_KEY]").replace(/OPENAI_API_KEY=\S+/g, "OPENAI_API_KEY=[REDACTED]").replace(/openclaw logs --follow/g, "gpao-t logs --follow").replace(/OpenClaw/g, "GPAO-T").replace(/openclaw/g, "gpao-t");
 }

@@ -416,7 +416,9 @@ import {
 } from "./provider-auth-heart.js";
 import {
   buildModelConnectionSettingsState,
+  buildOpenAiOAuthConnectionHelp,
   renderModelConnectionSettingsHtml,
+  saveOpenAiApiKeyConnection,
   verifyModelConnectionSettingsState,
 } from "./model-connection-settings.js";
 import {
@@ -3059,6 +3061,28 @@ export function handleGatewayRequest({ method = "GET", path = "/", body = {}, ro
       status: 200,
       headers: { "content-type": "text/html; charset=utf-8" },
       body: renderModelConnectionSettingsHtml(state),
+    };
+  }
+
+  if (normalizedMethod === "POST" && path === "/settings/model-connection/openai-api-key/save") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: saveOpenAiApiKeyConnection({
+        apiKey: body.apiKey,
+        provider: body.provider || "openai",
+        profileId: body.profileId || "openai:manual",
+        runCommand: body.runCommand,
+        cliEntry: body.cliEntry || process.argv[1],
+      }),
+    };
+  }
+
+  if (normalizedMethod === "POST" && path === "/settings/model-connection/openai-oauth") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: buildOpenAiOAuthConnectionHelp(),
     };
   }
 

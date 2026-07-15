@@ -20,7 +20,7 @@ import {
 
 test("GPAO-T update boundary disables the compatibility updater by default", () => {
   const boundary = resolveGpaoTUpdateBoundary({});
-  assert.equal(GPAO_T_RELEASE_VERSION, "2026.07.15-r1");
+  assert.equal(GPAO_T_RELEASE_VERSION, "2026.07.15-r2");
   assert.equal(boundary.enabled, false);
   assert.equal(boundary.compatibilityUpdaterAllowed, false);
   assert.equal(boundary.feedUrl, null);
@@ -40,7 +40,7 @@ test("GPAO-T feed configuration never re-enables the compatibility updater", () 
 
 test("GPAO-T GitHub update feed selects newer date-version assets only after integrity metadata is present", () => {
   assert.equal(compareGpaoTDateVersions("2026.07.15-r2", "2026.07.15-r1"), 1);
-  assert.equal(compareGpaoTDateVersions("2026.07.15-r1", "2026.07.15-r1"), 0);
+  assert.equal(compareGpaoTDateVersions("2026.07.15-r2", "2026.07.15-r2"), 0);
   const feed = buildGpaoTUpdateFeed({
     version: "2026.07.15-r2",
     releasePageUrl: "https://github.com/nbeai/gpao-t/releases/tag/2026.07.15-r2",
@@ -92,7 +92,7 @@ test("compatibility handler patch returns GPAO-T managed status and refuses upda
   assert.match(patched, /gpao_t_update_boundary_handlers_v0_1/);
   assert.match(patched, /gpao_t_update_feed_not_configured/);
   assert.match(patched, /gpao_t_github_update_feed_configured/);
-  assert.match(patched, /2026\.07\.15-r1/);
+  assert.match(patched, /2026\.07\.15-r2/);
   assert.equal(patchCompatibilityUpdateHandlersSource(patched), patched);
 });
 

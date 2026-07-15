@@ -247,7 +247,9 @@ import {
 } from "./core/provider-auth-heart.js";
 import {
   buildModelConnectionSettingsState,
+  buildOpenAiOAuthConnectionHelp,
   renderModelConnectionSettingsHtml,
+  saveOpenAiApiKeyConnection,
   verifyModelConnectionSettingsState,
 } from "./core/model-connection-settings.js";
 import {
@@ -679,6 +681,8 @@ export {
   buildTimeoutBudget,
   buildModelInvocationPacket,
   buildModelConnectionSettingsState,
+  buildOpenAiOAuthConnectionHelp,
+  saveOpenAiApiKeyConnection,
   buildSettingsConnectionHubState,
   buildTelegramConnectionState,
   buildModelProviderRegistry,

@@ -17,6 +17,7 @@ export function buildSessionEventHeart({
   root,
   workspaceState,
   telegramIdentity,
+  messengerIdentities,
   webchatIdentity,
   liveTurnRuns,
   progressEvents,
@@ -33,6 +34,9 @@ export function buildSessionEventHeart({
       conversationLabel: "Telegram",
     },
   });
+  const messengerDirect = Array.isArray(messengerIdentities) && messengerIdentities.length
+    ? messengerIdentities
+    : [telegram];
   const webchat = webchatIdentity || buildLiveTurnIdentityMap({
     sourceKind: "openclaw_web",
     agentId: "main",
@@ -47,7 +51,7 @@ export function buildSessionEventHeart({
   const events = progressEvents || safeRead(() => readConversationProgressEvents({ root, limit: 50 }), []);
   const observations = [
     ...classifyWorkspace({ state, sessionCheck }),
-    ...classifyIdentity("telegram_direct", telegram),
+    ...messengerDirect.flatMap((identity) => classifyIdentity(`${identity.channel || "messenger"}_direct`, identity)),
     ...classifyIdentity("webchat", webchat),
     ...classifyEventLedger({ runs, events }),
   ];
@@ -65,6 +69,7 @@ export function buildSessionEventHeart({
       boundaries: state.boundaries || {},
     },
     identities: {
+      messengerDirect: messengerDirect.map((identity) => summarizeIdentity(identity)),
       telegramDirect: summarizeIdentity(telegram),
       webchat: summarizeIdentity(webchat),
     },
@@ -76,17 +81,17 @@ export function buildSessionEventHeart({
     },
     observations,
     authorityBoundary: {
-      telegramExternalSend: "blocked",
+      messengerExternalSend: "blocked",
       durableMemoryPromotion: "blocked",
       compatibilitySessionMetaWrite: "blocked",
       permanentDelete: "blocked",
     },
     completionClaimAllowed: false,
     completionClaimReason:
-      "Session/Event Heart completion requires webchat and Telegram identity separation, event ledger readback, and live UI evidence.",
+      "Session/Event Heart completion requires webchat and messenger direct-session separation, event ledger readback, and live UI evidence.",
     nextSafeAction: severity === "P0"
       ? "Repair blocked session identity or authority gates before live hardening continues."
-      : "Run live webchat and Telegram boundary evidence after source contract verification.",
+      : "Run live webchat and connected messenger boundary evidence after source contract verification.",
   };
 }
 
@@ -97,11 +102,11 @@ export function verifySessionEventHeart({
   const ids = new Set((heart.observations || []).map((item) => item.id));
   if (heart.schema !== `${SCHEMA}.summary`) findings.push("invalid_session_event_schema");
   if (heart.completionClaimAllowed !== false) findings.push("completion_gate_open");
-  if (heart.authorityBoundary?.telegramExternalSend !== "blocked") findings.push("telegram_external_send_open");
+  if (heart.authorityBoundary?.messengerExternalSend !== "blocked") findings.push("messenger_external_send_open");
   if (heart.authorityBoundary?.durableMemoryPromotion !== "blocked") findings.push("durable_memory_promotion_open");
   if (heart.authorityBoundary?.compatibilitySessionMetaWrite !== "blocked") findings.push("compatibility_session_meta_write_open");
   if (heart.authorityBoundary?.permanentDelete !== "blocked") findings.push("permanent_delete_open");
-  if (!ids.has("telegram_direct_dedicated_session")) findings.push("telegram_direct_contract_missing");
+  if (!ids.has("messenger_direct_dedicated_session")) findings.push("messenger_direct_contract_missing");
   if (!ids.has("webchat_session_separated")) findings.push("webchat_contract_missing");
   if (!ids.has("session_workspace_ready")) findings.push("session_workspace_not_ready");
   if (heart.identities?.telegramDirect?.sessionId === heart.identities?.webchat?.sessionId) {
@@ -145,34 +150,35 @@ function classifyWorkspace({ state, sessionCheck }) {
 }
 
 function classifyIdentity(label, identityMap) {
+  const isMessengerDirect = identityMap.gpao?.directSessionPolicy === "single_dedicated_direct_session";
   const verification = verifyLiveTurnIdentityMap(identityMap);
   const observations = [];
   observations.push({
     id: verification.status === "passed" ? `${label}_identity_ready` : `${label}_identity_review`,
     severity: verification.status === "passed" ? "info" : "P0",
     ok: verification.status === "passed",
-    userLabel: label === "telegram_direct" ? "텔레그램 전용 세션" : "웹 대화 세션",
+    userLabel: isMessengerDirect ? `${channelLabel(identityMap.channel)} 전용 소통 세션` : "웹 대화 세션",
     userMessage: verification.status === "passed"
       ? "세션 정체성과 권한 경계가 확인되었습니다."
       : "세션 정체성 또는 권한 경계가 맞지 않습니다.",
     details: { findings: verification.findings },
   });
-  if (label === "telegram_direct" && identityMap.gpao?.directSessionPolicy === "single_dedicated_direct_session") {
+  if (isMessengerDirect) {
     observations.push({
-      id: "telegram_direct_dedicated_session",
+      id: "messenger_direct_dedicated_session",
       severity: "info",
       ok: true,
-      userLabel: "텔레그램 단일 전용 세션",
-      userMessage: "텔레그램은 코덱스식 여러 창이 아니라 하나의 전용 소통 세션으로 고정됩니다.",
+      userLabel: `${channelLabel(identityMap.channel)} 단일 전용 세션`,
+      userMessage: `${channelLabel(identityMap.channel)}로 들어온 메시지는 해당 메신저의 하나의 전용 소통 세션으로 고정됩니다.`,
     });
   }
-  if (label === "webchat" && identityMap.gpao?.sessionId !== "session.telegram.direct") {
+  if (label === "webchat" && !String(identityMap.gpao?.sessionId || "").includes(".direct")) {
     observations.push({
       id: "webchat_session_separated",
       severity: "info",
       ok: true,
       userLabel: "웹 대화 세션 분리",
-      userMessage: "웹 대화창은 텔레그램 전용 세션과 분리된 세션 정체성을 가집니다.",
+      userMessage: "웹 대화창은 메신저 전용 소통 세션과 분리된 세션 정체성을 가집니다.",
     });
   }
   return observations;
@@ -188,6 +194,18 @@ function classifyEventLedger({ runs, events }) {
       ? "최근 대화/도구 진행 기록을 읽을 수 있습니다."
       : "최근 대화/도구 진행 기록이 아직 비어 있습니다. 실제 대화 QA에서 채워야 합니다.",
   }];
+}
+
+function channelLabel(channel) {
+  const labels = {
+    telegram: "Telegram",
+    slack: "Slack",
+    discord: "Discord",
+    signal: "Signal",
+    whatsapp: "WhatsApp",
+    imessage: "iMessage",
+  };
+  return labels[channel] || "메신저";
 }
 
 function summarizeIdentity(identityMap) {
@@ -226,7 +244,7 @@ function buildUserVisibleStatus(observations) {
   return {
     language: "gpao_t_user_safe",
     label: "세션 흐름 정상",
-    message: "GPAO-T 대화창과 텔레그램 전용 세션의 정체성이 분리되어 있습니다.",
+    message: "GPAO-T 대화창과 메신저 전용 소통 세션의 정체성이 분리되어 있습니다.",
   };
 }
 

@@ -88,9 +88,11 @@ export function buildTelegramConnectionState({
     env.TELEGRAM_BOT_TOKEN ||
     env.GPAO_T_TELEGRAM_BOT_TOKEN,
   );
+  const ownerTelegramChatId = extractOwnerTelegramChatId(configRead.config?.commands?.ownerAllowFrom);
   const chatConfigured = Boolean(
     telegram.chatId ||
     telegram.defaultChatId ||
+    ownerTelegramChatId ||
     env.TELEGRAM_CHAT_ID ||
     env.GPAO_T_TELEGRAM_CHAT_ID,
   );
@@ -397,6 +399,14 @@ function renderGeneralBlock(state) {
         <p>설정 파일: <code>${escapeHtml(state.config.path)}</code></p>
         <p>상태: ${state.config.exists ? "설정 파일 확인됨" : "첫 설정 필요"}</p>
       </section>`;
+}
+
+function extractOwnerTelegramChatId(ownerAllowFrom) {
+  for (const value of Array.isArray(ownerAllowFrom) ? ownerAllowFrom : []) {
+    const match = String(value || "").match(/^telegram:([^\s]+)$/i);
+    if (match?.[1]) return match[1];
+  }
+  return "";
 }
 
 function statusLabel(status) {

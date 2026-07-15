@@ -124,6 +124,9 @@ import {
 } from "./provider-auth-heart.js";
 import {
   buildModelConnectionSettingsState,
+  buildOpenAiOAuthConnectionHelp,
+  renderModelConnectionSettingsHtml,
+  saveOpenAiApiKeyConnection,
   verifyModelConnectionSettingsState,
 } from "./model-connection-settings.js";
 import {
@@ -170,6 +173,8 @@ const PROTECTED_POST_ROUTES = new Set([
   "/workspace/welcome/draft",
   "/workspace/welcome/apply",
   "/connectors/execution-runtime/invoke-dry-run",
+  "/settings/model-connection/openai-api-key/save",
+  "/settings/model-connection/openai-oauth",
   "/settings/channels/telegram/save",
   "/settings/channels/telegram/verify-connection",
 ]);
@@ -671,6 +676,28 @@ export async function startControlCenterPreviewServer({
       return;
     }
 
+    if (request.method === "POST" && url.pathname === "/settings/model-connection/openai-api-key/save") {
+      const result = saveOpenAiApiKeyConnection({
+        apiKey: parsedProtectedBody?.apiKey,
+        provider: parsedProtectedBody?.provider || "openai",
+        profileId: parsedProtectedBody?.profileId || "openai:manual",
+        env: process.env,
+      });
+      const wantsJson = String(request.headers.accept || "").includes("application/json");
+      if (wantsJson) {
+        respondJson(response, result.status === "saved" ? 200 : 400, result);
+        return;
+      }
+      respondHtml(response, result.status === "saved" ? 200 : 400, secureHtml(renderModelConnectionSettingsResultHtml({ result })));
+      return;
+    }
+
+    if (request.method === "POST" && url.pathname === "/settings/model-connection/openai-oauth") {
+      const result = buildOpenAiOAuthConnectionHelp();
+      respondHtml(response, 200, secureHtml(renderModelConnectionSettingsResultHtml({ result })));
+      return;
+    }
+
     if (url.pathname === "/settings/model-connection/state") {
       respondJson(response, 200, buildModelConnectionSettingsState());
       return;
@@ -710,6 +737,11 @@ export async function startControlCenterPreviewServer({
           ? "Telegram 설정 값은 준비되어 있습니다. 실제 Telegram API 왕복 검증은 사용자가 외부 연결 실행을 승인할 때 수행합니다."
           : "Telegram Bot Token, Chat ID, Enable Telegram 설정이 필요합니다.",
       });
+      return;
+    }
+
+    if (url.pathname === "/settings/model-connection" || url.pathname === "/model-connection") {
+      respondHtml(response, 200, secureHtml(renderModelConnectionSettingsHtml(buildModelConnectionSettingsState())));
       return;
     }
 
@@ -1950,6 +1982,9 @@ function parseGenericRequestBody(body, contentType = "") {
     tone: params.get("tone") || undefined,
     botToken: params.get("botToken") || undefined,
     chatId: params.get("chatId") || undefined,
+    provider: params.get("provider") || undefined,
+    profileId: params.get("profileId") || undefined,
+    apiKey: params.get("apiKey") || undefined,
     enabled: params.get("enabled") || undefined,
     rememberAutomatically: params.get("rememberAutomatically") || undefined,
     neverRemember: params.get("neverRemember") || undefined,
@@ -1974,6 +2009,13 @@ function parseGenericRequestBody(body, contentType = "") {
     confirmationChoice: params.get("confirmationChoice") || undefined,
     confirmationState: params.get("confirmationState") || undefined,
   };
+}
+
+
+function renderModelConnectionSettingsResultHtml({ result }) {
+  const ok = result.status === "saved";
+  const title = ok ? "모델 연결 저장 완료" : "모델 연결 확인 필요";
+  return `<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>GPAO-T 모델 연결</title><style>body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#f7f4ef;color:#312b25}main{max-width:720px;margin:0 auto;padding:44px 24px}.box{border:1px solid #ded4c8;background:#fffaf3;border-radius:8px;padding:20px}h1{margin:0 0 12px;font-size:28px;letter-spacing:0}p{color:#746b60;line-height:1.6}.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}a{display:inline-flex;align-items:center;min-height:40px;padding:0 14px;border-radius:7px;border:1px solid #ded4c8;background:white;color:#312b25;text-decoration:none;font-weight:700}.primary{background:#d84d3f;border-color:#d84d3f;color:white}code{background:white;border:1px solid #ded4c8;border-radius:6px;padding:2px 6px}</style></head><body><main><div class="box"><h1>${escapeHtml(title)}</h1><p>${escapeHtml(result.message || "상태를 확인했습니다.")}</p>${result.command ? `<p>실행 명령: <code>${escapeHtml(result.command)}</code></p>` : ""}<p>비밀값은 화면과 로그에 다시 표시하지 않습니다.</p><div class="actions"><a class="primary" href="/chat?session=main">새 대화에서 확인</a><a href="/settings/model-connection">모델 연결로 돌아가기</a><a href="/runtime/provider-auth-heart">연결 상태 보기</a></div></div></main></body></html>`;
 }
 
 function renderWorkSurfaceSubmitResultHtml({ result, requestText }) {
