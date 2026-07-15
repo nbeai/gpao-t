@@ -2,6 +2,7 @@ import { ProviderRegistry } from "./provider.js";
 import { ProviderAdapterRegistry } from "./model-router.js";
 import { OpenAiResponsesAdapter } from "./providers/openai-responses.js";
 import { AnthropicMessagesAdapter } from "./providers/anthropic-messages.js";
+import { CodexOAuthAdapter } from "./providers/codex-oauth.js";
 
 function configured(environment, key) {
   return typeof environment?.[key] === "string" && environment[key].trim().length > 0;
@@ -48,6 +49,15 @@ export function createNativeProviderCatalog({ environment = process.env, fetchIm
         credentialPresent: openAiConfigured,
         modelId: value(environment, "GPAO_T_OPENAI_MODEL", "gpt-5.6")
       }),
+      {
+        id: "codex-oauth",
+        adapter: "codex-oauth",
+        adapterVersion: "0.1",
+        priority: 15,
+        auth: { kind: "oauth", credentialPresent: value(environment, "GPAO_T_CODEX_OAUTH_ENABLED", "") === "1" },
+        health: { state: value(environment, "GPAO_T_CODEX_OAUTH_ENABLED", "") === "1" ? "ready" : "unknown", failureClass: null, cooldownUntil: null },
+        models: [{ id: value(environment, "GPAO_T_CODEX_OAUTH_MODEL", "gpt-5.5"), capabilities: ["text"], inputModalities: ["text"], outputModalities: ["text"], contextLimit: 0, responseLimit: 8_192, priority: 15 }]
+      },
       externalProvider({
         id: "anthropic",
         adapter: "anthropic-messages",
@@ -78,6 +88,7 @@ export function createNativeProviderCatalog({ environment = process.env, fetchIm
     adapters: [
       { id: "openai-responses", adapter: new OpenAiResponsesAdapter({ fetchImpl, baseUrl: value(environment, "GPAO_T_OPENAI_BASE_URL", "https://api.openai.com/v1") }) },
       { id: "anthropic-messages", adapter: new AnthropicMessagesAdapter({ fetchImpl, baseUrl: value(environment, "GPAO_T_ANTHROPIC_BASE_URL", "https://api.anthropic.com") }) },
+      { id: "codex-oauth", adapter: new CodexOAuthAdapter({ command: value(environment, "GPAO_T_CODEX_BIN", "codex") }) },
       { id: "native-deterministic-emulator", adapter: emulator }
     ]
   });
