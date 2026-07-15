@@ -72,6 +72,31 @@ export class EventRouter {
     return { event, receipt: this.receipt(event) };
   }
 
+  restore({ runId, events = [] } = {}) {
+    if (!Array.isArray(events)) throw new Error("event_router_invalid_restore");
+    const run = this.#run(runId);
+    if (run.events.length) return false;
+    for (const source of events) {
+      const type = source.type === "turn.outcome.unknown" ? "turn.uncertain" : source.type;
+      if (!source?.eventId || !type || run.terminal) throw new Error("event_router_invalid_restore");
+      const sequence = run.nextSequence++;
+      const event = Object.freeze({
+        eventId: source.eventId,
+        runId,
+        sequence,
+        cursor: `${runId}:${sequence}`,
+        type,
+        payload: redact(source.payload || {}),
+        terminal: terminalFor(type, source.terminal),
+        createdAt: source.createdAt
+      });
+      run.events.push(event);
+      if (run.events.length > this.maxReplayEvents) run.events.shift();
+      if (event.terminal) run.terminal = event;
+    }
+    return true;
+  }
+
   cancel(runId, reason = "cancelled_by_user") {
     const run = this.#run(runId);
     if (run.terminal) return { event: run.terminal, receipt: this.receipt(run.terminal), changed: false };

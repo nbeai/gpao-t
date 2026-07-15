@@ -43,6 +43,8 @@ function execute(op, args) {
       return store.getCommand(args.commandId, args.principalId);
     case "getProgress":
       return store.getProgress(args.commandId, args.principalId);
+    case "getTurnEvents":
+      return store.getTurnEvents(args.commandId, args.principalId);
     case "cancelCommand":
       return store.transaction(() => store.cancelCommand(args.commandId, args.principalId, args.generation));
     case "pendingOutbox":

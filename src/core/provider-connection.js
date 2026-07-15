@@ -99,11 +99,12 @@ export class ProviderConnectionCenter {
   }
 
   async credential(providerId) {
-    const entry = this.connections.get(providerId);
-    if (entry?.connectionType === "oauth") return null;
-    if (!entry || entry.state !== "ready") return null;
-    const result = await this.credentialStore.withCredential(entry.credentialHandle, providerId, secret => ({ credential: secret }));
-    return result.credential;
+    if (!providerId) throw new RuntimeError("invalid_provider", "A valid provider id is required", 400);
+    throw new RuntimeError(
+      "credential_boundary_enforced",
+      "Raw provider credentials cannot leave the protected credential boundary",
+      501
+    );
   }
 
   async disconnect(providerId) {

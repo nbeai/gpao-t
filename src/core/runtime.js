@@ -17,7 +17,7 @@ import { NativeOsTurnPipeline } from "./os-turn.js";
 import { LocalHybridMemory } from "./local-memory.js";
 import { createFoundationToolRegistry } from "./tool-registry.js";
 import { LocalSessionAuthority } from "./local-session.js";
-import { MacKeychainCredentialStore } from "./credential-store.js";
+import { UnsupportedSecureCredentialBackend } from "./credential-store.js";
 import { ProviderConnectionCenter } from "./provider-connection.js";
 import { ProviderRouteHealth } from "./provider-route-health.js";
 import { createFoundationConnectorCatalog } from "./connector-catalog.js";
@@ -30,7 +30,7 @@ function requestDigest(payload) {
 }
 
 export class NativeRuntime {
-  constructor({ stateDir, providerRegistry = null, providerAdapter = new DeterministicProviderEmulator(), providerAdapters = null, credentialResolver = null, credentialStore = null, connectionCenter = null, providerEnvironment = process.env, providerFetch = fetch, socketRegistry = createFoundationSocketRegistry(), memory = new LocalHybridMemory(), toolRegistry = createFoundationToolRegistry(), connectorCatalog = null, connectorController = null, connectionConcierge = null, routeHealth = null, eventRouter = new EventRouter(), workerPath = path.resolve(new URL("./worker.js", import.meta.url).pathname), writerPath = path.resolve(new URL("./state-writer.js", import.meta.url).pathname), maxInflight = 4, maxQueue = 64, workerDispatchTimeoutMs = 250, workerResultTimeoutMs = 30_000, writerRequestTimeoutMs = 5_000, writerCloseTimeoutMs = 1_000, maxWorkerRestarts = 5, workerRestartWindowMs = 10_000, workerRestartBaseDelayMs = 25, workerStableWindowMs = 1_000 } = {}) {
+  constructor({ stateDir, providerRegistry = null, providerAdapter = new DeterministicProviderEmulator(), providerAdapters = null, credentialResolver = null, credentialStore = null, connectionCenter = null, providerEnvironment = process.env, allowEnvironmentCredentialCompatibility = false, providerFetch = fetch, socketRegistry = createFoundationSocketRegistry(), memory = new LocalHybridMemory(), toolRegistry = createFoundationToolRegistry(), connectorCatalog = null, connectorController = null, connectionConcierge = null, routeHealth = null, eventRouter = new EventRouter(), workerPath = path.resolve(new URL("./worker.js", import.meta.url).pathname), writerPath = path.resolve(new URL("./state-writer.js", import.meta.url).pathname), maxInflight = 4, maxQueue = 64, workerDispatchTimeoutMs = 250, workerResultTimeoutMs = 30_000, writerRequestTimeoutMs = 5_000, writerCloseTimeoutMs = 1_000, maxWorkerRestarts = 5, workerRestartWindowMs = 10_000, workerRestartBaseDelayMs = 25, workerStableWindowMs = 1_000 } = {}) {
     this.stateDir = assertSafeStateDir(stateDir);
     this.workerPath = workerPath;
     this.writerPath = writerPath;
@@ -40,13 +40,13 @@ export class NativeRuntime {
     this.workerResultTimeoutMs = workerResultTimeoutMs;
     this.writerRequestTimeoutMs = writerRequestTimeoutMs;
     this.writerCloseTimeoutMs = writerCloseTimeoutMs;
-    const providerCatalog = createNativeProviderCatalog({ environment: providerEnvironment, fetchImpl: providerFetch, emulator: providerAdapter });
+    const providerCatalog = createNativeProviderCatalog({ environment: providerEnvironment, fetchImpl: providerFetch, emulator: providerAdapter, allowEnvironmentCredentialCompatibility });
     this.providerRegistry = providerRegistry || providerCatalog.providerRegistry;
     this.providerAdapter = providerAdapter;
     this.providerAdapters = providerAdapters || providerCatalog.providerAdapters;
     this.catalogCredentialResolver = credentialResolver || providerCatalog.credentialResolver;
     this.connectionCenter = connectionCenter || new ProviderConnectionCenter({
-      credentialStore: credentialStore || new MacKeychainCredentialStore(),
+      credentialStore: credentialStore || new UnsupportedSecureCredentialBackend(),
       providerRegistry: this.providerRegistry,
       verify: input => this.verifyProviderConnection(input)
     });
@@ -54,7 +54,9 @@ export class NativeRuntime {
     this.modelRouter = new ModelRouter({
       providerRegistry: this.providerRegistry,
       adapterRegistry: this.providerAdapters,
-      credentialResolver: async route => (await this.connectionCenter.credential(route.providerId)) || this.catalogCredentialResolver(route),
+      // User-entered credentials never cross the Node runtime boundary. The
+      // future native credential bridge invokes providers on the protected side.
+      credentialResolver: async route => this.catalogCredentialResolver(route),
       routeHealth: this.routeHealth
     });
     this.connectorCatalog = connectorCatalog || createFoundationConnectorCatalog();
@@ -433,6 +435,8 @@ export class NativeRuntime {
       throw new RuntimeError("invalid_event_limit", "Event replay limit must be a positive integer", 400);
     }
     try {
+      const stored = await this.writer.call("getTurnEvents", { commandId, principalId });
+      this.eventRouter.restore({ runId: commandId, events: stored });
       return this.eventRouter.replay({ runId: commandId, cursor, limit });
     } catch (error) {
       if (error.message === "event_router_invalid_cursor") {

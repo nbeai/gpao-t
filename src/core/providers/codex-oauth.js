@@ -33,7 +33,9 @@ export class CodexOAuthAdapter {
   async invoke(plan, { input, signal } = {}) {
     const workDir = fs.mkdtempSync(path.join(this.workspaceRoot, "gpao-t-codex-oauth-"));
     const outputPath = path.join(workDir, "answer.txt");
-    const args = ["exec", "--ephemeral", "--skip-git-repo-check", "--sandbox", "workspace-write", "--color", "never", "--output-last-message", outputPath, "-C", workDir, "--model", plan.modelId, input];
+    // `-` tells Codex to read the prompt from stdin so user content never
+    // appears in the child-process argument list.
+    const args = ["exec", "--ephemeral", "--skip-git-repo-check", "--sandbox", "workspace-write", "--color", "never", "--output-last-message", outputPath, "-C", workDir, "--model", plan.modelId, "-"];
     try {
       await new Promise((resolve, reject) => {
         const env = {
@@ -43,7 +45,8 @@ export class CodexOAuthAdapter {
           TMPDIR: process.env.TMPDIR,
           CODEX_HOME: process.env.CODEX_HOME
         };
-        const child = spawn(this.command, args, { stdio: ["ignore", "ignore", "pipe"], env });
+        const child = spawn(this.command, args, { stdio: ["pipe", "ignore", "pipe"], env });
+        child.stdin.end(input);
         let stderr = "";
         child.stderr.on("data", chunk => { stderr += String(chunk).slice(0, 8_192); });
         const abort = () => {

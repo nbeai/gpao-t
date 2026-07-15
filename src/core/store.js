@@ -153,6 +153,15 @@ export class StateStore {
     return this.db.prepare("SELECT seq, command_id, principal_id, phase, detail_json, created_at FROM progress WHERE command_id = ? AND principal_id = ? ORDER BY seq").all(commandId, principalId).map(row => ({ ...row, detail: JSON.parse(row.detail_json) }));
   }
 
+  getTurnEvents(commandId, principalId) {
+    return this.db.prepare("SELECT event_id, type, payload_json, created_at FROM events WHERE command_id = ? AND principal_id = ? ORDER BY seq").all(commandId, principalId).map(row => ({
+      eventId: row.event_id,
+      type: row.type,
+      payload: JSON.parse(row.payload_json),
+      createdAt: row.created_at
+    }));
+  }
+
   createCommand(command) {
     this.db.prepare("INSERT INTO commands(id, principal_id, request_id, request_digest, payload_json, status, created_at, updated_at) VALUES(?, ?, ?, ?, ?, ?, ?, ?)").run(command.id, command.principalId, command.requestId, command.requestDigest, json(command.payload), "accepted", command.createdAt, command.createdAt);
     this.db.prepare("INSERT INTO outbox(id, command_id, principal_id, state, generation, attempts, created_at, updated_at) VALUES(?, ?, ?, 'pending', NULL, 0, ?, ?)").run(crypto.randomUUID(), command.id, command.principalId, command.createdAt, command.createdAt);

@@ -17,6 +17,7 @@ test("environment-backed provider configuration enters the standard OS turn with
       GPAO_T_OPENAI_API_KEY: credential,
       GPAO_T_OPENAI_MODEL: "test-openai-model"
     },
+    allowEnvironmentCredentialCompatibility: true,
     providerFetch: async (url, options) => {
       calls.push({ url, options });
       return new Response(JSON.stringify({ id: "mock-response", output_text: "mocked provider answer" }), { status: 200, headers: { "content-type": "application/json" } });
@@ -51,11 +52,39 @@ test("unconfigured external providers remain visible as connection-required whil
   }
 });
 
+test("production defaults ignore environment credentials until a protected backend is qualified", async () => {
+  let providerCalled = false;
+  const runtime = await new NativeRuntime({
+    stateDir: stateDir(),
+    providerEnvironment: { GPAO_T_OPENAI_API_KEY: "must-not-enter-default-runtime" },
+    providerFetch: async () => {
+      providerCalled = true;
+      throw new Error("production default must not call an environment-backed provider");
+    }
+  }).start();
+  try {
+    const openai = runtime.providerStatus().providers.find(provider => provider.id === "openai");
+    assert.equal(openai.auth.state, "auth_required");
+    const result = await runtime.runOsTurn({
+      principalId: "owner:test",
+      sessionId: "default-secure-session",
+      requestId: "default-secure-request",
+      input: "use openai",
+      authority: { modelSelection: { providerId: "openai" } }
+    });
+    assert.notEqual(result.replyMode, "provider_response");
+    assert.equal(providerCalled, false);
+  } finally {
+    await runtime.stop();
+  }
+});
+
 test("concurrent duplicate OS requests share one external provider invocation", async () => {
   let calls = 0;
   const runtime = await new NativeRuntime({
     stateDir: stateDir(),
     providerEnvironment: { GPAO_T_OPENAI_API_KEY: "duplicate-test-secret" },
+    allowEnvironmentCredentialCompatibility: true,
     providerFetch: async () => {
       calls += 1;
       await new Promise(resolve => setTimeout(resolve, 20));
@@ -81,6 +110,7 @@ test("trusted catalog uses only package-defined official HTTPS hosts and ignores
       GPAO_T_OPENAI_API_KEY: "catalog-host-test-secret",
       GPAO_T_OPENAI_BASE_URL: "http://127.0.0.1:9999/redirected"
     },
+    allowEnvironmentCredentialCompatibility: true,
     providerFetch: async url => {
       calls.push(url);
       return new Response(JSON.stringify({ id: "official-host", output_text: "official host only" }), { status: 200 });

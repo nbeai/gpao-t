@@ -48,11 +48,11 @@ function externalProvider({ id, adapter, priority, credentialPresent, modelId, d
  * Builds a process-local provider catalog. Credentials never enter the public
  * registry, persisted state, task packets, receipts, or logs.
  */
-export function createNativeProviderCatalog({ environment = process.env, fetchImpl = fetch, emulator } = {}) {
+export function createNativeProviderCatalog({ environment = process.env, fetchImpl = fetch, emulator, allowEnvironmentCredentialCompatibility = false } = {}) {
   const trustedCatalog = createTrustedProviderCatalog({ adapterVersions: ADAPTER_VERSIONS });
   const providerDefinition = id => trustedCatalog.providers.find(provider => provider.id === id);
-  const openAiConfigured = configured(environment, "GPAO_T_OPENAI_API_KEY");
-  const anthropicConfigured = configured(environment, "GPAO_T_ANTHROPIC_API_KEY");
+  const openAiConfigured = allowEnvironmentCredentialCompatibility && configured(environment, "GPAO_T_OPENAI_API_KEY");
+  const anthropicConfigured = allowEnvironmentCredentialCompatibility && configured(environment, "GPAO_T_ANTHROPIC_API_KEY");
   const registry = new ProviderRegistry({
     entries: [
       externalProvider({
@@ -85,7 +85,7 @@ export function createNativeProviderCatalog({ environment = process.env, fetchIm
         id: "google-gemini",
         adapter: "gemini-generate-content",
         priority: 40,
-        credentialPresent: configured(environment, "GPAO_T_GEMINI_API_KEY") || configured(environment, "GEMINI_API_KEY"),
+        credentialPresent: allowEnvironmentCredentialCompatibility && (configured(environment, "GPAO_T_GEMINI_API_KEY") || configured(environment, "GEMINI_API_KEY")),
         modelId: value(environment, "GPAO_T_GEMINI_MODEL", "gemini-3.5-flash"),
         display: { name: "Google Gemini API", authMethods: ["api_key"], description: "Google AI Studio API 키로 연결합니다." }
       }),
@@ -119,6 +119,7 @@ export function createNativeProviderCatalog({ environment = process.env, fetchIm
     ]
   });
   const credentialResolver = async ({ providerId }) => {
+    if (!allowEnvironmentCredentialCompatibility) return null;
     if (providerId === "openai") return openAiConfigured ? environment.GPAO_T_OPENAI_API_KEY.trim() : null;
     if (providerId === "anthropic") return anthropicConfigured ? environment.GPAO_T_ANTHROPIC_API_KEY.trim() : null;
     if (providerId === "google-gemini") return configured(environment, "GPAO_T_GEMINI_API_KEY") ? environment.GPAO_T_GEMINI_API_KEY.trim() : (configured(environment, "GEMINI_API_KEY") ? environment.GEMINI_API_KEY.trim() : null);

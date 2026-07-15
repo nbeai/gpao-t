@@ -100,8 +100,12 @@ export function createHttpServer(runtime, { host = "127.0.0.1", port = 18899 } =
         const [, providerId, action] = connectionMatch;
         if (request.method === "PUT" && action === "api-key") {
           assertTrustedLocalMutation(request, session, host, port);
-          const body = await readJson(request);
-          return send(response, 200, { schema: "gpao_t.connection_update.v1", connection: await runtime.configureProviderApiKey(providerId, body.secret) });
+          throw new RuntimeError(
+            "credential_connection_pending_secure_bridge",
+            "This build does not accept API keys until the native secure connection bridge is installed",
+            501,
+            { providerId }
+          );
         }
         if (request.method === "POST" && action === "verify") {
           assertTrustedLocalMutation(request, session, host, port);

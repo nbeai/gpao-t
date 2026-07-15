@@ -46,12 +46,12 @@ function providerState(provider) {
 }
 function providerAction(provider) {
   if (provider.id === "codex-oauth") return "Codex 로그인 확인";
-  if (provider.display.authMethods.includes("api_key")) return provider.auth.state === "configured" ? "다시 연결" : "연결 정보 입력";
+  if (provider.display.authMethods.includes("api_key")) return "안전한 연결 준비 중";
   return "상태 확인";
 }
 function providerName(provider) { return provider.display.name.replace(/\s*API$/i, ""); }
 function providerDescription(provider) {
-  return provider.id === "codex-oauth" ? "이 기기에 로그인된 Codex 계정을 사용합니다." : "이 AI 서비스를 연결합니다.";
+  return provider.id === "codex-oauth" ? "이 기기에 로그인된 Codex 계정을 사용합니다." : "이 AI 서비스를 위한 안전한 연결을 준비하고 있습니다.";
 }
 function connectorState(connector) {
   if (!localConnector(connector)) return "연결 준비 필요";
@@ -143,12 +143,7 @@ async function openProviderAction(providerId) {
     return;
   }
   if (!provider.display.authMethods.includes("api_key")) return;
-  $("#api-provider-id").value = provider.id;
-  $("#api-key-label").textContent = `${providerName(provider)} 연결 정보`;
-  $("#api-key-input").value = "";
-  $("#api-key-status").textContent = "키는 GPAO-T 기록에 남지 않습니다.";
-  $("#api-key-form").hidden = false;
-  $("#api-key-input").focus();
+  $("#model-selection-status").textContent = `${providerName(provider)} 연결은 전용 보안 모듈을 준비한 뒤 사용할 수 있습니다. 이 화면에서는 API 키를 입력받지 않습니다.`;
 }
 $("#models").addEventListener("click", async () => {
   $("#connection-dialog").showModal();
@@ -167,23 +162,6 @@ $("#save-default-model").addEventListener("click", async () => {
     $("#model-selection-status").textContent = "이제 새 대화에서 이 모델을 기본으로 사용합니다.";
     await refreshConnections();
   } catch { $("#model-selection-status").textContent = "기본 모델을 저장하지 못했습니다. 잠시 후 다시 시도해 주세요."; }
-});
-$("#api-key-form").addEventListener("submit", async event => {
-  event.preventDefault();
-  const providerId = $("#api-provider-id").value;
-  const secret = $("#api-key-input").value;
-  if (!providerId || !secret) return;
-  const status = $("#api-key-status");
-  status.textContent = "연결을 안전하게 확인하고 있습니다.";
-  $("#save-api-key").disabled = true;
-  try {
-    await request(`/v1/connections/${encodeURIComponent(providerId)}/api-key`, { method:"PUT", body:JSON.stringify({ secret }) });
-    $("#api-key-input").value = "";
-    const verified = await request(`/v1/connections/${encodeURIComponent(providerId)}/verify`, { method:"POST", body:"{}" });
-    status.textContent = verified.connection.state === "ready" ? "연결되었습니다. 이제 기본 모델로 선택할 수 있습니다." : "연결을 확인하지 못했습니다. 키와 연결 상태를 다시 확인해 주세요.";
-    await refreshConnections();
-  } catch { $("#api-key-input").value = ""; status.textContent = "연결을 확인하지 못했습니다. 입력 내용을 확인한 뒤 다시 시도해 주세요."; }
-  finally { $("#save-api-key").disabled = false; }
 });
 $("#new-chat").addEventListener("click", createSession);
 $("#status").addEventListener("click", async () => { await refreshHealth(); $("#turn-status").textContent = $("#runtime-state").textContent; });

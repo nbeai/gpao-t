@@ -188,17 +188,9 @@ test("HTTP never serializes internal RuntimeError details to a local dashboard r
   }
 });
 
-test("connection center stores only a redacted connection state and persists a verified default model", async () => {
+test("API-key HTTP endpoint fails closed before it accepts a browser credential", async () => {
   const secret = "http-connection-secret";
-  const runtime = await new NativeRuntime({
-    stateDir: tempState(),
-    credentialStore: new EphemeralCredentialStore(),
-    providerEnvironment: {},
-    providerFetch: async (_url, options) => {
-      assert.equal(options.headers.authorization, `Bearer ${secret}`);
-      return new Response(JSON.stringify({ id: "verify-1", output_text: "GPAO-T connection verified." }), { status: 200 });
-    }
-  }).start();
+  const runtime = await new NativeRuntime({ stateDir: tempState(), providerEnvironment: {} }).start();
   const { server } = createHttpServer(runtime, { port: 0 });
   await new Promise(resolve => server.listen(0, "127.0.0.1", resolve));
   const base = `http://127.0.0.1:${server.address().port}`;
@@ -206,20 +198,13 @@ test("connection center stores only a redacted connection state and persists a v
     const dashboard = await fetch(`${base}/`);
     const cookie = dashboard.headers.get("set-cookie");
     const headers = { cookie, origin: base, "content-type": "application/json" };
-    const before = await fetch(`${base}/v1/connection-center`, { headers: { cookie } }).then(response => response.json());
-    assert.equal(before.providers.find(provider => provider.id === "openai").connection.state, "not_configured");
     const configured = await fetch(`${base}/v1/connections/openai/api-key`, { method: "PUT", headers, body: JSON.stringify({ secret }) });
-    assert.equal(configured.status, 200);
-    assert.doesNotMatch(JSON.stringify(await configured.json()), new RegExp(secret));
-    const verified = await fetch(`${base}/v1/connections/openai/verify`, { method: "POST", headers }).then(response => response.json());
-    assert.equal(verified.connection.state, "ready");
-    const selected = await fetch(`${base}/v1/model-selection/default`, { method: "PUT", headers, body: JSON.stringify({ providerId: "openai", modelId: "gpt-5.6" }) });
-    assert.equal(selected.status, 200);
-    const status = await fetch(`${base}/v1/connection-center`, { headers: { cookie } }).then(response => response.json());
-    assert.deepEqual(status.defaultSelection, { preferredProviderId: "openai", preferredModelId: "gpt-5.6" });
-    assert.doesNotMatch(JSON.stringify(status), new RegExp(secret));
-    const blockedOrigin = await fetch(`${base}/v1/connections/openai/api-key`, { method: "PUT", headers: { ...headers, origin: "http://attacker.invalid" }, body: JSON.stringify({ secret }) });
-    assert.equal(blockedOrigin.status, 403);
+    assert.equal(configured.status, 501);
+    const body = await configured.json();
+    assert.equal(body.code, "credential_connection_pending_secure_bridge");
+    assert.doesNotMatch(JSON.stringify(body), new RegExp(secret));
+    const source = fs.readFileSync(new URL("../src/core/http.js", import.meta.url), "utf8");
+    assert.doesNotMatch(source, /configureProviderApiKey\(providerId, body\.secret\)/);
   } finally {
     await new Promise(resolve => server.close(resolve));
     await runtime.stop();
