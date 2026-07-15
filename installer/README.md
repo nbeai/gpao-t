@@ -1,6 +1,6 @@
 # GPAO-T macOS Local Installer
 
-This installer targets the standalone `gpao-t-0.1.0` production distribution.
+This installer targets the standalone `gpao-t-2026.07.15-r1` production distribution.
 It does not modify the source package, UI, or core runtime.
 
 For ordinary users, use the packaged `GPAO-T-Install.command` entrypoint. It
@@ -29,6 +29,8 @@ health, and rollback surface for operators.
   owner-only, and copied files retain their source modes.
 - The dedicated service label is `ai.nbeai.gpao-t`; it does not reuse or
   replace any previous gateway service. Its default port is `18799`.
+- Fresh installs store the GPAO-T GitHub update feed in both `gpao-t.json` and
+  the LaunchAgent environment. Compatibility/upstream updates remain disabled.
 
 ## Dry-run
 

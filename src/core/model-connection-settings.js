@@ -1,4 +1,5 @@
 import { inspectProviderAuthStores, buildProviderAuthRepairPlan } from "./provider-auth-heart.js";
+import { buildModelProviderRegistry } from "./model-invocation.js";
 
 const SCHEMA = "gpao_t.model_connection_settings.v1";
 const MODEL_CONNECTION_ROUTE = "/settings/model-connection";
@@ -10,21 +11,41 @@ const PROVIDER_AUTH_VERIFY_ROUTE = "/runtime/provider-auth-heart/verify";
 export function buildModelConnectionSettingsState({
   inventory = inspectProviderAuthStores(),
   repairPlan = buildProviderAuthRepairPlan({ inventory }),
+  modelProviderRegistry = buildModelProviderRegistry(),
   now = new Date().toISOString(),
 } = {}) {
   const visibleState = inventory.userVisibleState || {};
+  const registryProviders = Array.isArray(modelProviderRegistry?.providers)
+    ? modelProviderRegistry.providers
+    : [];
+  const accountSessionProvider = registryProviders.find((provider) => provider.lane === "oauth_session");
   const providers = [
     {
-      id: "openai",
-      label: "OpenAI",
+      id: "chatgpt_oauth_session",
+      label: "ChatGPT / Codex OAuth",
+      lane: accountSessionProvider?.lane || "oauth_session",
+      authMode: accountSessionProvider?.authMode || "oauth_or_session_auth",
+      recommended: true,
+      status: accountSessionProvider?.configured ? "configured_candidate" : "needs_setup",
+      note: "ChatGPT 또는 Codex 계정 세션으로 GPT 모델을 연결하는 방식입니다. API 키를 직접 붙여넣지 않아도 되는 계정 기반 연결 경로입니다.",
+      setupHint: "브라우저/계정 승인으로 연결하며, 토큰 값은 화면에 다시 표시하지 않습니다.",
+    },
+    {
+      id: "openai_api_key",
+      label: "OpenAI API key",
+      lane: "api_key",
+      authMode: "api_key",
       envKeys: ["OPENAI_API_KEY"],
       recommended: true,
       status: visibleState.status === "connected_candidate" ? "configured_candidate" : "needs_setup",
-      note: "GPAO-T의 기본 실제 모델 응답 경로에 사용합니다.",
+      note: "팀원별 OpenAI API 키로 GPT 모델을 연결하는 방식입니다. 사용량/과금 정책을 별도로 관리할 때 적합합니다.",
+      setupHint: "키 입력은 설정 저장소로만 들어가며, 저장 후 이 화면이나 로그에 원문 키를 표시하지 않습니다.",
     },
     {
       id: "anthropic",
       label: "Anthropic",
+      lane: "api_key",
+      authMode: "api_key",
       envKeys: ["ANTHROPIC_API_KEY"],
       recommended: false,
       status: "optional",
@@ -33,6 +54,8 @@ export function buildModelConnectionSettingsState({
     {
       id: "google",
       label: "Google Gemini",
+      lane: "api_key",
+      authMode: "api_key",
       envKeys: ["GOOGLE_API_KEY", "GEMINI_API_KEY"],
       recommended: false,
       status: "optional",
@@ -56,6 +79,22 @@ export function buildModelConnectionSettingsState({
       findings: inventory.findings || [],
       secretValuesExposed: false,
     },
+    connectionModes: [
+      {
+        id: "oauth_session",
+        label: "OAuth / Account Session",
+        status: accountSessionProvider ? "available" : "missing",
+        description: "ChatGPT/Codex 계정 승인으로 GPT 모델을 쓰는 방식입니다. 개인이나 팀원이 이미 계정 기반으로 사용하는 경우 이 경로가 자연스럽습니다.",
+        secretHandling: "oauth_or_session_token_never_echoed",
+      },
+      {
+        id: "api_key",
+        label: "API Key",
+        status: "available",
+        description: "OpenAI, Anthropic, Google 같은 provider 키를 저장해 모델을 호출하는 방식입니다. 사용량과 비용을 API 기준으로 관리합니다.",
+        secretHandling: "api_key_never_echoed",
+      },
+    ],
     providers,
     dashboardRoutes: {
       modelConnection: MODEL_CONNECTION_ROUTE,
@@ -109,8 +148,14 @@ export function verifyModelConnectionSettingsState(state = buildModelConnectionS
     findings.push("missing_api_key_management_action");
   }
   if (state.providerAuth?.secretValuesExposed !== false) findings.push("secret_value_exposure_open");
-  if (!state.providers?.some((provider) => provider.id === "openai" && provider.recommended)) {
+  if (!state.providers?.some((provider) => provider.id === "openai_api_key" && provider.recommended)) {
     findings.push("missing_recommended_openai_provider");
+  }
+  if (!state.connectionModes?.some((mode) => mode.id === "oauth_session" && mode.status === "available")) {
+    findings.push("missing_oauth_session_connection_mode");
+  }
+  if (!state.providers?.some((provider) => provider.id === "chatgpt_oauth_session" && provider.authMode === "oauth_or_session_auth")) {
+    findings.push("missing_chatgpt_oauth_session_provider");
   }
   return {
     schema: `${SCHEMA}.verification`,
@@ -158,6 +203,9 @@ export function renderModelConnectionSettingsHtml(state = buildModelConnectionSe
       a.primary { color:#fff; border-color:var(--accent); background:var(--accent); }
       code { background:#fff; border:1px solid var(--line); border-radius:6px; padding:2px 6px; }
       section { margin-top:28px; }
+      .mode-list { display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:12px; margin-top:12px; }
+      .mode-card { border:1px solid var(--line); background:#fff; border-radius:8px; padding:14px 16px; }
+      .mode-card h3 { margin:0 0 8px; font-size:16px; letter-spacing:0; }
       li { margin:8px 0; color:var(--muted); line-height:1.55; }
     </style>
   </head>
@@ -178,9 +226,20 @@ export function renderModelConnectionSettingsHtml(state = buildModelConnectionSe
 ${providerRows}
       </div>
       <section>
+        <h2>연결 방식</h2>
+        <div class="mode-list">
+${(state.connectionModes || []).map((mode) => `
+          <article class="mode-card">
+            <h3>${safe(mode.label)}</h3>
+            <p>${safe(mode.description)}</p>
+          </article>`).join("")}
+        </div>
+      </section>
+      <section>
         <h2>설정 방법</h2>
         <ul>
-          <li><strong>기능/API 키 관리</strong>에서 사용할 provider 또는 skill의 API 키 칸을 열어 저장합니다.</li>
+          <li><strong>OAuth / Account Session</strong>은 ChatGPT 또는 Codex 계정 승인으로 GPT 모델을 연결하는 방식입니다.</li>
+          <li><strong>API Key</strong>는 <strong>기능/API 키 관리</strong>에서 사용할 provider 또는 skill의 API 키 칸을 열어 저장합니다.</li>
           <li>필요하면 <strong>런타임 설정</strong>에서 provider 관련 설정을 확인합니다.</li>
           <li>API 키와 토큰 값은 이 화면이나 로그에 다시 표시하지 않습니다.</li>
           <li>현재 버전은 로컬 실행 환경의 안전 설정 저장소와 <code>GPAO-T doctor</code> 진단을 기준으로 연결 상태를 확인합니다.</li>

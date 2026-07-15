@@ -27,9 +27,10 @@ test("installer keeps the compatible Codex runtime route enabled", () => {
 
   assert.equal(config.plugins.entries.codex.enabled, true);
   assert.equal(config.plugins.entries.codex.config.appServer.homeScope, "agent");
-  assert.ok(config.plugins.allow.includes("codex"));
-  assert.ok(config.plugins.allow.includes("openai"));
-  assert.ok(config.plugins.allow.includes("memory-core"));
+  assert.equal(config.plugins.allow, undefined);
+  assert.equal(config.plugins.bundledDiscovery, "compat");
+  assert.equal(config.plugins.entries.openai.enabled, true);
+  assert.equal(config.plugins.entries["memory-core"].enabled, true);
 });
 
 test("doctor repair refuses to enable an uninstalled Codex runtime plugin", () => {
@@ -76,7 +77,7 @@ test("installer migration disables inherited external connections until separate
   assert.equal(config.webhooks.enabled, false);
   assert.equal(config.hooks.enabled, false);
   assert.equal(config.plugins.entries.telegram.enabled, false);
-  assert.equal(config.plugins.allow.includes("telegram"), false);
+  assert.equal(config.plugins.allow, undefined);
   assert.equal(config.tools.alsoAllow.includes("browser"), false);
 });
 

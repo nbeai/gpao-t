@@ -10,10 +10,15 @@ import {
   buildFreshRuntimeConfig,
   createInstallPlan,
   defaultOptions,
+  renderLaunchAgent,
   makeFixtureManifest,
+  normalizeGpaoTRuntimeConfig,
 } from "../tools/gpao-t-local-install-lib.mjs";
+import { GPAO_T_RELEASE_CONTRACT } from "../src/core/release-contract.js";
+import { GPAO_T_DEFAULT_GITHUB_UPDATE_FEED_URL } from "../src/core/update-boundary.js";
 
 const ROOT = resolve(new URL("..", import.meta.url).pathname);
+const RELEASE_VERSION = GPAO_T_RELEASE_CONTRACT.version;
 
 test("macOS installer entrypoint is syntax-valid and carries the no-dependency path", () => {
   execFileSync("zsh", ["-n", join(ROOT, "installer", "GPAO-T-Install.command")]);
@@ -35,8 +40,72 @@ test("fresh installs create a loopback-only token-authenticated runtime config",
   ]);
   assert.equal(config.agents.defaults.workspace, "/Users/test/.gpao-t/workspace");
   assert.equal(config.plugins.entries.codex.enabled, false);
-  assert.equal(config.plugins.allow.includes("codex"), false);
-  assert.equal(config.plugins.entries.telegram, undefined);
+  assert.equal(config.plugins.allow, undefined);
+  assert.equal(config.plugins.bundledDiscovery, "compat");
+  assert.deepEqual(config.channels.telegram, {
+    enabled: false,
+    botTokenRef: "GPAO_T_TELEGRAM_BOT_TOKEN",
+    chatIdRef: "GPAO_T_TELEGRAM_CHAT_ID",
+    userVisible: true,
+    setupRoute: "/settings/channels",
+  });
+  assert.equal(config.update.channel, "stable");
+  assert.equal(config.update.feedUrl, undefined);
+  assert.equal(config.update.compatibilityUpdaterAllowed, undefined);
+  assert.equal(config.update.preserveStateHome, undefined);
+  assert.equal(config.gpaoTUpdate.channel, "github-releases");
+  assert.equal(config.gpaoTUpdate.feedUrl, GPAO_T_DEFAULT_GITHUB_UPDATE_FEED_URL);
+  assert.equal(config.gpaoTUpdate.compatibilityUpdaterAllowed, false);
+  assert.equal(config.gpaoTUpdate.preserveStateHome, true);
+});
+
+test("installer normalizes legacy update and plugin keys before doctor verification", () => {
+  const config = normalizeGpaoTRuntimeConfig({
+    update: {
+      channel: "github-releases",
+      feedUrl: "https://example.com/gpao-t-update.json",
+      compatibilityUpdaterAllowed: true,
+      preserveStateHome: true,
+    },
+    plugins: {
+      allow: ["codex", "telegram"],
+      entries: { telegram: { enabled: true } },
+    },
+  });
+
+  assert.equal(config.update.channel, "stable");
+  assert.equal(config.update.feedUrl, undefined);
+  assert.equal(config.update.compatibilityUpdaterAllowed, undefined);
+  assert.equal(config.update.preserveStateHome, undefined);
+  assert.equal(config.gpaoTUpdate.channel, "github-releases");
+  assert.equal(config.gpaoTUpdate.feedUrl, "https://example.com/gpao-t-update.json");
+  assert.equal(config.gpaoTUpdate.compatibilityUpdaterAllowed, false);
+  assert.equal(config.gpaoTUpdate.preserveStateHome, true);
+  assert.equal(config.plugins.allow, undefined);
+  assert.equal(config.plugins.bundledDiscovery, "compat");
+  assert.equal(config.plugins.entries.telegram.enabled, false);
+});
+
+test("macOS LaunchAgent carries the GPAO-T GitHub update feed URL", async () => {
+  const root = await mkdtemp(join(tmpdir(), "gpao-t-launchagent-test-"));
+  const templatePath = join(root, "template.plist");
+  await fs.writeFile(templatePath, await fs.readFile(join(ROOT, "installer", "ai.nbeai.gpao-t.plist.template"), "utf8"));
+  try {
+    const plist = await renderLaunchAgent(templatePath, {
+      nodePath: "/Users/test/.gpao-t/runtime/node",
+      currentPath: "/Users/test/.gpao-t/current",
+      stateHome: "/Users/test/.gpao-t",
+      configPath: "/Users/test/.gpao-t/gpao-t.json",
+      logsDir: "/Users/test/.gpao-t/logs",
+      port: 18799,
+      updateFeedUrl: GPAO_T_DEFAULT_GITHUB_UPDATE_FEED_URL,
+    });
+    assert.match(plist, /GPAO_T_UPDATE_FEED_URL/);
+    assert.match(plist, /gpao-t-update\.json/);
+    assert.doesNotMatch(plist, /@@UPDATE_FEED_URL@@/);
+  } finally {
+    await fs.rm(root, { recursive: true, force: true });
+  }
 });
 
 test("macOS installer auto-approves the first local browser pairing after opening dashboard", async () => {
@@ -51,8 +120,8 @@ test("fresh installs succeed when only provider setup is missing after runtime h
   const readiness = assessInstallReadiness({
     status: "unhealthy",
     checks: [
-      { id: "current-link", ok: true, value: "/Users/test/.gpao-t/releases/gpao-t-0.1.0" },
-      { id: "distribution", ok: true, version: "0.1.0", integrity: "full-sha256" },
+      { id: "current-link", ok: true, value: `/Users/test/.gpao-t/releases/gpao-t-${RELEASE_VERSION}` },
+      { id: "distribution", ok: true, version: RELEASE_VERSION, integrity: "full-sha256" },
       { id: "launch-agent-plist", ok: true, mode: "0600" },
       { id: "launch-agent-loaded", ok: true },
       { id: "health", ok: true, status: 200 },
@@ -89,8 +158,8 @@ test("fresh installs remain blocked when runtime infrastructure is not live", ()
   const readiness = assessInstallReadiness({
     status: "unhealthy",
     checks: [
-      { id: "current-link", ok: true, value: "/Users/test/.gpao-t/releases/gpao-t-0.1.0" },
-      { id: "distribution", ok: true, version: "0.1.0", integrity: "full-sha256" },
+      { id: "current-link", ok: true, value: `/Users/test/.gpao-t/releases/gpao-t-${RELEASE_VERSION}` },
+      { id: "distribution", ok: true, version: RELEASE_VERSION, integrity: "full-sha256" },
       { id: "launch-agent-plist", ok: true, mode: "0600" },
       { id: "launch-agent-loaded", ok: true },
       { id: "health", ok: false, reason: "fetch failed" },
@@ -109,7 +178,7 @@ test("macOS install plan uses a copied runtime Node path for LaunchAgent stabili
   const launchAgentsDir = join(root, "LaunchAgents");
   await fs.mkdir(join(release, "compatibility", "gpao-t"), { recursive: true });
   await fs.writeFile(join(release, "gpao-t.mjs"), "#!/usr/bin/env node\n");
-  await fs.writeFile(join(release, "package.json"), '{"name":"gpao-t","version":"0.1.0"}\n');
+  await fs.writeFile(join(release, "package.json"), `${JSON.stringify({ name: "gpao-t", version: RELEASE_VERSION })}\n`);
   await fs.writeFile(join(release, "compatibility", "gpao-t", "runtime.js"), "export {};\n");
   await makeFixtureManifest(release);
   try {
@@ -132,4 +201,11 @@ test("macOS install plan uses a copied runtime Node path for LaunchAgent stabili
   } finally {
     await fs.rm(root, { recursive: true, force: true });
   }
+});
+
+
+test("macOS installer does not require stopping OpenClaw when migration is disabled", async () => {
+  const source = await fs.readFile(join(ROOT, "tools", "gpao-t-local-install-lib.mjs"), "utf8");
+  assert.match(source, /plan\.openclaw\.profile !== "none"[\s\S]+ai\.openclaw\.gateway/);
+  assert.match(source, /plan\.openclaw\.profile !== "none"[\s\S]+verifySecretModes\(options\.openclawHome\)/);
 });

@@ -101,9 +101,18 @@ function rootPackage(compatibilityPackage) {
 
 const wrapper = `#!/usr/bin/env node
 import { spawn } from "node:child_process";
+import { createHash, randomBytes } from "node:crypto";
+import { createReadStream } from "node:fs";
+import * as fs from "node:fs/promises";
+import http from "node:http";
+import https from "node:https";
 import { homedir } from "node:os";
-import { join } from "node:path";
+import { basename, dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+
+const VERSION = "${VERSION}";
+const PRODUCT_ID = "${GPAO_T_RELEASE_CONTRACT.productId}";
+const DEFAULT_UPDATE_FEED_URL = "https://github.com/nbeai/gpao-t/releases/latest/download/gpao-t-update.json";
 
 function gpaoOutput(value) {
   return value
@@ -128,26 +137,333 @@ if (process.env.GPAO_T_GATEWAY_PASSWORD && !process.env.OPENCLAW_GATEWAY_PASSWOR
 }
 process.env.GPAO_T_RUNTIME = "1";
 const launcher = fileURLToPath(new URL("./compatibility/gpao-t/openclaw.mjs", import.meta.url));
-// gpao_t_update_boundary_launcher_v0_1
-if (process.argv[2] === "update") {
-  const feedConfigured = Boolean(process.env.GPAO_T_UPDATE_FEED_URL?.trim());
-  const statusOnly = process.argv[3] === "status" || process.argv.includes("--json");
-  const payload = {
+
+async function pathExists(pathname) {
+  try {
+    await fs.stat(pathname);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+async function readJsonFile(pathname, fallback = null) {
+  try {
+    return JSON.parse(await fs.readFile(pathname, "utf8"));
+  } catch {
+    return fallback;
+  }
+}
+
+function parseDateVersion(version) {
+  const match = String(version || "").match(/^(\\d{4})\\.(\\d{2})\\.(\\d{2})-r(\\d+)$/u);
+  return match ? match.slice(1).map((part) => Number(part)) : null;
+}
+
+function compareDateVersions(left, right) {
+  const a = parseDateVersion(left);
+  const b = parseDateVersion(right);
+  if (!a || !b) throw new Error(\`Unsupported GPAO-T version comparison: \${left} vs \${right}\`);
+  for (let index = 0; index < a.length; index += 1) {
+    if (a[index] !== b[index]) return a[index] > b[index] ? 1 : -1;
+  }
+  return 0;
+}
+
+function resolveFeedUrl(config) {
+  const candidates = [
+    process.env.GPAO_T_UPDATE_FEED_URL,
+    process.env.GPAO_T_GITHUB_UPDATE_FEED_URL,
+    config?.gpaoTUpdate?.feedUrl,
+    config?.update?.feedUrl,
+    DEFAULT_UPDATE_FEED_URL,
+  ];
+  for (const candidate of candidates) {
+    if (typeof candidate !== "string" || !candidate.trim()) continue;
+    try {
+      const url = new URL(candidate.trim());
+      if (url.protocol === "https:" || url.protocol === "http:") return url.toString();
+    } catch {
+      // Try the next configured source.
+    }
+  }
+  return null;
+}
+
+function fetchBuffer(url, { timeoutMs = 120_000, redirectLimit = 5 } = {}) {
+  return new Promise((resolve, reject) => {
+    const parsed = new URL(url);
+    const client = parsed.protocol === "https:" ? https : http;
+    const request = client.get(parsed, { timeout: timeoutMs }, (response) => {
+      const status = response.statusCode ?? 0;
+      const location = response.headers.location;
+      if ([301, 302, 303, 307, 308].includes(status) && location && redirectLimit > 0) {
+        response.resume();
+        const next = new URL(location, parsed).toString();
+        fetchBuffer(next, { timeoutMs, redirectLimit: redirectLimit - 1 }).then(resolve, reject);
+        return;
+      }
+      if (status < 200 || status >= 300) {
+        response.resume();
+        reject(new Error(\`HTTP \${status}\`));
+        return;
+      }
+      const chunks = [];
+      response.on("data", (chunk) => chunks.push(Buffer.from(chunk)));
+      response.once("end", () => resolve(Buffer.concat(chunks)));
+    });
+    request.once("timeout", () => request.destroy(new Error("request timed out")));
+    request.once("error", reject);
+  });
+}
+
+async function fetchJson(url) {
+  try {
+    return JSON.parse((await fetchBuffer(url, { timeoutMs: 30_000 })).toString("utf8"));
+  } catch (error) {
+    throw new Error(\`Update feed request failed: \${error.message}\`);
+  }
+}
+
+function verifyUpdateFeed(feed) {
+  const findings = [];
+  if (!feed || typeof feed !== "object") findings.push("feed_not_object");
+  if (feed?.schema !== "gpao_t.github_update_feed.v1") findings.push("schema_mismatch");
+  if (feed?.productId !== PRODUCT_ID) findings.push("product_id_mismatch");
+  if (!parseDateVersion(feed?.version)) findings.push("version_not_date_release");
+  const assets = Array.isArray(feed?.assets) ? feed.assets.filter((asset) => {
+    return asset
+      && typeof asset.url === "string"
+      && /^https?:\\/\\//u.test(asset.url)
+      && typeof asset.sha256 === "string"
+      && /^[a-f0-9]{64}$/u.test(asset.sha256)
+      && typeof asset.name === "string"
+      && typeof asset.kind === "string";
+  }) : [];
+  if (!assets.some((asset) => asset.kind === "production_distribution")) findings.push("missing_distribution_asset");
+  if (!assets.some((asset) => asset.kind === "macos_installer")) findings.push("missing_macos_installer_asset");
+  return { ok: findings.length === 0, findings, assets };
+}
+
+function selectUpdateCandidate(feed) {
+  const verification = verifyUpdateFeed(feed);
+  if (!verification.ok) {
+    return { status: "invalid_feed", updateAvailable: false, reason: verification.findings[0], verification };
+  }
+  const comparison = compareDateVersions(feed.version, VERSION);
+  if (comparison <= 0) {
+    return {
+      status: "current",
+      updateAvailable: false,
+      currentVersion: VERSION,
+      latestVersion: feed.version,
+      verification,
+    };
+  }
+  return {
+    status: "update_available",
+    updateAvailable: true,
+    currentVersion: VERSION,
+    latestVersion: feed.version,
+    releasePageUrl: feed.releasePageUrl || null,
+    assets: verification.assets,
+    verification,
+  };
+}
+
+async function sha256File(pathname) {
+  const hash = createHash("sha256");
+  await new Promise((resolve, reject) => {
+    const stream = createReadStream(pathname);
+    stream.on("data", (chunk) => hash.update(chunk));
+    stream.once("error", reject);
+    stream.once("end", resolve);
+  });
+  return hash.digest("hex");
+}
+
+async function downloadFile(url, destination) {
+  await fs.mkdir(dirname(destination), { recursive: true, mode: 0o700 });
+  try {
+    await fs.writeFile(destination, await fetchBuffer(url, { timeoutMs: 120_000 }), { mode: 0o600 });
+  } catch (error) {
+    throw new Error(\`Update asset download failed: \${error.message}\`);
+  }
+}
+
+function runCommand(command, args, { timeoutMs = 300_000 } = {}) {
+  return new Promise((resolve) => {
+    const child = spawn(command, args, { stdio: ["ignore", "pipe", "pipe"] });
+    let stdout = "";
+    let stderr = "";
+    const timer = setTimeout(() => child.kill("SIGKILL"), timeoutMs);
+    child.stdout.on("data", (chunk) => { stdout += String(chunk); });
+    child.stderr.on("data", (chunk) => { stderr += String(chunk); });
+    child.once("error", (error) => {
+      clearTimeout(timer);
+      resolve({ ok: false, code: 1, stdout, stderr: error.message });
+    });
+    child.once("exit", (code) => {
+      clearTimeout(timer);
+      resolve({ ok: code === 0, code: code ?? 1, stdout, stderr });
+    });
+  });
+}
+
+async function verifyDistributionRoot(releaseRoot, expectedVersion) {
+  const manifest = await readJsonFile(join(releaseRoot, "GPAO-T-DISTRIBUTION-MANIFEST.json"));
+  if (!manifest || manifest.schema !== "gpao_t.distribution_manifest.v2") {
+    throw new Error("Downloaded release is missing a valid GPAO-T distribution manifest");
+  }
+  if (manifest.version !== expectedVersion) {
+    throw new Error(\`Downloaded release version mismatch: expected \${expectedVersion}, got \${manifest.version}\`);
+  }
+  if (manifest.productId !== PRODUCT_ID) throw new Error("Downloaded release product id mismatch");
+  if (!await pathExists(join(releaseRoot, "gpao-t.mjs"))) throw new Error("Downloaded release is missing gpao-t.mjs");
+  return manifest;
+}
+
+async function acquireUpdateLock() {
+  const lockPath = join(stateDir, ".update-lock");
+  await fs.mkdir(stateDir, { recursive: true, mode: 0o700 });
+  try {
+    await fs.mkdir(lockPath, { mode: 0o700 });
+    await fs.writeFile(
+      join(lockPath, "owner.json"),
+      JSON.stringify({ pid: process.pid, createdAt: new Date().toISOString() }, null, 2),
+      { mode: 0o600 },
+    );
+    return lockPath;
+  } catch (error) {
+    if (error?.code === "EEXIST") throw new Error(\`Another GPAO-T update is already running: \${lockPath}\`);
+    throw error;
+  }
+}
+
+async function pointCurrent(releaseDest) {
+  const currentLink = join(stateDir, "current");
+  const temporary = \`\${currentLink}.\${process.pid}.\${randomBytes(4).toString("hex")}.tmp\`;
+  await fs.rm(temporary, { recursive: true, force: true });
+  await fs.symlink(releaseDest, temporary);
+  await fs.rename(temporary, currentLink);
+}
+
+async function writeUpdateReceipt(receipt) {
+  const receiptsRoot = join(stateDir, "receipts");
+  await fs.mkdir(receiptsRoot, { recursive: true, mode: 0o700 });
+  const receiptPath = join(receiptsRoot, \`\${receipt.id}.json\`);
+  await fs.writeFile(receiptPath, JSON.stringify(receipt, null, 2) + "\\n", { mode: 0o600 });
+  return receiptPath;
+}
+
+async function updateStatus({ json = false } = {}) {
+  const config = await readJsonFile(configPath, {});
+  const feedUrl = resolveFeedUrl(config);
+  const boundary = {
     schema: "gpao_t.update_boundary.v1",
     product: "GPAO-T",
-    currentVersion: "${VERSION}",
+    currentVersion: VERSION,
     mode: "gpao_t_managed",
-    status: feedConfigured ? "configured_inactive" : "disabled",
-    updateAvailable: null,
+    enabled: Boolean(feedUrl),
+    feedUrl,
     compatibilityUpdaterAllowed: false,
-    reason: feedConfigured
-      ? "gpao_t_update_service_not_activated"
-      : "gpao_t_update_feed_not_configured",
   };
-  const output = JSON.stringify(payload, null, 2);
-  if (statusOnly) console.log(output);
-  else console.error(output);
-  process.exit(statusOnly ? 0 : 2);
+  let result = { ...boundary, status: feedUrl ? "configured_ready" : "disabled", updateAvailable: null };
+  if (feedUrl) {
+    try {
+      const feed = await fetchJson(feedUrl);
+      result = { ...boundary, ...selectUpdateCandidate(feed) };
+    } catch (error) {
+      result = { ...boundary, status: "feed_unreachable", updateAvailable: null, reason: error.message };
+    }
+  }
+  console.log(json ? JSON.stringify(result, null, 2) : gpaoOutput(JSON.stringify(result, null, 2)));
+  return result;
+}
+
+async function applyUpdate() {
+  const accepted = process.argv.includes("--yes") || process.argv.includes("--apply");
+  if (!accepted) {
+    throw new Error("GPAO-T update apply requires --yes after reviewing update status.");
+  }
+  const status = await updateStatus({ json: true });
+  if (!status.updateAvailable) {
+    const skipped = { status: "skipped", reason: status.reason || status.status, currentVersion: VERSION };
+    console.log(JSON.stringify(skipped, null, 2));
+    return skipped;
+  }
+  const asset = status.assets.find((item) => item.kind === "production_distribution");
+  if (!asset) throw new Error("Update feed does not include a production distribution asset");
+  const operationId = \`update-\${new Date().toISOString().replace(/[:.]/g, "-")}\`;
+  const lockPath = await acquireUpdateLock();
+  const stagingRoot = join(stateDir, "staging", operationId);
+  const archivePath = join(stagingRoot, asset.name);
+  const extractRoot = join(stagingRoot, "extract");
+  let previousCurrent = null;
+  try {
+    await fs.mkdir(extractRoot, { recursive: true, mode: 0o700 });
+    try {
+      previousCurrent = await fs.readlink(join(stateDir, "current"));
+    } catch {
+      previousCurrent = null;
+    }
+    await downloadFile(asset.url, archivePath);
+    const actualSha256 = await sha256File(archivePath);
+    if (actualSha256 !== asset.sha256) {
+      throw new Error(\`Downloaded asset SHA-256 mismatch: expected \${asset.sha256}, got \${actualSha256}\`);
+    }
+    const unzip = await runCommand("unzip", ["-q", archivePath, "-d", extractRoot]);
+    if (!unzip.ok) throw new Error(\`Unable to extract update asset: \${unzip.stderr || unzip.stdout}\`);
+    const expectedReleaseName = \`gpao-t-\${status.latestVersion}\`;
+    const extractedRelease = join(extractRoot, expectedReleaseName);
+    await verifyDistributionRoot(extractedRelease, status.latestVersion);
+    const releasesRoot = join(stateDir, "releases");
+    const releaseDest = join(releasesRoot, expectedReleaseName);
+    await fs.mkdir(releasesRoot, { recursive: true, mode: 0o700 });
+    await fs.rm(releaseDest, { recursive: true, force: true });
+    await fs.rename(extractedRelease, releaseDest);
+    await pointCurrent(releaseDest);
+    const receipt = {
+      schema: "gpao_t.github_update_receipt.v1",
+      id: operationId,
+      updatedAt: new Date().toISOString(),
+      fromVersion: VERSION,
+      toVersion: status.latestVersion,
+      feedUrl: status.feedUrl,
+      asset: { name: asset.name, url: asset.url, sha256: asset.sha256, bytes: asset.bytes ?? null },
+      previousCurrent,
+      current: releaseDest,
+      preservesStateHome: true,
+      restartRequired: true,
+    };
+    const receiptPath = await writeUpdateReceipt(receipt);
+    if (process.argv.includes("--restart")) {
+      const kickstart = await runCommand("launchctl", ["kickstart", "-k", \`gui/\${process.getuid()}/ai.nbeai.gpao-t\`], { timeoutMs: 30_000 });
+      receipt.restart = { attempted: true, ok: kickstart.ok, stderr: kickstart.stderr, stdout: kickstart.stdout };
+    }
+    console.log(JSON.stringify({ status: "updated", receiptPath, receipt }, null, 2));
+    return receipt;
+  } finally {
+    await fs.rm(stagingRoot, { recursive: true, force: true }).catch(() => {});
+    await fs.rm(lockPath, { recursive: true, force: true }).catch(() => {});
+  }
+}
+
+// gpao_t_update_boundary_launcher_v0_1
+if (process.argv[2] === "update") {
+  try {
+    const action = process.argv[3] || "status";
+    if (action === "apply" || action === "install" || action === "run") await applyUpdate();
+    else await updateStatus({ json: process.argv.includes("--json") || action === "status" });
+    process.exit(0);
+  } catch (error) {
+    console.error(JSON.stringify({
+      schema: "gpao_t.update_boundary.v1.error",
+      status: "failed",
+      message: error instanceof Error ? error.message : String(error),
+    }, null, 2));
+    process.exit(1);
+  }
 }
 const child = spawn(process.execPath, [...process.execArgv, launcher, ...process.argv.slice(2)], {
   env: process.env,

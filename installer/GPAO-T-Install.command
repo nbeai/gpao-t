@@ -10,6 +10,8 @@ NODE_BIN="${SCRIPT_DIR}/runtime/node"
 PACKAGE_ARCH="@@PACKAGE_ARCH@@"
 PORT="${GPAO_T_PORT:-18799}"
 URL="http://127.0.0.1:${PORT}/chat?session=main"
+DEFAULT_UPDATE_FEED_URL="https://github.com/nbeai/gpao-t/releases/latest/download/gpao-t-update.json"
+UPDATE_FEED_URL="${GPAO_T_UPDATE_FEED_URL:-${DEFAULT_UPDATE_FEED_URL}}"
 STATE_HOME="${GPAO_T_STATE_HOME:-${HOME}/.gpao-t}"
 COMPAT_HOME="${GPAO_T_COMPAT_HOME:-${HOME}/.openclaw}"
 LAUNCH_AGENTS_DIR="${GPAO_T_LAUNCH_AGENTS_DIR:-${HOME}/Library/LaunchAgents}"
@@ -69,6 +71,7 @@ DRY_RUN="$(${NODE_BIN} "${INSTALLER_MAIN}" install \
   --launch-agents-dir "${LAUNCH_AGENTS_DIR}" \
   --migration-profile none \
   --port "${PORT}" \
+  --update-feed-url "${UPDATE_FEED_URL}" \
   --json)" || fail "설치 전 점검에서 중단되었습니다.\n${DRY_RUN}"
 
 if [[ "${GPAO_T_DRY_RUN:-0}" == "1" ]]; then
@@ -87,6 +90,7 @@ INSTALL_OUTPUT="$(${NODE_BIN} "${INSTALLER_MAIN}" install \
   --launch-agents-dir "${LAUNCH_AGENTS_DIR}" \
   --migration-profile none \
   --port "${PORT}" \
+  --update-feed-url "${UPDATE_FEED_URL}" \
   --apply \
   --apply-token "${APPLY_TOKEN}" \
   --json)" || fail "설치 적용 단계에서 중단되었습니다.\n${INSTALL_OUTPUT}"

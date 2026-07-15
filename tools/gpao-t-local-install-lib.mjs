@@ -26,6 +26,8 @@ import {
   buildDoctorRecoveryHeart,
   verifyDoctorRecoveryHeart,
 } from "../src/core/doctor-recovery-heart.js";
+import { GPAO_T_RELEASE_CONTRACT } from "../src/core/release-contract.js";
+import { GPAO_T_DEFAULT_GITHUB_UPDATE_FEED_URL } from "../src/core/update-boundary.js";
 
 const execFileAsync = promisify(execFile);
 
@@ -272,11 +274,11 @@ export async function verifyDistribution(releaseRoot, { full = true } = {}) {
   if (!Array.isArray(manifest.files) || manifest.fileCount !== manifest.files.length) throw new Error("Distribution manifest fileCount does not match files[]");
   if (
     manifest.productId !== "gpao-t" ||
-    manifest.version !== "0.1.0" ||
-    manifest.distributionChannel !== "internal-production" ||
-    manifest.intendedAudience !== "internal" ||
-    manifest.publicRelease !== false ||
-    manifest.externalDistributionExecuted !== false ||
+    manifest.version !== GPAO_T_RELEASE_CONTRACT.version ||
+    manifest.distributionChannel !== GPAO_T_RELEASE_CONTRACT.distributionChannel ||
+    manifest.intendedAudience !== GPAO_T_RELEASE_CONTRACT.intendedAudience ||
+    manifest.publicRelease !== GPAO_T_RELEASE_CONTRACT.publicRelease ||
+    manifest.externalDistributionExecuted !== GPAO_T_RELEASE_CONTRACT.externalDistributionExecuted ||
     manifest.entrypoint !== "gpao-t.mjs"
   ) {
     throw new Error("Distribution manifest has an unsafe version or is missing the GPAO-T entrypoint");
@@ -595,7 +597,7 @@ export async function createInstallPlan(options) {
       selectedUnsafeSymlinks.push(...itemStats.unsafeSymlinks.map((path) => `${item}/${path}`));
     }
   }
-  const insecureSecretModes = openclawExists ? await verifySecretModes(options.openclawHome) : [];
+  const insecureSecretModes = profile !== "none" && openclawExists ? await verifySecretModes(options.openclawHome) : [];
   const oldServiceLoaded = process.platform === "darwin" ? await launchAgentLoaded("ai.openclaw.gateway") : false;
   const gpaoServiceLoaded = process.platform === "darwin" ? await launchAgentLoaded(LAUNCH_AGENT_LABEL) : false;
   const portBusy = await portListening(options.port);
@@ -630,6 +632,7 @@ export async function createInstallPlan(options) {
       configPath: paths.configPath,
       logsDir: paths.logsDir,
       port: options.port,
+      updateFeedUrl: options.updateFeedUrl,
     });
   } catch (error) {
     blockers.push(`LaunchAgent template is not usable: ${error.message}`);
@@ -667,7 +670,14 @@ export async function createInstallPlan(options) {
       integrity: release.integrity,
     },
     stateHome: paths.stateHome,
-    launchAgent: { label: LAUNCH_AGENT_LABEL, path: paths.launchAgentPath, node: paths.runtimeNodePath, sourceNode: nodePath, port: options.port },
+    launchAgent: {
+      label: LAUNCH_AGENT_LABEL,
+      path: paths.launchAgentPath,
+      node: paths.runtimeNodePath,
+      sourceNode: nodePath,
+      port: options.port,
+      updateFeedUrl: options.updateFeedUrl,
+    },
     runtime: { nodeSource: nodePath, nodeVersion, nodeDestination: paths.runtimeNodePath },
     openclaw: {
       source: resolve(options.openclawHome),
@@ -714,7 +724,7 @@ function xmlEscape(value) {
     .replaceAll("'", "&apos;");
 }
 
-export async function renderLaunchAgent(templatePath, { nodePath, currentPath, stateHome, configPath, logsDir, port }) {
+export async function renderLaunchAgent(templatePath, { nodePath, currentPath, stateHome, configPath, logsDir, port, updateFeedUrl }) {
   let template = await fs.readFile(templatePath, "utf8");
   const values = {
     "@@LABEL@@": LAUNCH_AGENT_LABEL,
@@ -726,6 +736,7 @@ export async function renderLaunchAgent(templatePath, { nodePath, currentPath, s
     "@@STDOUT_PATH@@": join(logsDir, "gateway.log"),
     "@@STDERR_PATH@@": join(logsDir, "gateway.error.log"),
     "@@PORT@@": String(port),
+    "@@UPDATE_FEED_URL@@": updateFeedUrl || "",
   };
   for (const [token, value] of Object.entries(values)) template = template.replaceAll(token, xmlEscape(value));
   if (template.includes("@@")) throw new Error("LaunchAgent template contains unresolved placeholders");
@@ -760,12 +771,46 @@ export function normalizeGpaoTPluginConfig(config) {
       : {}),
     enabled: true,
   };
-  const allow = Array.isArray(next.plugins.allow) ? next.plugins.allow : [];
-  next.plugins.allow = [...new Set([...allow.filter((id) => id !== "telegram"), "codex", "openai", "memory-core"])];
+  for (const pluginId of ["openai", "memory-core"]) {
+    next.plugins.entries[pluginId] = {
+      ...(next.plugins.entries[pluginId] && typeof next.plugins.entries[pluginId] === "object"
+        ? next.plugins.entries[pluginId]
+        : {}),
+      enabled: true,
+    };
+  }
+  delete next.plugins.allow;
+  if (next.plugins.bundledDiscovery !== "allowlist") {
+    next.plugins.bundledDiscovery = "compat";
+  }
   if (next.plugins.entries.telegram && typeof next.plugins.entries.telegram === "object") {
     next.plugins.entries.telegram = { ...next.plugins.entries.telegram, enabled: false };
   }
   return next;
+}
+
+function normalizeCompatibilityUpdateConfig(value) {
+  const source = value && typeof value === "object" ? value : {};
+  const allowedChannels = new Set(["stable", "extended-stable", "beta", "dev"]);
+  const channel = allowedChannels.has(source.channel) ? source.channel : "stable";
+  const next = { ...source, channel };
+  delete next.feedUrl;
+  delete next.compatibilityUpdaterAllowed;
+  delete next.preserveStateHome;
+  return next;
+}
+
+function normalizeGpaoTUpdateConfig(value, fallbackFeedUrl = GPAO_T_DEFAULT_GITHUB_UPDATE_FEED_URL) {
+  const source = value && typeof value === "object" ? value : {};
+  return {
+    ...source,
+    channel: "github-releases",
+    feedUrl: typeof source.feedUrl === "string" && source.feedUrl.trim()
+      ? source.feedUrl
+      : fallbackFeedUrl,
+    compatibilityUpdaterAllowed: false,
+    preserveStateHome: true,
+  };
 }
 
 export function normalizeGpaoTRuntimeConfig(config) {
@@ -792,6 +837,12 @@ export function normalizeGpaoTRuntimeConfig(config) {
     ? next.tools.sessions
     : {};
   next.tools.sessions.visibility = "agent";
+  const inheritedGpaoTFeed = next.gpaoTUpdate?.feedUrl || next.update?.feedUrl;
+  next.update = normalizeCompatibilityUpdateConfig(next.update);
+  next.gpaoTUpdate = normalizeGpaoTUpdateConfig(
+    next.gpaoTUpdate,
+    inheritedGpaoTFeed || GPAO_T_DEFAULT_GITHUB_UPDATE_FEED_URL,
+  );
   return next;
 }
 
@@ -814,7 +865,7 @@ export function disableInheritedExternalConnections(config) {
   return normalizeGpaoTRuntimeConfig(next);
 }
 
-export function buildFreshRuntimeConfig({ stateHome, port }) {
+export function buildFreshRuntimeConfig({ stateHome, port, updateFeedUrl = GPAO_T_DEFAULT_GITHUB_UPDATE_FEED_URL }) {
   const config = normalizeGpaoTRuntimeConfig({
     agents: {
       defaults: {
@@ -838,24 +889,51 @@ export function buildFreshRuntimeConfig({ stateHome, port }) {
     tools: {
       profile: "coding",
     },
+    channels: {
+      telegram: {
+        enabled: false,
+        botTokenRef: "GPAO_T_TELEGRAM_BOT_TOKEN",
+        chatIdRef: "GPAO_T_TELEGRAM_CHAT_ID",
+        userVisible: true,
+        setupRoute: "/settings/channels",
+      },
+    },
+    update: { channel: "stable" },
+    gpaoTUpdate: {
+      channel: "github-releases",
+      feedUrl: updateFeedUrl,
+      compatibilityUpdaterAllowed: false,
+      preserveStateHome: true,
+    },
     plugins: {
       entries: {
         codex: { enabled: true },
         openai: { enabled: true },
         "memory-core": { enabled: true },
       },
-      allow: ["codex", "openai", "memory-core"],
+      bundledDiscovery: "compat",
     },
   });
   // The portable package does not bundle the optional Codex plugin. Keep the
   // first boot self-contained; a detected plugin can be enabled later.
   config.plugins.entries.codex = { enabled: false };
-  config.plugins.allow = config.plugins.allow.filter((id) => id !== "codex");
   return config;
+}
+
+async function readExistingRuntimeConfig(configPath) {
+  try {
+    const stat = await fs.stat(configPath);
+    const config = JSON.parse(await fs.readFile(configPath, "utf8"));
+    return { exists: true, config, mode: stat.mode & 0o7777 };
+  } catch (error) {
+    if (error.code === "ENOENT") return { exists: false, config: null, mode: 0o600 };
+    throw error;
+  }
 }
 
 async function stageMigratedState(plan, stagingState, options) {
   await fs.mkdir(stagingState, { recursive: true, mode: 0o700 });
+  const existingConfig = await readExistingRuntimeConfig(plan.paths.configPath);
   const sourceConfig = join(options.openclawHome, "openclaw.json");
   if (plan.openclaw.profile !== "none" && await pathExists(sourceConfig)) {
     const sourceStat = await fs.stat(sourceConfig);
@@ -867,10 +945,15 @@ async function stageMigratedState(plan, stagingState, options) {
     disableInheritedExternalConnections(migrated);
     const configDestination = join(stagingState, "gpao-t.json");
     await writeJsonAtomic(configDestination, migrated, sourceStat.mode & 0o7777);
-  } else if (!(await pathExists(plan.paths.configPath))) {
+  } else if (existingConfig.exists) {
+    const normalized = normalizeGpaoTRuntimeConfig(existingConfig.config);
+    normalized.gateway = normalized.gateway && typeof normalized.gateway === "object" ? normalized.gateway : {};
+    normalized.gateway.port = options.port;
+    await writeJsonAtomic(join(stagingState, "gpao-t.json"), normalized, existingConfig.mode || 0o600);
+  } else {
     await writeJsonAtomic(
       join(stagingState, "gpao-t.json"),
-      buildFreshRuntimeConfig({ stateHome: plan.paths.stateHome, port: options.port }),
+      buildFreshRuntimeConfig({ stateHome: plan.paths.stateHome, port: options.port, updateFeedUrl: options.updateFeedUrl }),
       0o600,
     );
   }
@@ -1053,10 +1136,14 @@ async function waitForHealth(port, timeoutMs = 30000, { logsDir = null, label = 
 export async function applyInstall(plan, options) {
   if (plan.blockers.length > 0) throw new Error(`Apply refused by preflight:\n- ${plan.blockers.join("\n- ")}`);
   checkApplyToken(options.applyToken, plan.applyTokenRequired);
-  if (plan.openclaw.exists && await launchAgentLoaded("ai.openclaw.gateway")) throw new Error("Apply refused: stop ai.openclaw.gateway before backup/migration");
+  if (plan.openclaw.profile !== "none" && plan.openclaw.exists && await launchAgentLoaded("ai.openclaw.gateway")) {
+    throw new Error("Apply refused: stop ai.openclaw.gateway before backup/migration");
+  }
   if (await launchAgentLoaded(LAUNCH_AGENT_LABEL)) throw new Error(`Apply refused: stop ${LAUNCH_AGENT_LABEL} before snapshot/install`);
   if (await portListening(options.port)) throw new Error(`Apply refused: port ${options.port} is already listening`);
-  const insecureSecretModes = plan.openclaw.exists ? await verifySecretModes(options.openclawHome) : [];
+  const insecureSecretModes = plan.openclaw.profile !== "none" && plan.openclaw.exists
+    ? await verifySecretModes(options.openclawHome)
+    : [];
   if (insecureSecretModes.length > 0) throw new Error("Apply refused: secret-bearing OpenClaw path permissions changed after preflight");
   const operationId = nowId("install");
   const stagingDir = join(plan.paths.stagingRoot, operationId);
@@ -1108,6 +1195,7 @@ export async function applyInstall(plan, options) {
       configPath: plan.paths.configPath,
       logsDir: plan.paths.logsDir,
       port: options.port,
+      updateFeedUrl: options.updateFeedUrl,
     });
     await writeTextAtomic(plan.paths.launchAgentPath, plist, 0o600);
     const lint = await commandStatus("plutil", ["-lint", plan.paths.launchAgentPath]);
@@ -1401,13 +1489,14 @@ export function assessInstallReadiness(health) {
 export function defaultOptions({ scriptDir, workspaceRoot } = {}) {
   const root = workspaceRoot ?? resolve(scriptDir ?? process.cwd(), "..");
   return {
-    release: join(root, ".gpao-t", "releases", "gpao-t-0.1.0"),
+    release: join(root, ".gpao-t", "releases", `gpao-t-${GPAO_T_RELEASE_CONTRACT.version}`),
     stateHome: join(homedir(), ".gpao-t"),
     openclawHome: join(homedir(), ".openclaw"),
     launchAgentsDir: join(homedir(), "Library", "LaunchAgents"),
     plistTemplate: join(root, "installer", `${LAUNCH_AGENT_LABEL}.plist.template`),
     migrationProfile: "none",
     port: DEFAULT_PORT,
+    updateFeedUrl: GPAO_T_DEFAULT_GITHUB_UPDATE_FEED_URL,
     fullVerify: true,
     apply: false,
     applyToken: null,
@@ -1436,7 +1525,7 @@ export async function verifySecretModes(root) {
   return findings;
 }
 
-export async function makeFixtureManifest(releaseRoot, version = "0.1.0") {
+export async function makeFixtureManifest(releaseRoot, version = GPAO_T_RELEASE_CONTRACT.version) {
   const entries = await inventoryTree(releaseRoot, { hashFiles: true });
   const files = entries
     .filter((entry) => entry.path !== "." && entry.path !== MANIFEST_NAME && entry.kind !== "directory")
@@ -1449,10 +1538,10 @@ export async function makeFixtureManifest(releaseRoot, version = "0.1.0") {
     productId: "gpao-t",
     product: "nBeAI. GPAO-T",
     version,
-    distributionChannel: "internal-production",
-    intendedAudience: "internal",
-    publicRelease: false,
-    externalDistributionExecuted: false,
+    distributionChannel: GPAO_T_RELEASE_CONTRACT.distributionChannel,
+    intendedAudience: GPAO_T_RELEASE_CONTRACT.intendedAudience,
+    publicRelease: GPAO_T_RELEASE_CONTRACT.publicRelease,
+    externalDistributionExecuted: GPAO_T_RELEASE_CONTRACT.externalDistributionExecuted,
     generatedAt: new Date().toISOString(),
     stateHome: "~/.gpao-t",
     entrypoint: "gpao-t.mjs",

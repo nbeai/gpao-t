@@ -125,7 +125,10 @@ export async function buildMacosInstaller({
     ["tools/gpao-t-local-install-lib.mjs", "tools/gpao-t-local-install-lib.mjs"],
     ["src/core/provider-auth-heart.js", "src/core/provider-auth-heart.js"],
     ["src/core/model-connection-settings.js", "src/core/model-connection-settings.js"],
+    ["src/core/settings-connection-hub.js", "src/core/settings-connection-hub.js"],
     ["src/core/doctor-recovery-heart.js", "src/core/doctor-recovery-heart.js"],
+    ["src/core/release-contract.js", "src/core/release-contract.js"],
+    ["src/core/update-boundary.js", "src/core/update-boundary.js"],
   ];
   for (const [source, destination] of installerSources) {
     await copyFile(join(PROJECT_ROOT, source), join(outputRoot, destination));

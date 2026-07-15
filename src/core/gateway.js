@@ -420,6 +420,12 @@ import {
   verifyModelConnectionSettingsState,
 } from "./model-connection-settings.js";
 import {
+  buildSettingsConnectionHubState,
+  buildTelegramConnectionState,
+  renderSettingsConnectionHubHtml,
+  verifySettingsConnectionHubState,
+} from "./settings-connection-hub.js";
+import {
   buildMemoryContextHeart,
   verifyMemoryContextHeart,
 } from "./memory-context-heart.js";
@@ -3069,6 +3075,83 @@ export function handleGatewayRequest({ method = "GET", path = "/", body = {}, ro
       schema: "gpao_t.gateway_response.v0_1",
       status: 200,
       body: verifyModelConnectionSettingsState(),
+    };
+  }
+
+  if (normalizedMethod === "GET" && [
+    "/settings",
+    "/settings/general",
+    "/settings/channels",
+    "/settings/profile",
+    "/settings/ai-agents",
+  ].includes(path)) {
+    const route = path === "/settings" ? "/settings/general" : path;
+    const state = buildSettingsConnectionHubState({ route });
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      headers: { "content-type": "text/html; charset=utf-8" },
+      body: renderSettingsConnectionHubHtml(state),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/settings/state") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: buildSettingsConnectionHubState(),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/settings/verify") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: verifySettingsConnectionHubState(),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/settings/channels/telegram/state") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: buildTelegramConnectionState(),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/settings/channels/telegram/verify") {
+    const state = buildSettingsConnectionHubState({ route: "/settings/channels" });
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: {
+        schema: "gpao_t.telegram_settings_verification.v1",
+        status: state.telegram.status === "ready_candidate" ? "ready_candidate" : "needs_setup",
+        findings: state.telegram.findings,
+        secretValuesExposed: false,
+        completionClaimAllowed: false,
+        nextSafeAction: state.telegram.status === "ready_candidate"
+          ? "사용자 승인 후 Telegram 연결 확인을 실행하고 Telegram 대화 세션에서 실제 수신/응답을 검증하세요."
+          : "Telegram Bot Token, Chat ID, Enable Telegram 설정을 저장한 뒤 다시 확인하세요.",
+      },
+    };
+  }
+
+  if (normalizedMethod === "POST" && [
+    "/settings/channels/telegram/save",
+    "/settings/channels/telegram/verify-connection",
+  ].includes(path)) {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 202,
+      body: {
+        schema: "gpao_t.settings_action_boundary.v1",
+        status: "requires_runtime_mutation_path",
+        action: path.endsWith("/save") ? "save_telegram_settings" : "verify_telegram_connection",
+        secretValuesExposed: false,
+        message: "이 액션은 사용자 입력, 비밀값 저장, 외부 Telegram 네트워크 확인이 필요하므로 live runtime mutation 경로에서 CSRF/session 보호와 함께 실행되어야 합니다.",
+        nextSafeAction: "설정 화면의 사용자 제출 경로에 연결하고, 저장 후 /settings/channels/telegram/verify와 실제 Telegram 세션으로 검증하세요.",
+      },
     };
   }
 

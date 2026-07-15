@@ -31,6 +31,7 @@ Options:
   --launch-agents-dir <path>   LaunchAgents directory
   --migration-profile <name>   standard | none
   --port <number>              Dedicated gateway port (default: 18799)
+  --update-feed-url <url>      GPAO-T GitHub update feed URL
   --snapshot <id>              Snapshot to roll back
   --apply                      Enable the mutation lane
   --apply-token <token>        Exact token printed by the dry-run plan
@@ -52,6 +53,7 @@ function parseArgs(argv, defaults) {
     ["--launch-agents-dir", "launchAgentsDir"],
     ["--migration-profile", "migrationProfile"],
     ["--port", "port"],
+    ["--update-feed-url", "updateFeedUrl"],
     ["--snapshot", "snapshotId"],
     ["--apply-token", "applyToken"],
   ]);

@@ -127,6 +127,13 @@ import {
   verifyModelConnectionSettingsState,
 } from "./model-connection-settings.js";
 import {
+  buildSettingsConnectionHubState,
+  buildTelegramConnectionState,
+  renderSettingsConnectionHubHtml,
+  saveTelegramSettingsToConfig,
+  verifySettingsConnectionHubState,
+} from "./settings-connection-hub.js";
+import {
   buildMemoryContextHeart,
   verifyMemoryContextHeart,
 } from "./memory-context-heart.js";
@@ -163,6 +170,8 @@ const PROTECTED_POST_ROUTES = new Set([
   "/workspace/welcome/draft",
   "/workspace/welcome/apply",
   "/connectors/execution-runtime/invoke-dry-run",
+  "/settings/channels/telegram/save",
+  "/settings/channels/telegram/verify-connection",
 ]);
 const WELCOME_WRITE_FILES = [
   "IDENTITY.md",
@@ -669,6 +678,82 @@ export async function startControlCenterPreviewServer({
 
     if (url.pathname === "/settings/model-connection/verify") {
       respondJson(response, 200, verifyModelConnectionSettingsState());
+      return;
+    }
+
+    if (request.method === "POST" && url.pathname === "/settings/channels/telegram/save") {
+      const result = saveTelegramSettingsToConfig({
+        configPath: process.env.GPAO_T_CONFIG_PATH || join(homedir(), ".gpao-t", "gpao-t.json"),
+        form: parsedProtectedBody || {},
+        now,
+      });
+      const wantsJson = String(request.headers.accept || "").includes("application/json");
+      if (wantsJson) {
+        respondJson(response, 200, result);
+        return;
+      }
+      respondHtml(response, 200, secureHtml(renderSettingsConnectionHubHtml(
+        buildSettingsConnectionHubState({ route: "/settings/channels" }),
+      )));
+      return;
+    }
+
+    if (request.method === "POST" && url.pathname === "/settings/channels/telegram/verify-connection") {
+      const state = buildTelegramConnectionState();
+      respondJson(response, 200, {
+        schema: "gpao_t.telegram_connection_check.v1",
+        status: state.status === "ready_candidate" ? "ready_candidate" : "needs_setup",
+        findings: state.findings,
+        secretValuesExposed: false,
+        externalNetworkExecuted: false,
+        message: state.status === "ready_candidate"
+          ? "Telegram 설정 값은 준비되어 있습니다. 실제 Telegram API 왕복 검증은 사용자가 외부 연결 실행을 승인할 때 수행합니다."
+          : "Telegram Bot Token, Chat ID, Enable Telegram 설정이 필요합니다.",
+      });
+      return;
+    }
+
+    if ([
+      "/settings",
+      "/settings/general",
+      "/settings/channels",
+      "/settings/profile",
+      "/settings/ai-agents",
+    ].includes(url.pathname)) {
+      const route = url.pathname === "/settings" ? "/settings/general" : url.pathname;
+      respondHtml(response, 200, secureHtml(renderSettingsConnectionHubHtml(
+        buildSettingsConnectionHubState({ route }),
+      )));
+      return;
+    }
+
+    if (url.pathname === "/settings/state") {
+      respondJson(response, 200, buildSettingsConnectionHubState());
+      return;
+    }
+
+    if (url.pathname === "/settings/verify") {
+      respondJson(response, 200, verifySettingsConnectionHubState());
+      return;
+    }
+
+    if (url.pathname === "/settings/channels/telegram/state") {
+      respondJson(response, 200, buildTelegramConnectionState());
+      return;
+    }
+
+    if (url.pathname === "/settings/channels/telegram/verify") {
+      const state = buildSettingsConnectionHubState({ route: "/settings/channels" });
+      respondJson(response, 200, {
+        schema: "gpao_t.telegram_settings_verification.v1",
+        status: state.telegram.status === "ready_candidate" ? "ready_candidate" : "needs_setup",
+        findings: state.telegram.findings,
+        secretValuesExposed: false,
+        completionClaimAllowed: false,
+        nextSafeAction: state.telegram.status === "ready_candidate"
+          ? "사용자 승인 후 Telegram 연결 확인을 실행하고 Telegram 대화 세션에서 실제 수신/응답을 검증하세요."
+          : "Telegram Bot Token, Chat ID, Enable Telegram 설정을 저장한 뒤 다시 확인하세요.",
+      });
       return;
     }
 
@@ -1863,6 +1948,9 @@ function parseGenericRequestBody(body, contentType = "") {
     userAddress: params.get("userAddress") || undefined,
     companionName: params.get("companionName") || undefined,
     tone: params.get("tone") || undefined,
+    botToken: params.get("botToken") || undefined,
+    chatId: params.get("chatId") || undefined,
+    enabled: params.get("enabled") || undefined,
     rememberAutomatically: params.get("rememberAutomatically") || undefined,
     neverRemember: params.get("neverRemember") || undefined,
     approvalActions: params.get("approvalActions") || undefined,

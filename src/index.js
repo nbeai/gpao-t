@@ -251,6 +251,12 @@ import {
   verifyModelConnectionSettingsState,
 } from "./core/model-connection-settings.js";
 import {
+  buildSettingsConnectionHubState,
+  buildTelegramConnectionState,
+  renderSettingsConnectionHubHtml,
+  verifySettingsConnectionHubState,
+} from "./core/settings-connection-hub.js";
+import {
   buildDashboardForkMap,
   buildLabUiSlicePackage,
   buildMemoryKnowledgeControlArchitecture,
@@ -673,6 +679,8 @@ export {
   buildTimeoutBudget,
   buildModelInvocationPacket,
   buildModelConnectionSettingsState,
+  buildSettingsConnectionHubState,
+  buildTelegramConnectionState,
   buildModelProviderRegistry,
   buildDashboardForkMap,
   buildLabUiSlicePackage,
@@ -831,6 +839,7 @@ export {
   verifyTimeoutBudget,
   verifyModelInvocation,
   verifyModelConnectionSettingsState,
+  verifySettingsConnectionHubState,
   verifyProviderAuthHeart,
   verifyDoctorRecoveryHeart,
   verifyMemoryApplyGateState,
@@ -863,6 +872,7 @@ export {
   verifyGpaoTFirstCompletionAudit,
   renderControlCenterHtml,
   renderModelConnectionSettingsHtml,
+  renderSettingsConnectionHubHtml,
   renderTauriInstallDryRunPreview,
   startControlCenterPreviewServer,
   validateControlCenterUiSnapshot,

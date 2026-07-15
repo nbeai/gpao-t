@@ -2,6 +2,7 @@
 import { copyFile, mkdir, readFile, readdir, writeFile } from "node:fs/promises";
 import { basename, dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { GPAO_T_RELEASE_CONTRACT } from "../src/core/release-contract.js";
 
 const REPO_ROOT = fileURLToPath(new URL("..", import.meta.url));
 const DEFAULT_RUNTIME_ROOT =
@@ -16,6 +17,7 @@ const APPLY_TOKEN = "apply-gpao-t-update-boundary";
 const STARTUP_MARKER = "gpao_t_update_boundary_startup_v0_1";
 const HANDLERS_MARKER = "gpao_t_update_boundary_handlers_v0_1";
 const LAUNCHER_MARKER = "gpao_t_update_boundary_launcher_v0_1";
+const CURRENT_VERSION = GPAO_T_RELEASE_CONTRACT.version;
 
 function hasArg(name) {
   return process.argv.includes(name);
@@ -54,13 +56,13 @@ export function patchCompatibilityUpdateHandlersSource(source) {
   let patched = replaceExactlyOnce(
     source,
     '\t\tif (!assertValidParams(params, validateUpdateStatusParams, "update.status", respond)) return;',
-    `\t\tif (!assertValidParams(params, validateUpdateStatusParams, "update.status", respond)) return;\n\t\tif (process.env.GPAO_T_RUNTIME === "1") {\n\t\t\tconst feedConfigured = Boolean(process.env.GPAO_T_UPDATE_FEED_URL?.trim());\n\t\t\trespond(true, { sentinel: null, gpaoTUpdate: { schema: "gpao_t.update_boundary.v1", product: "GPAO-T", currentVersion: "0.1.0", mode: "gpao_t_managed", status: feedConfigured ? "configured_inactive" : "disabled", updateAvailable: null, compatibilityUpdaterAllowed: false, reason: feedConfigured ? "gpao_t_update_service_not_activated" : "gpao_t_update_feed_not_configured" } }, void 0); // ${HANDLERS_MARKER}\n\t\t\treturn;\n\t\t}`,
+    `\t\tif (!assertValidParams(params, validateUpdateStatusParams, "update.status", respond)) return;\n\t\tif (process.env.GPAO_T_RUNTIME === "1") {\n\t\t\tconst feedConfigured = Boolean(process.env.GPAO_T_UPDATE_FEED_URL?.trim());\n\t\t\trespond(true, { sentinel: null, gpaoTUpdate: { schema: "gpao_t.update_boundary.v1", product: "GPAO-T", currentVersion: "${CURRENT_VERSION}", mode: "gpao_t_managed", status: feedConfigured ? "configured_ready" : "disabled", updateAvailable: null, compatibilityUpdaterAllowed: false, reason: feedConfigured ? "gpao_t_github_update_feed_configured" : "gpao_t_update_feed_not_configured" } }, void 0); // ${HANDLERS_MARKER}\n\t\t\treturn;\n\t\t}`,
     "update.status handler",
   );
   patched = replaceExactlyOnce(
     patched,
     '\t\tif (!assertValidParams(params, validateUpdateRunParams, "update.run", respond)) return;',
-    `\t\tif (!assertValidParams(params, validateUpdateRunParams, "update.run", respond)) return;\n\t\tif (process.env.GPAO_T_RUNTIME === "1") {\n\t\t\tconst feedConfigured = Boolean(process.env.GPAO_T_UPDATE_FEED_URL?.trim());\n\t\t\trespond(true, { ok: false, result: { status: "skipped", mode: "gpao_t_managed", reason: feedConfigured ? "gpao_t_update_service_not_activated" : "gpao_t_update_feed_not_configured", steps: [], durationMs: 0 }, restart: null, sentinel: { persisted: false, payload: null } }, void 0);\n\t\t\treturn;\n\t\t}`,
+    `\t\tif (!assertValidParams(params, validateUpdateRunParams, "update.run", respond)) return;\n\t\tif (process.env.GPAO_T_RUNTIME === "1") {\n\t\t\tconst feedConfigured = Boolean(process.env.GPAO_T_UPDATE_FEED_URL?.trim());\n\t\t\trespond(true, { ok: false, result: { status: "skipped", mode: "gpao_t_managed", reason: feedConfigured ? "gpao_t_update_requires_verified_github_asset" : "gpao_t_update_feed_not_configured", steps: [], durationMs: 0 }, restart: null, sentinel: { persisted: false, payload: null } }, void 0);\n\t\t\treturn;\n\t\t}`,
     "update.run handler",
   );
   return patched;
@@ -70,7 +72,7 @@ export function patchGpaoTLauncherSource(source) {
   if (source.includes(LAUNCHER_MARKER)) return source;
   const anchor = "const child = spawn(process.execPath";
   if (!source.includes(anchor)) throw new Error("GPAO-T launcher: child process anchor not found");
-  const block = `// ${LAUNCHER_MARKER}\nif (process.argv[2] === "update") {\n  const feedConfigured = Boolean(process.env.GPAO_T_UPDATE_FEED_URL?.trim());\n  const statusOnly = process.argv[3] === "status" || process.argv.includes("--json");\n  const payload = { schema: "gpao_t.update_boundary.v1", product: "GPAO-T", currentVersion: "0.1.0", mode: "gpao_t_managed", status: feedConfigured ? "configured_inactive" : "disabled", updateAvailable: null, compatibilityUpdaterAllowed: false, reason: feedConfigured ? "gpao_t_update_service_not_activated" : "gpao_t_update_feed_not_configured" };\n  const output = JSON.stringify(payload, null, 2);\n  if (statusOnly) console.log(output);\n  else console.error(output);\n  process.exit(statusOnly ? 0 : 2);\n}\n`;
+  const block = `// ${LAUNCHER_MARKER}\nif (process.argv[2] === "update") {\n  const feedConfigured = Boolean(process.env.GPAO_T_UPDATE_FEED_URL?.trim());\n  const statusOnly = process.argv[3] === "status" || process.argv.includes("--json");\n  const payload = { schema: "gpao_t.update_boundary.v1", product: "GPAO-T", currentVersion: "${CURRENT_VERSION}", mode: "gpao_t_managed", status: feedConfigured ? "configured_ready" : "disabled", updateAvailable: null, compatibilityUpdaterAllowed: false, reason: feedConfigured ? "gpao_t_github_update_feed_configured" : "gpao_t_update_feed_not_configured" };\n  const output = JSON.stringify(payload, null, 2);\n  if (statusOnly) console.log(output);\n  else console.error(output);\n  process.exit(statusOnly ? 0 : 2);\n}\n`;
   return source.replace(anchor, `${block}${anchor}`);
 }
 

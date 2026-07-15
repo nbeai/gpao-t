@@ -10,6 +10,7 @@ import {
   patchControlUiIndexHtmlPublicAssetRootPaths,
   patchControlUiIndexHtmlSkillSurfaceIsolation,
   patchControlUiPublicAssetRootPaths,
+  patchIndexBundle,
   patchSkillsPageBasicSkillKoreanDescriptions,
 } from "../tools/apply-live-model-connection-settings-route-patch.mjs";
 
@@ -36,8 +37,13 @@ test("model connection settings gives users a visible provider setup surface wit
   assert.equal(state.dashboardRoutes.modelConnection, "/settings/model-connection");
   assert.equal(state.dashboardRoutes.apiKeyManagement, "/skills");
   assert.equal(state.dashboardRoutes.runtimeConfig, "/settings/general");
-  assert.equal(state.providers.some((provider) => provider.id === "openai" && provider.recommended), true);
+  assert.equal(state.connectionModes.some((mode) => mode.id === "oauth_session" && mode.status === "available"), true);
+  assert.equal(state.connectionModes.some((mode) => mode.id === "api_key" && mode.status === "available"), true);
+  assert.equal(state.providers.some((provider) => provider.id === "chatgpt_oauth_session" && provider.authMode === "oauth_or_session_auth"), true);
+  assert.equal(state.providers.some((provider) => provider.id === "openai_api_key" && provider.recommended), true);
   assert.match(html, /모델 연결 설정/);
+  assert.match(html, /ChatGPT \/ Codex OAuth/);
+  assert.match(html, /OAuth \/ Account Session/);
   assert.match(html, /OpenAI/);
   assert.match(html, /기능\/API 키 관리/);
   assert.match(html, /런타임 설정/);
@@ -58,6 +64,23 @@ test("gateway exposes model connection settings page, state, and verification ro
   assert.equal(state.body.schema, "gpao_t.model_connection_settings.v1");
   assert.equal(check.body.schema, "gpao_t.model_connection_settings.v1.verification");
   assert.equal(check.body.status, "ready");
+});
+
+test("control UI model connection panel exposes OAuth and API key lanes", () => {
+  const source = [
+    "var $o=N({id:`skills`,path:`/skills`,loader:Qo,component:()=>M(()=>import(`./skills-page-DwYk0iep.js`).then(()=>({header:!0,render:e=>f`<gpao-t-skills-page .routeData=${e}></gpao-t-skills-page>`})),__vite__mapDeps([33,1,2,3,4,7,12,19,28,18,17,29]),import.meta.url)})",
+    "async function es(",
+    "channels:{path:`/settings/channels`,aliases:[`/channels`]},config:",
+    "channels:{titleKey:`tabs.channels`,subtitleKey:`subtitles.channels`},instances:",
+    "channels:`link`,instances:",
+    "routes:[`channels`,`communications`]",
+    "ho,ts,$o];function rs()",
+  ].join("");
+  const { source: patched } = patchIndexBundle(source);
+
+  assert.match(patched, /ChatGPT \/ Codex OAuth/);
+  assert.match(patched, /OpenAI API key/);
+  assert.match(patched, /OAuth 토큰과 API 키 원문은 화면이나 로그에 다시 표시하지 않습니다/);
 });
 
 test("control UI public assets stay rooted on settings subroutes", () => {

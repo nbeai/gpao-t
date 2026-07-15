@@ -1,0 +1,35 @@
+{
+  "schema": "gpao_t.github_update_feed.v1",
+  "productId": "gpao-t",
+  "product": "nBeAI. GPAO-T",
+  "channel": "github-releases",
+  "version": "2026.07.15-r1",
+  "generatedAt": "2026-07-15T10:49:40.752Z",
+  "releasePageUrl": "https://github.com/nbeai/gpao-t/releases/tag/2026.07.15-r1",
+  "minimumInstalledVersion": "2026.07.15-r1",
+  "installStrategy": {
+    "mode": "staged_verified_local_install",
+    "preservesStateHome": true,
+    "snapshotBeforeApply": true,
+    "rollbackAvailable": true,
+    "requiresSha256Verification": true
+  },
+  "assets": [
+    {
+      "kind": "production_distribution",
+      "name": "gpao-t-2026.07.15-r1.zip",
+      "url": "https://github.com/nbeai/gpao-t/releases/download/2026.07.15-r1/gpao-t-2026.07.15-r1.zip",
+      "sha256": "c2e901a193911c4ab8bf75863267740a292f8ed95f967d7ef61371e86ac3779d",
+      "bytes": 80306245,
+      "platform": null
+    },
+    {
+      "kind": "macos_installer",
+      "name": "gpao-t-2026.07.15-r1-macos-installer.zip",
+      "url": "https://github.com/nbeai/gpao-t/releases/download/2026.07.15-r1/gpao-t-2026.07.15-r1-macos-installer.zip",
+      "sha256": "dd3f9b5a768b274ae2d137dc7ed25a5c11b34eabda6dffe7f2e18c9cee282cc2",
+      "bytes": 124293495,
+      "platform": "macos"
+    }
+  ]
+}

@@ -2,10 +2,15 @@ import test from "node:test";
 import assert from "node:assert/strict";
 
 import {
+  GPAO_T_DEFAULT_GITHUB_UPDATE_FEED_URL,
   GPAO_T_RELEASE_VERSION,
   assertCompatibilityUpdaterDisabled,
+  buildGpaoTUpdateFeed,
+  compareGpaoTDateVersions,
   gpaoTUpdateStatus,
   resolveGpaoTUpdateBoundary,
+  selectGpaoTUpdateCandidate,
+  verifyGpaoTUpdateFeed,
 } from "../src/core/update-boundary.js";
 import {
   patchCompatibilityUpdateHandlersSource,
@@ -29,7 +34,39 @@ test("GPAO-T feed configuration never re-enables the compatibility updater", () 
   });
   assert.equal(boundary.enabled, true);
   assert.equal(boundary.compatibilityUpdaterAllowed, false);
-  assert.equal(boundary.reason, "gpao_t_update_service_not_activated");
+  assert.equal(boundary.reason, "gpao_t_github_update_feed_configured");
+  assert.equal(gpaoTUpdateStatus({ GPAO_T_UPDATE_FEED_URL: GPAO_T_DEFAULT_GITHUB_UPDATE_FEED_URL }).status, "configured_ready");
+});
+
+test("GPAO-T GitHub update feed selects newer date-version assets only after integrity metadata is present", () => {
+  assert.equal(compareGpaoTDateVersions("2026.07.15-r2", "2026.07.15-r1"), 1);
+  assert.equal(compareGpaoTDateVersions("2026.07.15-r1", "2026.07.15-r1"), 0);
+  const feed = buildGpaoTUpdateFeed({
+    version: "2026.07.15-r2",
+    releasePageUrl: "https://github.com/nbeai/gpao-t/releases/tag/2026.07.15-r2",
+    assets: [
+      {
+        kind: "production_distribution",
+        name: "gpao-t-2026.07.15-r2.zip",
+        url: "https://github.com/nbeai/gpao-t/releases/download/2026.07.15-r2/gpao-t-2026.07.15-r2.zip",
+        sha256: "a".repeat(64),
+        bytes: 123,
+      },
+      {
+        kind: "macos_installer",
+        name: "gpao-t-2026.07.15-r2-macos-installer.zip",
+        url: "https://github.com/nbeai/gpao-t/releases/download/2026.07.15-r2/gpao-t-2026.07.15-r2-macos-installer.zip",
+        sha256: "b".repeat(64),
+        bytes: 456,
+        platform: "macos",
+      },
+    ],
+  });
+  assert.equal(verifyGpaoTUpdateFeed(feed).ok, true);
+  const candidate = selectGpaoTUpdateCandidate(feed, "2026.07.15-r1");
+  assert.equal(candidate.status, "update_available");
+  assert.equal(candidate.updateAvailable, true);
+  assert.equal(candidate.assets.length, 2);
 });
 
 test("compatibility startup patch blocks background update checks in GPAO-T runtime", () => {
@@ -54,7 +91,8 @@ test("compatibility handler patch returns GPAO-T managed status and refuses upda
   const patched = patchCompatibilityUpdateHandlersSource(source);
   assert.match(patched, /gpao_t_update_boundary_handlers_v0_1/);
   assert.match(patched, /gpao_t_update_feed_not_configured/);
-  assert.match(patched, /gpao_t_update_service_not_activated/);
+  assert.match(patched, /gpao_t_github_update_feed_configured/);
+  assert.match(patched, /2026\.07\.15-r1/);
   assert.equal(patchCompatibilityUpdateHandlersSource(patched), patched);
 });
 

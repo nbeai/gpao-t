@@ -23,6 +23,8 @@
     <string>@@CONFIG_PATH@@</string>
     <key>GPAO_T_RUNTIME</key>
     <string>1</string>
+    <key>GPAO_T_UPDATE_FEED_URL</key>
+    <string>@@UPDATE_FEED_URL@@</string>
     <key>GPAO_T_ENABLE_LEGACY_COMPATIBILITY_NETWORK</key>
     <string>0</string>
     <key>OPENCLAW_NO_AUTO_UPDATE</key>

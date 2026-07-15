@@ -1,13 +1,13 @@
-# GPAO-T 0.1.0 Production Distribution
+# GPAO-T 2026.07.15-r1 Production Distribution
 
 Status language: `production_ready` only after every production seal gate passes.
 
 ## Product Contract
 
 - Product: `nBeAI. GPAO-T`
-- Version: `0.1.0`
-- Distribution channel: `internal-production`
-- Intended audience: internal company users
+- Version: `2026.07.15-r1`
+- Distribution channel: `public-source-prep`
+- Intended audience: public
 - Public release: not executed
 - State home: `~/.gpao-t`
 - Dashboard: `http://127.0.0.1:18799/chat?session=main`
@@ -18,10 +18,12 @@ self-growth gates apply to every package.
 
 ## Artifacts
 
-- Directory: `.gpao-t/releases/gpao-t-0.1.0/`
-- Archive: `.gpao-t/releases/gpao-t-0.1.0.zip`
-- Checksum: `.gpao-t/releases/gpao-t-0.1.0.zip.sha256`
-- Manifest: `.gpao-t/releases/gpao-t-0.1.0/GPAO-T-DISTRIBUTION-MANIFEST.json`
+- Directory: `.gpao-t/releases/gpao-t-2026.07.15-r1/`
+- Archive: `.gpao-t/releases/gpao-t-2026.07.15-r1.zip`
+- Checksum: `.gpao-t/releases/gpao-t-2026.07.15-r1.zip.sha256`
+- Manifest: `.gpao-t/releases/gpao-t-2026.07.15-r1/GPAO-T-DISTRIBUTION-MANIFEST.json`
+- GitHub update feed: `docs/05-release/update-feed/gpao-t-update.json`
+- Windows installer archive: `.gpao-t/releases/gpao-t-2026.07.15-r1-windows-installer.zip`
 
 The manifest is `gpao_t.distribution_manifest.v2`. It binds the release version,
 distribution channel, package identity, runtime identity, source provenance, file
@@ -32,7 +34,10 @@ inventory, and SHA-256 hashes.
 ```bash
 npm run package:production
 node tools/verify-gpao-t-production-distribution.mjs \
-  --archive .gpao-t/releases/gpao-t-0.1.0.zip
+  --archive .gpao-t/releases/gpao-t-2026.07.15-r1.zip
+npm run package:macos-installer
+npm run package:windows-installer
+npm run package:github-update-feed
 npm run verify
 npm run seal:final
 ```
@@ -51,7 +56,8 @@ npm run package:macos-installer
 Share the resulting archive:
 
 ```text
-.gpao-t/releases/gpao-t-0.1.0-macos-installer.zip
+.gpao-t/releases/gpao-t-2026.07.15-r1-macos-installer.zip
+.gpao-t/releases/gpao-t-2026.07.15-r1-windows-installer.zip
 ```
 
 The recipient extracts the archive and double-clicks `GPAO-T-Install.command`.
@@ -69,14 +75,23 @@ node installer/gpao-t-macos-local.mjs rollback --snapshot <id>
 It keeps rollback evidence and does not use the historical pre-production package as
 the default install source.
 
-## Update Boundary
+For Windows, share the Windows installer archive. The recipient extracts it and
+double-clicks `GPAO-T-Install.cmd`. The package includes `runtime/node.exe`,
+installs into `%USERPROFILE%\.gpao-t`, registers a Windows Task Scheduler
+`ONLOGON` task, opens the authenticated dashboard, and auto-approves the first
+local browser device pairing. Users should not type a connection key manually.
+
+## GitHub Update Boundary
 
 GPAO-T owns its update contract. The isolated compatibility runtime is never allowed
 to check or install its upstream product updates while `GPAO_T_RUNTIME=1`.
 
 - `gpao-t update status` returns the GPAO-T managed update state.
-- `gpao-t update` fails closed until the GPAO-T update service is activated.
-- A future feed must use signed GPAO-T manifests, digest verification, staged install,
+- New installs carry `GPAO_T_UPDATE_FEED_URL` in the LaunchAgent and `gpaoTUpdate.feedUrl`
+  in `~/.gpao-t/gpao-t.json`; compatibility `update.channel` remains schema-safe.
+- The default feed target is
+  `https://github.com/nbeai/gpao-t/releases/latest/download/gpao-t-update.json`.
+- The feed must use GPAO-T manifests, SHA-256 verification, staged install,
   atomic swap, rollback, restart, health, dashboard, fresh chat, and log readback.
 
 ## Completion Evidence

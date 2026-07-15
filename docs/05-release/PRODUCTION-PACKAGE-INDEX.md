@@ -1,4 +1,4 @@
-# GPAO-T 0.1.0 Production Package Index
+# GPAO-T 2026.07.15-r1 Production Package Index
 
 ## Canonical Files
 
@@ -13,7 +13,10 @@
 ```bash
 npm run package:production
 node tools/verify-gpao-t-production-distribution.mjs \
-  --archive .gpao-t/releases/gpao-t-0.1.0.zip
+  --archive .gpao-t/releases/gpao-t-2026.07.15-r1.zip
+npm run package:macos-installer
+npm run package:windows-installer
+npm run package:github-update-feed
 npm run verify
 npm run seal:identity
 npm run seal:namespace
@@ -23,4 +26,4 @@ npm run seal:final
 ```
 
 The final accepted status is `production_ready`. Distribution scope is recorded
-separately as `internal`; it is never encoded as a test or candidate version.
+in the release contract; it is never encoded as a test or candidate version.
