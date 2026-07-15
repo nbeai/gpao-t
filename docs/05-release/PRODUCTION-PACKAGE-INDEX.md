@@ -1,4 +1,4 @@
-# GPAO-T 2026.07.15-r1 Production Package Index
+# GPAO-T 2026.07.15-r3 Production Package Index
 
 ## Canonical Files
 
@@ -13,7 +13,7 @@
 ```bash
 npm run package:production
 node tools/verify-gpao-t-production-distribution.mjs \
-  --archive .gpao-t/releases/gpao-t-2026.07.15-r1.zip
+  --archive .gpao-t/releases/gpao-t-2026.07.15-r3.zip
 npm run package:macos-installer
 npm run package:windows-installer
 npm run package:github-update-feed

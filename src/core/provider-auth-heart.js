@@ -12,10 +12,10 @@ export function buildProviderAuthHeartContract({
 } = {}) {
   const agentStoreDir = join(stateDir, "agents", agentId, "agent");
   const legacyAgentStoreDir = join(legacyStateDir, "agents", agentId, "agent");
-  const activeRuntimeStore = join(agentStoreDir, "openclaw-agent.sqlite");
-  const productNamedMirror = join(agentStoreDir, "gpao-t-agent.sqlite");
+  const canonicalStore = join(agentStoreDir, "gpao-t-agent.sqlite");
+  const runtimeCompatibilityStore = join(agentStoreDir, "openclaw-agent.sqlite");
   const compatibilityStores = [
-    productNamedMirror,
+    runtimeCompatibilityStore,
     join(legacyAgentStoreDir, "openclaw-agent.sqlite"),
   ];
 
@@ -26,9 +26,10 @@ export function buildProviderAuthHeartContract({
     stateDir,
     legacyStateDir,
     canonicalStateRoot: stateDir,
-    activeRuntimeStore,
-    canonicalStore: activeRuntimeStore,
-    productNamedMirror,
+    canonicalStore,
+    activeRuntimeStore: canonicalStore,
+    runtimeCompatibilityStore,
+    productNamedMirror: canonicalStore,
     compatibilityStores,
     productBoundary: {
       userFacingName: "GPAO-T",
@@ -38,15 +39,17 @@ export function buildProviderAuthHeartContract({
     },
     invariants: {
       canonicalStateRootIsGpaoT: true,
+      canonicalStoreNameIsGpaoT: true,
       activeCompatibilityFilenameIsInternalOnly: true,
-      productNamedMirrorIsNotRuntimeAuthority: true,
+      runtimeCompatibilityStoreIsMirrorOnly: true,
+      productNamedMirrorIsRuntimeAuthority: true,
       compatibilityStoreNamesAreNotProductIdentity: true,
       repairMustNotPrintSecrets: true,
       freshChatRequiredAfterRepair: true,
       health200IsNotCompletion: true,
     },
     nextSafeAction:
-      "Inspect the active store under the GPAO-T state root and migration sources without reading secret values.",
+      "Inspect the canonical GPAO-T auth store and compatibility mirrors without reading secret values.",
   };
 }
 
@@ -59,6 +62,7 @@ export function inspectProviderAuthStores({
   const contract = buildProviderAuthHeartContract({ stateDir, legacyStateDir, agentId });
   const canonical = statStore(contract.activeRuntimeStore, "active_runtime");
   const productMirror = statStore(contract.productNamedMirror, "product_named_mirror");
+  const runtimeCompatibility = statStore(contract.runtimeCompatibilityStore, "runtime_compatibility_mirror");
   const compatibility = contract.compatibilityStores.map((store) => statStore(store, "compatibility"));
   const usableCompatibility = compatibility.filter((store) => store.exists && store.size > 0);
   const findings = [];
@@ -67,8 +71,8 @@ export function inspectProviderAuthStores({
   if (canonical.exists && canonical.size === 0) findings.push("active_auth_store_empty");
   if (!usableCompatibility.length) findings.push("compatibility_auth_store_missing_or_empty");
   if (!canonical.exists && usableCompatibility.length) findings.push("repairable_from_compatibility_store");
-  if (canonical.exists && canonical.size > 0 && productMirror.exists && productMirror.size !== canonical.size) {
-    findings.push("product_named_mirror_stale_after_runtime_activity");
+  if (canonical.exists && canonical.size > 0 && runtimeCompatibility.exists && runtimeCompatibility.size !== canonical.size) {
+    findings.push("runtime_compatibility_mirror_stale_after_runtime_activity");
   }
 
   const repairRequired = findings.some((finding) => [
@@ -86,6 +90,7 @@ export function inspectProviderAuthStores({
       canonical,
       activeRuntime: canonical,
       productMirror,
+      runtimeCompatibility,
       compatibility,
     },
     secretSafety: {
@@ -112,7 +117,7 @@ export function buildProviderAuthRepairPlan({
 
   if (inventory.findings?.includes("active_auth_store_missing") && source) {
     actions.push({
-      id: "copy_compatibility_store_to_active_runtime",
+      id: "copy_compatibility_store_to_canonical_gpao_t_store",
       status: "requires_apply_gate",
       from: source.path,
       to: canonical.path,
@@ -121,11 +126,31 @@ export function buildProviderAuthRepairPlan({
   }
   if (inventory.findings?.includes("active_auth_store_empty") && source) {
     actions.push({
-      id: "replace_empty_active_runtime_store_from_compatibility",
+      id: "replace_empty_canonical_gpao_t_store_from_compatibility",
       status: "requires_apply_gate",
       from: source.path,
       to: canonical.path,
       secretHandling: "copy_file_without_printing_values",
+    });
+  }
+  if (canonical?.exists && canonical.size > 0 && inventory.stores?.runtimeCompatibility?.exists === false) {
+    actions.push({
+      id: "create_internal_runtime_compatibility_mirror",
+      status: "requires_apply_gate",
+      from: canonical.path,
+      to: inventory.contract.runtimeCompatibilityStore,
+      secretHandling: "copy_file_without_printing_values",
+      userFacingMeaning: "GPAO-T canonical auth remains authoritative; compatibility mirror only supports the current bundled engine.",
+    });
+  }
+  if (inventory.findings?.includes("runtime_compatibility_mirror_stale_after_runtime_activity")) {
+    actions.push({
+      id: "refresh_internal_runtime_compatibility_mirror",
+      status: "requires_apply_gate",
+      from: canonical.path,
+      to: inventory.contract.runtimeCompatibilityStore,
+      secretHandling: "copy_file_without_printing_values",
+      userFacingMeaning: "GPAO-T canonical auth remains authoritative; compatibility mirror is refreshed for the bundled engine.",
     });
   }
   const verification = [
@@ -167,6 +192,11 @@ export function verifyProviderAuthHeart({
   if (inventory.secretSafety?.readsSecretValues !== false) findings.push("secret_value_reading_open");
   if (inventory.secretSafety?.recordsSecretValues !== false) findings.push("secret_value_recording_open");
   if (inventory.contract?.productBoundary?.openClawVisibleToUser !== false) findings.push("openclaw_user_surface_open");
+  if (inventory.contract?.canonicalStore !== inventory.contract?.productNamedMirror) findings.push("canonical_store_not_product_named");
+  if (inventory.contract?.invariants?.canonicalStoreNameIsGpaoT !== true) findings.push("canonical_store_name_not_gpao_t");
+  if (inventory.contract?.invariants?.runtimeCompatibilityStoreIsMirrorOnly !== true) {
+    findings.push("runtime_compatibility_mirror_boundary_missing");
+  }
   if (inventory.contract?.invariants?.freshChatRequiredAfterRepair !== true) findings.push("fresh_chat_gate_missing");
   if (inventory.contract?.invariants?.health200IsNotCompletion !== true) findings.push("health_only_completion_gate_open");
   if (repairPlan.forbiddenActions?.includes("print_api_key_or_oauth_token") !== true) findings.push("secret_print_forbidden_action_missing");

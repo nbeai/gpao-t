@@ -36,7 +36,16 @@ Run from `/Users/jyp/Developer/gpao-t`:
 - Targeted live/memory tests:
   - `node --test test/live-turn-absorption-bridge.test.js test/connector-governance.test.js test/memory-candidate-review-queue.test.js --test-concurrency=1 --test-timeout=180000 --test-reporter=spec`
 - Runtime health: `curl -fsS http://127.0.0.1:18799/health`
+- Runtime doctor: `gpao-t doctor`
+- Runtime logs: `gpao-t logs --follow`
+- Memory status: `gpao-t memory status --index`
+- Memory index rebuild: `gpao-t memory index --force`
 - Plugin diagnostics: run the GPAO-T runtime plugin doctor through the installed local runtime command lane.
+
+Never suggest legacy compatibility CLI commands in user-facing GPAO-T answers.
+If an internal compatibility log or model output contains a legacy logs,
+memory-index, or runtime command, translate it to the corresponding GPAO-T
+command before showing it to the user.
 
 ## Runtime Workspace Pack
 

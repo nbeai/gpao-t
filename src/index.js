@@ -226,10 +226,12 @@ import {
   guardExternalWriteCompletion,
   isolateHeartbeatFailures,
   sanitizeChatSendParams,
+  sanitizeUserFacingRuntimeAnswer,
   verifyChatSendSanitizer,
   verifyExternalWriteCompletionGuard,
   verifyHeartbeatFailureIsolation,
   verifyTimeoutBudget,
+  verifyUserFacingRuntimeAnswerGuard,
 } from "./core/tester-failure-guards.js";
 import {
   buildModelInvocationPacket,
@@ -820,6 +822,7 @@ export {
   routeSkillPacks,
   routeModel,
   sanitizeChatSendParams,
+  sanitizeUserFacingRuntimeAnswer,
   buildProviderAuthHeartContract,
   buildProviderAuthRepairPlan,
   inspectProviderAuthStores,
@@ -841,6 +844,7 @@ export {
   verifyExternalWriteCompletionGuard,
   verifyHeartbeatFailureIsolation,
   verifyTimeoutBudget,
+  verifyUserFacingRuntimeAnswerGuard,
   verifyModelInvocation,
   verifyModelConnectionSettingsState,
   verifySettingsConnectionHubState,

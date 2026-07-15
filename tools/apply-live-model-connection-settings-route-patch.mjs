@@ -24,22 +24,27 @@ const MODEL_CONNECTION_PANEL_SOURCE = [
   "<section style=\"padding:24px 28px 18px;max-width:1120px\">",
   "<div style=\"display:flex;justify-content:space-between;gap:20px;align-items:flex-start;margin-bottom:18px\">",
   "<div><h1 style=\"margin:0 0 8px;font-size:28px;letter-spacing:0\">모델 연결</h1>",
-  "<p style=\"margin:0;color:var(--muted);line-height:1.55\">ChatGPT/Codex OAuth 계정 세션과 OpenAI API Key 연결을 이 화면에서 바로 설정합니다. 키와 토큰 원문은 저장 후 다시 표시하지 않습니다.</p></div>",
+  "<p style=\"margin:0;color:var(--muted);line-height:1.55\">ChatGPT/Codex OAuth 계정 세션과 provider API Key 연결을 이 화면에서 바로 설정합니다. 키와 토큰 원문은 저장 후 다시 표시하지 않습니다.</p></div>",
   "<a href=\"/chat?session=main\" style=\"display:inline-flex;align-items:center;min-height:38px;padding:0 13px;border:1px solid var(--border);border-radius:7px;text-decoration:none;color:var(--fg);background:var(--panel)\">채팅으로 돌아가기</a>",
   "</div>",
   "<div style=\"display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin:18px 0\">",
   "<article style=\"border:1px solid var(--border);border-radius:8px;background:var(--panel);padding:16px\"><strong>ChatGPT / Codex OAuth</strong><p style=\"margin:8px 0 0;color:var(--muted);line-height:1.5\">ChatGPT 또는 Codex 계정 승인으로 GPT 모델을 연결합니다. API 키를 직접 붙여넣지 않는 계정 기반 연결 방식입니다.</p></article>",
-  "<article style=\"border:1px solid var(--border);border-radius:8px;background:var(--panel);padding:16px\"><strong>OpenAI API Key</strong><p style=\"margin:8px 0 0;color:var(--muted);line-height:1.5\">팀원별 OpenAI API 키로 GPT 모델을 연결합니다. ChatGPT 구독과 OpenAI API 과금은 별도입니다.</p></article>",
-  "<article style=\"border:1px solid var(--border);border-radius:8px;background:var(--panel);padding:16px\"><strong>Anthropic</strong><p style=\"margin:8px 0 0;color:var(--muted);line-height:1.5\">선택 provider입니다. 모델 선택 확장 시 같은 연결 화면 업데이트로 제공됩니다.</p></article>",
-  "<article style=\"border:1px solid var(--border);border-radius:8px;background:var(--panel);padding:16px\"><strong>Google Gemini</strong><p style=\"margin:8px 0 0;color:var(--muted);line-height:1.5\">선택 provider입니다. 연결 후 실제 응답과 로그까지 확인해야 합니다.</p></article>",
-  "<article style=\"border:1px solid var(--border);border-radius:8px;background:var(--panel);padding:16px\"><strong>Telegram</strong><p style=\"margin:8px 0 0;color:var(--muted);line-height:1.5\">Bot Token과 Chat ID를 등록해 Telegram 대화 채널을 연결합니다. 채널 설정에서 저장합니다.</p></article>",
+  "<article style=\"border:1px solid var(--border);border-radius:8px;background:var(--panel);padding:16px\"><strong>OpenAI API Key</strong><p style=\"margin:8px 0 0;color:var(--muted);line-height:1.5\">GPT 계열 모델을 OpenAI API 사용량/과금 기준으로 연결합니다.</p></article>",
+  "<article style=\"border:1px solid var(--border);border-radius:8px;background:var(--panel);padding:16px\"><strong>Anthropic</strong><p style=\"margin:8px 0 0;color:var(--muted);line-height:1.5\">Claude 계열 모델을 Anthropic API 키로 연결합니다.</p></article>",
+  "<article style=\"border:1px solid var(--border);border-radius:8px;background:var(--panel);padding:16px\"><strong>Google Gemini</strong><p style=\"margin:8px 0 0;color:var(--muted);line-height:1.5\">Gemini 계열 모델을 Google/Gemini API 키로 연결합니다.</p></article>",
+  "<article style=\"border:1px solid var(--border);border-radius:8px;background:var(--panel);padding:16px\"><strong>Telegram</strong><p style=\"margin:8px 0 0;color:var(--muted);line-height:1.5\">봇 토큰과 Chat ID를 등록해 Telegram 대화 채널을 연결합니다. 채널 설정에서 저장합니다.</p></article>",
   "</div>",
   "<form method=\"post\" action=\"/settings/model-connection/openai-api-key/save\" style=\"border:1px solid var(--border);border-radius:8px;background:var(--panel);padding:16px;margin:18px 0\">",
-  "<strong style=\"display:block;margin-bottom:8px\">OpenAI API Key 연결</strong>",
-  "<label for=\"openai-api-key\" style=\"display:block;font-size:13px;font-weight:700;margin:10px 0 6px\">OpenAI API Key</label>",
-  "<input id=\"openai-api-key\" name=\"apiKey\" type=\"password\" autocomplete=\"off\" placeholder=\"sk-...\" required style=\"box-sizing:border-box;width:100%;min-height:42px;border:1px solid var(--border);border-radius:7px;padding:0 12px;background:var(--bg);color:var(--fg);font:inherit\">",
-  "<input type=\"hidden\" name=\"provider\" value=\"openai\"><input type=\"hidden\" name=\"profileId\" value=\"openai:manual\">",
-  "<button type=\"submit\" style=\"margin-top:12px;min-height:40px;padding:0 14px;border-radius:7px;border:1px solid #d84d3f;background:#d84d3f;color:white;font-weight:750\">OpenAI API Key 저장</button>",
+  "<strong style=\"display:block;margin-bottom:8px\">API Key 연결</strong>",
+  "<label for=\"api-key-provider\" style=\"display:block;font-size:13px;font-weight:700;margin:10px 0 6px\">Provider</label>",
+  "<select id=\"api-key-provider\" name=\"provider\" required style=\"box-sizing:border-box;width:100%;min-height:42px;border:1px solid var(--border);border-radius:7px;padding:0 12px;background:var(--bg);color:var(--fg);font:inherit\">",
+  "<option value=\"openai\">OpenAI - GPT 계열 모델을 OpenAI API 사용량/과금 기준으로 연결합니다.</option>",
+  "<option value=\"anthropic\">Anthropic - Claude 계열 모델을 Anthropic API 키로 연결합니다.</option>",
+  "<option value=\"google\">Google Gemini - Gemini 계열 모델을 Google/Gemini API 키로 연결합니다.</option>",
+  "</select>",
+  "<label for=\"provider-api-key\" style=\"display:block;font-size:13px;font-weight:700;margin:10px 0 6px\">API Key</label>",
+  "<input id=\"provider-api-key\" name=\"apiKey\" type=\"password\" autocomplete=\"off\" placeholder=\"선택한 provider의 API key\" required style=\"box-sizing:border-box;width:100%;min-height:42px;border:1px solid var(--border);border-radius:7px;padding:0 12px;background:var(--bg);color:var(--fg);font:inherit\">",
+  "<button type=\"submit\" style=\"margin-top:12px;min-height:40px;padding:0 14px;border-radius:7px;border:1px solid #d84d3f;background:#d84d3f;color:white;font-weight:750\">선택한 Provider API Key 저장</button>",
   "<p style=\"margin:10px 0 0;color:var(--muted);line-height:1.55\">저장 후 새 대화에서 실제 모델 응답이 나오는지 확인하세요. 키 원문은 화면이나 로그에 다시 표시하지 않습니다.</p>",
   "</form>",
   "<form method=\"post\" action=\"/settings/model-connection/openai-oauth\" style=\"border:1px solid var(--border);border-radius:8px;background:var(--panel);padding:16px;margin:18px 0\">",
@@ -124,7 +129,7 @@ const BASIC_SKILL_LABEL_ALIASES = {
   "대화 기록 검색": "session-logs",
   "기능-creator": "skill-creator",
 };
-const MODEL_CONNECTION_SKILLS_UI_BUILD = "2026071502-model-connection-skills-ko";
+const MODEL_CONNECTION_SKILLS_UI_BUILD = "2026071503-model-connection-provider-select";
 
 function patchModelConnectionRouteDefinition(source) {
   const modelRouteStart = "var eu=N({id:`model-connection`";
@@ -282,6 +287,61 @@ export function patchControlUiIndexHtmlSkillSurfaceIsolation(source) {
     /const build = "[^"]+";/,
     `const build = "${MODEL_CONNECTION_SKILLS_UI_BUILD}";`,
   );
+  const modelConnectionTopFormMarker = "gpao_t_model_connection_top_form_v0_1";
+  if (!patched.includes(modelConnectionTopFormMarker)) {
+    const script = `
+    <script data-gpao-t="${modelConnectionTopFormMarker}">
+      (function () {
+        var marker = "${modelConnectionTopFormMarker}";
+        function html() {
+          return [
+            '<section data-gpao-t="' + marker + '" style="padding:24px 28px 18px;max-width:1120px">',
+            '<h1 style="margin:0 0 8px;font-size:28px;letter-spacing:0">모델 연결</h1>',
+            '<p style="margin:0 0 16px;color:var(--muted);line-height:1.55">ChatGPT/Codex OAuth 계정 세션과 provider API Key 연결을 이 화면에서 바로 설정합니다. 키와 토큰 원문은 저장 후 다시 표시하지 않습니다.</p>',
+            '<form method="post" action="/settings/model-connection/openai-api-key/save" style="border:1px solid var(--border);border-radius:8px;background:var(--panel);padding:16px;margin:18px 0">',
+            '<strong style="display:block;margin-bottom:8px">API Key 연결</strong>',
+            '<label for="api-key-provider-live" style="display:block;font-size:13px;font-weight:700;margin:10px 0 6px">Provider</label>',
+            '<select id="api-key-provider-live" name="provider" required style="box-sizing:border-box;width:100%;min-height:42px;border:1px solid var(--border);border-radius:7px;padding:0 12px;background:var(--bg);color:var(--fg);font:inherit">',
+            '<option value="openai">OpenAI - GPT 계열 모델을 OpenAI API 사용량/과금 기준으로 연결합니다.</option>',
+            '<option value="anthropic">Anthropic - Claude 계열 모델을 Anthropic API 키로 연결합니다.</option>',
+            '<option value="google">Google Gemini - Gemini 계열 모델을 Google/Gemini API 키로 연결합니다.</option>',
+            '</select>',
+            '<label for="provider-api-key-live" style="display:block;font-size:13px;font-weight:700;margin:10px 0 6px">API Key</label>',
+            '<input id="provider-api-key-live" name="apiKey" type="password" autocomplete="off" placeholder="선택한 provider의 API key" required style="box-sizing:border-box;width:100%;min-height:42px;border:1px solid var(--border);border-radius:7px;padding:0 12px;background:var(--bg);color:var(--fg);font:inherit">',
+            '<button type="submit" style="margin-top:12px;min-height:40px;padding:0 14px;border-radius:7px;border:1px solid #d84d3f;background:#d84d3f;color:white;font-weight:750">선택한 Provider API Key 저장</button>',
+            '<p style="margin:10px 0 0;color:var(--muted);line-height:1.55">저장 후 새 대화에서 실제 모델 응답이 나오는지 확인하세요. 키 원문은 화면이나 로그에 다시 표시하지 않습니다.</p>',
+            '</form>',
+            '<form method="post" action="/settings/model-connection/openai-oauth" style="border:1px solid var(--border);border-radius:8px;background:var(--panel);padding:16px;margin:18px 0">',
+            '<strong style="display:block;margin-bottom:8px">ChatGPT / Codex OAuth</strong>',
+            '<p style="margin:0 0 12px;color:var(--muted);line-height:1.55">OAuth는 브라우저 또는 device-code 계정 승인이 필요합니다. GPAO-T가 사용자 계정 승인을 몰래 대신 수행하지 않습니다.</p>',
+            '<button type="submit" style="min-height:40px;padding:0 14px;border-radius:7px;border:1px solid var(--border);background:var(--bg);color:var(--fg);font-weight:750">OAuth 연결 방법 보기</button>',
+            '</form>',
+            '<div style="display:flex;flex-wrap:wrap;gap:10px;margin:18px 0 6px">',
+            '<a href="/settings/channels" style="display:inline-flex;align-items:center;min-height:40px;padding:0 14px;border-radius:7px;text-decoration:none;font-weight:650;color:var(--fg);background:var(--panel);border:1px solid var(--border)">Telegram/채널 설정 열기</a>',
+            '<a href="/settings/general" style="display:inline-flex;align-items:center;min-height:40px;padding:0 14px;border-radius:7px;text-decoration:none;font-weight:650;color:var(--fg);background:var(--panel);border:1px solid var(--border)">런타임 설정 열기</a>',
+            '</div>',
+            '</section>'
+          ].join('');
+        }
+        function mount() {
+          if (location.pathname !== '/settings/model-connection') return;
+          if (document.querySelector('section[data-gpao-t="' + marker + '"]')) return;
+          if (document.getElementById('api-key-provider') || document.getElementById('api-key-provider-live')) return;
+          var main = document.querySelector('main');
+          if (!main) return;
+          var wrapper = document.createElement('div');
+          wrapper.innerHTML = html();
+          main.insertBefore(wrapper.firstElementChild, main.firstChild);
+        }
+        mount();
+        window.addEventListener('popstate', mount);
+        document.addEventListener('click', function () { setTimeout(mount, 80); }, true);
+        setTimeout(mount, 250);
+        setTimeout(mount, 900);
+      })();
+    </script>`;
+    patched = patched.replace("</body>", `${script}\n</body>`);
+  }
   const cleanupElementNeedle = 'for (const attr of ["aria-label", "title", "alt", "placeholder"]) {';
   const cleanupElementGuard = 'if (element.closest?.(".skills-grid")) return;';
   if (!patched.includes(cleanupElementGuard) && patched.includes(cleanupElementNeedle)) {

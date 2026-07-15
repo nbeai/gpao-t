@@ -2,7 +2,7 @@ export const GPAO_T_RELEASE_CONTRACT = Object.freeze({
   schema: "gpao_t.release_contract.v1",
   productId: "gpao-t",
   productName: "nBeAI. GPAO-T",
-  version: "2026.07.15-r2",
+  version: "2026.07.15-r3",
   distributionChannel: "public-source-prep",
   intendedAudience: "public",
   sourceVisibilityTarget: "public",

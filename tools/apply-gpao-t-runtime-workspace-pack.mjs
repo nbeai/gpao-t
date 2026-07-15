@@ -87,14 +87,22 @@ async function verifyWorkspace({ workspace, requiredFiles }) {
   pass("agents.canonical_live_root", hasCanonicalLiveRoot(agents));
   pass("agents.default_memory_path", agents.includes("`local_hybrid_memory_search`"));
   pass("agents.capability_truth", agents.includes("### Capability Truth"));
+  pass("agents.user_stability_contract", agents.includes("### User Stability Check Contract"));
+  pass("agents.no_openclaw_user_command", agents.includes("Do not recommend legacy compatibility CLI commands"));
+  pass("agents.no_git_stability_leak", agents.includes("do not report developer source-control facts"));
+  pass("agents.memory_index_recovery", agents.includes("`gpao-t memory index --force`"));
   pass("soul.gpao_t_identity", soul.includes("nBeAI. GPAO-T"));
   pass("identity.gpao_t_product", /Product Name:\*\*\s*\n\s*nBeAI\. GPAO-T/i.test(identity));
   pass("tools.secret_boundary", tools.includes("Do not expose or print gateway auth tokens"));
   pass("tools.canonical_live_root", hasCanonicalLiveRoot(tools));
   pass("tools.canonical_dashboard_port", tools.includes("127.0.0.1:18799"));
+  pass("tools.gpao_memory_index_command", tools.includes("gpao-t memory index --force"));
+  pass("tools.no_openclaw_user_command", tools.includes("Never suggest legacy compatibility CLI commands"));
   pass("tools.no_legacy_live_root", !tools.includes("~/.openclaw") && !tools.includes("/Users/jyp/.openclaw"));
   pass("memory.north_star", memory.includes("GPAO-T North Star"));
-  pass("memory.independent_product", memory.includes("separate comparison product"));
+  pass("memory.gpao_t_namespace", memory.includes("### GPAO-T Memory Namespace"));
+  pass("memory.no_openclaw_durable_anchor", !/\bOpenClaw\b|\bopenclaw\b/.test(memory));
+  pass("memory.stability_index_recovery", memory.includes("Stability And Memory Index Recovery"));
   pass("welcome.personalization", welcome.includes("First-install Personalization") && welcome.includes("Required Setup Questions"));
   pass("heartbeat.default_inactive", heartbeat.includes("inactive by default"));
 

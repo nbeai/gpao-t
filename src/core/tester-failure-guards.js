@@ -278,12 +278,117 @@ export function verifyHeartbeatFailureIsolation({
   };
 }
 
+export function sanitizeUserFacingRuntimeAnswer({
+  request = "",
+  answerText = "",
+  audience = "ordinary_user",
+} = {}) {
+  const originalText = String(answerText || "");
+  const normalizedRequest = String(request || "");
+  const stabilityIntent = /안정|정상|상태|health|stable|ready|점검|확인/i.test(normalizedRequest);
+  const developerIntent = /git|커밋|commit|untracked|dirty|소스|source|repo|repository|개발|릴리스|release/i.test(normalizedRequest);
+  const ordinaryStability = audience === "ordinary_user" && stabilityIntent && !developerIntent;
+  const replacements = [];
+  const suppressedDeveloperLines = [];
+
+  let sanitized = originalText
+    .replace(/\bopenclaw\s+memory\s+index\s+(?:—|--)?force\b/gi, () => {
+      replacements.push("openclaw_memory_index_command");
+      return "gpao-t memory index --force";
+    })
+    .replace(/\bopenclaw\s+logs\s+--follow\b/gi, () => {
+      replacements.push("openclaw_logs_command");
+      return "gpao-t logs --follow";
+    })
+    .replace(/\bopenclaw\s+doctor\b/gi, () => {
+      replacements.push("openclaw_doctor_command");
+      return "gpao-t doctor";
+    })
+    .replace(/\bOpenClaw\s+세션\b/g, () => {
+      replacements.push("openclaw_session_label");
+      return "GPAO-T 세션";
+    })
+    .replace(/\bOpenClaw\s+런타임\b/g, () => {
+      replacements.push("openclaw_runtime_label");
+      return "GPAO-T 런타임";
+    })
+    .replace(/\bOpenClaw\b/g, () => {
+      replacements.push("openclaw_product_name");
+      return "GPAO-T";
+    })
+    .replace(/\bopenclaw\b/g, () => {
+      replacements.push("openclaw_lowercase");
+      return "gpao-t";
+    });
+
+  if (ordinaryStability) {
+    const keptLines = [];
+    for (const line of sanitized.split("\n")) {
+      if (/\bgit\b|untracked|첫\s*커밋|dirty worktree|rollback anchor|소스\s*제어|source control/i.test(line)) {
+        suppressedDeveloperLines.push(line.trim());
+        continue;
+      }
+      keptLines.push(line);
+    }
+    sanitized = keptLines.join("\n").trim();
+  }
+
+  const findings = [];
+  if (/\bOpenClaw\b|\bopenclaw\b/.test(sanitized)) findings.push("compatibility_name_leaked");
+  if (/openclaw\s+\w+/i.test(sanitized)) findings.push("compatibility_command_leaked");
+  if (ordinaryStability && /\bgit\b|untracked|첫\s*커밋|dirty worktree/i.test(sanitized)) {
+    findings.push("developer_source_state_leaked_to_stability_answer");
+  }
+
+  return {
+    schema: "gpao_t.user_facing_runtime_answer_guard.v1",
+    status: findings.length ? "blocked" : "ready",
+    request: normalizedRequest,
+    audience,
+    stabilityIntent,
+    developerIntent,
+    sanitizedText: sanitized,
+    replacements: [...new Set(replacements)],
+    suppressedDeveloperLines,
+    findings,
+    userVisibleRecovery: findings.length
+      ? "사용자 답변에 내부 호환층 명칭이나 개발자 상태가 남아 있어 다시 정리해야 합니다."
+      : "사용자 답변이 GPAO-T 제품 언어와 복구 명령으로 정리되었습니다.",
+  };
+}
+
+export function verifyUserFacingRuntimeAnswerGuard({
+  sample = {
+    request: "지금 전체 안정화 되었는지 확인해",
+    answerText: [
+      "현재 OpenClaw 세션은 살아 있고 큐 depth 0입니다.",
+      "메모리 검색 인덱스가 아직 비활성입니다.",
+      "openclaw memory index --force를 실행해보세요.",
+      "git은 아직 첫 커밋 전이고 untracked 상태입니다.",
+    ].join("\n"),
+  },
+} = {}) {
+  const guarded = sanitizeUserFacingRuntimeAnswer(sample);
+  const findings = [...guarded.findings];
+  if (!guarded.sanitizedText.includes("GPAO-T 세션")) findings.push("gpao_t_session_label_missing");
+  if (!guarded.sanitizedText.includes("gpao-t memory index --force")) findings.push("gpao_t_memory_rebuild_command_missing");
+  if (guarded.suppressedDeveloperLines.length < 1) findings.push("developer_git_line_not_suppressed");
+
+  return {
+    schema: "gpao_t.user_facing_runtime_answer_guard_verification.v1",
+    status: findings.length ? "blocked" : "ready",
+    findings,
+    guarded,
+  };
+}
+
 export function buildTesterFailureGuardSummary(options = {}) {
   const chat = verifyChatSendSanitizer(options.chat || {});
   const timeout = verifyTimeoutBudget(options.timeout || {});
   const externalWrite = verifyExternalWriteCompletionGuard(options.externalWrite || {});
   const heartbeat = verifyHeartbeatFailureIsolation(options.heartbeat || {});
-  const checks = { chat, timeout, externalWrite, heartbeat };
+  const userFacingRuntimeAnswer = verifyUserFacingRuntimeAnswerGuard(options.userFacingRuntimeAnswer || {});
+  const checks = { chat, timeout, externalWrite, heartbeat, userFacingRuntimeAnswer };
   const findings = Object.entries(checks)
     .flatMap(([key, value]) => (value.findings || []).map((finding) => `${key}:${finding}`));
 

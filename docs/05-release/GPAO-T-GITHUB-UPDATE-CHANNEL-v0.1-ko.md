@@ -23,24 +23,24 @@ GPAO-T 정식 배포본은 설치 후에도 사용자의 `~/.gpao-t` 상태, 모
 릴리스 태그 예:
 
 ```text
-2026.07.15-r1
+2026.07.15-r3
 ```
 
 각 GitHub Release에는 최소 다음 파일을 올린다.
 
 ```text
-gpao-t-2026.07.15-r1.zip
-gpao-t-2026.07.15-r1.zip.sha256
-gpao-t-2026.07.15-r1-macos-installer.zip
-gpao-t-2026.07.15-r1-macos-installer.zip.sha256
+gpao-t-2026.07.15-r3.zip
+gpao-t-2026.07.15-r3.zip.sha256
+gpao-t-2026.07.15-r3-macos-installer.zip
+gpao-t-2026.07.15-r3-macos-installer.zip.sha256
 gpao-t-update.json
 ```
 
 Windows 설치 파일은 Windows `node.exe` payload가 검증된 경우에만 추가한다.
 
 ```text
-gpao-t-2026.07.15-r1-windows-installer.zip
-gpao-t-2026.07.15-r1-windows-installer.zip.sha256
+gpao-t-2026.07.15-r3-windows-installer.zip
+gpao-t-2026.07.15-r3-windows-installer.zip.sha256
 ```
 
 `gpao-t-update.json`은 아래 명령으로 생성한다.

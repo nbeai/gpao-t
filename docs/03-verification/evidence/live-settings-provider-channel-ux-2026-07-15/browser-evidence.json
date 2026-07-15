@@ -1,0 +1,38 @@
+{
+  "schema": "gpao_t.live_settings_provider_channel_ux_evidence.v1",
+  "createdAt": "2026-07-15T14:30:05.642Z",
+  "runtime": "http://127.0.0.1:18799",
+  "modelConnection": {
+    "hasOAuthCard": true,
+    "hasProviderSelect": true,
+    "hasSaveButton": true,
+    "hasTelegramCard": true,
+    "openClawVisible": false,
+    "options": [
+      {
+        "text": "OpenAI - GPT 계열 모델을 OpenAI API 사용량/과금 기준으로 연결합니다.",
+        "value": "openai"
+      },
+      {
+        "text": "Anthropic - Claude 계열 모델을 Anthropic API 키로 연결합니다.",
+        "value": "anthropic"
+      },
+      {
+        "text": "Google Gemini - Gemini 계열 모델을 Google/Gemini API 키로 연결합니다.",
+        "value": "google"
+      }
+    ],
+    "url": "http://127.0.0.1:18799/settings/model-connection"
+  },
+  "channels": {
+    "hasModelConnectionNav": true,
+    "hasSummaryTitle": true,
+    "hasTelegramAction": true,
+    "openClawVisible": false,
+    "url": "http://127.0.0.1:18799/settings/channels"
+  },
+  "screenshots": [
+    "model-connection-provider-select.png",
+    "channels-user-summary.png"
+  ]
+}

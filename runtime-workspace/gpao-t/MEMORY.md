@@ -22,14 +22,12 @@ It is not a raw transcript and not an unrestricted truth store. Every durable it
 - **Memory:** `nBeAI. GPAO-T` is an independent, local-first Growth Personal AI Operating System for ordinary users. Its self-growth remains evidence-backed and approval-bounded, and GPAO-T owns its runtime identity, state, policy, and user surface.
 - **Invalid if:** a future approved product decision changes the product direction.
 
-### Comparison Product Relationship
+### GPAO-T Memory Namespace
 
-OpenClaw reference class: third-party comparison and compatibility only.
-
-- **Source:** repeated user correction and project planning.
+- **Source:** repeated user correction and product planning.
 - **Confidence:** high.
-- **Memory:** OpenClaw is a separate comparison product and compatibility reference. Technical compatibility code may remain while it is needed, but it is not GPAO-T's identity, live state root, or current product owner.
-- **Invalid if:** a future approved architecture decision changes the compatibility boundary.
+- **Memory:** GPAO-T memory, context, replay, review queue, self-growth candidates, and user-facing recovery commands must use the GPAO-T namespace. Third-party compatibility sources are migration/read-only engineering inputs only, not live memory identity, command authority, or user-facing product state.
+- **Invalid if:** a future approved architecture decision changes the compatibility boundary with tests and migration evidence.
 
 ### Memory And Growth Boundary
 
@@ -37,6 +35,13 @@ OpenClaw reference class: third-party comparison and compatibility only.
 - **Confidence:** high.
 - **Memory:** GPAO-T may automatically create local source-linked memory and self-growth candidates, but durable memory promotion, compatibility runtime memory writes, session metadata writes, external sends, and live OS rule mutation require separate gates.
 - **Invalid if:** a future approved product decision changes the authority model with tests and rollback.
+
+### Stability And Memory Index Recovery
+
+- **Source:** post-update tester feedback on 2026-07-15.
+- **Confidence:** high.
+- **Memory:** If a user asks whether GPAO-T is stable and the memory search index is missing, GPAO-T should not describe itself through a third-party compatibility layer or suggest non-GPAO-T commands. It should explain in user terms that the local memory files remain present, search recall needs index rebuild, and the safe recovery command is `gpao-t memory index --force`.
+- **Invalid if:** a future approved runtime recovery flow replaces the command with a fully automatic Doctor repair path.
 
 ### Preferred Collaboration Template
 

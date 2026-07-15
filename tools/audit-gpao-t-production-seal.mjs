@@ -12,6 +12,7 @@ import { auditGpaoTRuntimeNamespace } from "./audit-gpao-t-runtime-namespace.mjs
 import { auditLivePatchReproducibility } from "./audit-live-patch-reproducibility.mjs";
 import { buildSourceEvidenceGroupAudit } from "./audit-source-evidence-groups.mjs";
 import { runGpaoTDashboardRouteCrawl } from "./run-gpao-t-dashboard-route-crawl.mjs";
+import { GPAO_T_RELEASE_CONTRACT } from "../src/core/release-contract.js";
 import {
   MANIFEST_NAME,
   extractZipArchive,
@@ -23,7 +24,7 @@ import {
 
 const REPO_ROOT = fileURLToPath(new URL("..", import.meta.url));
 const PACKAGE_ROOT = join(REPO_ROOT, ".gpao-t", "releases");
-const PACKAGE_BASE = "gpao-t-0.1.0";
+const PACKAGE_BASE = `gpao-t-${GPAO_T_RELEASE_CONTRACT.version}`;
 const RUNTIME_SOURCE_BUILD =
   process.env.GPAO_T_RUNTIME_SOURCE_BUILD ||
   join(homedir(), ".gpao-t", "current", "compatibility", "gpao-t");

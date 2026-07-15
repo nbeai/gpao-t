@@ -398,10 +398,12 @@ import {
   guardExternalWriteCompletion,
   isolateHeartbeatFailures,
   sanitizeChatSendParams,
+  sanitizeUserFacingRuntimeAnswer,
   verifyChatSendSanitizer,
   verifyExternalWriteCompletionGuard,
   verifyHeartbeatFailureIsolation,
   verifyTimeoutBudget,
+  verifyUserFacingRuntimeAnswerGuard,
 } from "./tester-failure-guards.js";
 import {
   buildModelInvocationPacket,
@@ -2945,6 +2947,22 @@ export function handleGatewayRequest({ method = "GET", path = "/", body = {}, ro
     };
   }
 
+  if (normalizedMethod === "POST" && path === "/stage-1/user-facing-runtime-answer/guard") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: sanitizeUserFacingRuntimeAnswer(body),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/stage-1/user-facing-runtime-answer/guard/verify") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: verifyUserFacingRuntimeAnswerGuard(),
+    };
+  }
+
   if (normalizedMethod === "POST" && path === "/stage-1/timeout-budget") {
     return {
       schema: "gpao_t.gateway_response.v0_1",
@@ -3071,7 +3089,7 @@ export function handleGatewayRequest({ method = "GET", path = "/", body = {}, ro
       body: saveOpenAiApiKeyConnection({
         apiKey: body.apiKey,
         provider: body.provider || "openai",
-        profileId: body.profileId || "openai:manual",
+        profileId: body.profileId,
         runCommand: body.runCommand,
         cliEntry: body.cliEntry || process.argv[1],
       }),

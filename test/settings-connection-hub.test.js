@@ -48,6 +48,10 @@ test("settings hub exposes all ordinary settings routes with real state and acti
   assert.match(html, /Bot Token/);
   assert.match(html, /Chat ID/);
   assert.match(html, /GPAO_T_TELEGRAM_BOT_TOKEN/);
+  assert.match(html, /method="post" action="\/settings\/channels\/telegram\/verify-connection"/);
+  assert.match(html, /method="post" action="\/settings\/channels\/telegram\/save"/);
+  assert.doesNotMatch(html, /href="\/settings\/channels\/telegram\/save"/);
+  assert.doesNotMatch(html, /href="\/settings\/channels\/telegram\/verify-connection"/);
   assert.doesNotMatch(html, /[0-9]{8,}:[A-Za-z0-9_-]{20,}/);
   assert.equal(verification.status, "ready");
 });
@@ -97,6 +101,8 @@ test("gateway settings routes return visible pages and verification state", () =
   const telegram = handleGatewayRequest({ method: "GET", path: "/settings/channels/telegram/state" });
   const telegramVerify = handleGatewayRequest({ method: "GET", path: "/settings/channels/telegram/verify" });
   const telegramSave = handleGatewayRequest({ method: "POST", path: "/settings/channels/telegram/save" });
+  const modelPage = handleGatewayRequest({ method: "GET", path: "/settings/model-connection" });
+  const agentsPage = handleGatewayRequest({ method: "GET", path: "/settings/ai-agents" });
 
   assert.equal(state.body.schema, "gpao_t.settings_connection_hub.v1");
   assert.equal(verify.body.schema, "gpao_t.settings_connection_hub.v1.verification");
@@ -106,6 +112,13 @@ test("gateway settings routes return visible pages and verification state", () =
   assert.equal(telegramVerify.body.schema, "gpao_t.telegram_settings_verification.v1");
   assert.equal(telegramSave.status, 202);
   assert.equal(telegramSave.body.secretValuesExposed, false);
+  assert.match(modelPage.body, /API Key 연결/);
+  assert.match(modelPage.body, /id="api-key-provider"/);
+  assert.match(modelPage.body, /OpenAI/);
+  assert.match(modelPage.body, /Anthropic/);
+  assert.match(modelPage.body, /Google Gemini/);
+  assert.match(agentsPage.body, /\/runtime\/tool-authority-heart/);
+  assert.match(agentsPage.body, /Execution Runtime/);
 });
 
 test("telegram settings save writes local config without echoing secret values", async () => {

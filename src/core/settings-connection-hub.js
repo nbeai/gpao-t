@@ -206,8 +206,9 @@ export function buildSettingsConnectionHubState({
       description: "OAuth / Account Session 또는 API Key 방식으로 모델 provider를 연결합니다.",
       status: modelConnection.status,
       actions: [
-        { label: "상태 보기", href: "/settings/model-connection/state" },
-        { label: "검증", href: "/settings/model-connection/verify" },
+        { label: "모델 연결 화면 열기", href: "/settings/model-connection" },
+        { label: "연결 상태 보기", href: "/runtime/provider-auth-heart" },
+        { label: "설정 검증", href: "/settings/model-connection/verify" },
       ],
     },
     {
@@ -219,7 +220,8 @@ export function buildSettingsConnectionHubState({
       status: telegram.status,
       actions: [
         { label: "Telegram 상태", href: "/settings/channels/telegram/state" },
-        { label: "Telegram 검증", href: "/settings/channels/telegram/verify" },
+        { label: "Telegram 설정 검증", href: "/settings/channels/telegram/verify" },
+        { label: "Telegram 대화 열기", href: "/chat?session=telegram" },
       ],
     },
     {
@@ -239,7 +241,7 @@ export function buildSettingsConnectionHubState({
       description: "GPAO-T가 사용할 모델, 도구, 실행 권한의 기본 정책을 확인합니다.",
       status: "ready",
       actions: [
-        { label: "도구 권한", href: "/tool-authority-heart" },
+        { label: "도구 권한", href: "/runtime/tool-authority-heart" },
         { label: "실행 런타임", href: "/connectors/execution-runtime" },
       ],
     },
@@ -308,7 +310,7 @@ export function renderSettingsConnectionHubHtml(state = buildSettingsConnectionH
       h3 { margin:0 0 8px; font-size:17px; letter-spacing:0; }
       p { margin:0; color:var(--muted); line-height:1.6; }
       .tabs { display:flex; flex-wrap:wrap; gap:8px; margin:18px 0 20px; }
-      .tab, .button { display:inline-flex; align-items:center; min-height:38px; padding:0 12px; border:1px solid var(--line); border-radius:7px; color:var(--text); text-decoration:none; background:#fff; font-weight:650; }
+      .tab, .button { display:inline-flex; align-items:center; min-height:38px; padding:0 12px; border:1px solid var(--line); border-radius:7px; color:var(--text); text-decoration:none; background:#fff; font-weight:650; font:inherit; cursor:pointer; }
       .tab.active, .button.primary { color:#fff; background:var(--accent); border-color:var(--accent); }
       .panel, .card { border:1px solid var(--line); border-radius:8px; background:#fff; padding:18px; }
       .panel { margin-bottom:14px; }
@@ -316,6 +318,7 @@ export function renderSettingsConnectionHubHtml(state = buildSettingsConnectionH
       .pill { display:inline-flex; align-items:center; min-height:26px; padding:0 9px; border-radius:999px; border:1px solid var(--line); color:var(--muted); font-size:13px; }
       .pill.ready, .pill.ready_candidate { color:var(--ok); border-color:rgba(23,114,69,.35); background:rgba(23,114,69,.07); }
       .actions { display:flex; flex-wrap:wrap; gap:10px; margin-top:14px; }
+      .inline-action { margin:0; padding:0; border:0; background:transparent; }
       .fields { display:grid; gap:10px; margin-top:12px; }
       .field { border:1px solid var(--line); border-radius:8px; padding:13px 14px; background:var(--panel); }
       .field strong { display:block; margin-bottom:4px; }
@@ -339,11 +342,14 @@ export function renderSettingsConnectionHubHtml(state = buildSettingsConnectionH
         <h2>${safe(active.title)}</h2>
         <p>${safe(active.description)}</p>
         <div class="actions">
-          ${(active.actions || []).map((action) => `<a class="button" href="${safe(action.href)}">${safe(action.label)}</a>`).join("")}
+          ${renderActionControls(active.actions || [])}
         </div>
       </section>
       ${active.id === "channels" ? renderTelegramBlock(state.telegram) : ""}
       ${active.id === "general" ? renderGeneralBlock(state) : ""}
+      ${active.id === "model-connection" ? renderModelConnectionBlock(state.modelConnection) : ""}
+      ${active.id === "profile" ? renderProfileBlock(state) : ""}
+      ${active.id === "ai-agents" ? renderAiAgentsBlock() : ""}
       <section class="grid">
         ${state.pages.map((page) => `
           <article class="card">
@@ -358,6 +364,7 @@ export function renderSettingsConnectionHubHtml(state = buildSettingsConnectionH
 }
 
 function renderTelegramBlock(telegram) {
+  const visibleActions = (telegram.actions || []).filter((action) => action.id !== "save_telegram_settings");
   return `
       <section class="panel">
         <span class="pill ${escapeHtml(telegram.status)}">${escapeHtml(statusLabel(telegram.status))}</span>
@@ -372,7 +379,7 @@ function renderTelegramBlock(telegram) {
             </div>`).join("")}
         </div>
         <div class="actions">
-          ${telegram.actions.map((action) => `<a class="button ${action.id === "save_telegram_settings" ? "primary" : ""}" href="${escapeHtml(action.path)}">${escapeHtml(action.label)}</a>`).join("")}
+          ${renderActionControls(visibleActions)}
         </div>
         <form method="post" action="/settings/channels/telegram/save" class="fields">
           <div class="field">
@@ -392,6 +399,63 @@ function renderTelegramBlock(telegram) {
       </section>`;
 }
 
+function renderModelConnectionBlock(modelConnection) {
+  const providers = modelConnection?.apiKeyProviders || [];
+  return `
+      <section class="panel">
+        <h2>API Key Provider</h2>
+        <p>현재 화면에서 선택 가능한 API 키 연결 대상입니다. 키 원문은 저장 후 다시 표시하지 않습니다.</p>
+        <div class="fields">
+          ${providers.map((provider) => `
+            <div class="field">
+              <strong>${escapeHtml(provider.label)}</strong>
+              <p>${escapeHtml(provider.help)}</p>
+              <p><code>${escapeHtml(provider.profileId)}</code></p>
+            </div>`).join("")}
+        </div>
+      </section>`;
+}
+
+function renderProfileBlock(state) {
+  return `
+      <section class="panel">
+        <h2>프로필 기준</h2>
+        <p>사용자 이름, 응답 선호, 작업 기준은 로컬 GPAO-T 설정과 메모리 승인 흐름을 통해 반영됩니다.</p>
+        <div class="fields">
+          <div class="field">
+            <strong>설정 파일</strong>
+            <p><code>${escapeHtml(state.config.path)}</code></p>
+          </div>
+          <div class="field">
+            <strong>비밀값 보호</strong>
+            <p>토큰과 API 키 원문은 설정 화면이나 로그에 다시 표시하지 않습니다.</p>
+          </div>
+        </div>
+      </section>`;
+}
+
+function renderAiAgentsBlock() {
+  return `
+      <section class="panel">
+        <h2>실행 권한과 도구</h2>
+        <p>GPAO-T의 도구는 가능 여부보다 현재 요청에서 허용된 행동인지가 먼저입니다. 위험도가 있는 기능은 승인 기반으로 다룹니다.</p>
+        <div class="fields">
+          <div class="field">
+            <strong>Provider/Auth Heart</strong>
+            <p>모델 연결 상태와 인증 저장소를 확인합니다.</p>
+          </div>
+          <div class="field">
+            <strong>Tool Authority Heart</strong>
+            <p>도구 실행 권한과 감독 실행 경계를 확인합니다.</p>
+          </div>
+          <div class="field">
+            <strong>Execution Runtime</strong>
+            <p>도구 실행 요청이 dry-run, 승인, 실행, 결과 반영 흐름을 타는지 점검합니다.</p>
+          </div>
+        </div>
+      </section>`;
+}
+
 function renderGeneralBlock(state) {
   return `
       <section class="panel">
@@ -399,6 +463,17 @@ function renderGeneralBlock(state) {
         <p>설정 파일: <code>${escapeHtml(state.config.path)}</code></p>
         <p>상태: ${state.config.exists ? "설정 파일 확인됨" : "첫 설정 필요"}</p>
       </section>`;
+}
+
+function renderActionControls(actions = []) {
+  return actions.map((action) => {
+    const target = action.href || action.path || "#";
+    const label = escapeHtml(action.label || "열기");
+    if (String(action.method || "GET").toUpperCase() === "POST") {
+      return `<form class="inline-action" method="post" action="${escapeHtml(target)}"><button class="button" type="submit">${label}</button></form>`;
+    }
+    return `<a class="button" href="${escapeHtml(target)}">${label}</a>`;
+  }).join("");
 }
 
 function extractOwnerTelegramChatId(ownerAllowFrom) {

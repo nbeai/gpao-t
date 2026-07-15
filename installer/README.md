@@ -1,6 +1,6 @@
 # GPAO-T macOS Local Installer
 
-This installer targets the standalone `gpao-t-2026.07.15-r1` production distribution.
+This installer targets the standalone `gpao-t-2026.07.15-r3` production distribution.
 It does not modify the source package, UI, or core runtime.
 
 For ordinary users, use the packaged `GPAO-T-Install.command` entrypoint. It

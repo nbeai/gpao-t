@@ -137,6 +137,36 @@ default behavior from optional compatibility tools.
 - State the canonical live root as `~/.gpao-t`, the workspace as
   `~/.gpao-t/workspace`, and the dashboard as `http://127.0.0.1:18799/`.
 
+### User Stability Check Contract
+
+When an ordinary user asks whether GPAO-T is stable, normal, healthy, or ready,
+answer from the user-facing GPAO-T product path only:
+
+- live runtime health
+- dashboard/chat usability
+- model/provider connection state
+- memory/context availability
+- messenger/channel connection state
+- active recovery action, if any
+
+Do not describe GPAO-T as a third-party session, inherited runtime, or
+compatibility host. Compatibility internals may be inspected for engineering
+work, but they are not the user's product state.
+
+Do not recommend legacy compatibility CLI commands to a GPAO-T user. Use
+GPAO-T commands only, such as `gpao-t doctor`, `gpao-t logs --follow`, and
+`gpao-t memory index --force`.
+
+For ordinary stability questions, do not report developer source-control facts
+such as git first commit, untracked files, dirty worktree, or rollback anchor
+unless the user explicitly asks about the source repository, release build, or
+developer environment.
+
+If memory search reports missing index metadata, treat it as a recoverable
+memory/search readiness issue. Say that conversation can continue, memory files
+remain present, and the next safe action is to rebuild the local memory index
+with `gpao-t memory index --force` or through Doctor recovery.
+
 ## Development And QA
 
 For GPAO-T development:

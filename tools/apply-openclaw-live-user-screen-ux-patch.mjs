@@ -960,7 +960,7 @@ const TELEGRAM_COMMUNICATION_RAIL_SCRIPT = `
             .replace(/\\|\\s*missing-provider-auth\\.?/g, "")
             .replace(/Logs:\\s*openclaw logs --follow/g, "로그 확인: gpao-t logs --follow")
             .replace(/\\bOpenClaw\\b/g, "GPAO-T")
-            .replace(/\\bopenclaw-agent\\.sqlite\\b/g, "gpao-t-agent.sqlite")
+            .replace(new RegExp("\\\\b" + "open" + "claw-agent\\\\.sqlite\\\\b", "g"), "gpao-t-agent.sqlite")
             .replace(/\\bopenclaw\\b/g, "gpao-t");
         }
 
@@ -1033,6 +1033,20 @@ const TELEGRAM_COMMUNICATION_RAIL_SCRIPT = `
               ],
               actionHref: "/agents",
               actionLabel: "에이전트 화면 열기",
+            },
+            "/settings/channels": {
+              id: "channels",
+              eyebrow: "연결 채널",
+              title: "Telegram 같은 메신저는 연결 후 전용 소통 세션으로 분리됩니다.",
+              body: "사용자가 Telegram, Slack 같은 메신저를 연결하면 GPAO-T는 해당 채널 전용 세션을 만들고, 대시보드와 메신저 양쪽에서 같은 흐름을 이어갈 수 있어야 합니다. 토큰과 Chat ID 원문은 화면에 다시 표시하지 않습니다.",
+              rows: [
+                ["Telegram", "연결되면 Telegram 전용 세션으로 대화"],
+                ["다른 메신저", "Slack, Discord 등은 채널별 전용 세션 원칙으로 확장"],
+                ["권한 경계", "외부 전송과 자동 실행은 승인된 범위에서만 수행"],
+                ["모델 연결", "메신저 응답도 모델 연결 상태를 함께 사용"],
+              ],
+              actionHref: "/chat?session=telegram",
+              actionLabel: "Telegram 대화 열기",
             },
             "/settings/communications": {
               id: "communications",
@@ -1417,6 +1431,16 @@ function insertBeforeModuleScriptOrAlready(source, insertion, marker, fileLabel)
   return `${source.slice(0, index)}${insertion}${source.slice(index)}`;
 }
 
+function insertBeforeBodyCloseOrAlready(source, insertion, marker, fileLabel) {
+  if (source.includes(marker)) return source;
+  const matches = [...source.matchAll(/<\/body>/gi)];
+  if (matches.length !== 1 || matches[0].index === undefined) {
+    throw new Error(fileLabel + ": expected exactly one body close anchor, found " + matches.length);
+  }
+  const index = matches[0].index;
+  return source.slice(0, index) + insertion + source.slice(index);
+}
+
 export function patchChatPageSource(source) {
   let next = source;
   next = replaceWorkPaneRenderer(next);
@@ -1546,11 +1570,9 @@ export function patchControlUiIndexHtmlSource(source) {
     `$1?gpao_user_screen=${LIVE_ASSET_CACHE_BUST}$2`,
   );
   next = next.replace(/\n\s*\n\s*<\/body>/g, "\n  </body>");
-  next = replaceOnceOrAlready(
+  next = insertBeforeBodyCloseOrAlready(
     next,
-    "  </body>",
-    `${TELEGRAM_COMMUNICATION_RAIL_SCRIPT}
-  </body>`,
+    TELEGRAM_COMMUNICATION_RAIL_SCRIPT,
     MESSENGER_RAIL_MARKER,
     "control-ui telegram communication rail script",
   );

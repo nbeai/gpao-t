@@ -10,11 +10,13 @@ import {
   handleGatewayRequest,
   isolateHeartbeatFailures,
   sanitizeChatSendParams,
+  sanitizeUserFacingRuntimeAnswer,
   verifyChatSendSanitizer,
   verifyExternalWriteCompletionGuard,
   verifyHeartbeatFailureIsolation,
   verifyModelRouterPolicy,
   verifyTimeoutBudget,
+  verifyUserFacingRuntimeAnswerGuard,
   verifyToolAuthorityHeart,
 } from "../src/index.js";
 
@@ -124,6 +126,28 @@ test("heartbeat failures are coalesced into Doctor and do not pollute normal cha
   assert.equal(verifyHeartbeatFailureIsolation({ isolation }).status, "ready");
 });
 
+test("user-facing runtime answer guard removes OpenClaw command leaks and developer git noise", () => {
+  const guarded = sanitizeUserFacingRuntimeAnswer({
+    request: "지금 전체 안정화 되었는지 확인해",
+    answerText: [
+      "현재 OpenClaw 세션은 살아 있고 큐 depth 0입니다.",
+      "메모리 검색 인덱스가 아직 비활성입니다.",
+      "openclaw memory index --force를 실행해보려 했습니다.",
+      "Logs: openclaw logs --follow",
+      "git은 아직 첫 커밋 전이고 untracked 상태입니다.",
+    ].join("\n"),
+  });
+
+  assert.equal(guarded.status, "ready");
+  assert.match(guarded.sanitizedText, /GPAO-T 세션/);
+  assert.match(guarded.sanitizedText, /gpao-t memory index --force/);
+  assert.match(guarded.sanitizedText, /gpao-t logs --follow/);
+  assert.doesNotMatch(guarded.sanitizedText, /\bOpenClaw\b|\bopenclaw\b/);
+  assert.doesNotMatch(guarded.sanitizedText, /\bgit\b|untracked|첫 커밋/);
+  assert.equal(guarded.suppressedDeveloperLines.length, 1);
+  assert.equal(verifyUserFacingRuntimeAnswerGuard().status, "ready");
+});
+
 test("Tool/Authority Heart includes external write and heartbeat tester guards", () => {
   const heart = buildToolAuthorityHeart({ root: process.cwd() });
 
@@ -154,6 +178,14 @@ test("Gateway exposes Stage -1 tester failure guards", () => {
       claim: "푸시 완료했습니다.",
     },
   });
+  const answerGuard = handleGatewayRequest({
+    method: "POST",
+    path: "/stage-1/user-facing-runtime-answer/guard",
+    body: {
+      request: "안정화 되었는지 확인해",
+      answerText: "OpenClaw 세션입니다. openclaw logs --follow",
+    },
+  });
 
   assert.equal(summary.status, 200);
   assert.equal(summary.body.status, "ready");
@@ -161,5 +193,7 @@ test("Gateway exposes Stage -1 tester failure guards", () => {
   assert.equal(sanitized.body.payload.__controlUiReconnectResume, undefined);
   assert.equal(writeGuard.status, 409);
   assert.equal(writeGuard.body.canClaimCompletion, false);
+  assert.equal(answerGuard.status, 200);
+  assert.doesNotMatch(answerGuard.body.sanitizedText, /OpenClaw|openclaw/);
   assert.equal(buildTesterFailureGuardSummary().status, "ready");
 });

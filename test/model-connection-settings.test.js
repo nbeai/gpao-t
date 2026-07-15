@@ -40,13 +40,19 @@ test("model connection settings gives users a visible provider setup surface wit
   assert.equal(state.dashboardRoutes.runtimeConfig, "/settings/general");
   assert.equal(state.connectionModes.some((mode) => mode.id === "oauth_session" && mode.status === "available"), true);
   assert.equal(state.connectionModes.some((mode) => mode.id === "api_key" && mode.status === "available"), true);
+  assert.equal(state.apiKeyProviders.some((provider) => provider.id === "openai"), true);
+  assert.equal(state.apiKeyProviders.some((provider) => provider.id === "anthropic"), true);
+  assert.equal(state.apiKeyProviders.some((provider) => provider.id === "google"), true);
   assert.equal(state.providers.some((provider) => provider.id === "chatgpt_oauth_session" && provider.authMode === "oauth_or_session_auth"), true);
   assert.equal(state.providers.some((provider) => provider.id === "openai_api_key" && provider.recommended), true);
   assert.match(html, /모델 연결 설정/);
   assert.match(html, /ChatGPT \/ Codex OAuth/);
   assert.match(html, /OAuth \/ Account Session/);
   assert.match(html, /OpenAI/);
-  assert.match(html, /OpenAI API Key 저장/);
+  assert.match(html, /Anthropic/);
+  assert.match(html, /Google Gemini/);
+  assert.match(html, /<select id="api-key-provider" name="provider" required>/);
+  assert.match(html, /선택한 Provider API Key 저장/);
   assert.match(html, /action="\/settings\/model-connection\/openai-api-key\/save"/);
   assert.match(html, /gpao-t models auth login --provider openai --device-code --set-default/);
   assert.match(html, /런타임 설정/);
@@ -79,6 +85,8 @@ test("gateway exposes model connection settings page, state, and verification ro
   assert.equal(check.body.status, "ready");
   assert.equal(oauth.body.status, "manual_user_approval_required");
   assert.equal(save.body.status, "saved");
+  assert.equal(save.body.provider, "openai");
+  assert.equal(save.body.profileId, "openai:manual");
   assert.doesNotMatch(JSON.stringify(save.body), /sk-test_secret/);
 });
 
@@ -96,6 +104,12 @@ test("control UI model connection panel exposes OAuth and API key lanes", () => 
 
   assert.match(patched, /ChatGPT \/ Codex OAuth/);
   assert.match(patched, /OpenAI API Key/);
+  assert.match(patched, /id="api-key-provider"/);
+  assert.match(patched, /Anthropic - Claude 계열 모델/);
+  assert.match(patched, /Google Gemini - Gemini 계열 모델/);
+  assert.match(patched, /선택한 Provider API Key 저장/);
+  assert.match(patched, /봇 토큰과 Chat ID/);
+  assert.doesNotMatch(patched, /Bot 연결키과/);
   assert.match(patched, /OAuth 토큰과 API 키 원문은 화면이나 로그에 다시 표시하지 않습니다/);
   assert.match(patched, /settings\/model-connection\/openai-api-key\/save/);
   const modelRouteOnly = patched.slice(0, patched.indexOf("$o=N({id:`skills`"));
@@ -122,6 +136,31 @@ test("model connection saves OpenAI API keys through official CLI without exposi
   assert.equal(calls.length, 1);
   assert.deepEqual(calls[0].args.slice(1), ["models", "auth", "paste-api-key", "--provider", "openai", "--profile-id", "openai:manual"]);
   assert.match(calls[0].input, /sk-test_secret_value_123456/);
+});
+
+test("model connection saves selected provider API keys with provider-specific profile ids", () => {
+  const calls = [];
+  const result = saveOpenAiApiKeyConnection({
+    apiKey: "sk-ant-test_secret_value_123456",
+    provider: "anthropic",
+    cliEntry: "/tmp/gpao-t.mjs",
+    nodePath: "node",
+    env: { GPAO_T_STATE_DIR: "/private/tmp/gpao-t-missing-store" },
+    runCommand: (node, args, options) => {
+      calls.push({ node, args, input: options.input });
+      return Buffer.from("Updated config");
+    },
+    now: "2026-07-15T00:00:00.000Z",
+  });
+
+  assert.equal(result.status, "saved");
+  assert.equal(result.provider, "anthropic");
+  assert.equal(result.profileId, "anthropic:manual");
+  assert.equal(result.secretValuesExposed, false);
+  assert.doesNotMatch(JSON.stringify(result), /sk-ant-test_secret/);
+  assert.equal(calls.length, 1);
+  assert.deepEqual(calls[0].args.slice(1), ["models", "auth", "paste-api-key", "--provider", "anthropic", "--profile-id", "anthropic:manual"]);
+  assert.match(calls[0].input, /sk-ant-test_secret_value_123456/);
 });
 
 test("control UI public assets stay rooted on settings subroutes", () => {
@@ -179,7 +218,7 @@ test("global dashboard copy cleanup does not rewrite skill card labels", () => {
   ].join("\n");
   const patched = patchControlUiIndexHtmlSkillSurfaceIsolation(html);
 
-  assert.match(patched, /2026071502-model-connection-skills-ko/);
+  assert.match(patched, /2026071503-model-connection-provider-select/);
   assert.match(patched, /element\.closest\?\.\("\.skills-grid"\)/);
   assert.match(patched, /parent\.closest\?\.\("\.skills-grid"\)/);
 });

@@ -1,0 +1,301 @@
+{
+  "schema": "gpao_t.runtime_workspace_absorption_run.v0_1",
+  "status": "dry_run",
+  "createdAt": "2026-07-15T13:42:34.790Z",
+  "applyToken": "apply-gpao-t-runtime-workspace",
+  "sourcePack": "/Users/jyp/Developer/gpao-t/runtime-workspace/gpao-t",
+  "liveWorkspace": "/Users/jyp/.gpao-t/workspace",
+  "backupDir": null,
+  "sourceSummary": {
+    "manifest": {
+      "schema": "gpao_t.runtime_workspace_manifest.v0_1",
+      "product": "nBeAI. GPAO-T",
+      "productIdentity": "nBeAI. GPAO-T is an independent, local-first Growth Personal AI Operating System.",
+      "packVersion": "0.2.0",
+      "createdAt": "2026-07-14T00:00:00.000Z",
+      "targetWorkspace": "configured_at_install_time",
+      "sourcePack": "runtime-workspace/gpao-t",
+      "files": [
+        "AGENTS.md",
+        "SOUL.md",
+        "IDENTITY.md",
+        "USER.md",
+        "TOOLS.md",
+        "HEARTBEAT.md",
+        "MEMORY.md",
+        "WELCOME.md",
+        "RUNTIME-MANIFEST.json"
+      ],
+      "authority": {
+        "externalSend": "blocked",
+        "durableMemoryPromotion": "review_required",
+        "compatibilityMemoryWrite": "blocked",
+        "sessionMetaWrite": "blocked",
+        "liveOsRuleMutation": "blocked",
+        "heartbeatActivation": "explicit_user_enable_required"
+      },
+      "runtimeRelation": "independent_gpao_t_runtime_with_bounded_third_party_compatibility",
+      "gpaoTRole": "user_facing_runtime_identity_and_operating_contract"
+    },
+    "files": [
+      {
+        "file": "AGENTS.md",
+        "sha256": "114aa012a1356ac762c14f93ba94bbf563c90a8cef76f6b50cafee11fcd98924"
+      },
+      {
+        "file": "HEARTBEAT.md",
+        "sha256": "efde0150d9ad287758d65c286a39a628400b709915f2ec5f38d549f10a9c214f"
+      },
+      {
+        "file": "IDENTITY.md",
+        "sha256": "2a97770065e818e64f1d9a8dcd46bda488482bbe98b9080aef0a78ea042e22d0"
+      },
+      {
+        "file": "MEMORY.md",
+        "sha256": "b7e2b239f756907ff38b110d3470e17eefc9e864f8f468b8778bb52f135f0ed4"
+      },
+      {
+        "file": "RUNTIME-MANIFEST.json",
+        "sha256": "f8e31d04e5a6d86c99c3cf2f92b585cb0b558da7370ea254b10b3ae096fa4704"
+      },
+      {
+        "file": "SOUL.md",
+        "sha256": "84ce6ffad2607675c69d5ff930461c3db060117a277d430bd0c1fcdd8bb70a51"
+      },
+      {
+        "file": "TOOLS.md",
+        "sha256": "7ddc627a12792bc1f0a7d192d57e337999e1c3c99bb4447470f7c002595dda0e"
+      },
+      {
+        "file": "USER.md",
+        "sha256": "cd8cfac1628dc87822deccf43f45f0ec7ecead26bfd0ac33f065d0ba1ea264ec"
+      },
+      {
+        "file": "WELCOME.md",
+        "sha256": "c9ceb98b272b19ff36392d2a68842737979e79c8966947af7ce7e2f0b6d7e9ee"
+      }
+    ]
+  },
+  "backedUp": [],
+  "copied": [],
+  "dailyMemory": null,
+  "logo": null,
+  "verification": {
+    "schema": "gpao_t.runtime_workspace_verification.v0_1",
+    "status": "pass",
+    "checkedAt": "2026-07-15T13:42:34.790Z",
+    "workspace": "/Users/jyp/Developer/gpao-t/runtime-workspace/gpao-t",
+    "checks": [
+      {
+        "id": "exists:AGENTS.md",
+        "status": "pass",
+        "detail": "/Users/jyp/Developer/gpao-t/runtime-workspace/gpao-t/AGENTS.md"
+      },
+      {
+        "id": "exists:SOUL.md",
+        "status": "pass",
+        "detail": "/Users/jyp/Developer/gpao-t/runtime-workspace/gpao-t/SOUL.md"
+      },
+      {
+        "id": "exists:IDENTITY.md",
+        "status": "pass",
+        "detail": "/Users/jyp/Developer/gpao-t/runtime-workspace/gpao-t/IDENTITY.md"
+      },
+      {
+        "id": "exists:USER.md",
+        "status": "pass",
+        "detail": "/Users/jyp/Developer/gpao-t/runtime-workspace/gpao-t/USER.md"
+      },
+      {
+        "id": "exists:TOOLS.md",
+        "status": "pass",
+        "detail": "/Users/jyp/Developer/gpao-t/runtime-workspace/gpao-t/TOOLS.md"
+      },
+      {
+        "id": "exists:HEARTBEAT.md",
+        "status": "pass",
+        "detail": "/Users/jyp/Developer/gpao-t/runtime-workspace/gpao-t/HEARTBEAT.md"
+      },
+      {
+        "id": "exists:MEMORY.md",
+        "status": "pass",
+        "detail": "/Users/jyp/Developer/gpao-t/runtime-workspace/gpao-t/MEMORY.md"
+      },
+      {
+        "id": "exists:WELCOME.md",
+        "status": "pass",
+        "detail": "/Users/jyp/Developer/gpao-t/runtime-workspace/gpao-t/WELCOME.md"
+      },
+      {
+        "id": "exists:RUNTIME-MANIFEST.json",
+        "status": "pass",
+        "detail": "/Users/jyp/Developer/gpao-t/runtime-workspace/gpao-t/RUNTIME-MANIFEST.json"
+      },
+      {
+        "id": "agents.constitution",
+        "status": "pass",
+        "detail": ""
+      },
+      {
+        "id": "agents.product_identity",
+        "status": "pass",
+        "detail": ""
+      },
+      {
+        "id": "agents.canonical_live_root",
+        "status": "pass",
+        "detail": ""
+      },
+      {
+        "id": "agents.default_memory_path",
+        "status": "pass",
+        "detail": ""
+      },
+      {
+        "id": "agents.capability_truth",
+        "status": "pass",
+        "detail": ""
+      },
+      {
+        "id": "agents.user_stability_contract",
+        "status": "pass",
+        "detail": ""
+      },
+      {
+        "id": "agents.no_openclaw_user_command",
+        "status": "pass",
+        "detail": ""
+      },
+      {
+        "id": "agents.no_git_stability_leak",
+        "status": "pass",
+        "detail": ""
+      },
+      {
+        "id": "agents.memory_index_recovery",
+        "status": "pass",
+        "detail": ""
+      },
+      {
+        "id": "soul.gpao_t_identity",
+        "status": "pass",
+        "detail": ""
+      },
+      {
+        "id": "identity.gpao_t_product",
+        "status": "pass",
+        "detail": ""
+      },
+      {
+        "id": "tools.secret_boundary",
+        "status": "pass",
+        "detail": ""
+      },
+      {
+        "id": "tools.canonical_live_root",
+        "status": "pass",
+        "detail": ""
+      },
+      {
+        "id": "tools.canonical_dashboard_port",
+        "status": "pass",
+        "detail": ""
+      },
+      {
+        "id": "tools.gpao_memory_index_command",
+        "status": "pass",
+        "detail": ""
+      },
+      {
+        "id": "tools.no_openclaw_user_command",
+        "status": "pass",
+        "detail": ""
+      },
+      {
+        "id": "tools.no_legacy_live_root",
+        "status": "pass",
+        "detail": ""
+      },
+      {
+        "id": "memory.north_star",
+        "status": "pass",
+        "detail": ""
+      },
+      {
+        "id": "memory.independent_product",
+        "status": "pass",
+        "detail": ""
+      },
+      {
+        "id": "memory.stability_index_recovery",
+        "status": "pass",
+        "detail": ""
+      },
+      {
+        "id": "welcome.personalization",
+        "status": "pass",
+        "detail": ""
+      },
+      {
+        "id": "heartbeat.default_inactive",
+        "status": "pass",
+        "detail": ""
+      },
+      {
+        "id": "legacy_template_removed:AGENTS.md",
+        "status": "pass",
+        "detail": ""
+      },
+      {
+        "id": "legacy_template_removed:SOUL.md",
+        "status": "pass",
+        "detail": ""
+      },
+      {
+        "id": "legacy_template_removed:IDENTITY.md",
+        "status": "pass",
+        "detail": ""
+      },
+      {
+        "id": "legacy_template_removed:USER.md",
+        "status": "pass",
+        "detail": ""
+      },
+      {
+        "id": "legacy_template_removed:TOOLS.md",
+        "status": "pass",
+        "detail": ""
+      },
+      {
+        "id": "legacy_template_removed:HEARTBEAT.md",
+        "status": "pass",
+        "detail": ""
+      },
+      {
+        "id": "legacy_template_removed:MEMORY.md",
+        "status": "pass",
+        "detail": ""
+      },
+      {
+        "id": "legacy_template_removed:WELCOME.md",
+        "status": "pass",
+        "detail": ""
+      },
+      {
+        "id": "manifest.schema",
+        "status": "pass",
+        "detail": ""
+      },
+      {
+        "id": "manifest.product",
+        "status": "pass",
+        "detail": ""
+      }
+    ]
+  },
+  "nextChecks": [
+    "Ask GPAO-T to inspect its workspace and confirm it reports nBeAI. GPAO-T identity and current canonical runtime paths.",
+    "Wire WELCOME.md into first-install onboarding UI/CLI.",
+    "Keep durable memory promotion behind review and replay gates."
+  ]
+}

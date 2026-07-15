@@ -20,7 +20,7 @@ import {
 
 test("GPAO-T update boundary disables the compatibility updater by default", () => {
   const boundary = resolveGpaoTUpdateBoundary({});
-  assert.equal(GPAO_T_RELEASE_VERSION, "2026.07.15-r2");
+  assert.equal(GPAO_T_RELEASE_VERSION, "2026.07.15-r3");
   assert.equal(boundary.enabled, false);
   assert.equal(boundary.compatibilityUpdaterAllowed, false);
   assert.equal(boundary.feedUrl, null);
@@ -39,23 +39,23 @@ test("GPAO-T feed configuration never re-enables the compatibility updater", () 
 });
 
 test("GPAO-T GitHub update feed selects newer date-version assets only after integrity metadata is present", () => {
-  assert.equal(compareGpaoTDateVersions("2026.07.15-r2", "2026.07.15-r1"), 1);
-  assert.equal(compareGpaoTDateVersions("2026.07.15-r2", "2026.07.15-r2"), 0);
+  assert.equal(compareGpaoTDateVersions("2026.07.15-r3", "2026.07.15-r2"), 1);
+  assert.equal(compareGpaoTDateVersions("2026.07.15-r3", "2026.07.15-r3"), 0);
   const feed = buildGpaoTUpdateFeed({
-    version: "2026.07.15-r2",
-    releasePageUrl: "https://github.com/nbeai/gpao-t/releases/tag/2026.07.15-r2",
+    version: "2026.07.15-r3",
+    releasePageUrl: "https://github.com/nbeai/gpao-t/releases/tag/2026.07.15-r3",
     assets: [
       {
         kind: "production_distribution",
-        name: "gpao-t-2026.07.15-r2.zip",
-        url: "https://github.com/nbeai/gpao-t/releases/download/2026.07.15-r2/gpao-t-2026.07.15-r2.zip",
+        name: "gpao-t-2026.07.15-r3.zip",
+        url: "https://github.com/nbeai/gpao-t/releases/download/2026.07.15-r3/gpao-t-2026.07.15-r3.zip",
         sha256: "a".repeat(64),
         bytes: 123,
       },
       {
         kind: "macos_installer",
-        name: "gpao-t-2026.07.15-r2-macos-installer.zip",
-        url: "https://github.com/nbeai/gpao-t/releases/download/2026.07.15-r2/gpao-t-2026.07.15-r2-macos-installer.zip",
+        name: "gpao-t-2026.07.15-r3-macos-installer.zip",
+        url: "https://github.com/nbeai/gpao-t/releases/download/2026.07.15-r3/gpao-t-2026.07.15-r3-macos-installer.zip",
         sha256: "b".repeat(64),
         bytes: 456,
         platform: "macos",
@@ -63,7 +63,7 @@ test("GPAO-T GitHub update feed selects newer date-version assets only after int
     ],
   });
   assert.equal(verifyGpaoTUpdateFeed(feed).ok, true);
-  const candidate = selectGpaoTUpdateCandidate(feed, "2026.07.15-r1");
+  const candidate = selectGpaoTUpdateCandidate(feed, "2026.07.15-r2");
   assert.equal(candidate.status, "update_available");
   assert.equal(candidate.updateAvailable, true);
   assert.equal(candidate.assets.length, 2);
@@ -92,7 +92,7 @@ test("compatibility handler patch returns GPAO-T managed status and refuses upda
   assert.match(patched, /gpao_t_update_boundary_handlers_v0_1/);
   assert.match(patched, /gpao_t_update_feed_not_configured/);
   assert.match(patched, /gpao_t_github_update_feed_configured/);
-  assert.match(patched, /2026\.07\.15-r2/);
+  assert.match(patched, /2026\.07\.15-r3/);
   assert.equal(patchCompatibilityUpdateHandlersSource(patched), patched);
 });
 

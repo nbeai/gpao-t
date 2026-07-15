@@ -3,9 +3,9 @@
   "productId": "gpao-t",
   "product": "nBeAI. GPAO-T",
   "channel": "github-releases",
-  "version": "2026.07.15-r2",
-  "generatedAt": "2026-07-15T12:27:33.708Z",
-  "releasePageUrl": "https://github.com/nbeai/gpao-t/releases/tag/2026.07.15-r2",
+  "version": "2026.07.15-r3",
+  "generatedAt": "2026-07-15T15:24:16.146Z",
+  "releasePageUrl": "https://github.com/nbeai/gpao-t/releases/tag/2026.07.15-r3",
   "minimumInstalledVersion": "2026.07.15-r1",
   "installStrategy": {
     "mode": "staged_verified_local_install",
@@ -17,26 +17,26 @@
   "assets": [
     {
       "kind": "production_distribution",
-      "name": "gpao-t-2026.07.15-r2.zip",
-      "url": "https://github.com/nbeai/gpao-t/releases/download/2026.07.15-r2/gpao-t-2026.07.15-r2.zip",
-      "sha256": "b5d19977bb02225a47619daef84b541a59578de16acbe11524f50621c12fe041",
-      "bytes": 80307560,
+      "name": "gpao-t-2026.07.15-r3.zip",
+      "url": "https://github.com/nbeai/gpao-t/releases/download/2026.07.15-r3/gpao-t-2026.07.15-r3.zip",
+      "sha256": "bcd11ddf9d49f718766bb0120a27d4006ade73b73f519bf33b30d4d7e60cf295",
+      "bytes": 80309171,
       "platform": null
     },
     {
       "kind": "macos_installer",
-      "name": "gpao-t-2026.07.15-r2-macos-installer.zip",
-      "url": "https://github.com/nbeai/gpao-t/releases/download/2026.07.15-r2/gpao-t-2026.07.15-r2-macos-installer.zip",
-      "sha256": "8538eeea1945a67cdfe0ec0565632858387054f5b4db059c9dcf6138b3031716",
-      "bytes": 124296762,
+      "name": "gpao-t-2026.07.15-r3-macos-installer.zip",
+      "url": "https://github.com/nbeai/gpao-t/releases/download/2026.07.15-r3/gpao-t-2026.07.15-r3-macos-installer.zip",
+      "sha256": "51ac372392d8a485441a33c19c0cba0e8e902a384f2a74388b49dc8796a5acef",
+      "bytes": 124299760,
       "platform": "macos"
     },
     {
       "kind": "windows_installer",
-      "name": "gpao-t-2026.07.15-r2-windows-installer.zip",
-      "url": "https://github.com/nbeai/gpao-t/releases/download/2026.07.15-r2/gpao-t-2026.07.15-r2-windows-installer.zip",
-      "sha256": "16cdf1a6a8b3b25a0f52fdd2516c45bb56b34b414d76a7b5d76579113362fd98",
-      "bytes": 116500187,
+      "name": "gpao-t-2026.07.15-r3-windows-installer.zip",
+      "url": "https://github.com/nbeai/gpao-t/releases/download/2026.07.15-r3/gpao-t-2026.07.15-r3-windows-installer.zip",
+      "sha256": "9b9bea658e0d19ae293b4d19ad9215f27d21f5ca131a8af6450b2f2ed68927d0",
+      "bytes": 116501821,
       "platform": "windows-x64"
     }
   ]

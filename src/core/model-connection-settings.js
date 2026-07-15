@@ -13,6 +13,29 @@ const OPENAI_OAUTH_HELP_ROUTE = "/settings/model-connection/openai-oauth";
 const CONFIG_ROUTE = "/settings/general";
 const PROVIDER_AUTH_STATE_ROUTE = "/runtime/provider-auth-heart";
 const PROVIDER_AUTH_VERIFY_ROUTE = "/runtime/provider-auth-heart/verify";
+const API_KEY_PROVIDERS = [
+  {
+    id: "openai",
+    label: "OpenAI",
+    profileId: "openai:manual",
+    placeholder: "sk-...",
+    help: "GPT 계열 모델을 OpenAI API 사용량/과금 기준으로 연결합니다.",
+  },
+  {
+    id: "anthropic",
+    label: "Anthropic",
+    profileId: "anthropic:manual",
+    placeholder: "sk-ant-...",
+    help: "Claude 계열 모델을 Anthropic API 키로 연결합니다.",
+  },
+  {
+    id: "google",
+    label: "Google Gemini",
+    profileId: "google:manual",
+    placeholder: "AIza...",
+    help: "Gemini 계열 모델을 Google/Gemini API 키로 연결합니다.",
+  },
+];
 
 export function buildModelConnectionSettingsState({
   inventory = inspectProviderAuthStores(),
@@ -101,6 +124,7 @@ export function buildModelConnectionSettingsState({
         secretHandling: "api_key_never_echoed",
       },
     ],
+    apiKeyProviders: API_KEY_PROVIDERS.map(({ id, label, profileId, help }) => ({ id, label, profileId, help })),
     providers,
     dashboardRoutes: {
       modelConnection: MODEL_CONNECTION_ROUTE,
@@ -117,7 +141,7 @@ export function buildModelConnectionSettingsState({
       },
       {
         id: "save_openai_api_key",
-        label: "OpenAI API Key 저장",
+        label: "Provider API Key 저장",
         href: OPENAI_API_KEY_SAVE_ROUTE,
         method: "POST",
         secretHandling: "secret_value_never_echoed",
@@ -152,7 +176,7 @@ export function buildModelConnectionSettingsState({
 export function saveOpenAiApiKeyConnection({
   apiKey,
   provider = "openai",
-  profileId = "openai:manual",
+  profileId,
   cliEntry = process.argv[1],
   nodePath = process.execPath,
   env = process.env,
@@ -161,7 +185,8 @@ export function saveOpenAiApiKeyConnection({
 } = {}) {
   const normalizedProvider = normalizeProvider(provider);
   const key = String(apiKey || "").trim();
-  const profile = String(profileId || normalizedProvider + ":manual").trim() || normalizedProvider + ":manual";
+  const providerMeta = API_KEY_PROVIDERS.find((item) => item.id === normalizedProvider);
+  const profile = String(profileId || providerMeta?.profileId || normalizedProvider + ":manual").trim() || normalizedProvider + ":manual";
   const findings = [];
   if (!key) findings.push("api_key_required");
   if (!isSupportedApiKeyProvider(normalizedProvider)) findings.push("unsupported_provider");
@@ -198,6 +223,11 @@ export function verifyModelConnectionSettingsState(state = buildModelConnectionS
   if (!state.setupActions?.some((action) => action.href === OPENAI_API_KEY_SAVE_ROUTE && action.method === "POST")) {
     findings.push("missing_openai_api_key_save_action");
   }
+  for (const providerId of ["openai", "anthropic", "google"]) {
+    if (!state.apiKeyProviders?.some((provider) => provider.id === providerId)) {
+      findings.push(`missing_api_key_provider:${providerId}`);
+    }
+  }
   if (state.providerAuth?.secretValuesExposed !== false) findings.push("secret_value_exposure_open");
   if (!state.providers?.some((provider) => provider.id === "openai_api_key" && provider.recommended)) {
     findings.push("missing_recommended_openai_provider");
@@ -221,6 +251,8 @@ export function verifyModelConnectionSettingsState(state = buildModelConnectionS
 
 export function renderModelConnectionSettingsHtml(state = buildModelConnectionSettingsState()) {
   const safe = escapeHtml;
+  const apiKeyProviderOptions = (state.apiKeyProviders || API_KEY_PROVIDERS).map((provider) => `
+              <option value="${safe(provider.id)}">${safe(provider.label)} - ${safe(provider.help || "")}</option>`).join("");
   const providerRows = (state.providers || []).map((provider) => `
           <article class="provider-card">
             <div>
@@ -253,6 +285,7 @@ export function renderModelConnectionSettingsHtml(state = buildModelConnectionSe
       form { border:1px solid var(--line); background:#fff; border-radius:8px; padding:16px; margin-top:14px; }
       label { display:block; font-weight:700; margin-bottom:8px; }
       input { width:100%; box-sizing:border-box; min-height:42px; border:1px solid var(--line); border-radius:7px; padding:0 12px; font:inherit; background:#fff; color:var(--text); }
+      select { width:100%; box-sizing:border-box; min-height:42px; border:1px solid var(--line); border-radius:7px; padding:0 12px; font:inherit; background:#fff; color:var(--text); }
       .field { margin:12px 0; }
       button { min-height:42px; border-radius:7px; border:1px solid var(--accent); background:var(--accent); color:white; font-weight:750; padding:0 14px; cursor:pointer; }
       .notice { border:1px solid rgba(216,77,63,.25); background:rgba(216,77,63,.06); border-radius:8px; padding:14px 16px; margin-top:14px; }
@@ -293,16 +326,20 @@ ${(state.connectionModes || []).map((mode) => `
         </div>
       </section>
       <section>
-        <h2>OpenAI API Key 연결</h2>
+        <h2>API Key 연결</h2>
         <form method="post" action="${OPENAI_API_KEY_SAVE_ROUTE}">
           <div class="field">
-            <label for="openai-api-key">OpenAI API Key</label>
-            <input id="openai-api-key" name="apiKey" type="password" autocomplete="off" placeholder="sk-..." required>
+            <label for="api-key-provider">Provider</label>
+            <select id="api-key-provider" name="provider" required>
+${apiKeyProviderOptions}
+            </select>
           </div>
-          <input type="hidden" name="provider" value="openai">
-          <input type="hidden" name="profileId" value="openai:manual">
-          <button type="submit">OpenAI API Key 저장</button>
-          <p style="margin-top:10px">저장 후 키 원문은 다시 표시하지 않습니다. 저장이 끝나면 새 대화에서 실제 응답을 확인합니다.</p>
+          <div class="field">
+            <label for="provider-api-key">API Key</label>
+            <input id="provider-api-key" name="apiKey" type="password" autocomplete="off" placeholder="선택한 provider의 API key" required>
+          </div>
+          <button type="submit">선택한 Provider API Key 저장</button>
+          <p style="margin-top:10px">저장 후 키 원문은 다시 표시하지 않습니다. 저장이 끝나면 새 대화에서 실제 모델 응답을 확인합니다.</p>
         </form>
         <form method="post" action="${OPENAI_OAUTH_HELP_ROUTE}">
           <button type="submit">ChatGPT / Codex OAuth 연결 방법 보기</button>
@@ -316,7 +353,7 @@ ${(state.connectionModes || []).map((mode) => `
         <h2>설정 방법</h2>
         <ul>
           <li><strong>OAuth / Account Session</strong>은 ChatGPT 또는 Codex 계정 승인으로 GPT 모델을 연결하는 방식입니다.</li>
-          <li><strong>API Key</strong>는 이 화면의 OpenAI API Key 입력칸에 붙여넣고 저장합니다. 저장 후 키 원문은 다시 표시하지 않습니다.</li>
+          <li><strong>API Key</strong>는 provider를 선택한 뒤 해당 회사의 API key를 붙여넣고 저장합니다. 저장 후 키 원문은 다시 표시하지 않습니다.</li>
           <li>필요하면 <strong>런타임 설정</strong>에서 provider 관련 설정을 확인합니다.</li>
           <li>API 키와 토큰 값은 이 화면이나 로그에 다시 표시하지 않습니다.</li>
           <li>현재 버전은 로컬 실행 환경의 안전 설정 저장소와 <code>GPAO-T doctor</code> 진단을 기준으로 연결 상태를 확인합니다.</li>
@@ -336,19 +373,25 @@ function mirrorProductNamedAuthStore({ env = process.env } = {}) {
   try {
     const stateDir = resolveStateDir(env);
     const agentDir = join(stateDir, "agents", "main", "agent");
-    const activeRuntimeStore = join(agentDir, "openclaw-agent.sqlite");
-    const productNamedMirror = join(agentDir, "gpao-t-agent.sqlite");
-    if (!existsSync(activeRuntimeStore)) {
-      return { status: "skipped", reason: "active_runtime_store_missing", productNamedMirror: "gpao-t-agent.sqlite" };
+    const canonicalStore = join(agentDir, "gpao-t-agent.sqlite");
+    const runtimeCompatibilityStore = join(agentDir, "openclaw-agent.sqlite");
+    const sourceStore = existsSync(canonicalStore)
+      ? canonicalStore
+      : existsSync(runtimeCompatibilityStore)
+        ? runtimeCompatibilityStore
+        : null;
+    if (!sourceStore) {
+      return { status: "skipped", reason: "auth_store_missing", canonicalStore: "gpao-t-agent.sqlite" };
     }
     mkdirSync(agentDir, { recursive: true });
-    copyFileSync(activeRuntimeStore, productNamedMirror);
-    const activeSize = statSync(activeRuntimeStore).size;
-    const mirrorSize = statSync(productNamedMirror).size;
+    if (sourceStore !== canonicalStore) copyFileSync(sourceStore, canonicalStore);
+    if (existsSync(canonicalStore)) copyFileSync(canonicalStore, runtimeCompatibilityStore);
+    const canonicalSize = statSync(canonicalStore).size;
+    const compatibilitySize = statSync(runtimeCompatibilityStore).size;
     return {
-      status: activeSize === mirrorSize ? "synced" : "size_mismatch",
-      activeRuntimeStore: "gpao-t-runtime-auth-store",
-      productNamedMirror: "gpao-t-agent.sqlite",
+      status: canonicalSize === compatibilitySize ? "synced" : "size_mismatch",
+      canonicalStore: "gpao-t-agent.sqlite",
+      runtimeCompatibilityStore: "gpao-t-runtime-compatibility-auth-mirror",
     };
   } catch (error) {
     return { status: "failed", reason: redactAuthCommandOutput(error?.message || "auth_store_mirror_failed") };

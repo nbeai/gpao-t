@@ -1,11 +1,11 @@
-# GPAO-T 2026.07.15-r1 Production Distribution
+# GPAO-T 2026.07.15-r3 Production Distribution
 
 Status language: `production_ready` only after every production seal gate passes.
 
 ## Product Contract
 
 - Product: `nBeAI. GPAO-T`
-- Version: `2026.07.15-r1`
+- Version: `2026.07.15-r3`
 - Distribution channel: `public-source-prep`
 - Intended audience: public
 - Public release: not executed
@@ -18,12 +18,12 @@ self-growth gates apply to every package.
 
 ## Artifacts
 
-- Directory: `.gpao-t/releases/gpao-t-2026.07.15-r1/`
-- Archive: `.gpao-t/releases/gpao-t-2026.07.15-r1.zip`
-- Checksum: `.gpao-t/releases/gpao-t-2026.07.15-r1.zip.sha256`
-- Manifest: `.gpao-t/releases/gpao-t-2026.07.15-r1/GPAO-T-DISTRIBUTION-MANIFEST.json`
+- Directory: `.gpao-t/releases/gpao-t-2026.07.15-r3/`
+- Archive: `.gpao-t/releases/gpao-t-2026.07.15-r3.zip`
+- Checksum: `.gpao-t/releases/gpao-t-2026.07.15-r3.zip.sha256`
+- Manifest: `.gpao-t/releases/gpao-t-2026.07.15-r3/GPAO-T-DISTRIBUTION-MANIFEST.json`
 - GitHub update feed: `docs/05-release/update-feed/gpao-t-update.json`
-- Windows installer archive: `.gpao-t/releases/gpao-t-2026.07.15-r1-windows-installer.zip`
+- Windows installer archive: `.gpao-t/releases/gpao-t-2026.07.15-r3-windows-installer.zip`
 
 The manifest is `gpao_t.distribution_manifest.v2`. It binds the release version,
 distribution channel, package identity, runtime identity, source provenance, file
@@ -34,7 +34,7 @@ inventory, and SHA-256 hashes.
 ```bash
 npm run package:production
 node tools/verify-gpao-t-production-distribution.mjs \
-  --archive .gpao-t/releases/gpao-t-2026.07.15-r1.zip
+  --archive .gpao-t/releases/gpao-t-2026.07.15-r3.zip
 npm run package:macos-installer
 npm run package:windows-installer
 npm run package:github-update-feed
@@ -56,8 +56,8 @@ npm run package:macos-installer
 Share the resulting archive:
 
 ```text
-.gpao-t/releases/gpao-t-2026.07.15-r1-macos-installer.zip
-.gpao-t/releases/gpao-t-2026.07.15-r1-windows-installer.zip
+.gpao-t/releases/gpao-t-2026.07.15-r3-macos-installer.zip
+.gpao-t/releases/gpao-t-2026.07.15-r3-windows-installer.zip
 ```
 
 The recipient extracts the archive and double-clicks `GPAO-T-Install.command`.
