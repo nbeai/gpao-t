@@ -66,6 +66,10 @@ function execute(op, args) {
       return store.verifyCheckpoint();
     case "verifyIntegrity":
       return store.verifyIntegrity();
+    case "getPreference":
+      return store.getPreference(args.key);
+    case "setPreference":
+      return store.transaction(() => store.setPreference(args.key, args.value));
     case "close":
       store.close();
       closed = true;

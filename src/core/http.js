@@ -42,6 +42,13 @@ function dashboardSessionId(value) {
   return String(value);
 }
 
+function assertTrustedLocalMutation(request, session, host, port) {
+  if (!session) throw new RuntimeError("unauthorized", "A local GPAO-T session is required", 401);
+  const origin = request.headers.origin;
+  const expected = `http://${request.headers.host || `${host}:${port}`}`;
+  if (origin && origin !== expected) throw new RuntimeError("forbidden_origin", "This GPAO-T action must come from its local dashboard", 403);
+}
+
 export function createHttpServer(runtime, { host = "127.0.0.1", port = 18899 } = {}) {
   const uiDir = path.resolve(new URL("../ui/", import.meta.url).pathname);
   const localSessionAllowed = isLoopbackHost(host);
@@ -67,6 +74,33 @@ export function createHttpServer(runtime, { host = "127.0.0.1", port = 18899 } =
       const principalId = session?.principalId || "owner:local";
       if (request.method === "GET" && url.pathname === "/v1/doctor") return send(response, 200, await runtime.doctor());
       if (request.method === "GET" && url.pathname === "/v1/providers") return send(response, 200, runtime.providerStatus());
+      if (request.method === "GET" && url.pathname === "/v1/connection-center") return send(response, 200, await runtime.connectionCenterStatus());
+      if (request.method === "PUT" && url.pathname === "/v1/model-selection/default") {
+        assertTrustedLocalMutation(request, session, host, port);
+        const body = await readJson(request);
+        return send(response, 200, { schema: "gpao_t.model_selection.v1", selection: await runtime.setDefaultModelSelection(body.selection || body) });
+      }
+      const connectionMatch = url.pathname.match(/^\/v1\/connections\/([a-z0-9-]+)(?:\/(api-key|verify))?$/i);
+      if (request.method === "POST" && url.pathname === "/v1/connections/codex-oauth/recheck") {
+        assertTrustedLocalMutation(request, session, host, port);
+        return send(response, 200, { schema: "gpao_t.connection_update.v1", connection: await runtime.recheckCodexOAuth() });
+      }
+      if (connectionMatch) {
+        const [, providerId, action] = connectionMatch;
+        if (request.method === "PUT" && action === "api-key") {
+          assertTrustedLocalMutation(request, session, host, port);
+          const body = await readJson(request);
+          return send(response, 200, { schema: "gpao_t.connection_update.v1", connection: await runtime.configureProviderApiKey(providerId, body.secret) });
+        }
+        if (request.method === "POST" && action === "verify") {
+          assertTrustedLocalMutation(request, session, host, port);
+          return send(response, 200, { schema: "gpao_t.connection_update.v1", connection: await runtime.verifyProviderApiKey(providerId) });
+        }
+        if (request.method === "DELETE" && !action) {
+          assertTrustedLocalMutation(request, session, host, port);
+          return send(response, 200, { schema: "gpao_t.connection_update.v1", connection: await runtime.disconnectProvider(providerId) });
+        }
+      }
       if (request.method === "GET" && url.pathname === "/v1/sockets") return send(response, 200, runtime.socketRegistry.snapshot());
       if (request.method === "GET" && url.pathname === "/v1/tools") return send(response, 200, runtime.tools.snapshot());
       const providerMatch = url.pathname.match(/^\/v1\/providers\/([^/]+)$/);

@@ -17,13 +17,15 @@ import { NativeOsTurnPipeline } from "./os-turn.js";
 import { LocalHybridMemory } from "./local-memory.js";
 import { createFoundationToolRegistry } from "./tool-registry.js";
 import { LocalSessionAuthority } from "./local-session.js";
+import { MacKeychainCredentialStore } from "./credential-store.js";
+import { ProviderConnectionCenter } from "./provider-connection.js";
 
 function requestDigest(payload) {
   return crypto.createHash("sha256").update(JSON.stringify(payload)).digest("hex");
 }
 
 export class NativeRuntime {
-  constructor({ stateDir, providerRegistry = null, providerAdapter = new DeterministicProviderEmulator(), providerAdapters = null, credentialResolver = null, providerEnvironment = process.env, providerFetch = fetch, socketRegistry = createFoundationSocketRegistry(), memory = new LocalHybridMemory(), toolRegistry = createFoundationToolRegistry(), workerPath = path.resolve(new URL("./worker.js", import.meta.url).pathname), writerPath = path.resolve(new URL("./state-writer.js", import.meta.url).pathname), maxInflight = 4, maxQueue = 64, workerDispatchTimeoutMs = 250, workerResultTimeoutMs = 30_000, writerRequestTimeoutMs = 5_000, writerCloseTimeoutMs = 1_000, maxWorkerRestarts = 5, workerRestartWindowMs = 10_000, workerRestartBaseDelayMs = 25, workerStableWindowMs = 1_000 } = {}) {
+  constructor({ stateDir, providerRegistry = null, providerAdapter = new DeterministicProviderEmulator(), providerAdapters = null, credentialResolver = null, credentialStore = null, connectionCenter = null, providerEnvironment = process.env, providerFetch = fetch, socketRegistry = createFoundationSocketRegistry(), memory = new LocalHybridMemory(), toolRegistry = createFoundationToolRegistry(), workerPath = path.resolve(new URL("./worker.js", import.meta.url).pathname), writerPath = path.resolve(new URL("./state-writer.js", import.meta.url).pathname), maxInflight = 4, maxQueue = 64, workerDispatchTimeoutMs = 250, workerResultTimeoutMs = 30_000, writerRequestTimeoutMs = 5_000, writerCloseTimeoutMs = 1_000, maxWorkerRestarts = 5, workerRestartWindowMs = 10_000, workerRestartBaseDelayMs = 25, workerStableWindowMs = 1_000 } = {}) {
     this.stateDir = assertSafeStateDir(stateDir);
     this.workerPath = workerPath;
     this.writerPath = writerPath;
@@ -37,7 +39,17 @@ export class NativeRuntime {
     this.providerRegistry = providerRegistry || providerCatalog.providerRegistry;
     this.providerAdapter = providerAdapter;
     this.providerAdapters = providerAdapters || providerCatalog.providerAdapters;
-    this.modelRouter = new ModelRouter({ providerRegistry: this.providerRegistry, adapterRegistry: this.providerAdapters, credentialResolver: credentialResolver || providerCatalog.credentialResolver });
+    this.catalogCredentialResolver = credentialResolver || providerCatalog.credentialResolver;
+    this.connectionCenter = connectionCenter || new ProviderConnectionCenter({
+      credentialStore: credentialStore || new MacKeychainCredentialStore(),
+      providerRegistry: this.providerRegistry,
+      verify: input => this.verifyProviderConnection(input)
+    });
+    this.modelRouter = new ModelRouter({
+      providerRegistry: this.providerRegistry,
+      adapterRegistry: this.providerAdapters,
+      credentialResolver: async route => (await this.connectionCenter.credential(route.providerId)) || this.catalogCredentialResolver(route)
+    });
     this.socketRegistry = socketRegistry;
     this.router = new ExecutionRouter({ socketRegistry });
     this.controller = new ExecutionController({ runtime: this });
@@ -90,6 +102,7 @@ export class NativeRuntime {
       await this.writer.start();
       await this.writer.call("verifyIntegrity");
       this.generation = (await this.writer.call("bootstrapRuntime", { instanceId: this.instanceId })).generation;
+      await this.hydrateProviderConnections();
       this.accepting = true;
       this.healthSnapshot = { status: "ready", state: "online", generation: this.generation, inflight: 0 };
       this.readyAt = Date.now();
@@ -250,7 +263,12 @@ export class NativeRuntime {
     const idempotencyKey = `${principalId}:${sessionId}:${requestId}`;
     const inFlight = this.osTurnInflight.get(idempotencyKey);
     if (inFlight) return inFlight;
-    const run = this.osTurns.run({ principalId, sessionId, requestId, input, activeGoal, authority });
+    const run = (async () => {
+      const explicitSelection = authority.modelSelection?.preferredProviderId || authority.modelSelection?.providerId || authority.modelSelection?.preferredModelId || authority.modelSelection?.modelId;
+      const defaultSelection = explicitSelection ? null : await this.defaultModelSelection();
+      const effectiveAuthority = defaultSelection ? { ...authority, modelSelection: defaultSelection } : authority;
+      return this.osTurns.run({ principalId, sessionId, requestId, input, activeGoal, authority: effectiveAuthority });
+    })();
     this.osTurnInflight.set(idempotencyKey, run);
     try {
       return await run;
@@ -431,6 +449,95 @@ export class NativeRuntime {
   }
 
   providerStatus() { return this.providerRegistry.snapshot(); }
+
+  async hydrateProviderConnections() {
+    const preference = await this.writer.call("getPreference", { key: "provider_connections" });
+    this.connectionCenter.hydrate(preference?.value || []);
+    for (const entry of this.connectionCenter.exportMetadata()) {
+      if (entry.connectionType === "oauth" && entry.providerId === "codex-oauth") await this.recheckCodexOAuth({ persist: false });
+      else await this.connectionCenter.refresh(entry.providerId);
+    }
+  }
+
+  async persistProviderConnections() {
+    return this.writer.call("setPreference", { key: "provider_connections", value: this.connectionCenter.exportMetadata() });
+  }
+
+  async verifyProviderConnection({ providerId, secret }) {
+    const provider = this.providerRegistry.get(providerId);
+    if (!provider) throw new RuntimeError("invalid_provider", "The selected GPAO-T provider is unavailable", 404);
+    const adapter = this.providerAdapters.require(provider.adapter);
+    const result = await adapter.invoke({
+      runId: crypto.randomUUID(), sessionId: "connection-check", generation: this.generation || 0,
+      idempotencyKey: crypto.randomUUID(), providerId, modelId: provider.models[0].id,
+      responseBudget: 16, timeoutMs: 15_000
+    }, { input: "Reply with exactly: GPAO-T connection verified.", credential: secret });
+    return result?.status === "succeeded" ? { state: "ready" } : { state: "provider_unavailable" };
+  }
+
+  async configureProviderApiKey(providerId, secret) {
+    const provider = this.providerRegistry.get(providerId);
+    if (!provider?.display.authMethods.includes("api_key")) throw new RuntimeError("unsupported_connection", "This GPAO-T provider does not accept an API key", 400);
+    const status = await this.connectionCenter.configure({ providerId, secret });
+    await this.persistProviderConnections();
+    return status;
+  }
+
+  async verifyProviderApiKey(providerId) {
+    const status = await this.connectionCenter.verifyConnection(providerId);
+    await this.persistProviderConnections();
+    return status;
+  }
+
+  async disconnectProvider(providerId) {
+    const status = await this.connectionCenter.disconnect(providerId);
+    await this.persistProviderConnections();
+    return status;
+  }
+
+  async recheckCodexOAuth({ persist = true } = {}) {
+    const provider = this.providerRegistry.get("codex-oauth");
+    const adapter = provider ? this.providerAdapters.require(provider.adapter) : null;
+    if (!adapter?.checkConnection) throw new RuntimeError("oauth_check_unavailable", "Codex OAuth status cannot be checked", 503);
+    try {
+      await adapter.checkConnection();
+      const status = this.connectionCenter.markOAuthReady("codex-oauth");
+      if (persist) await this.persistProviderConnections();
+      return status;
+    } catch (error) {
+      this.providerRegistry.updateConnection("codex-oauth", { auth: { kind: "oauth", credentialPresent: false }, health: { state: "unknown", failureClass: "auth_required", cooldownUntil: null } });
+      throw error;
+    }
+  }
+
+  async defaultModelSelection() {
+    const preference = await this.writer.call("getPreference", { key: "default_model_selection" });
+    return preference?.value || null;
+  }
+
+  async setDefaultModelSelection(selection) {
+    const providerId = String(selection?.providerId || selection?.preferredProviderId || "");
+    const modelId = String(selection?.modelId || selection?.preferredModelId || "");
+    const provider = this.providerRegistry.get(providerId);
+    if (!provider || !provider.models.some(model => model.id === modelId)) {
+      throw new RuntimeError("invalid_model_selection", "The selected GPAO-T model is unavailable", 400);
+    }
+    if (provider.auth.state !== "configured" || provider.health.state !== "ready") {
+      throw new RuntimeError("model_connection_required", "The selected GPAO-T model needs a working connection", 409);
+    }
+    const value = { preferredProviderId: providerId, preferredModelId: modelId };
+    await this.writer.call("setPreference", { key: "default_model_selection", value });
+    return value;
+  }
+
+  async connectionCenterStatus() {
+    for (const entry of this.connectionCenter.exportMetadata()) await this.connectionCenter.refresh(entry.providerId);
+    return {
+      schema: "gpao_t.connection_center.v1",
+      providers: this.providerStatus().providers.map(provider => ({ ...provider, connection: this.connectionCenter.status(provider.id) })),
+      defaultSelection: await this.defaultModelSelection()
+    };
+  }
 
   health() {
     return {

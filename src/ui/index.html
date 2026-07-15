@@ -15,7 +15,7 @@
       <div class="runtime-state" id="runtime-state">연결 상태 확인 중</div>
     </aside>
     <main class="conversation">
-      <header class="topbar"><div><span class="eyebrow">작업 공간</span><h1 id="chat-title">새 대화</h1></div><button id="status" type="button" aria-label="런타임 상태">상태</button></header>
+      <header class="topbar"><div><span class="eyebrow">작업 공간</span><h1 id="chat-title">새 대화</h1></div><div class="top-actions"><button id="models" type="button">AI 연결</button><button id="status" type="button" aria-label="런타임 상태">상태</button></div></header>
       <section class="messages" id="messages" aria-live="polite">
         <div class="welcome"><span class="mark" aria-hidden="true">∞</span><h2>무엇을 함께 해볼까요?</h2><p>대화를 시작하면 이 대화 안에서 필요한 맥락과 실행 흐름을 안전하게 정리합니다.</p></div>
       </section>
@@ -27,6 +27,18 @@
       <p class="quiet-status" id="turn-status"></p>
     </main>
   </div>
+  <dialog class="connection-dialog" id="connection-dialog" aria-labelledby="connection-title">
+    <header class="dialog-header"><div><span class="eyebrow">GPAO-T 모델 연결</span><h2 id="connection-title">내 AI 연결</h2></div><button class="icon-button" id="close-connections" type="button" aria-label="닫기">×</button></header>
+    <p class="dialog-intro">연결 정보는 이 Mac의 보안 보관함에만 저장됩니다. 대화나 작업 기록에는 남지 않습니다.</p>
+    <section class="default-model" aria-labelledby="default-model-title"><label id="default-model-title" for="default-model">기본 모델</label><select id="default-model"></select><button id="save-default-model" type="button">기본으로 사용</button><p id="model-selection-status" class="form-status" aria-live="polite"></p></section>
+    <section id="provider-list" class="provider-list" aria-label="AI 연결 목록"></section>
+    <form id="api-key-form" class="api-key-form" hidden>
+      <input id="api-provider-id" type="hidden">
+      <label id="api-key-label" for="api-key-input">API 키</label>
+      <div class="key-row"><input id="api-key-input" type="password" autocomplete="off" spellcheck="false" required><button id="save-api-key" type="submit">연결 확인</button></div>
+      <p id="api-key-status" class="form-status" aria-live="polite"></p>
+    </form>
+  </dialog>
   <script type="module" src="/app.js"></script>
 </body>
 </html>

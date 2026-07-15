@@ -7,6 +7,7 @@ export const AUTH_STATES = Object.freeze([
   "revoked",
   "invalid",
   "provider_unavailable",
+  "content_blocked",
   "unknown"
 ]);
 
@@ -15,6 +16,7 @@ export const FAILURE_CLASSES = Object.freeze([
   "rate_limited",
   "provider_timeout",
   "provider_unavailable",
+  "content_blocked",
   "invalid_request",
   "external_outcome_unknown",
   "failed"
@@ -27,6 +29,7 @@ const FAILURE_SPECS = Object.freeze({
   rate_limited: { retryable: true, externalEffect: false, status: 429 },
   provider_timeout: { retryable: true, externalEffect: false, status: 504 },
   provider_unavailable: { retryable: true, externalEffect: false, status: 503 },
+  content_blocked: { retryable: false, externalEffect: false, status: 422 },
   invalid_request: { retryable: false, externalEffect: false, status: 400 },
   external_outcome_unknown: { retryable: false, externalEffect: true, status: 502 },
   failed: { retryable: false, externalEffect: false, status: 502 }
@@ -96,6 +99,7 @@ function publicProvider(entry) {
     adapter: entry.adapter,
     adapterVersion: entry.adapterVersion,
     priority: entry.priority,
+    display: { ...entry.display },
     auth: { ...entry.auth },
     health: { ...entry.health },
     models: entry.models.map(model => ({ ...model, capabilities: [...model.capabilities], inputModalities: [...model.inputModalities], outputModalities: [...model.outputModalities] }))
@@ -117,6 +121,11 @@ export class ProviderRegistry {
       adapter: String(entry.adapter),
       adapterVersion: String(entry.adapterVersion || "0.0"),
       priority: Number.isFinite(entry.priority) ? Number(entry.priority) : 100,
+      display: {
+        name: String(entry.display?.name || entry.id),
+        authMethods: [...(entry.display?.authMethods || [])],
+        description: String(entry.display?.description || "")
+      },
       auth: authStatusFromProfile(entry.auth || entry.credentialSource || { kind: "none" }),
       health: {
         state: entry.health?.state || "unknown",
@@ -161,6 +170,20 @@ export class ProviderRegistry {
     } else if (normalized.failureClass === "provider_unavailable" || normalized.failureClass === "provider_timeout") {
       entry.health.state = "degraded";
       entry.health.cooldownUntil = now + Math.max(1, Number(normalized.details?.cooldownMs || cooldownMs));
+    }
+    return publicProvider(entry);
+  }
+
+  updateConnection(providerId, { auth, health } = {}) {
+    const entry = this.entries.get(providerId);
+    if (!entry) return null;
+    if (auth) entry.auth = authStatusFromProfile(auth);
+    if (health) {
+      entry.health = {
+        state: health.state || entry.health.state,
+        failureClass: health.failureClass ?? entry.health.failureClass,
+        cooldownUntil: health.cooldownUntil ?? entry.health.cooldownUntil
+      };
     }
     return publicProvider(entry);
   }

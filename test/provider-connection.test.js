@@ -9,7 +9,7 @@ test("connection center exposes safe user states without leaking credentials", a
   const store = new EphemeralCredentialStore();
   const center = new ProviderConnectionCenter({ credentialStore: store, verify: async ({ secret }) => { verifiedSecret = secret; return { state: "ready" }; } });
   assert.equal(center.status("model-a").presentation.title, "사용할 AI 모델을 연결해 주세요");
-  const configuring = center.configure({ providerId: "model-a", secret: "private-test-value" });
+  const configuring = await center.configure({ providerId: "model-a", secret: "private-test-value" });
   assert.equal(configuring.state, "verifying");
   const ready = await center.verifyConnection("model-a");
   assert.equal(ready.state, "ready");

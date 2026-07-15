@@ -6,6 +6,7 @@ import test from "node:test";
 import { createHttpServer } from "../src/core/http.js";
 import { NativeRuntime } from "../src/core/runtime.js";
 import { ProviderInvocationError } from "../src/core/provider.js";
+import { EphemeralCredentialStore } from "../src/core/credential-store.js";
 
 function tempState() {
   return fs.mkdtempSync(path.join(os.tmpdir(), "gpao-t-native-http-"));
@@ -123,6 +124,44 @@ test("provider failure returns a user-safe repair plan without internal detail",
     assert.equal(body.repairPlan.state, "auth_required");
     assert.ok(body.repairPlan.action);
     assert.doesNotMatch(JSON.stringify(body.repairPlan), /raw provider failure detail/);
+  } finally {
+    await new Promise(resolve => server.close(resolve));
+    await runtime.stop();
+  }
+});
+
+test("connection center stores only a redacted connection state and persists a verified default model", async () => {
+  const secret = "http-connection-secret";
+  const runtime = await new NativeRuntime({
+    stateDir: tempState(),
+    credentialStore: new EphemeralCredentialStore(),
+    providerEnvironment: {},
+    providerFetch: async (_url, options) => {
+      assert.equal(options.headers.authorization, `Bearer ${secret}`);
+      return new Response(JSON.stringify({ id: "verify-1", output_text: "GPAO-T connection verified." }), { status: 200 });
+    }
+  }).start();
+  const { server } = createHttpServer(runtime, { port: 0 });
+  await new Promise(resolve => server.listen(0, "127.0.0.1", resolve));
+  const base = `http://127.0.0.1:${server.address().port}`;
+  try {
+    const dashboard = await fetch(`${base}/`);
+    const cookie = dashboard.headers.get("set-cookie");
+    const headers = { cookie, origin: base, "content-type": "application/json" };
+    const before = await fetch(`${base}/v1/connection-center`, { headers: { cookie } }).then(response => response.json());
+    assert.equal(before.providers.find(provider => provider.id === "openai").connection.state, "not_configured");
+    const configured = await fetch(`${base}/v1/connections/openai/api-key`, { method: "PUT", headers, body: JSON.stringify({ secret }) });
+    assert.equal(configured.status, 200);
+    assert.doesNotMatch(JSON.stringify(await configured.json()), new RegExp(secret));
+    const verified = await fetch(`${base}/v1/connections/openai/verify`, { method: "POST", headers }).then(response => response.json());
+    assert.equal(verified.connection.state, "ready");
+    const selected = await fetch(`${base}/v1/model-selection/default`, { method: "PUT", headers, body: JSON.stringify({ providerId: "openai", modelId: "gpt-5.6" }) });
+    assert.equal(selected.status, 200);
+    const status = await fetch(`${base}/v1/connection-center`, { headers: { cookie } }).then(response => response.json());
+    assert.deepEqual(status.defaultSelection, { preferredProviderId: "openai", preferredModelId: "gpt-5.6" });
+    assert.doesNotMatch(JSON.stringify(status), new RegExp(secret));
+    const blockedOrigin = await fetch(`${base}/v1/connections/openai/api-key`, { method: "PUT", headers: { ...headers, origin: "http://attacker.invalid" }, body: JSON.stringify({ secret }) });
+    assert.equal(blockedOrigin.status, 403);
   } finally {
     await new Promise(resolve => server.close(resolve));
     await runtime.stop();

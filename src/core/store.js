@@ -30,6 +30,11 @@ export class StateStore {
           key TEXT PRIMARY KEY,
           value TEXT NOT NULL
         );
+        CREATE TABLE IF NOT EXISTS preferences (
+          key TEXT PRIMARY KEY,
+          value_json TEXT NOT NULL,
+          updated_at INTEGER NOT NULL
+        );
         CREATE TABLE IF NOT EXISTS commands (
           id TEXT PRIMARY KEY,
           principal_id TEXT NOT NULL,
@@ -112,6 +117,17 @@ export class StateStore {
 
   setMeta(key, value) {
     this.db.prepare("INSERT INTO meta(key, value) VALUES(?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value").run(key, String(value));
+  }
+
+  getPreference(key) {
+    const row = this.db.prepare("SELECT value_json, updated_at FROM preferences WHERE key = ?").get(key);
+    return row ? { value: JSON.parse(row.value_json), updatedAt: row.updated_at } : null;
+  }
+
+  setPreference(key, value) {
+    const updatedAt = Date.now();
+    this.db.prepare("INSERT INTO preferences(key, value_json, updated_at) VALUES(?, ?, ?) ON CONFLICT(key) DO UPDATE SET value_json = excluded.value_json, updated_at = excluded.updated_at").run(key, json(value), updatedAt);
+    return { value, updatedAt };
   }
 
   appendEvent(input) {

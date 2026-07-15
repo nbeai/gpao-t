@@ -4,6 +4,7 @@ import { ProviderInvocationError, ProviderRegistry } from "../src/core/provider.
 import { ModelRouter, ProviderAdapterRegistry } from "../src/core/model-router.js";
 import { OpenAiResponsesAdapter } from "../src/core/providers/openai-responses.js";
 import { AnthropicMessagesAdapter } from "../src/core/providers/anthropic-messages.js";
+import { GeminiGenerateContentAdapter } from "../src/core/providers/gemini-generate-content.js";
 
 function registry() {
   return new ProviderRegistry({ entries: [
@@ -91,4 +92,20 @@ test("OpenAI and Anthropic adapters map official response envelopes without expo
   const plan = { runId: "run", sessionId: "session", generation: 1, providerId: "provider", modelId: "model", responseBudget: 32 };
   assert.equal((await openai.invoke(plan, { input: "hello", credential: "private-key" })).result.text, "OpenAI answer");
   assert.equal((await anthropic.invoke(plan, { input: "hello", credential: "private-key" })).result.text, "Anthropic answer");
+});
+
+test("Gemini adapter maps generateContent output without exposing its credential", async () => {
+  const gemini = new GeminiGenerateContentAdapter({ baseUrl: "https://provider.test/v1beta", fetchImpl: async (url, init) => {
+    assert.match(url, /:generateContent$/);
+    assert.doesNotMatch(url, /key=/);
+    assert.equal(init.headers["x-goog-api-key"], "private-gemini-key");
+    assert.deepEqual(JSON.parse(init.body), { contents: [{ role: "user", parts: [{ text: "hello" }] }], generationConfig: { candidateCount: 1, maxOutputTokens: 32 } });
+    return new Response(JSON.stringify({ responseId: "gemini_1", modelVersion: "test-version", usageMetadata: { promptTokenCount: 3, candidatesTokenCount: 2, totalTokenCount: 5 }, candidates: [{ finishReason: "STOP", content: { parts: [{ text: "Gemini answer" }, { inlineData: {} }] } }, { content: { parts: [{ text: "must not join" }] } }] }), { status: 200 });
+  } });
+  const plan = { runId: "run", sessionId: "session", generation: 1, providerId: "google-gemini", modelId: "gemini-test", responseBudget: 32 };
+  const result = await gemini.invoke(plan, { input: "hello", credential: "private-gemini-key" });
+  assert.equal(result.result.text, "Gemini answer");
+  assert.equal(result.receipt.providerResponseId, "gemini_1");
+  assert.equal(result.receipt.stopReason, "STOP");
+  assert.deepEqual(result.receipt.usage, { promptTokens: 3, outputTokens: 2, totalTokens: 5 });
 });

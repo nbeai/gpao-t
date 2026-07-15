@@ -5,6 +5,7 @@ const ERROR_TO_STATE = {
   rate_limited: "rate_limited",
   provider_unavailable: "provider_unavailable",
   provider_timeout: "provider_unavailable",
+  content_blocked: "content_blocked",
   external_outcome_unknown: "outcome_unknown",
   runtime_not_ready: "provider_unavailable"
 };

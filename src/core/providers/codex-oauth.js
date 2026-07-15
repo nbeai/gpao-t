@@ -16,6 +16,20 @@ export class CodexOAuthAdapter {
     this.workspaceRoot = workspaceRoot;
   }
 
+  async checkConnection({ signal } = {}) {
+    let stderr = "";
+    await new Promise((resolve, reject) => {
+      const child = spawn(this.command, ["login", "status"], { stdio: ["ignore", "ignore", "pipe"], env: { PATH: process.env.PATH, HOME: process.env.HOME, USER: process.env.USER, TMPDIR: process.env.TMPDIR, CODEX_HOME: process.env.CODEX_HOME } });
+      child.stderr.on("data", chunk => { stderr += String(chunk).slice(0, 8_192); });
+      const abort = () => { try { child.kill("SIGTERM"); } catch {} reject(signal?.reason instanceof ProviderInvocationError ? signal.reason : new ProviderInvocationError("external_outcome_unknown", "Codex OAuth check was interrupted")); };
+      if (signal?.aborted) return abort();
+      signal?.addEventListener("abort", abort, { once: true });
+      child.once("error", error => { signal?.removeEventListener("abort", abort); reject(new ProviderInvocationError("provider_unavailable", "Codex OAuth check could not start", { cause: error.code || "spawn_failed" })); });
+      child.once("exit", code => { signal?.removeEventListener("abort", abort); code === 0 ? resolve() : reject(classifyFailure(stderr)); });
+    });
+    return { state: "ready" };
+  }
+
   async invoke(plan, { input, signal } = {}) {
     const workDir = fs.mkdtempSync(path.join(this.workspaceRoot, "gpao-t-codex-oauth-"));
     const outputPath = path.join(workDir, "answer.txt");
