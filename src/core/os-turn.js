@@ -64,14 +64,17 @@ export class NativeOsTurnPipeline {
       ? this.runtime.searchMemory(input, { sessionId, userId, projectId: authority.projectId || null, channelId: authority.channelId || null, budgetMs: 225 })
       : this.memory.search(input, { sessionId, userId, budgetMs: 225 }));
     const approvedInfluences = this.contextInfluence.activeForTask({ sessionId, userId, projectId: authority.projectId || null, channelId: authority.channelId || null, input });
+    const growthPolicy = this.runtimeManagedContext && this.runtime.growthAdmissionPolicy
+      ? this.runtime.growthAdmissionPolicy({ sessionId, userId, projectId: authority.projectId || null, channelId: authority.channelId || null })
+      : { policy: {}, mutationIds: [] };
     const taskCandidates = [...approvedInfluences, ...memorySearch.results];
     if (taskCandidates.length) await onSurfaceEvent?.("memory.retrieved", { candidateIds: taskCandidates.map(candidate => candidate.id), sourceCount: taskCandidates.length });
     const initialTaskPacket = createTaskPacket({ sessionId, input, activeGoal, contextWindow: authority.modelContextWindow || 32_768, userId, projectId: authority.projectId || null, channelId: authority.channelId || null });
-    let admission = admitTcellCandidates(initialTaskPacket, taskCandidates);
+    let admission = admitTcellCandidates(initialTaskPacket, taskCandidates, growthPolicy.policy);
     if (this.runtimeManagedContext && this.runtime.persistMctAdmission) {
       const persistence = await boundedAdmissionPersistence(() => this.runtime.persistMctAdmission(admission));
       if (!persistence.ok) {
-        admission = admitTcellCandidates(initialTaskPacket, []);
+        admission = admitTcellCandidates(initialTaskPacket, [], growthPolicy.policy);
         admission.persistenceDegraded = persistence.timeout ? "admission_persistence_timeout" : "admission_persistence_failed";
       } else admission.persistence = persistence.receipt;
     }
@@ -121,6 +124,6 @@ export class NativeOsTurnPipeline {
           ? await this.runtime.addMemoryObservation({ text: input, source: "turn_observation", traceRef: taskPacket.id, sessionId, userId, projectId: authority.projectId || null, channelId: authority.channelId || null, reviewed: false })
           : this.memory.ingest({ text: input, source: "turn_observation", traceRef: taskPacket.id, sessionId, userId, reviewed: false }))
       : { accepted: false, reason: "non_terminal_success" };
-    return { schema: "gpao_t3.os_turn.v1", submitted, taskPacket, memory: memorySearch, approvedInfluences, admission, toolFlow, providerPlan, providerRoute: { providerId: routed.provider.id, modelId: routed.model.id, fallbackUsed: routed.fallbackUsed, failures: routed.failures, decision: routed.routeDecision }, providerReceipt: providerResult.receipt, turn, observation, replyMode: turn?.status === "succeeded" ? (routed.provider.adapter === "native-deterministic-emulator" ? "provider_emulator" : "provider_response") : "blocked_or_failed", replay, growthCandidate, contextInfluence };
+    return { schema: "gpao_t3.os_turn.v1", submitted, taskPacket, memory: memorySearch, approvedInfluences, growthPolicy: { mutationIds: growthPolicy.mutationIds }, admission, toolFlow, providerPlan, providerRoute: { providerId: routed.provider.id, modelId: routed.model.id, fallbackUsed: routed.fallbackUsed, failures: routed.failures, decision: routed.routeDecision }, providerReceipt: providerResult.receipt, turn, observation, replyMode: turn?.status === "succeeded" ? (routed.provider.adapter === "native-deterministic-emulator" ? "provider_emulator" : "provider_response") : "blocked_or_failed", replay, growthCandidate, contextInfluence };
   }
 }

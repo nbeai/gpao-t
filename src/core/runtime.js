@@ -38,6 +38,8 @@ import { ToolInvocationController } from "./tool-invocation-controller.js";
 import { createResponseDocument } from "./response-document.js";
 import { createSurfaceEvent, createTextCompleteEvent } from "./surface-event.js";
 import { canonicalDigest } from "./canonical-json.js";
+import { createGrowthProposal, evaluateGrowthReplay, projectGrowthAdmissionPolicy } from "./growth-engine.js";
+import { verifyRestoredGrowthPolicy } from "./growth-replay-registry.js";
 
 function requestDigest(payload) {
   return crypto.createHash("sha256").update(JSON.stringify(payload)).digest("hex");
@@ -109,6 +111,7 @@ export class NativeRuntime {
     this.controller = new ExecutionController({ runtime: this });
     this.memory = memory;
     this.contextInfluence = contextInfluence;
+    this.activeGrowthMutations = [];
     this.tools = toolRegistry || createFoundationToolSuite({ runtime: this, stateDir: this.stateDir, workspaceRoots, channelAdapters });
     this.toolInvocations = null;
     this.connectionCells = new ConnectionCellRegistry({ connectorController: this.connectorController, toolRegistry: this.tools });
@@ -172,6 +175,9 @@ export class NativeRuntime {
       const memoryWiki = await this.writer.call("listMemory", { allOwners: true, limit: this.memory.maxEntries || 500 });
       this.memory.hydrate?.(memoryWiki.entries);
       this.contextInfluence.hydrate?.(await this.writer.call("listContextInfluences"));
+      const expiredGrowth = await this.writer.call("expireGrowthMutations", { now: Date.now() });
+      this.activeGrowthMutations = (await this.writer.call("listGrowthMutations", { ownerId: null, activeOnly: true, limit: 500 })).mutations;
+      await this.finalizeGrowthRollbacks(expiredGrowth.receipts);
       await this.hydrateProviderConnections();
       await this.hydrateConnectorControls();
       this.accepting = true;
@@ -640,6 +646,77 @@ export class NativeRuntime {
     const result = await this.writer.call("rollbackContextInfluence", { influenceId: id, reason });
     this.contextInfluence.hydrate?.(await this.writer.call("listContextInfluences"));
     return { schema: "gpao_t3.context_influence_rollback.v1", ...result };
+  }
+
+  async proposeGrowth(principalId, input = {}) {
+    assertPayloadHasNoSecrets(input);
+    const proposal = createGrowthProposal({ ...input, ownerId: principalId });
+    const saved = await this.writer.call("saveGrowthProposal", { bundle: proposal });
+    return { schema: "gpao_t3.growth_proposal_receipt.v1", proposal: saved.record, detail: saved.detail, surface: { type: "growth.proposed", payload: { proposalId: saved.record.id, scope: saved.record.scope.level, approvalState: saved.record.status } } };
+  }
+
+  listGrowth(principalId, options = {}) {
+    return this.writer.call("listGrowthProposals", { ownerId: principalId, ...options });
+  }
+
+  async replayGrowth(principalId, proposalId, datasetSplit = "evaluation") {
+    const proposal = await this.writer.call("getGrowthProposalBundle", { proposalId });
+    if (!proposal || proposal.record.scope.userId !== principalId) throw new RuntimeError("growth_proposal_not_found", "검증할 성장 제안을 찾을 수 없습니다.", 404);
+    const baselinePolicy = projectGrowthAdmissionPolicy(this.activeGrowthMutations, proposal.record.scope).policy;
+    const result = evaluateGrowthReplay({ proposal: proposal.record, detail: proposal.detail, datasetSplit, baselinePolicy });
+    const saved = await this.writer.call("saveGrowthReplayResult", { bundle: result });
+    return { schema: "gpao_t3.growth_replay_receipt.v1", replayResult: saved.record, metrics: saved.detail.metrics, surface: { type: "growth.replayed", payload: { proposalId, replayResultId: saved.record.id, passed: saved.record.passed } } };
+  }
+
+  async reviewGrowth(principalId, proposalId, approved) {
+    const proposal = await this.writer.call("reviewGrowthProposal", { proposalId, decision: approved ? "approved" : "rejected", authority: { principalId, decisionClass: approved ? "A2" : "A0" } });
+    return { schema: "gpao_t3.growth_review_receipt.v1", proposal: proposal.record };
+  }
+
+  async applyGrowth(principalId, proposalId, replayResultId, ttlMs) {
+    const proposal = await this.writer.call("getGrowthProposalBundle", { proposalId });
+    if (!proposal || proposal.record.scope.userId !== principalId) throw new RuntimeError("growth_proposal_not_found", "적용할 성장 제안을 찾을 수 없습니다.", 404);
+    const expired = await this.writer.call("expireGrowthMutations", { now: Date.now() });
+    this.activeGrowthMutations = (await this.writer.call("listGrowthMutations", { ownerId: null, activeOnly: true, limit: 500 })).mutations;
+    await this.finalizeGrowthRollbacks(expired.receipts);
+    const baseline = projectGrowthAdmissionPolicy(this.activeGrowthMutations, proposal.record.scope);
+    const snapshotDigest = canonicalDigest("gpao_t3.growth_policy_snapshot.v1", baseline.policy);
+    const result = await this.writer.call("applyGrowthMutation", { proposalId, replayResultId, ownerId: principalId, ttlMs, snapshotDigest, snapshotPolicy: baseline.policy });
+    this.activeGrowthMutations = (await this.writer.call("listGrowthMutations", { ownerId: null, activeOnly: true, limit: 500 })).mutations;
+    return { schema: "gpao_t3.growth_application_receipt.v1", mutation: result.mutation.record, rollbackReceipt: result.rollbackReceipt.record, deduplicated: result.deduplicated, surface: { type: "growth.applied", payload: { mutationId: result.mutation.record.id, scope: result.mutation.record.scope.level, expiresAt: result.mutation.record.expiresAt, rollbackReceiptId: result.rollbackReceipt.record.id } } };
+  }
+
+  async listGrowthMutations(principalId, options = {}) {
+    const expired = await this.writer.call("expireGrowthMutations", { now: Date.now() });
+    this.activeGrowthMutations = (await this.writer.call("listGrowthMutations", { ownerId: null, activeOnly: true, limit: 500 })).mutations;
+    await this.finalizeGrowthRollbacks(expired.receipts);
+    return this.writer.call("listGrowthMutations", { ownerId: principalId, ...options });
+  }
+
+  async rollbackGrowth(principalId, mutationId, reason) {
+    const result = await this.writer.call("rollbackGrowthMutation", { mutationId, ownerId: principalId, reason });
+    this.activeGrowthMutations = (await this.writer.call("listGrowthMutations", { ownerId: null, activeOnly: true, limit: 500 })).mutations;
+    const [verified] = await this.finalizeGrowthRollbacks([result]);
+    return { schema: "gpao_t3.growth_rollback_receipt.v1", mutation: result.mutation.record, rollbackReceipt: verified.record, surface: { type: "growth.rolled_back", payload: { mutationId, rollbackReceiptId: verified.record.id, verified: verified.record.verified } } };
+  }
+
+  async finalizeGrowthRollbacks(results = []) {
+    const verified = [];
+    for (const result of results) {
+      const mutation = result.mutation;
+      const receipt = result.rollbackReceipt;
+      if (!mutation?.record || !receipt?.record) continue;
+      const restored = projectGrowthAdmissionPolicy(this.activeGrowthMutations, mutation.record.scope);
+      const projectionPurge = !restored.mutationIds.includes(mutation.record.id);
+      const snapshotRestored = canonicalDigest("gpao_t3.growth_policy_snapshot.v1", restored.policy) === receipt.record.snapshotDigest;
+      const postRollbackReplay = verifyRestoredGrowthPolicy(restored.policy, receipt.detail.snapshotPolicy, receipt.record.snapshotDigest);
+      verified.push(await this.writer.call("verifyGrowthRollback", { mutationId: mutation.record.id, ownerId: mutation.record.scope.userId, projectionPurge, snapshotRestored, postRollbackReplay }));
+    }
+    return verified;
+  }
+
+  growthAdmissionPolicy(context) {
+    return projectGrowthAdmissionPolicy(this.activeGrowthMutations, context);
   }
 
   async pump() {

@@ -135,6 +135,40 @@ export function createHttpServer(runtime, { host = "127.0.0.1", port = 18899 } =
         const body = await readJson(request);
         return send(response, 200, await runtime.rollbackContextInfluenceDurable(influenceRollbackMatch[1], body.reason || "local_dashboard_requested"));
       }
+      if (request.method === "GET" && url.pathname === "/v1/growth/proposals") return send(response, 200, await runtime.listGrowth(principalId, { status: url.searchParams.get("status") || null, limit: Number(url.searchParams.get("limit") || 100) }));
+      if (request.method === "POST" && url.pathname === "/v1/growth/proposals") {
+        assertTrustedLocalMutation(request, session, host, port);
+        return send(response, 201, await runtime.proposeGrowth(principalId, await readJson(request)));
+      }
+      const growthReplayMatch = url.pathname.match(/^\/v1\/growth\/proposals\/([^/]+)\/replay$/);
+      if (request.method === "POST" && growthReplayMatch) {
+        assertTrustedLocalMutation(request, session, host, port);
+        const body = await readJson(request);
+        if ("scenarios" in body || "metrics" in body || "baseline" in body || "candidate" in body) throw new RuntimeError("growth_replay_client_metrics_forbidden", "Replay 사례와 점수는 T3의 봉인된 검증 세트에서만 생성됩니다.", 400);
+        return send(response, 200, await runtime.replayGrowth(principalId, growthReplayMatch[1], body.datasetSplit || "evaluation"));
+      }
+      const growthReviewMatch = url.pathname.match(/^\/v1\/growth\/proposals\/([^/]+)\/review$/);
+      if (request.method === "POST" && growthReviewMatch) {
+        assertTrustedLocalMutation(request, session, host, port);
+        const body = await readJson(request);
+        if (typeof body.approved !== "boolean") throw new RuntimeError("growth_review_required", "성장 제안의 승인 또는 거절을 선택해야 합니다.", 400);
+        return send(response, 200, await runtime.reviewGrowth(principalId, growthReviewMatch[1], body.approved));
+      }
+      const growthApplyMatch = url.pathname.match(/^\/v1\/growth\/proposals\/([^/]+)\/apply$/);
+      if (request.method === "POST" && growthApplyMatch) {
+        assertTrustedLocalMutation(request, session, host, port);
+        const body = await readJson(request);
+        if (body.approved !== true) throw new RuntimeError("growth_application_approval_required", "제한 적용 내용을 확인하고 승인해야 합니다.", 409);
+        return send(response, 200, await runtime.applyGrowth(principalId, growthApplyMatch[1], body.replayResultId, body.ttlMs));
+      }
+      if (request.method === "GET" && url.pathname === "/v1/growth/mutations") return send(response, 200, await runtime.listGrowthMutations(principalId, { activeOnly: url.searchParams.get("active") === "true", limit: Number(url.searchParams.get("limit") || 100) }));
+      const growthRollbackMatch = url.pathname.match(/^\/v1\/growth\/mutations\/([^/]+)\/rollback$/);
+      if (request.method === "POST" && growthRollbackMatch) {
+        assertTrustedLocalMutation(request, session, host, port);
+        const body = await readJson(request);
+        if (body.approved !== true) throw new RuntimeError("growth_rollback_approval_required", "복구 실행을 확인해야 합니다.", 409);
+        return send(response, 200, await runtime.rollbackGrowth(principalId, growthRollbackMatch[1], body.reason || "local_dashboard_requested"));
+      }
       if (request.method === "GET" && url.pathname === "/v1/workspaces") return send(response, 200, await runtime.listWorkspaces(principalId, { includeArchived: url.searchParams.get("archived") === "true" }));
       if (request.method === "POST" && url.pathname === "/v1/workspaces") {
         assertTrustedLocalMutation(request, session, host, port);

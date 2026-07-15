@@ -172,6 +172,30 @@ function execute(op, args) {
       return store.listContextInfluences();
     case "rollbackContextInfluence":
       return store.transaction(() => store.rollbackContextInfluence(args.influenceId, args.reason));
+    case "saveGrowthProposal":
+      return store.transaction(() => store.saveGrowthProposal(args.bundle));
+    case "listGrowthProposals":
+      return store.listGrowthProposals(args.ownerId, args);
+    case "getGrowthProposal":
+      return store.getGrowthProposal(args.proposalId);
+    case "getGrowthProposalBundle":
+      return store.getGrowthProposalBundle(args.proposalId);
+    case "saveGrowthReplayResult":
+      return store.transaction(() => store.saveGrowthReplayResult(args.bundle));
+    case "reviewGrowthProposal":
+      return store.transaction(() => store.reviewGrowthProposal(args.proposalId, args.decision, args.authority));
+    case "applyGrowthMutation":
+      return store.transaction(() => store.applyGrowthMutation(args.proposalId, args.replayResultId, args));
+    case "listGrowthMutations":
+      return store.listGrowthMutations(args.ownerId, args);
+    case "getRollbackReceiptBundle":
+      return store.getRollbackReceiptBundle(args.receiptId);
+    case "expireGrowthMutations":
+      return store.transaction(() => store.expireGrowthMutations(args.now));
+    case "rollbackGrowthMutation":
+      return store.transaction(() => store.rollbackGrowthMutation(args.mutationId, args));
+    case "verifyGrowthRollback":
+      return store.transaction(() => store.verifyGrowthRollback(args.mutationId, args));
     case "close":
       store.close();
       closed = true;

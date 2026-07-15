@@ -7,8 +7,9 @@ import { PRODUCT_IDENTITY, STATE_OWNERSHIP, schemaName } from "./product-identit
 import { channelIdentityDigest, messengerSessionKind, normalizeChannelIdentity } from "./channel-envelope.js";
 import { verifyResponseDocument } from "./response-document.js";
 import { createSurfaceEvent } from "./surface-event.js";
+import { approveGrowthProposal, createCanaryMutation, requestCanaryRollback, verifyCanaryRollback } from "./growth-engine.js";
 
-const CURRENT_SCHEMA_VERSION = 13;
+const CURRENT_SCHEMA_VERSION = 14;
 const LEGACY_DATABASE_FILES = ["runtime.sqlite"];
 const TELEMETRY_STAGES = new Set(["accepted", "dispatching", "responding", "completed", "failed", "cancelled", "uncertain"]);
 
@@ -470,6 +471,57 @@ export class StateStore {
           WHERE authority_decision_id IS NOT NULL AND (authority_decision_class IS NULL OR authority_principal_id IS NULL OR authority_scope IS NULL);
         `);
       }
+      if (startingVersion < 14) {
+        this.db.exec(`
+          CREATE TABLE IF NOT EXISTS mct_growth_proposals (
+            proposal_id TEXT PRIMARY KEY,
+            owner_id TEXT NOT NULL,
+            scope_level TEXT NOT NULL,
+            status TEXT NOT NULL,
+            digest TEXT NOT NULL,
+            proposal_json TEXT NOT NULL,
+            created_at INTEGER NOT NULL,
+            updated_at INTEGER NOT NULL,
+            expires_at INTEGER
+          );
+          CREATE TABLE IF NOT EXISTS mct_replay_results (
+            replay_result_id TEXT PRIMARY KEY,
+            proposal_id TEXT NOT NULL,
+            passed INTEGER NOT NULL,
+            digest TEXT NOT NULL,
+            result_json TEXT NOT NULL,
+            created_at INTEGER NOT NULL,
+            FOREIGN KEY(proposal_id) REFERENCES mct_growth_proposals(proposal_id)
+          );
+          CREATE TABLE IF NOT EXISTS mct_mutation_ledger (
+            mutation_id TEXT PRIMARY KEY,
+            proposal_id TEXT NOT NULL,
+            replay_result_id TEXT NOT NULL,
+            owner_id TEXT NOT NULL,
+            status TEXT NOT NULL,
+            expires_at INTEGER NOT NULL,
+            digest TEXT NOT NULL,
+            mutation_json TEXT NOT NULL,
+            created_at INTEGER NOT NULL,
+            updated_at INTEGER NOT NULL,
+            FOREIGN KEY(proposal_id) REFERENCES mct_growth_proposals(proposal_id),
+            FOREIGN KEY(replay_result_id) REFERENCES mct_replay_results(replay_result_id)
+          );
+          CREATE TABLE IF NOT EXISTS mct_rollback_receipts (
+            rollback_receipt_id TEXT PRIMARY KEY,
+            mutation_id TEXT NOT NULL UNIQUE,
+            verified INTEGER NOT NULL,
+            digest TEXT NOT NULL,
+            receipt_json TEXT NOT NULL,
+            created_at INTEGER NOT NULL,
+            updated_at INTEGER NOT NULL,
+            FOREIGN KEY(mutation_id) REFERENCES mct_mutation_ledger(mutation_id)
+          );
+          CREATE INDEX IF NOT EXISTS idx_mct_growth_owner ON mct_growth_proposals(owner_id, status, updated_at);
+          CREATE INDEX IF NOT EXISTS idx_mct_replay_proposal ON mct_replay_results(proposal_id, created_at);
+          CREATE INDEX IF NOT EXISTS idx_mct_mutation_owner ON mct_mutation_ledger(owner_id, status, expires_at);
+        `);
+      }
       const statement = this.db.prepare("INSERT INTO state_ownership(domain, owner, durability, table_name, updated_at) VALUES(?, ?, ?, ?, ?) ON CONFLICT(domain) DO UPDATE SET owner = excluded.owner, durability = excluded.durability, table_name = excluded.table_name, updated_at = excluded.updated_at");
       const ownershipUpdatedAt = Date.now();
       for (const entry of STATE_OWNERSHIP) statement.run(entry.domain, entry.owner, entry.durability, entry.table, ownershipUpdatedAt);
@@ -824,6 +876,146 @@ export class StateStore {
     const row = this.db.prepare("SELECT * FROM context_influences WHERE influence_id = ?").get(influenceId);
     if (changed.changes === 1 && row) this.db.prepare("UPDATE memory_wiki SET promotion_state = 'rolled_back', updated_at = ? WHERE memory_id = ?").run(now, row.source_memory_id);
     return { rolledBack: changed.changes === 1, entry: row ? this.contextInfluenceRecord(this.db.prepare("SELECT * FROM context_influences WHERE influence_id = ?").get(influenceId)) : null };
+  }
+
+  saveGrowthProposal(bundle) {
+    const proposal = bundle.record;
+    const serialized = json(bundle);
+    const changed = this.db.prepare("INSERT OR IGNORE INTO mct_growth_proposals(proposal_id, owner_id, scope_level, status, digest, proposal_json, created_at, updated_at, expires_at) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)").run(
+      proposal.id, proposal.scope.userId, proposal.scope.level, proposal.status, digest(serialized), serialized, proposal.createdAt, proposal.updatedAt, proposal.expiresAt
+    );
+    if (changed.changes === 0) {
+      const existing = this.getGrowthProposalBundle(proposal.id);
+      if (digest(json(existing)) !== digest(serialized)) throw new RuntimeError("growth_proposal_conflict", "같은 성장 제안 ID에 다른 내용이 이미 있습니다.", 409);
+    }
+    return this.getGrowthProposalBundle(proposal.id);
+  }
+
+  getGrowthProposalBundle(proposalId) {
+    const row = this.db.prepare("SELECT proposal_json FROM mct_growth_proposals WHERE proposal_id = ?").get(proposalId);
+    return row ? JSON.parse(row.proposal_json) : null;
+  }
+  getGrowthProposal(proposalId) { return this.getGrowthProposalBundle(proposalId)?.record || null; }
+
+  listGrowthProposals(ownerId, { status = null, limit = 100 } = {}) {
+    const rows = status
+      ? this.db.prepare("SELECT proposal_json FROM mct_growth_proposals WHERE owner_id = ? AND status = ? ORDER BY updated_at DESC LIMIT ?").all(ownerId, status, Math.min(100, limit))
+      : this.db.prepare("SELECT proposal_json FROM mct_growth_proposals WHERE owner_id = ? ORDER BY updated_at DESC LIMIT ?").all(ownerId, Math.min(100, limit));
+    return { schema: "gpao_t3.growth_proposals.v1", proposals: rows.map(row => JSON.parse(row.proposal_json).record) };
+  }
+
+  saveGrowthReplayResult(bundle) {
+    const result = bundle.record;
+    const proposal = this.getGrowthProposal(result.proposalId);
+    if (!proposal) throw new RuntimeError("growth_proposal_not_found", "검증할 성장 제안을 찾을 수 없습니다.", 404);
+    const serialized = json(bundle);
+    this.db.prepare("INSERT OR IGNORE INTO mct_replay_results(replay_result_id, proposal_id, passed, digest, result_json, created_at) VALUES(?, ?, ?, ?, ?, ?)").run(result.id, result.proposalId, Number(result.passed), digest(serialized), serialized, result.createdAt);
+    return this.getGrowthReplayResultBundle(result.id);
+  }
+
+  getGrowthReplayResultBundle(replayResultId) {
+    const row = this.db.prepare("SELECT result_json FROM mct_replay_results WHERE replay_result_id = ?").get(replayResultId);
+    return row ? JSON.parse(row.result_json) : null;
+  }
+  getGrowthReplayResult(replayResultId) { return this.getGrowthReplayResultBundle(replayResultId)?.record || null; }
+
+  reviewGrowthProposal(proposalId, decision, authority) {
+    const bundle = this.getGrowthProposalBundle(proposalId);
+    if (!bundle) throw new RuntimeError("growth_proposal_not_found", "검토할 성장 제안을 찾을 수 없습니다.", 404);
+    const reviewed = approveGrowthProposal(bundle, { ...authority, approved: decision === "approved" });
+    const serialized = json(reviewed);
+    const changed = this.db.prepare("UPDATE mct_growth_proposals SET status = ?, digest = ?, proposal_json = ?, updated_at = ?, expires_at = ? WHERE proposal_id = ? AND status = 'review_required'").run(reviewed.record.status, digest(serialized), serialized, reviewed.record.updatedAt, reviewed.record.expiresAt, proposalId);
+    if (changed.changes !== 1) throw new RuntimeError("growth_review_unavailable", "이미 검토된 성장 제안입니다.", 409);
+    return reviewed;
+  }
+
+  applyGrowthMutation(proposalId, replayResultId, { ownerId, ttlMs, snapshotDigest, snapshotPolicy } = {}) {
+    const proposalBundle = this.getGrowthProposalBundle(proposalId);
+    const replayBundle = this.getGrowthReplayResultBundle(replayResultId);
+    if (!proposalBundle || proposalBundle.record.scope.userId !== ownerId) throw new RuntimeError("growth_proposal_not_found", "적용할 성장 제안을 찾을 수 없습니다.", 404);
+    const unreconciledExpiry = this.db.prepare("SELECT mutation_id FROM mct_mutation_ledger WHERE proposal_id = ? AND status = 'canary' AND expires_at <= ? LIMIT 1").get(proposalId, Date.now());
+    if (unreconciledExpiry) throw new RuntimeError("growth_expiry_reconciliation_required", "만료된 성장 변경의 복구 검증을 먼저 완료해야 합니다.", 409);
+    const existing = this.db.prepare("SELECT mutation_json FROM mct_mutation_ledger WHERE proposal_id = ? AND status = 'canary' AND expires_at > ?").get(proposalId, Date.now());
+    if (existing) {
+      const mutation = JSON.parse(existing.mutation_json);
+      return { mutation, rollbackReceipt: this.getRollbackReceiptBundle(mutation.record.rollbackReceiptId), deduplicated: true };
+    }
+    const latestCreatedAt = this.db.prepare("SELECT MAX(created_at) AS value FROM mct_mutation_ledger").get()?.value || 0;
+    const created = createCanaryMutation({ proposalBundle, replayBundle, ttlMs, snapshotDigest, snapshotPolicy, now: Math.max(Date.now(), latestCreatedAt + 1) });
+    const mutationJson = json(created.mutation);
+    const receiptJson = json(created.rollbackReceipt);
+    this.db.prepare("INSERT INTO mct_mutation_ledger(mutation_id, proposal_id, replay_result_id, owner_id, status, expires_at, digest, mutation_json, created_at, updated_at) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)").run(created.mutation.record.id, proposalId, replayResultId, ownerId, created.mutation.record.state, created.mutation.record.expiresAt, digest(mutationJson), mutationJson, created.mutation.record.createdAt, created.mutation.record.updatedAt);
+    this.db.prepare("INSERT INTO mct_rollback_receipts(rollback_receipt_id, mutation_id, verified, digest, receipt_json, created_at, updated_at) VALUES(?, ?, 0, ?, ?, ?, ?)").run(created.rollbackReceipt.record.id, created.mutation.record.id, digest(receiptJson), receiptJson, created.rollbackReceipt.record.createdAt, created.rollbackReceipt.record.updatedAt);
+    return { ...created, deduplicated: false };
+  }
+
+  getRollbackReceiptBundle(receiptId) {
+    const row = this.db.prepare("SELECT receipt_json FROM mct_rollback_receipts WHERE rollback_receipt_id = ?").get(receiptId);
+    return row ? JSON.parse(row.receipt_json) : null;
+  }
+  getRollbackReceipt(receiptId) { return this.getRollbackReceiptBundle(receiptId)?.record || null; }
+
+  listGrowthMutations(ownerId, { activeOnly = false, limit = 100 } = {}) {
+    const rows = ownerId == null
+      ? (activeOnly
+          ? this.db.prepare("SELECT mutation_json FROM mct_mutation_ledger WHERE status = 'canary' AND expires_at > ? ORDER BY created_at DESC LIMIT ?").all(Date.now(), Math.min(500, limit))
+          : this.db.prepare("SELECT mutation_json FROM mct_mutation_ledger ORDER BY created_at DESC LIMIT ?").all(Math.min(500, limit)))
+      : (activeOnly
+          ? this.db.prepare("SELECT mutation_json FROM mct_mutation_ledger WHERE owner_id = ? AND status = 'canary' AND expires_at > ? ORDER BY created_at DESC LIMIT ?").all(ownerId, Date.now(), Math.min(100, limit))
+          : this.db.prepare("SELECT mutation_json FROM mct_mutation_ledger WHERE owner_id = ? ORDER BY created_at DESC LIMIT ?").all(ownerId, Math.min(100, limit)));
+    return { schema: "gpao_t3.mutation_ledgers.v1", mutations: rows.map(row => JSON.parse(row.mutation_json)) };
+  }
+
+  expireGrowthMutations(now = Date.now()) {
+    const rows = this.db.prepare("SELECT mutation_id, owner_id FROM mct_mutation_ledger WHERE status = 'canary' AND expires_at <= ? ORDER BY expires_at").all(now);
+    const receipts = rows.map(row => this.rollbackGrowthMutation(row.mutation_id, { ownerId: row.owner_id, reason: "canary_expired" }));
+    return { expired: receipts.length, receipts };
+  }
+
+  rollbackGrowthMutation(mutationId, { ownerId, reason } = {}) {
+    const row = this.db.prepare("SELECT mutation_json FROM mct_mutation_ledger WHERE mutation_id = ?").get(mutationId);
+    if (!row) throw new RuntimeError("growth_mutation_not_found", "복구할 성장 변경을 찾을 수 없습니다.", 404);
+    const mutation = JSON.parse(row.mutation_json);
+    if (mutation.record.scope.userId !== ownerId) throw new RuntimeError("growth_mutation_not_found", "복구할 성장 변경을 찾을 수 없습니다.", 404);
+    const receipt = this.getRollbackReceiptBundle(mutation.record.rollbackReceiptId);
+    const rolledBack = requestCanaryRollback(mutation, receipt, reason);
+    if (!rolledBack.changed) return rolledBack;
+    const mutationJson = json(rolledBack.mutation);
+    const receiptJson = json(rolledBack.rollbackReceipt);
+    this.db.prepare("UPDATE mct_mutation_ledger SET status = 'rolled_back', digest = ?, mutation_json = ?, updated_at = ? WHERE mutation_id = ? AND status = 'canary'").run(digest(mutationJson), mutationJson, rolledBack.mutation.record.updatedAt, mutationId);
+    this.db.prepare("UPDATE mct_rollback_receipts SET verified = 0, digest = ?, receipt_json = ?, updated_at = ? WHERE rollback_receipt_id = ?").run(digest(receiptJson), receiptJson, rolledBack.rollbackReceipt.record.updatedAt, receipt.record.id);
+    return rolledBack;
+  }
+
+  verifyGrowthRollback(mutationId, { ownerId, projectionPurge, snapshotRestored, postRollbackReplay } = {}) {
+    const row = this.db.prepare("SELECT mutation_json FROM mct_mutation_ledger WHERE mutation_id = ? AND status = 'rolled_back'").get(mutationId);
+    if (!row) throw new RuntimeError("growth_mutation_not_found", "검증할 성장 복구 기록을 찾을 수 없습니다.", 404);
+    const mutation = JSON.parse(row.mutation_json);
+    if (mutation.record.scope.userId !== ownerId) throw new RuntimeError("growth_mutation_not_found", "검증할 성장 복구 기록을 찾을 수 없습니다.", 404);
+    const receipt = this.getRollbackReceiptBundle(mutation.record.rollbackReceiptId);
+    const verified = verifyCanaryRollback(receipt, { projectionPurge, snapshotRestored, postRollbackReplay });
+    const serialized = json(verified);
+    this.db.prepare("UPDATE mct_rollback_receipts SET verified = ?, digest = ?, receipt_json = ?, updated_at = ? WHERE rollback_receipt_id = ?").run(Number(verified.record.verified), digest(serialized), serialized, verified.record.updatedAt, verified.record.id);
+    return verified;
+  }
+
+  verifyGrowthJournal() {
+    const specifications = [
+      ["mct_growth_proposals", "proposal_id", "proposal_json", row => row.id === row.record.id && row.owner_id === row.record.scope.userId && row.status === row.record.status && row.scope_level === row.record.scope.level && row.expires_at === row.record.expiresAt],
+      ["mct_replay_results", "replay_result_id", "result_json", row => row.id === row.record.id && row.proposal_id === row.record.proposalId && Boolean(row.passed) === row.record.passed],
+      ["mct_mutation_ledger", "mutation_id", "mutation_json", row => row.id === row.record.id && row.proposal_id === row.record.proposalId && row.replay_result_id === row.detail.replayResultId && row.owner_id === row.record.scope.userId && row.status === row.record.state && row.expires_at === row.record.expiresAt],
+      ["mct_rollback_receipts", "rollback_receipt_id", "receipt_json", row => row.id === row.record.id && row.mutation_id === row.record.mutationId && Boolean(row.verified) === row.record.verified]
+    ];
+    const counts = {};
+    for (const [table, idColumn, jsonColumn, matchesColumns] of specifications) {
+      const rows = this.db.prepare(`SELECT *, ${idColumn} AS id, ${jsonColumn} AS body FROM ${table}`).all();
+      for (const row of rows) {
+        const envelope = JSON.parse(row.body);
+        if (digest(row.body) !== row.digest || !matchesColumns({ ...row, ...envelope })) throw new RuntimeError("growth_journal_integrity_failed", "성장 변경 감사 기록의 무결성을 확인할 수 없습니다.", 500, { table, id: row.id });
+      }
+      counts[table] = rows.length;
+    }
+    return { ok: true, counts };
   }
 
   identitySnapshot() {
@@ -1358,7 +1550,7 @@ export class StateStore {
     }
     const checkpoint = this.getCheckpoint();
     if (checkpoint.seq !== lastSeq || checkpoint.hash !== previous) throw new RuntimeError("event_checkpoint_drift", "Event checkpoint does not match the event log", 500, { checkpoint, lastSeq, lastHash: previous });
-    return { ok: true, events: rows.length, checkpoint, surfaceJournal: this.verifySurfaceJournal() };
+    return { ok: true, events: rows.length, checkpoint, surfaceJournal: this.verifySurfaceJournal(), growthJournal: this.verifyGrowthJournal() };
   }
 
   close() {

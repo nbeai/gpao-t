@@ -257,7 +257,7 @@ test("MCT-R2 admission ledger survives restart without projection drift", () => 
     assert.deepEqual(restored.taskPacket, admission.taskPacket);
     assert.deepEqual(restored.candidates, admission.candidates);
     assert.deepEqual(restored.decisions, admission.decisions);
-    assert.equal(store.identitySnapshot().schemaVersion, 13);
+    assert.equal(store.identitySnapshot().schemaVersion, 14);
     store.close();
   } finally {
     fs.rmSync(dir, { recursive: true, force: true });
