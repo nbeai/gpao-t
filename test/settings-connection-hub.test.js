@@ -21,8 +21,6 @@ test("settings hub exposes all ordinary settings routes with real state and acti
         channels: {
           telegram: {
             enabled: false,
-            botTokenRef: "GPAO_T_TELEGRAM_BOT_TOKEN",
-            chatIdRef: "GPAO_T_TELEGRAM_CHAT_ID",
           },
         },
       },
@@ -134,6 +132,8 @@ test("telegram settings save writes local config without echoing secret values",
     assert.equal(config.channels.telegram.enabled, true);
     assert.equal(config.channels.telegram.chatId, "8601204821");
     assert.equal(config.channels.telegram.botToken, "123456789:AA_secret_fixture_token_value");
+    assert.equal(config.channels.telegram.botTokenRef, undefined);
+    assert.equal(config.channels.telegram.userVisible, undefined);
     assert.doesNotMatch(JSON.stringify(result), /AA_secret_fixture_token_value/);
   } finally {
     await rm(root, { recursive: true, force: true });

@@ -108,7 +108,10 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     "--macos-installer-archive",
     join(PROJECT_ROOT, ".gpao-t", "releases", `gpao-t-${version}-macos-installer.zip`),
   );
-  const windowsInstallerArchiveArg = arg("--windows-installer-archive", "");
+  const windowsInstallerArchiveArg = arg(
+    "--windows-installer-archive",
+    join(PROJECT_ROOT, ".gpao-t", "releases", `gpao-t-${version}-windows-installer.zip`),
+  );
   const windowsInstallerArchive = windowsInstallerArchiveArg ? resolve(windowsInstallerArchiveArg) : null;
   const output = arg(
     "--output",

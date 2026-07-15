@@ -44,19 +44,12 @@ test("fresh installs create a loopback-only token-authenticated runtime config",
   assert.equal(config.plugins.bundledDiscovery, "compat");
   assert.deepEqual(config.channels.telegram, {
     enabled: false,
-    botTokenRef: "GPAO_T_TELEGRAM_BOT_TOKEN",
-    chatIdRef: "GPAO_T_TELEGRAM_CHAT_ID",
-    userVisible: true,
-    setupRoute: "/settings/channels",
   });
   assert.equal(config.update.channel, "stable");
   assert.equal(config.update.feedUrl, undefined);
   assert.equal(config.update.compatibilityUpdaterAllowed, undefined);
   assert.equal(config.update.preserveStateHome, undefined);
-  assert.equal(config.gpaoTUpdate.channel, "github-releases");
-  assert.equal(config.gpaoTUpdate.feedUrl, GPAO_T_DEFAULT_GITHUB_UPDATE_FEED_URL);
-  assert.equal(config.gpaoTUpdate.compatibilityUpdaterAllowed, false);
-  assert.equal(config.gpaoTUpdate.preserveStateHome, true);
+  assert.equal(config.gpaoTUpdate, undefined);
 });
 
 test("installer normalizes legacy update and plugin keys before doctor verification", () => {
@@ -77,10 +70,7 @@ test("installer normalizes legacy update and plugin keys before doctor verificat
   assert.equal(config.update.feedUrl, undefined);
   assert.equal(config.update.compatibilityUpdaterAllowed, undefined);
   assert.equal(config.update.preserveStateHome, undefined);
-  assert.equal(config.gpaoTUpdate.channel, "github-releases");
-  assert.equal(config.gpaoTUpdate.feedUrl, "https://example.com/gpao-t-update.json");
-  assert.equal(config.gpaoTUpdate.compatibilityUpdaterAllowed, false);
-  assert.equal(config.gpaoTUpdate.preserveStateHome, true);
+  assert.equal(config.gpaoTUpdate, undefined);
   assert.equal(config.plugins.allow, undefined);
   assert.equal(config.plugins.bundledDiscovery, "compat");
   assert.equal(config.plugins.entries.telegram.enabled, false);
@@ -208,4 +198,22 @@ test("macOS installer does not require stopping OpenClaw when migration is disab
   const source = await fs.readFile(join(ROOT, "tools", "gpao-t-local-install-lib.mjs"), "utf8");
   assert.match(source, /plan\.openclaw\.profile !== "none"[\s\S]+ai\.openclaw\.gateway/);
   assert.match(source, /plan\.openclaw\.profile !== "none"[\s\S]+verifySecretModes\(options\.openclawHome\)/);
+});
+
+test("fresh installer config validates through the packaged runtime validator", async () => {
+  const root = await mkdtemp(join(tmpdir(), "gpao-t-config-validate-"));
+  const configPath = join(root, "gpao-t.json");
+  await fs.writeFile(configPath, JSON.stringify(buildFreshRuntimeConfig({ stateHome: root, port: 18799 }), null, 2));
+  try {
+    execFileSync(process.execPath, [join(ROOT, ".gpao-t", "releases", `gpao-t-${RELEASE_VERSION}`, "gpao-t.mjs"), "config", "validate"], {
+      env: {
+        ...process.env,
+        GPAO_T_CONFIG_PATH: configPath,
+        GPAO_T_STATE_DIR: root,
+      },
+      stdio: "pipe",
+    });
+  } finally {
+    await fs.rm(root, { recursive: true, force: true });
+  }
 });

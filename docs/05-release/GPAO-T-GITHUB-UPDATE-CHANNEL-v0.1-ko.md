@@ -12,7 +12,8 @@ GPAO-T 정식 배포본은 설치 후에도 사용자의 `~/.gpao-t` 상태, 모
 - 설치 파일은 `~/.gpao-t`에 런타임을 설치하고, 이후 업데이트도 같은 state
   home을 보존한다.
 - OpenClaw 호환 런타임의 upstream 업데이트 경로는 사용하지 않는다.
-- GPAO-T 업데이트만 `GPAO_T_UPDATE_FEED_URL`과 `gpaoTUpdate.feedUrl`로 관리한다.
+- GPAO-T 업데이트 feed URL은 LaunchAgent의 `GPAO_T_UPDATE_FEED_URL` 환경변수로 관리한다.
+- `~/.gpao-t/gpao-t.json`에는 호환 런타임 스키마가 허용하는 키만 저장한다.
 - 호환 런타임 스키마와 충돌하지 않도록 `update.channel`은 `stable`, `extended-stable`, `beta`, `dev` 중 하나만 사용한다.
 - 업데이트 적용 전 SHA-256 검증, snapshot, staged copy, current symlink 교체,
   restart, health, dashboard, fresh chat, 로그 확인을 거친다.
@@ -63,8 +64,7 @@ https://github.com/nbeai/gpao-t/releases/latest/download/gpao-t-update.json
 macOS 설치기는 기본적으로 다음을 수행한다.
 
 - `~/.gpao-t/gpao-t.json`에 호환 런타임용 `update.channel = stable` 저장
-- `~/.gpao-t/gpao-t.json`에 GPAO-T 전용 `gpaoTUpdate.channel = github-releases` 저장
-- `~/.gpao-t/gpao-t.json`에 `gpaoTUpdate.feedUrl` 저장
+- `gpao-t.json`에는 `gpaoTUpdate` 같은 GPAO-T 전용 최상위 키를 저장하지 않음
 - LaunchAgent 환경변수에 `GPAO_T_UPDATE_FEED_URL` 저장
 - `OPENCLAW_NO_AUTO_UPDATE=1` 유지
 - 기존 호환 런타임은 기본적으로 읽거나 변경하지 않음

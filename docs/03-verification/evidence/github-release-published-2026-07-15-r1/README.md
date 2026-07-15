@@ -8,7 +8,7 @@ https://github.com/nbeai/gpao-t/releases/tag/2026.07.15-r1
 
 Release commit pushed to `main`:
 
-`ad62be6 release: prepare gpao-t 2026.07.15-r1 installers and updates`
+`this commit: fix: keep installer config schema-valid`
 
 ## OpenClaw Coexistence Fix
 
@@ -19,18 +19,19 @@ Verified package-internal readback:
 - preflight `verifySecretModes(options.openclawHome)` is guarded by `profile !== "none"`
 - apply-time `ai.openclaw.gateway` stop requirement is guarded by `plan.openclaw.profile !== "none"`
 - `plugins.allow` is removed during config normalization
-- `gpaoTUpdate` stores GPAO-T GitHub update metadata separately from compatibility `update.channel`
+- `gpaoTUpdate` is not written to `gpao-t.json`; GitHub update metadata is supplied by `GPAO_T_UPDATE_FEED_URL`
 
 ## Uploaded Assets
 
 - `gpao-t-2026.07.15-r1.zip`
-  - SHA-256: `c2e901a193911c4ab8bf75863267740a292f8ed95f967d7ef61371e86ac3779d`
+  - SHA-256: `76b68a0357e71c8ed92665581d5ebd76b7fe2fad152d67fa15dabdc04da65e53`
 - `gpao-t-2026.07.15-r1.zip.sha256`
 - `gpao-t-2026.07.15-r1-macos-installer.zip`
-  - SHA-256: `dd3f9b5a768b274ae2d137dc7ed25a5c11b34eabda6dffe7f2e18c9cee282cc2`
+  - SHA-256: `44d9367d0adff118d74671e3c397fe488534e9f3b2211ac7dfe3c3ffd0f7250a`
 - `gpao-t-2026.07.15-r1-macos-installer.zip.sha256`
 - `gpao-t-update.json`
 - `gpao-t-2026.07.15-r1-windows-installer.zip`
+  - SHA-256: `4b3837537d80e5e57b7ec4d2f8a0000841ea26c65c622d6e85324f88fb62f6cc`
 - `gpao-t-2026.07.15-r1-windows-installer.zip.sha256`
 
 ## Verification
@@ -41,8 +42,11 @@ Verified package-internal readback:
 - `npm run package:macos-installer`: sealed
 - `npm run package:github-update-feed`: ready
 - `npm run verify:macos-installer`: verified
-- `zip -T` for production and macOS installer archives: OK
-- Feed SHA readback: production and macOS installer asset hashes match local files
+- `npm run verify:windows-installer`: verified
+- `npm test`: 485 pass / 0 fail + dashboard readiness checks pass
+- packaged fresh config validation: `Config valid`
+- `zip -T` for production, macOS installer, and Windows installer archives: OK
+- Feed SHA readback: production, macOS installer, and Windows installer asset hashes match local files
 - GitHub Release readback: release exists, not draft, not prerelease, 7 assets uploaded
 - Latest feed URL: HTTP 200, 1257 bytes
 - Packaged updater status against latest feed:
@@ -52,4 +56,4 @@ Verified package-internal readback:
 
 ## Remaining Boundary
 
-This release publishes the macOS updater feed. Windows installer is uploaded as a release asset, but Windows updater feed/apply behavior is still a separate platform expansion item.
+This release publishes production, macOS installer, and Windows installer assets in the GitHub update feed. Platform-specific apply behavior still depends on the installed updater path on each OS.

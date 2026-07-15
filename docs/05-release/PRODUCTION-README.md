@@ -87,8 +87,8 @@ GPAO-T owns its update contract. The isolated compatibility runtime is never all
 to check or install its upstream product updates while `GPAO_T_RUNTIME=1`.
 
 - `gpao-t update status` returns the GPAO-T managed update state.
-- New installs carry `GPAO_T_UPDATE_FEED_URL` in the LaunchAgent and `gpaoTUpdate.feedUrl`
-  in `~/.gpao-t/gpao-t.json`; compatibility `update.channel` remains schema-safe.
+- New installs carry `GPAO_T_UPDATE_FEED_URL` in the LaunchAgent environment; `~/.gpao-t/gpao-t.json`
+  keeps only compatibility-schema-valid keys, and compatibility `update.channel` remains schema-safe.
 - The default feed target is
   `https://github.com/nbeai/gpao-t/releases/latest/download/gpao-t-update.json`.
 - The feed must use GPAO-T manifests, SHA-256 verification, staged install,

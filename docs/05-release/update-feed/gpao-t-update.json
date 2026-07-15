@@ -4,7 +4,7 @@
   "product": "nBeAI. GPAO-T",
   "channel": "github-releases",
   "version": "2026.07.15-r1",
-  "generatedAt": "2026-07-15T10:49:40.752Z",
+  "generatedAt": "2026-07-15T11:27:20.358Z",
   "releasePageUrl": "https://github.com/nbeai/gpao-t/releases/tag/2026.07.15-r1",
   "minimumInstalledVersion": "2026.07.15-r1",
   "installStrategy": {
@@ -19,17 +19,25 @@
       "kind": "production_distribution",
       "name": "gpao-t-2026.07.15-r1.zip",
       "url": "https://github.com/nbeai/gpao-t/releases/download/2026.07.15-r1/gpao-t-2026.07.15-r1.zip",
-      "sha256": "c2e901a193911c4ab8bf75863267740a292f8ed95f967d7ef61371e86ac3779d",
-      "bytes": 80306245,
+      "sha256": "76b68a0357e71c8ed92665581d5ebd76b7fe2fad152d67fa15dabdc04da65e53",
+      "bytes": 80306237,
       "platform": null
     },
     {
       "kind": "macos_installer",
       "name": "gpao-t-2026.07.15-r1-macos-installer.zip",
       "url": "https://github.com/nbeai/gpao-t/releases/download/2026.07.15-r1/gpao-t-2026.07.15-r1-macos-installer.zip",
-      "sha256": "dd3f9b5a768b274ae2d137dc7ed25a5c11b34eabda6dffe7f2e18c9cee282cc2",
-      "bytes": 124293495,
+      "sha256": "44d9367d0adff118d74671e3c397fe488534e9f3b2211ac7dfe3c3ffd0f7250a",
+      "bytes": 124293302,
       "platform": "macos"
+    },
+    {
+      "kind": "windows_installer",
+      "name": "gpao-t-2026.07.15-r1-windows-installer.zip",
+      "url": "https://github.com/nbeai/gpao-t/releases/download/2026.07.15-r1/gpao-t-2026.07.15-r1-windows-installer.zip",
+      "sha256": "4b3837537d80e5e57b7ec4d2f8a0000841ea26c65c622d6e85324f88fb62f6cc",
+      "bytes": 116498868,
+      "platform": "windows-x64"
     }
   ]
 }

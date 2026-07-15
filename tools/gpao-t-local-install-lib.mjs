@@ -800,19 +800,6 @@ function normalizeCompatibilityUpdateConfig(value) {
   return next;
 }
 
-function normalizeGpaoTUpdateConfig(value, fallbackFeedUrl = GPAO_T_DEFAULT_GITHUB_UPDATE_FEED_URL) {
-  const source = value && typeof value === "object" ? value : {};
-  return {
-    ...source,
-    channel: "github-releases",
-    feedUrl: typeof source.feedUrl === "string" && source.feedUrl.trim()
-      ? source.feedUrl
-      : fallbackFeedUrl,
-    compatibilityUpdaterAllowed: false,
-    preserveStateHome: true,
-  };
-}
-
 export function normalizeGpaoTRuntimeConfig(config) {
   const next = normalizeGpaoTPluginConfig(config);
   next.agents = next.agents && typeof next.agents === "object" ? next.agents : {};
@@ -837,12 +824,17 @@ export function normalizeGpaoTRuntimeConfig(config) {
     ? next.tools.sessions
     : {};
   next.tools.sessions.visibility = "agent";
-  const inheritedGpaoTFeed = next.gpaoTUpdate?.feedUrl || next.update?.feedUrl;
   next.update = normalizeCompatibilityUpdateConfig(next.update);
-  next.gpaoTUpdate = normalizeGpaoTUpdateConfig(
-    next.gpaoTUpdate,
-    inheritedGpaoTFeed || GPAO_T_DEFAULT_GITHUB_UPDATE_FEED_URL,
-  );
+  delete next.gpaoTUpdate;
+  if (next.channels && typeof next.channels === "object") {
+    const telegram = next.channels.telegram;
+    if (telegram && typeof telegram === "object") {
+      next.channels.telegram = Object.fromEntries(
+        Object.entries(telegram).filter(([key]) => ["enabled", "botToken", "token", "chatId", "defaultChatId"].includes(key)),
+      );
+      if (typeof next.channels.telegram.enabled !== "boolean") next.channels.telegram.enabled = false;
+    }
+  }
   return next;
 }
 
@@ -865,7 +857,7 @@ export function disableInheritedExternalConnections(config) {
   return normalizeGpaoTRuntimeConfig(next);
 }
 
-export function buildFreshRuntimeConfig({ stateHome, port, updateFeedUrl = GPAO_T_DEFAULT_GITHUB_UPDATE_FEED_URL }) {
+export function buildFreshRuntimeConfig({ stateHome, port }) {
   const config = normalizeGpaoTRuntimeConfig({
     agents: {
       defaults: {
@@ -892,19 +884,9 @@ export function buildFreshRuntimeConfig({ stateHome, port, updateFeedUrl = GPAO_
     channels: {
       telegram: {
         enabled: false,
-        botTokenRef: "GPAO_T_TELEGRAM_BOT_TOKEN",
-        chatIdRef: "GPAO_T_TELEGRAM_CHAT_ID",
-        userVisible: true,
-        setupRoute: "/settings/channels",
       },
     },
     update: { channel: "stable" },
-    gpaoTUpdate: {
-      channel: "github-releases",
-      feedUrl: updateFeedUrl,
-      compatibilityUpdaterAllowed: false,
-      preserveStateHome: true,
-    },
     plugins: {
       entries: {
         codex: { enabled: true },

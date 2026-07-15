@@ -174,7 +174,6 @@ function resolveFeedUrl(config) {
   const candidates = [
     process.env.GPAO_T_UPDATE_FEED_URL,
     process.env.GPAO_T_GITHUB_UPDATE_FEED_URL,
-    config?.gpaoTUpdate?.feedUrl,
     config?.update?.feedUrl,
     DEFAULT_UPDATE_FEED_URL,
   ];

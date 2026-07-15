@@ -10,7 +10,8 @@ Tester install failed during post-migration plugin verification:
 ## Fix
 
 - Keep compatibility runtime `update.channel` schema-safe as `stable`.
-- Move GPAO-T GitHub update metadata to `gpaoTUpdate.channel = github-releases` and `gpaoTUpdate.feedUrl`.
+- Remove GPAO-T-only `gpaoTUpdate` from `gpao-t.json`; update feed stays in LaunchAgent `GPAO_T_UPDATE_FEED_URL`.
+- Remove Telegram UI metadata from `channels.telegram`; fresh config keeps `channels.telegram.enabled` only.
 - Remove legacy `plugins.allow` during install-time config normalization.
 - Set `plugins.bundledDiscovery = compat` unless the user explicitly chose `allowlist`.
 - Normalize an existing `~/.gpao-t/gpao-t.json` during install, not only fresh installs or migrations.
@@ -53,7 +54,8 @@ The rebuilt installer contains:
 
 - `tools/gpao-t-local-install-lib.mjs`
 - `normalizeCompatibilityUpdateConfig`
-- `gpaoTUpdate`
+- no `gpaoTUpdate` root key in generated `gpao-t.json`
+- `channels.telegram` uses schema-valid keys only
 - `plugins.bundledDiscovery = "compat"`
 - `readExistingRuntimeConfig`
 

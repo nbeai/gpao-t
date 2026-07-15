@@ -43,13 +43,7 @@ export function saveTelegramSettingsToConfig({
     ? config.channels.telegram
     : {};
   config.channels.telegram = {
-    ...previous,
     enabled,
-    botTokenRef: previous.botTokenRef || "GPAO_T_TELEGRAM_BOT_TOKEN",
-    chatIdRef: previous.chatIdRef || "GPAO_T_TELEGRAM_CHAT_ID",
-    userVisible: true,
-    setupRoute: "/settings/channels",
-    updatedAt: now,
   };
   if (token) config.channels.telegram.botToken = token;
   if (chatId) config.channels.telegram.chatId = chatId;
