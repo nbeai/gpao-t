@@ -5,6 +5,7 @@ import path from "node:path";
 import test from "node:test";
 import { createHttpServer } from "../src/core/http.js";
 import { NativeRuntime } from "../src/core/runtime.js";
+import { ProviderInvocationError } from "../src/core/provider.js";
 
 function tempState() {
   return fs.mkdtempSync(path.join(os.tmpdir(), "gpao-t-native-http-"));
@@ -38,7 +39,9 @@ test("HTTP health is public, work is owner-authenticated, and turn state is scop
   assert.equal(unauthorized.status, 401);
   const dashboard = await fetch(`${base}/`);
   assert.equal(dashboard.status, 200);
-  assert.match(await dashboard.text(), /nBeAI\. GPAO-T/);
+  const dashboardHtml = await dashboard.text();
+  assert.match(dashboardHtml, /nBeAI\. GPAO-T/);
+  assert.match(dashboardHtml, /무엇을 함께 해볼까요/);
   const localSession = dashboard.headers.get("set-cookie");
   assert.match(localSession, /HttpOnly/);
   assert.equal((await fetch(`${base}/v1/doctor`, { headers: { cookie: localSession } })).status, 200);
@@ -95,6 +98,30 @@ test("HTTP health is public, work is owner-authenticated, and turn state is scop
   assert.equal((await fetch(`${base}/health`)).status, 200);
   assert.equal((await fetch(`${base}/ready`)).status, 503);
 
+  } finally {
+    await new Promise(resolve => server.close(resolve));
+    await runtime.stop();
+  }
+});
+
+test("provider failure returns a user-safe repair plan without internal detail", async () => {
+  const providerAdapter = { invoke: async () => { throw new ProviderInvocationError("auth_required", "raw provider failure detail"); } };
+  const runtime = await new NativeRuntime({ stateDir: tempState(), providerAdapter }).start();
+  const { server } = createHttpServer(runtime, { port: 0 });
+  await new Promise(resolve => server.listen(0, "127.0.0.1", resolve));
+  const base = `http://127.0.0.1:${server.address().port}`;
+  try {
+    const response = await fetch(`${base}/v1/os-turns`, {
+      method: "POST",
+      headers: { authorization: `Bearer ${runtime.ownerToken}`, "content-type": "application/json" },
+      body: JSON.stringify({ requestId: "provider-repair", sessionId: "fbe843a4-383e-44ab-9f6b-a7df2a498ce1", input: "provider recovery" })
+    });
+    const body = await response.json();
+    assert.equal(response.status, 409);
+    assert.equal(body.replyMode, "provider_blocked");
+    assert.equal(body.repairPlan.state, "auth_required");
+    assert.ok(body.repairPlan.action);
+    assert.doesNotMatch(JSON.stringify(body.repairPlan), /raw provider failure detail/);
   } finally {
     await new Promise(resolve => server.close(resolve));
     await runtime.stop();
