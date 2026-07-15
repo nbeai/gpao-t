@@ -1,9 +1,10 @@
-const state = { sessions: [], messengerSessions: [], activeId: null, activeKind: "workspace", sessionAction: null, pendingChannelSend: null, activeTurn: null, surfaceEventIds:new Set(), streamText:new Map(), connections: null, channels: null, connectionCells: null, tools: null, influence: null, memoryWiki: null, doctor: null, panel: { sessionId:null, open:false, userClosed:false, view:"activity", notices:0 } };
+const state = { sessions: [], messengerSessions: [], activeId: null, activeKind: "workspace", sessionAction: null, sessionMenuId: null, sessionSearch: "", pendingChannelSend: null, activeTurn: null, surfaceEventIds:new Set(), streamText:new Map(), connections: null, channels: null, connectionCells: null, tools: null, influence: null, memoryWiki: null, doctor: null, panel: { sessionId:null, open:false, userClosed:false, view:"activity", notices:0 } };
 const $ = selector => document.querySelector(selector);
 function refreshIcons(root = document) { globalThis.lucide?.createIcons?.({ root, attrs:{ "stroke-width":1.8 } }); }
 const localConnector = connector => (connector.compatibility?.transport || connector.transport) === "builtin";
 const managedChannel = connector => connector.id === "channel.telegram";
 const userFacingProvider = provider => provider.adapter !== "native-deterministic-emulator";
+let panelReturnFocus = null;
 
 function active() { return (state.activeKind === "messenger" ? state.messengerSessions : state.sessions).find(session => session.sessionId === state.activeId); }
 const panelTitles = { activity:"진행 상황", tools:"도구와 결과", memory:"기억", recovery:"문제 해결" };
@@ -21,6 +22,10 @@ function renderPanelState() {
   workbench.classList.toggle("panel-open", state.panel.open);
   $("#assistant-panel").setAttribute("aria-hidden", String(!state.panel.open));
   $("#panel-toggle").setAttribute("aria-expanded", String(state.panel.open));
+  const panel = $("#assistant-panel");
+  const modal = state.panel.open && window.innerWidth <= 980;
+  if (modal) { panel.setAttribute("role", "dialog"); panel.setAttribute("aria-modal", "true"); }
+  else { panel.removeAttribute("role"); panel.removeAttribute("aria-modal"); }
   $("#panel-title").textContent = panelTitles[state.panel.view] || panelTitles.activity;
   document.querySelectorAll("[data-panel-view]").forEach(button => button.setAttribute("aria-current", String(button.dataset.panelView === state.panel.view)));
   document.querySelectorAll("[data-panel-content]").forEach(section => { section.hidden = section.dataset.panelContent !== state.panel.view; });
@@ -34,11 +39,15 @@ function restorePanelForSession(sessionId) {
   renderPanelState();
 }
 function setPanelOpen(open, { userClosed = false } = {}) {
+  const wasModal = $("#assistant-panel").getAttribute("aria-modal") === "true";
+  if (open && !state.panel.open) panelReturnFocus = document.activeElement;
   state.panel.open = open;
   state.panel.userClosed = !open && userClosed;
   if (open) state.panel.notices = 0;
   savePanelState();
   renderPanelState();
+  if (open && window.innerWidth <= 980) setTimeout(() => $("#panel-close").focus(), 200);
+  if (!open && wasModal) setTimeout(() => (panelReturnFocus?.isConnected ? panelReturnFocus : $("#panel-toggle")).focus(), 0);
 }
 function setPanelView(view) {
   if (!panelTitles[view]) return;
@@ -145,22 +154,48 @@ function awaitOsTurn(acceptance) {
   });
 }
 async function createSession() {
+  closeSessionContextMenu();
   const sessionId = crypto.randomUUID();
   const session = await request("/v1/workspaces", { method:"POST", body:JSON.stringify({ sessionId, title:"새 대화" }) });
   session.messages = []; state.sessions.unshift(session); state.activeKind = "workspace"; state.activeId = sessionId; render();
 }
 async function loadWorkspace(sessionId) {
+  closeSessionContextMenu();
   const workspace = await request(`/v1/workspaces/${encodeURIComponent(sessionId)}`);
   const index = state.sessions.findIndex(item => item.sessionId === sessionId);
   if (index >= 0) state.sessions[index] = workspace; else state.sessions.unshift(workspace);
   state.activeKind = "workspace"; state.activeId = sessionId; closeSessionMenu(); render();
 }
 function loadMessengerSession(sessionId) { state.activeKind = "messenger"; state.activeId = sessionId; closeSessionMenu(); render(); }
-function closeSessionMenu() { $(".rail").classList.remove("sessions-open"); $("#session-menu").setAttribute("aria-expanded", "false"); }
+function closeSessionMenu() {
+  $(".rail").classList.remove("sessions-open");
+  $("#session-backdrop").classList.remove("open");
+  $("#session-menu").setAttribute("aria-expanded", "false");
+}
+function closeSessionContextMenu() {
+  const closingId = state.sessionMenuId;
+  state.sessionMenuId = null;
+  document.querySelectorAll(".session-context-menu").forEach(menu => { menu.hidden = true; });
+  document.querySelectorAll(".session-row.menu-open").forEach(row => row.classList.remove("menu-open"));
+  document.querySelectorAll("[data-session-menu]").forEach(button => button.setAttribute("aria-expanded", "false"));
+  if (closingId) queueMicrotask(() => document.querySelector(`[data-session-menu="${CSS.escape(closingId)}"]`)?.focus());
+}
+function positionSessionContextMenu() {
+  const menu = document.querySelector(".session-context-menu:not([hidden])");
+  const row = menu?.closest(".session-row");
+  if (!menu || !row) return;
+  if (window.innerWidth <= 760) { menu.style.removeProperty("top"); menu.style.removeProperty("left"); return; }
+  const rowBox = row.getBoundingClientRect();
+  const top = Math.max(10, Math.min(rowBox.top + 34, window.innerHeight - menu.offsetHeight - 10));
+  const left = Math.max(10, Math.min(rowBox.right - 36, window.innerWidth - menu.offsetWidth - 10));
+  menu.style.top = `${top}px`;
+  menu.style.left = `${left}px`;
+}
 function closeSessionDialog() { state.sessionAction = null; $("#session-dialog").close(); $("#session-dialog-status").textContent = ""; }
 function openSessionDialog(mode, sessionId) {
   const item = state.sessions.find(entry => entry.sessionId === sessionId);
   if (!item) return;
+  closeSessionContextMenu();
   state.sessionAction = { mode, sessionId };
   const rename = mode === "rename";
   $("#session-dialog-title").textContent = rename ? "대화 이름 변경" : "대화 삭제";
@@ -182,6 +217,7 @@ async function refreshSessions() {
   return loadWorkspace(next);
 }
 async function updateSession(sessionId, changes) {
+  state.sessionMenuId = null;
   await request(`/v1/workspaces/${encodeURIComponent(sessionId)}`, { method:"PATCH", body:JSON.stringify(changes) });
   await refreshSessions();
 }
@@ -242,8 +278,9 @@ function renderMessages(messages, session, messenger) {
   if (!session.messages?.length) {
     const welcome = document.createElement("div");
     welcome.className = "welcome";
-    welcome.innerHTML = `<img class="welcome-logo" src="/assets/gpao-t3-logo.jpeg" alt=""><h2>${messenger ? "메신저 대화" : "무엇을 함께 해볼까요?"}</h2><p>${messenger ? "연결된 메신저 대화를 여기서 이어갑니다." : "메시지를 입력하면 바로 시작합니다."}</p>`;
+    welcome.innerHTML = `<img class="welcome-logo" src="/assets/gpao-t3-logo.jpeg" alt=""><h2>${messenger ? "메신저 대화" : "무엇을 함께 해볼까요?"}</h2><p>${messenger ? "연결된 메신저 대화를 여기서 이어갑니다." : "대화하듯 시작하면 필요한 모델과 도구를 연결합니다."}</p>${messenger ? "" : `<div class="welcome-suggestions"><button type="button" data-suggestion="오늘 해야 할 일을 정리해줘">오늘 해야 할 일을 정리해줘</button><button type="button" data-suggestion="최근 대화를 이어서 진행해줘">최근 대화를 이어서 진행해줘</button><button type="button" data-suggestion="문서를 읽고 핵심을 정리해줘">문서를 읽고 핵심을 정리해줘</button><button type="button" data-suggestion="시스템 상태를 확인해줘">시스템 상태를 확인해줘</button></div>`}`;
     messages.append(welcome);
+    welcome.querySelectorAll("[data-suggestion]").forEach(button => button.addEventListener("click", () => { $("#message").value = button.dataset.suggestion; $("#message").focus(); }));
     return;
   }
   for (const item of session.messages) {
@@ -276,21 +313,34 @@ function setCard(id, { tone = "", summary, detail }) {
   $(`#${id}-summary`).textContent = summary;
   $(`#${id}-detail`).textContent = detail;
 }
+function renderSessions() {
+  const matchesSearch = item => !state.sessionSearch || `${item.title || ""} ${item.channelId || ""} ${item.peer?.id || ""}`.toLocaleLowerCase("ko").includes(state.sessionSearch);
+  const visibleWorkspaces = state.sessions.filter(matchesSearch);
+  const visibleMessengers = state.messengerSessions.filter(matchesSearch);
+  const workRows = visibleWorkspaces.map(item => {
+    const id = escape(item.sessionId);
+    const menuOpen = state.sessionMenuId === item.sessionId;
+    return `<div class="session-row ${item.pinned ? "pinned" : ""} ${menuOpen ? "menu-open" : ""}" aria-current="${state.activeKind === "workspace" && item.sessionId === state.activeId}"><button class="session" type="button" data-session-open="${id}" title="대화 열기">${escape(item.title)}</button><div class="session-actions"><button class="session-pin" type="button" data-session-pin="${id}" title="${item.pinned ? "고정 해제" : "대화 고정"}" aria-label="${item.pinned ? "고정 해제" : "대화 고정"}"><i data-lucide="${item.pinned ? "pin" : "pin"}" aria-hidden="true"></i></button><button class="session-more" type="button" data-session-menu="${id}" title="대화 관리" aria-label="대화 관리" aria-expanded="${menuOpen}"><i data-lucide="ellipsis" aria-hidden="true"></i></button></div><div class="session-context-menu" role="menu" ${menuOpen ? "" : "hidden"}><button type="button" role="menuitem" data-session-open="${id}"><i data-lucide="message-square" aria-hidden="true"></i><span>대화 열기</span></button><button type="button" role="menuitem" data-session-pin="${id}"><i data-lucide="${item.pinned ? "pin-off" : "pin"}" aria-hidden="true"></i><span>${item.pinned ? "고정 해제" : "대화 고정"}</span></button><button type="button" role="menuitem" data-session-rename="${id}" aria-label="이름 변경"><i data-lucide="pencil" aria-hidden="true"></i><span>이름 바꾸기</span></button><button type="button" role="menuitem" data-session-archive="${id}"><i data-lucide="archive" aria-hidden="true"></i><span>대화 보관</span></button><div class="session-context-separator"></div><button class="danger" type="button" role="menuitem" data-session-delete="${id}"><i data-lucide="trash-2" aria-hidden="true"></i><span>삭제</span></button></div></div>`;
+  }).join("");
+  const messengerRows = visibleMessengers.map(item => `<div class="session-row" aria-current="${state.activeKind === "messenger" && item.sessionId === state.activeId}"><button class="session" type="button" data-messenger-open="${escape(item.sessionId)}" title="메신저 대화 열기">${escape(`${item.channelId === "telegram" ? "Telegram" : item.channelId} · ${item.peer.id}`)}</button></div>`).join("");
+  $("#sessions").innerHTML = `<h2 class="session-group-title">작업 대화</h2>${workRows || `<p class="session-group-empty">일치하는 대화 없음</p>`}<h2 class="session-group-title">메신저 대화</h2>${messengerRows || `<p class="session-group-empty">연결된 대화 없음</p>`}`;
+  $("#sessions").querySelectorAll("[data-session-open]").forEach(button => button.addEventListener("click", () => loadWorkspace(button.dataset.sessionOpen)));
+  $("#sessions").querySelectorAll("[data-messenger-open]").forEach(button => button.addEventListener("click", () => loadMessengerSession(button.dataset.messengerOpen)));
+  $("#sessions").querySelectorAll("[data-session-pin]").forEach(button => button.addEventListener("click", () => { const item = state.sessions.find(entry => entry.sessionId === button.dataset.sessionPin); updateSession(item.sessionId, { pinned:!item.pinned }); }));
+  $("#sessions").querySelectorAll("[data-session-menu]").forEach(button => button.addEventListener("click", event => { event.stopPropagation(); state.sessionMenuId = state.sessionMenuId === button.dataset.sessionMenu ? null : button.dataset.sessionMenu; renderSessions(); if (state.sessionMenuId) queueMicrotask(() => document.querySelector(".session-context-menu:not([hidden]) [role=menuitem]")?.focus()); }));
+  $("#sessions").querySelectorAll("[data-session-rename]").forEach(button => button.addEventListener("click", () => openSessionDialog("rename", button.dataset.sessionRename)));
+  $("#sessions").querySelectorAll("[data-session-archive]").forEach(button => button.addEventListener("click", () => updateSession(button.dataset.sessionArchive, { archived:true })));
+  $("#sessions").querySelectorAll("[data-session-delete]").forEach(button => button.addEventListener("click", () => openSessionDialog("delete", button.dataset.sessionDelete)));
+  refreshIcons($("#sessions"));
+  positionSessionContextMenu();
+}
 function render() {
   const session = active();
   if (!session) return;
   if (state.panel.sessionId !== state.activeId) restorePanelForSession(state.activeId);
   const messenger = state.activeKind === "messenger";
   $("#chat-title").textContent = messenger ? `${session.channelId === "telegram" ? "Telegram" : session.channelId} · ${session.peer.id}` : session.title;
-  const workRows = state.sessions.map(item => `<div class="session-row" aria-current="${state.activeKind === "workspace" && item.sessionId === state.activeId}"><button class="session" type="button" data-session-open="${item.sessionId}" title="대화 열기">${escape(item.title)}</button><div class="session-actions"><button type="button" data-session-pin="${item.sessionId}" title="${item.pinned ? "고정 해제" : "대화 고정"}" aria-label="${item.pinned ? "고정 해제" : "대화 고정"}"><i data-lucide="${item.pinned ? "pin-off" : "pin"}" aria-hidden="true"></i></button><button type="button" data-session-rename="${item.sessionId}" title="이름 변경" aria-label="이름 변경"><i data-lucide="pencil" aria-hidden="true"></i></button><button type="button" data-session-archive="${item.sessionId}" title="보관" aria-label="보관"><i data-lucide="archive" aria-hidden="true"></i></button><button type="button" data-session-delete="${item.sessionId}" title="삭제" aria-label="삭제"><i data-lucide="trash-2" aria-hidden="true"></i></button></div></div>`).join("");
-  const messengerRows = state.messengerSessions.map(item => `<div class="session-row" aria-current="${state.activeKind === "messenger" && item.sessionId === state.activeId}"><button class="session" type="button" data-messenger-open="${item.sessionId}" title="메신저 대화 열기">${escape(`${item.channelId === "telegram" ? "Telegram" : item.channelId} · ${item.peer.id}`)}</button></div>`).join("");
-  $("#sessions").innerHTML = `<h2 class="session-group-title">작업 대화</h2>${workRows}<h2 class="session-group-title">메신저 대화</h2>${messengerRows || `<p class="session-group-empty">연결된 대화 없음</p>`}`;
-  $("#sessions").querySelectorAll("[data-session-open]").forEach(button => button.addEventListener("click", () => loadWorkspace(button.dataset.sessionOpen)));
-  $("#sessions").querySelectorAll("[data-messenger-open]").forEach(button => button.addEventListener("click", () => loadMessengerSession(button.dataset.messengerOpen)));
-  $("#sessions").querySelectorAll("[data-session-pin]").forEach(button => button.addEventListener("click", () => { const item = state.sessions.find(entry => entry.sessionId === button.dataset.sessionPin); updateSession(item.sessionId, { pinned:!item.pinned }); }));
-  $("#sessions").querySelectorAll("[data-session-rename]").forEach(button => button.addEventListener("click", () => openSessionDialog("rename", button.dataset.sessionRename)));
-  $("#sessions").querySelectorAll("[data-session-archive]").forEach(button => button.addEventListener("click", () => updateSession(button.dataset.sessionArchive, { archived:true })));
-  $("#sessions").querySelectorAll("[data-session-delete]").forEach(button => button.addEventListener("click", () => openSessionDialog("delete", button.dataset.sessionDelete)));
+  renderSessions();
   const messages = $("#messages");
   renderMessages(messages, session, messenger);
   refreshIcons();
@@ -327,6 +377,12 @@ function connectionOverview(connections) {
   if (emulatorReady) return { tone:"hold", summary:"기본 응답 준비됨", detail:"실제 AI 답변을 받으려면 AI를 연결하세요" };
   return { tone:"warn", summary:"연결 필요", detail:"AI 연결에서 계정이나 키를 연결하세요" };
 }
+function updateComposerModelLabel(connections) {
+  const ready = readyModels(connections).filter(item => userFacingProvider(item.provider));
+  const selected = connections.defaultSelection;
+  const selectedProvider = connections.providers.find(provider => provider.id === selected?.preferredProviderId);
+  $("#composer-model-label").textContent = selected?.preferredModelId ? `${providerName(selectedProvider || { display:{ name:selected.preferredProviderId } })} · ${selected.preferredModelId}` : ready[0] ? `${providerName(ready[0].provider)} · ${ready[0].model.id}` : "AI 연결 필요";
+}
 function toolOverview(cells) {
   const list = cells?.cells || [];
   const usable = list.filter(cell => cell.seamlessState === "usable_read").length;
@@ -349,6 +405,7 @@ function recoveryOverview(doctor) {
   return { tone:"warn", summary:"복구 필요", detail:"새 실행보다 복구 확인이 먼저입니다" };
 }
 async function refreshOperations() {
+  const channelsRequest = request("/v1/channels").catch(() => null);
   try {
     const [connections, cells, tools, influence, memoryWiki, doctor] = await Promise.all([
       request("/v1/connection-center"),
@@ -364,6 +421,7 @@ async function refreshOperations() {
     state.influence = influence;
     state.memoryWiki = memoryWiki;
     state.doctor = doctor;
+    updateComposerModelLabel(connections);
     setCard("model", connectionOverview(connections));
     setCard("tool", toolOverview(cells));
     setCard("memory", memoryOverview(influence));
@@ -375,6 +433,11 @@ async function refreshOperations() {
     setCard("memory", { tone:"warn", summary:"확인 필요", detail:"기억 상태를 불러오지 못했습니다" });
     setCard("recovery", { tone:"warn", summary:"확인 필요", detail:"복구 상태를 불러오지 못했습니다" });
   }
+  const channels = await channelsRequest;
+  if (!channels) { $("#channel-shortcut-state").textContent = "상태 확인 필요"; return; }
+  state.channels = channels;
+  const telegram = channels.channels?.find(item => item.channelId === "telegram");
+  $("#channel-shortcut-state").textContent = telegram?.connection?.state === "connected" ? "연결됨" : "연결 필요";
 }
 function providerState(provider) {
   if (provider.auth.state === "configured" && provider.health.state === "ready") return "연결됨";
@@ -500,6 +563,8 @@ async function refreshConnectors() {
   state.connectionCells = payload;
   state.tools = tools;
   state.channels = channels;
+  const telegram = channels.channels?.find(item => item.channelId === "telegram");
+  $("#channel-shortcut-state").textContent = telegram?.connection?.state === "connected" ? "연결됨" : "연결 필요";
   renderConnectors(Array.isArray(payload.cells) ? payload.cells.filter(cell => cell.kind !== "tool") : [], channels.channels || []);
   renderTools(tools.tools || []);
   setCard("tool", toolOverview(payload));
@@ -556,6 +621,7 @@ async function refreshConnections() {
   const ready = readyModels(connections).filter(item => userFacingProvider(item.provider));
   const select = $("#default-model");
   const selected = connections.defaultSelection;
+  updateComposerModelLabel(connections);
   select.innerHTML = ready.length ? ready.map(({ provider, model }) => `<option value="${escape(`${provider.id}:${model.id}`)}" ${selected?.preferredProviderId === provider.id && selected?.preferredModelId === model.id ? "selected" : ""}>${escape(provider.display.name)} · ${escape(model.id)}</option>`).join("") : `<option value="">연결된 외부 모델이 없습니다</option>`;
   $("#save-default-model").disabled = ready.length === 0;
   $("#provider-list").innerHTML = connections.providers.filter(userFacingProvider).map(provider => `<article class="provider-row"><div><strong>${escape(providerName(provider))}</strong><p>${escape(providerDescription(provider))}</p></div><div class="provider-state"><span>${providerState(provider)}</span>${providerControls(provider)}</div></article>`).join("");
@@ -666,7 +732,7 @@ async function disconnectProvider(providerId) {
     await refreshConnections();
   } catch (error) { status.textContent = connectionRecoveryMessage(error, providerName(provider)); }
 }
-$("#models").addEventListener("click", async () => {
+async function openConnectionCenter(target = "models") {
   $("#connection-dialog").showModal();
   $("#model-selection-status").textContent = "";
   $("#connector-status").textContent = "";
@@ -674,14 +740,35 @@ $("#models").addEventListener("click", async () => {
   if (connections.status === "rejected") $("#model-selection-status").textContent = "연결 목록을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.";
   if (connectors.status === "rejected") $("#connector-status").textContent = "도구 목록을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.";
   await refreshOperations().catch(() => {});
-});
+  const section = target === "tools" ? $(".tool-connections") : $(".default-model");
+  section?.scrollIntoView({ block:"start" });
+}
+$("#models").addEventListener("click", () => openConnectionCenter("models"));
+$("#top-new-chat").addEventListener("click", createSession);
+$("#composer-model").addEventListener("click", () => openConnectionCenter("models"));
+$("#composer-add").addEventListener("click", () => openConnectionCenter("tools"));
+$("#channel-shortcut").addEventListener("click", () => openConnectionCenter("tools"));
+$("#connections-shortcut").addEventListener("click", () => openConnectionCenter("tools"));
+function openSettings() { if (!$("#settings-dialog").open) $("#settings-dialog").showModal(); }
+$("#settings").addEventListener("click", openSettings);
+$("#composer-settings").addEventListener("click", openSettings);
+$("#close-settings").addEventListener("click", () => $("#settings-dialog").close());
+document.querySelectorAll("[data-settings-target]").forEach(button => button.addEventListener("click", () => {
+  const target = button.dataset.settingsTarget;
+  $("#settings-dialog").close();
+  if (["models", "tools"].includes(target)) return openConnectionCenter(target);
+  if (target === "memory") return $("#memory").click();
+  if (target === "recovery") return $("#status").click();
+  if (target === "authority") { setPanelView("activity"); setPanelOpen(true); }
+}));
+$("#overview").addEventListener("click", () => { setPanelView("activity"); setPanelOpen(true); });
 $("#panel-toggle").addEventListener("click", () => setPanelOpen(!state.panel.open));
 $("#panel-close").addEventListener("click", () => setPanelOpen(false, { userClosed:true }));
 $("#panel-backdrop").addEventListener("click", () => setPanelOpen(false, { userClosed:true }));
 document.querySelectorAll("[data-panel-view]").forEach(button => button.addEventListener("click", () => setPanelView(button.dataset.panelView)));
 $("#model-card").addEventListener("click", () => $("#models").click());
-$("#tool-card").addEventListener("click", () => $("#models").click());
-$("#open-tools").addEventListener("click", () => $("#models").click());
+$("#tool-card").addEventListener("click", () => openConnectionCenter("tools"));
+$("#open-tools").addEventListener("click", () => openConnectionCenter("tools"));
 $("#close-connections").addEventListener("click", () => $("#connection-dialog").close());
 $("#memory").addEventListener("click", async () => {
   $("#memory-dialog").showModal();
@@ -710,12 +797,64 @@ $("#save-default-model").addEventListener("click", async () => {
   } catch { $("#model-selection-status").textContent = "기본 모델을 저장하지 못했습니다. 잠시 후 다시 시도해 주세요."; }
 });
 $("#new-chat").addEventListener("click", createSession);
+function applyRailPreference() {
+  const mobile = window.innerWidth <= 760;
+  const collapsed = !mobile && localStorage.getItem("gpao-t3:rail-collapsed") === "true";
+  $(".app-shell").classList.toggle("rail-collapsed", collapsed);
+  $("#rail-collapse").setAttribute("aria-expanded", String(!collapsed));
+  $("#rail-collapse").setAttribute("aria-label", mobile ? "대화 목록 닫기" : collapsed ? "사이드바 펼치기" : "사이드바 접기");
+  $("#rail-collapse").setAttribute("title", mobile ? "대화 목록 닫기" : collapsed ? "사이드바 펼치기" : "사이드바 접기");
+  $("#rail-collapse i, #rail-collapse svg")?.setAttribute("data-lucide", collapsed ? "panel-left-open" : "panel-left-close");
+  refreshIcons($("#rail-collapse"));
+}
+$("#rail-collapse").addEventListener("click", () => {
+  if (window.innerWidth <= 760) { closeSessionMenu(); return; }
+  const collapsed = $(".app-shell").classList.toggle("rail-collapsed");
+  localStorage.setItem("gpao-t3:rail-collapsed", String(collapsed));
+  applyRailPreference();
+});
+function setSessionSearchOpen(open) {
+  $("#session-search-wrap").hidden = !open;
+  $("#session-search-toggle").setAttribute("aria-expanded", String(open));
+  if (open) $("#session-search").focus();
+  else { $("#session-search").value = ""; state.sessionSearch = ""; renderSessions(); }
+}
+$("#session-search-toggle").addEventListener("click", () => setSessionSearchOpen($("#session-search-wrap").hidden));
+$("#session-search-close").addEventListener("click", () => setSessionSearchOpen(false));
+$("#session-search").addEventListener("input", event => { state.sessionSearch = event.target.value.trim().toLocaleLowerCase("ko"); renderSessions(); });
 $("#session-menu").addEventListener("click", () => {
   const open = $(".rail").classList.toggle("sessions-open");
   $("#session-backdrop").classList.toggle("open", open);
   $("#session-menu").setAttribute("aria-expanded", String(open));
 });
-$("#session-backdrop").addEventListener("click", () => { $(".rail").classList.remove("sessions-open"); $("#session-backdrop").classList.remove("open"); $("#session-menu").setAttribute("aria-expanded", "false"); });
+$("#session-backdrop").addEventListener("click", closeSessionMenu);
+$("#sessions").addEventListener("scroll", closeSessionContextMenu, { passive:true });
+document.addEventListener("click", event => { if (!event.target.closest("[data-session-menu]") && !event.target.closest(".session-context-menu")) closeSessionContextMenu(); });
+document.addEventListener("keydown", event => {
+  const menu = document.querySelector(".session-context-menu:not([hidden])");
+  if (menu && ["ArrowDown", "ArrowUp", "Home", "End"].includes(event.key)) {
+    const items = [...menu.querySelectorAll('[role="menuitem"]:not([disabled])')];
+    if (!items.length) return;
+    event.preventDefault();
+    const current = Math.max(0, items.indexOf(document.activeElement));
+    const next = event.key === "Home" ? 0 : event.key === "End" ? items.length - 1 : event.key === "ArrowDown" ? (current + 1) % items.length : (current - 1 + items.length) % items.length;
+    items[next].focus();
+    return;
+  }
+  const panel = $("#assistant-panel");
+  if (event.key === "Tab" && panel.getAttribute("aria-modal") === "true") {
+    const focusable = [...panel.querySelectorAll('button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])')].filter(item => item.getClientRects().length > 0);
+    if (!focusable.length) return;
+    const first = focusable[0], last = focusable.at(-1);
+    if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+    else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+    return;
+  }
+  if (event.key === "Escape") {
+    if (menu) closeSessionContextMenu();
+    else if (panel.getAttribute("aria-modal") === "true") setPanelOpen(false, { userClosed:true });
+  }
+});
 $("#close-session-dialog").addEventListener("click", closeSessionDialog);
 $("#cancel-session-action").addEventListener("click", closeSessionDialog);
 $("#confirm-session-action").addEventListener("click", async () => {
@@ -786,10 +925,16 @@ $("#confirm-channel-send").addEventListener("click", async () => {
   } catch (error) { $("#channel-send-status").textContent = error.message || "전송 결과를 확인하지 못했습니다. 자동으로 다시 보내지 않습니다."; }
   finally { $("#confirm-channel-send").disabled = false; }
 });
+applyRailPreference();
 refreshSessions().catch(() => createSession()).then(() => { refreshHealth(); refreshOperations(); });
 const syncViewportHeight = () => document.documentElement.style.setProperty("--visual-viewport-height", `${window.visualViewport?.height || window.innerHeight}px`);
 window.visualViewport?.addEventListener("resize", syncViewportHeight);
 window.visualViewport?.addEventListener("scroll", syncViewportHeight);
-window.addEventListener("resize", syncViewportHeight);
+window.addEventListener("resize", () => {
+  syncViewportHeight();
+  closeSessionContextMenu();
+  applyRailPreference();
+  renderPanelState();
+});
 syncViewportHeight();
 refreshIcons();

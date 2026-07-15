@@ -31,6 +31,9 @@ test("F6 dashboard is a conversation-first workspace with session-scoped assista
     assert.match(html, /\/assets\/gpao-t3-logo\.jpeg/);
     assert.match(html, /id="session-menu"/);
     assert.match(html, /id="session-dialog"/);
+    assert.match(html, /id="settings-dialog"/);
+    assert.match(html, /id="rail-collapse"/);
+    assert.match(html, /id="composer-settings"/);
     assert.doesNotMatch(html, /GPAO-T3 운영 상태|schema|replay|raw receipt|stack trace|evidence|WP 검증/i);
     assert.doesNotMatch(html, /token|authorization|credentialRef/i);
 
@@ -41,6 +44,13 @@ test("F6 dashboard is a conversation-first workspace with session-scoped assista
     assert.match(app, /되돌리기/);
     assert.match(app, /summary:"기본 응답 준비됨"/);
     assert.match(app, /aria-label="이름 변경"/);
+    assert.match(app, /class="session-context-menu"/);
+    assert.match(app, /data-session-menu/);
+    assert.match(app, /gpao-t3:rail-collapsed/);
+    assert.match(app, /function applyRailPreference/);
+    assert.match(app, /renderSessions\(\)/);
+    assert.match(app, /ArrowDown/);
+    assert.match(app, /aria-modal/);
     assert.match(app, /sessions-open/);
     assert.match(app, /gpao-t3:assistant-panel:/);
     assert.match(app, /sessionStorage\.setItem/);

@@ -35,7 +35,7 @@ const adapter = {
   async *stream(plan) {
     const split = Math.floor(markdown.length / 2);
     yield { runId:plan.runId, generation:plan.generation, seq:1, type:"delta", text:markdown.slice(0, split), terminal:false };
-    await new Promise(resolve => setTimeout(resolve, 250));
+    await new Promise(resolve => setTimeout(resolve, 700));
     yield { runId:plan.runId, generation:plan.generation, seq:2, type:"delta", text:markdown.slice(split), terminal:false };
     await new Promise(resolve => setTimeout(resolve, 50));
     yield { runId:plan.runId, generation:plan.generation, seq:3, type:"terminal", text:markdown, terminal:true, receipt:{ schema:"gpao_t3.provider_receipt.v1", runId:plan.runId, generation:plan.generation, terminal:true } };
@@ -55,10 +55,59 @@ async function exercise(page, name) {
   page.on("console", message => { if (message.type() === "error") consoleErrors.push(`${name}:${message.text()}`); });
   page.on("pageerror", error => consoleErrors.push(`${name}:${error.message}`));
   await page.goto(base, { waitUntil:"networkidle" });
+  await page.locator("#composer-settings").click();
+  await page.locator("#settings-dialog").waitFor({ state:"visible" });
+  assert.ok(await page.locator("[data-settings-target]").count() >= 5);
+  await page.screenshot({ path:path.join(evidenceDir, `${name}-settings.png`), fullPage:false });
+  await page.locator('[data-settings-target="tools"]').click();
+  await page.locator("#connection-dialog").waitFor({ state:"visible" });
+  await page.waitForTimeout(150);
+  const toolRoute = await page.evaluate(() => {
+    const dialog = document.querySelector("#connection-dialog").getBoundingClientRect();
+    const section = document.querySelector(".tool-connections").getBoundingClientRect();
+    return { dialogTop:dialog.top, dialogBottom:dialog.bottom, sectionTop:section.top };
+  });
+  assert.ok(toolRoute.sectionTop >= toolRoute.dialogTop && toolRoute.sectionTop < toolRoute.dialogBottom, JSON.stringify(toolRoute));
+  await page.locator("#close-connections").click();
+  if (name.startsWith("mobile")) assert.equal(await page.locator(".app-shell").evaluate(node => node.classList.contains("rail-collapsed")), false);
+  if (name.startsWith("desktop")) {
+    const firstSession = page.locator(".session-row").first();
+    await firstSession.hover();
+    await page.waitForTimeout(180);
+    const hoverState = await firstSession.evaluate(node => ({ hovered:node.matches(":hover"), actionsOpacity:getComputedStyle(node.querySelector(".session-actions")).opacity }));
+    assert.ok(hoverState.hovered && Number(hoverState.actionsOpacity) > 0, JSON.stringify(hoverState));
+    await firstSession.locator("[data-session-menu]").click();
+    await firstSession.locator(".session-context-menu").waitFor({ state:"visible" });
+    const menuBox = await firstSession.locator(".session-context-menu").boundingBox();
+    assert.ok(menuBox && menuBox.width >= 200 && menuBox.x + menuBox.width <= 1440, JSON.stringify(menuBox));
+    assert.match(await firstSession.locator(".session-context-menu").innerText(), /대화 열기/);
+    assert.match(await firstSession.locator(".session-context-menu").innerText(), /이름 바꾸기/);
+    assert.match(await page.evaluate(() => document.activeElement?.textContent || ""), /대화 열기/);
+    await page.keyboard.press("ArrowDown");
+    assert.match(await page.evaluate(() => document.activeElement?.textContent || ""), /대화 고정|고정 해제/);
+    await page.screenshot({ path:path.join(evidenceDir, `${name}-session-menu.png`), fullPage:false });
+    await page.keyboard.press("Escape");
+    await firstSession.locator(".session-context-menu").waitFor({ state:"hidden" });
+    assert.equal(await page.evaluate(() => document.activeElement?.hasAttribute("data-session-menu")), true);
+    const expandedWidth = await page.locator(".rail").evaluate(node => node.getBoundingClientRect().width);
+    await page.locator("#rail-collapse").click();
+    await page.waitForTimeout(220);
+    const collapsedWidth = await page.locator(".rail").evaluate(node => node.getBoundingClientRect().width);
+    assert.ok(collapsedWidth < expandedWidth, JSON.stringify({ expandedWidth, collapsedWidth }));
+    await page.locator("#rail-collapse").click();
+    await page.waitForTimeout(220);
+  }
   await page.locator("#message").fill("긴 한국어 답변을 Markdown, 코드, 표와 함께 보여줘");
   await page.locator("#send").click();
   await page.locator(".message.streaming .response-prose").waitFor({ timeout:15_000 });
   assert.ok((await page.locator(".message.streaming .response-prose").innerText()).length > 20);
+  if (name.startsWith("desktop")) {
+    await page.locator("#session-search-toggle").click();
+    await page.locator("#session-search").fill("일치하지 않는 검색어");
+    assert.equal(await page.locator(".message.streaming").count(), 1);
+    await page.locator("#session-search-close").click();
+    assert.equal(await page.locator(".message.streaming").count(), 1);
+  }
   await page.screenshot({ path:path.join(evidenceDir, `${name}-streaming.png`), fullPage:false });
   await page.locator(".response-prose table").waitFor({ timeout:15_000 });
   await page.locator(".message.streaming").waitFor({ state:"detached", timeout:15_000 });
@@ -79,6 +128,12 @@ async function exercise(page, name) {
   assert.ok(conversationLayout.conversation.left >= 0 && conversationLayout.composer.left >= 0, JSON.stringify(conversationLayout));
   await page.screenshot({ path:path.join(evidenceDir, `${name}-conversation.png`), fullPage:true });
   await page.locator("#panel-toggle").click();
+  if (await page.evaluate(() => innerWidth <= 980)) {
+    await page.waitForTimeout(220);
+    assert.equal(await page.locator("#assistant-panel").getAttribute("role"), "dialog");
+    assert.equal(await page.locator("#assistant-panel").getAttribute("aria-modal"), "true");
+    assert.equal(await page.evaluate(() => document.activeElement?.id), "panel-close");
+  }
   await page.locator("#activity-event-list li").first().waitFor();
   const eventText = await page.locator("#activity-event-list").innerText();
   assert.match(eventText, /요청 확인/);
@@ -97,7 +152,26 @@ try {
   assert.ok(desktopBoxes.conversationRight <= desktopBoxes.panelLeft + 1);
   assert.ok(desktopBoxes.scrollWidth <= desktopBoxes.width);
 
+  const intermediate = await browser.newPage({ viewport:{ width:900, height:800 } });
+  intermediate.on("console", message => { if (message.type() === "error") consoleErrors.push(`intermediate-900:${message.text()}`); });
+  intermediate.on("pageerror", error => consoleErrors.push(`intermediate-900:${error.message}`));
+  await intermediate.goto(base, { waitUntil:"networkidle" });
+  await intermediate.locator("#panel-toggle").click();
+  await intermediate.waitForTimeout(220);
+  assert.equal(await intermediate.locator("#assistant-panel").getAttribute("aria-hidden"), "false");
+  assert.equal(await intermediate.locator("#assistant-panel").getAttribute("aria-modal"), "true");
+  const intermediateBoxes = await intermediate.evaluate(() => {
+    const conversation = document.querySelector(".conversation").getBoundingClientRect();
+    const panel = document.querySelector(".assistant-panel").getBoundingClientRect();
+    return { conversationWidth:conversation.width, panelLeft:panel.left, panelRight:panel.right, width:innerWidth, scrollWidth:document.documentElement.scrollWidth };
+  });
+  assert.ok(intermediateBoxes.conversationWidth >= 600, JSON.stringify(intermediateBoxes));
+  assert.ok(intermediateBoxes.panelLeft < intermediateBoxes.width && intermediateBoxes.panelRight <= intermediateBoxes.width + 1, JSON.stringify(intermediateBoxes));
+  assert.ok(intermediateBoxes.scrollWidth <= intermediateBoxes.width, JSON.stringify(intermediateBoxes));
+  await intermediate.screenshot({ path:path.join(evidenceDir, "intermediate-900-panel-overlay.png"), fullPage:false });
+
   const mobile = await browser.newPage({ viewport:{ width:390, height:844 }, isMobile:true, hasTouch:true });
+  await mobile.addInitScript(() => localStorage.setItem("gpao-t3:rail-collapsed", "true"));
   await exercise(mobile, "mobile-390-long-markdown");
   await mobile.locator("#panel-close").click();
   await mobile.locator("#assistant-panel").waitFor({ state:"hidden" });
@@ -116,7 +190,7 @@ try {
   assert.ok(mobileBoxes.scrollWidth <= mobileBoxes.width);
   await mobile.screenshot({ path:path.join(evidenceDir, "mobile-390-keyboard-constrained.png"), fullPage:false });
   assert.deepEqual(consoleErrors, []);
-  const receipt = { schema:"gpao_t3.wp8r_product_surface_qualification.v1", verdict:"pass", markdown:true, xssBlocked:true, surfaceEvents:true, icons:true, desktop:true, mobile:true, keyboardConstrained:true, consoleErrors, evidenceDir };
+  const receipt = { schema:"gpao_t3.wp8r_product_surface_qualification.v1", verdict:"pass", markdown:true, xssBlocked:true, surfaceEvents:true, icons:true, desktop:true, intermediateOverlay:true, mobile:true, mobileRailPreference:true, keyboardNavigation:true, streamingPreserved:true, modalFocus:true, keyboardConstrained:true, consoleErrors, evidenceDir };
   await fs.writeFile(path.join(evidenceDir, "qualification.json"), `${JSON.stringify(receipt, null, 2)}\n`);
   console.log(JSON.stringify(receipt, null, 2));
 } finally {
