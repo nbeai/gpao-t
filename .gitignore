@@ -3,6 +3,7 @@ node_modules/
 .env.*
 *.log
 .gpao-t/releases/
+.gpao-t/build/
 *.sqlite
 *.sqlite-*
 runtime.lock
