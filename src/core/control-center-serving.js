@@ -1,5 +1,8 @@
-import { readFileSync } from "node:fs";
+import { randomBytes, timingSafeEqual } from "node:crypto";
+import { existsSync, lstatSync, readFileSync, realpathSync, statSync } from "node:fs";
 import { createServer } from "node:http";
+import { homedir } from "node:os";
+import { basename, dirname, isAbsolute, join, relative, resolve } from "node:path";
 import {
   buildBrowserLocalAppShellContract,
   buildBrowserLocalAppShellHtml,
@@ -120,6 +123,10 @@ import {
   verifyProviderAuthHeart,
 } from "./provider-auth-heart.js";
 import {
+  buildModelConnectionSettingsState,
+  verifyModelConnectionSettingsState,
+} from "./model-connection-settings.js";
+import {
   buildMemoryContextHeart,
   verifyMemoryContextHeart,
 } from "./memory-context-heart.js";
@@ -147,6 +154,24 @@ import {
 
 const DEFAULT_HOST = "127.0.0.1";
 const DEFAULT_PORT = 0;
+const DEFAULT_WORKSPACE_ROOT = process.env.GPAO_T_RUNTIME_WORKSPACE || join(homedir(), ".gpao-t", "workspace");
+const SESSION_COOKIE_NAME = "gpao_t_control_session";
+const PROTECTED_POST_ROUTES = new Set([
+  "/sessions/action",
+  "/work-surface/submit",
+  "/work-surface/execution-flow/record",
+  "/workspace/welcome/draft",
+  "/workspace/welcome/apply",
+  "/connectors/execution-runtime/invoke-dry-run",
+]);
+const WELCOME_WRITE_FILES = [
+  "IDENTITY.md",
+  "USER.md",
+  "SOUL.md",
+  "WELCOME-STATE.json",
+  "MEMORY.md",
+  "HEARTBEAT.md",
+];
 
 export function buildControlCenterServingContract({
   host = DEFAULT_HOST,
@@ -283,6 +308,10 @@ export function buildControlCenterServingContract({
     },
     authorityBoundary: {
       loopbackOnly: true,
+      loopbackHostRequiredForMutation: true,
+      sameOriginOrAllowedOriginRequiredForMutation: true,
+      authenticatedSessionAndCsrfRequiredForMutation: true,
+      getMutationAllowed: false,
       startsPersistentDaemon: false,
       opensExternalNetwork: false,
       connectsAccounts: false,
@@ -302,7 +331,18 @@ export async function startControlCenterPreviewServer({
   port = DEFAULT_PORT,
   html,
   now,
+  configuredWorkspaceRoot = DEFAULT_WORKSPACE_ROOT,
+  allowedOrigins = [],
 } = {}) {
+  if (!isLoopbackHostname(host)) {
+    throw new Error(`control_center_loopback_host_required:${host}`);
+  }
+  const canonicalWorkspaceRoot = canonicalizePathAllowMissing(configuredWorkspaceRoot);
+  const sessionToken = randomBytes(32).toString("base64url");
+  const csrfToken = randomBytes(32).toString("base64url");
+  const sessionCookie = `${SESSION_COOKIE_NAME}=${sessionToken}; HttpOnly; SameSite=Strict; Path=/`;
+  const secureHtml = (value) => injectCsrfIntoPostForms(value, csrfToken);
+  let boundPort = port;
   const render = renderControlCenterHtml({
     root,
     outputPath: ".gpao-t/control-center/index.html",
@@ -313,9 +353,43 @@ export async function startControlCenterPreviewServer({
 
   const server = createServer(async (request, response) => {
     const url = new URL(request.url || "/", `http://${host}`);
-    if (request.method === "POST" && url.pathname === "/sessions/action") {
+    let parsedProtectedBody = null;
+    if (PROTECTED_POST_ROUTES.has(url.pathname)) {
+      if (request.method !== "POST") {
+        respondJson(response, 405, {
+          schema: "gpao_t.control_center_mutation_rejected.v1",
+          status: "blocked",
+          reason: "mutation_route_requires_post",
+          method: request.method,
+          path: url.pathname,
+        }, { allow: "POST" });
+        return;
+      }
+      const envelope = verifyMutationRequestEnvelope({
+        request,
+        boundPort,
+        allowedOrigins,
+        sessionToken,
+      });
+      if (envelope.status !== "ready") {
+        respondJson(response, envelope.statusCode, envelope);
+        return;
+      }
       const body = await readRequestBody(request);
-      const parsedBody = parseGenericRequestBody(body, request.headers["content-type"]);
+      parsedProtectedBody = parseGenericRequestBody(body, request.headers["content-type"]);
+      const csrfCheck = verifyMutationCsrf({
+        request,
+        parsedBody: parsedProtectedBody,
+        csrfToken,
+      });
+      if (csrfCheck.status !== "ready") {
+        respondJson(response, csrfCheck.statusCode, csrfCheck);
+        return;
+      }
+    }
+
+    if (request.method === "POST" && url.pathname === "/sessions/action") {
+      const parsedBody = parsedProtectedBody;
       const result = applySessionWorkspaceAction({
         root,
         action: parsedBody.action,
@@ -338,8 +412,7 @@ export async function startControlCenterPreviewServer({
     }
 
     if (request.method === "POST" && url.pathname === "/work-surface/submit") {
-      const body = await readRequestBody(request);
-      const parsedBody = parseGenericRequestBody(body, request.headers["content-type"]);
+      const parsedBody = parsedProtectedBody;
       const requestText = String(parsedBody.request || "").trim();
       const loop = buildFirstLocalWorkLoop({
         root,
@@ -384,18 +457,18 @@ export async function startControlCenterPreviewServer({
         respondJson(response, result.status === "blocked" ? 409 : 200, result);
         return;
       }
-      respondHtml(response, result.status === "blocked" ? 409 : 200, renderWorkSurfaceSubmitResultHtml({
+      respondHtml(response, result.status === "blocked" ? 409 : 200, secureHtml(renderWorkSurfaceSubmitResultHtml({
         result,
         requestText,
-      }), {
+      })), {
         "x-gpao-t-surface": "work-surface-submit-result",
+        "set-cookie": sessionCookie,
       });
       return;
     }
 
     if (request.method === "POST" && url.pathname === "/work-surface/execution-flow/record") {
-      const body = await readRequestBody(request);
-      const parsedBody = parseRecordRequestBody(body, request.headers["content-type"]);
+      const parsedBody = parsedProtectedBody;
       const result = recordWorkSurfaceExecutionFlow({
         root,
         request: parsedBody.request,
@@ -408,20 +481,20 @@ export async function startControlCenterPreviewServer({
         respondJson(response, result.status === "blocked" ? 409 : 200, result);
         return;
       }
-      respondHtml(response, result.status === "blocked" ? 409 : 200, renderWorkSurfaceExecutionRecordResultHtml({
+      respondHtml(response, result.status === "blocked" ? 409 : 200, secureHtml(renderWorkSurfaceExecutionRecordResultHtml({
         result,
         requestText: parsedBody.request,
-      }), {
+      })), {
         "x-gpao-t-surface": "work-surface-local-record-result",
+        "set-cookie": sessionCookie,
       });
       return;
     }
 
     if (request.method === "POST" && url.pathname === "/workspace/welcome/draft") {
-      const body = await readRequestBody(request);
-      const parsedBody = parseGenericRequestBody(body, request.headers["content-type"]);
+      const parsedBody = parsedProtectedBody;
       const result = buildRuntimeWorkspaceWelcomeDraft({
-        workspaceRoot: parsedBody.workspaceRoot,
+        workspaceRoot: canonicalWorkspaceRoot,
         answers: parsedBody.answers || parsedBody,
         now,
       });
@@ -430,15 +503,44 @@ export async function startControlCenterPreviewServer({
     }
 
     if (request.method === "POST" && url.pathname === "/workspace/welcome/apply") {
-      const body = await readRequestBody(request);
-      const parsedBody = parseGenericRequestBody(body, request.headers["content-type"]);
-      const result = applyRuntimeWorkspaceWelcomeSettings({
-        workspaceRoot: parsedBody.workspaceRoot,
-        answers: parsedBody.answers || parsedBody,
-        approvalToken: parsedBody.approvalToken || "",
+      const parsedBody = parsedProtectedBody;
+      const boundary = verifyWelcomeWorkspaceBoundary({
+        configuredWorkspaceRoot: canonicalWorkspaceRoot,
+        callerWorkspaceRoot: parsedBody.workspaceRoot,
+      });
+      if (boundary.status !== "ready") {
+        respondJson(response, 403, boundary);
+        return;
+      }
+      try {
+        const result = applyRuntimeWorkspaceWelcomeSettings({
+          workspaceRoot: boundary.workspaceRoot,
+          answers: parsedBody.answers || parsedBody,
+          approvalToken: parsedBody.approvalToken || "",
+          now,
+        });
+        respondJson(response, result.status === "applied" ? 200 : 409, result);
+      } catch (error) {
+        respondJson(response, 409, {
+          schema: "gpao_t.runtime_workspace_welcome_apply_rejected.v1",
+          status: "blocked",
+          applied: false,
+          reason: error instanceof Error ? error.message : String(error),
+        });
+      }
+      return;
+    }
+
+    if (request.method === "POST" && url.pathname === "/connectors/execution-runtime/invoke-dry-run") {
+      const parsedBody = parsedProtectedBody;
+      const commandId = parsedBody.commandId || "model-invocation-check";
+      const result = invokeExecutionRuntimeDryRun({
+        root,
+        commandId,
+        approval: parsedBody.approval || {},
         now,
       });
-      respondJson(response, result.status === "applied" ? 200 : 409, result);
+      respondJson(response, result.status === "completed_dry_run_invocation" ? 200 : 409, result);
       return;
     }
 
@@ -560,6 +662,16 @@ export async function startControlCenterPreviewServer({
       return;
     }
 
+    if (url.pathname === "/settings/model-connection/state") {
+      respondJson(response, 200, buildModelConnectionSettingsState());
+      return;
+    }
+
+    if (url.pathname === "/settings/model-connection/verify") {
+      respondJson(response, 200, verifyModelConnectionSettingsState());
+      return;
+    }
+
     if (url.pathname === "/runtime/doctor-recovery-heart") {
       const providerAuthInventory = inspectProviderAuthStores();
       const providerAuthRepairPlan = buildProviderAuthRepairPlan({ inventory: providerAuthInventory });
@@ -638,21 +750,6 @@ export async function startControlCenterPreviewServer({
       return;
     }
 
-    if (url.pathname === "/connectors/execution-runtime/invoke-dry-run") {
-      const commandId = url.searchParams.get("commandId") || "model-invocation-check";
-      respondJson(response, 200, invokeExecutionRuntimeDryRun({
-        root,
-        commandId,
-        approval: {
-          confirmed: true,
-          commandId,
-          authorityTier: "dry_run",
-          allowMutation: false,
-        },
-      }));
-      return;
-    }
-
     if (url.pathname === "/connectors/execution-runtime/invocation/verify") {
       respondJson(response, 200, verifyExecutionRuntimeInvocation({ root }));
       return;
@@ -668,8 +765,9 @@ export async function startControlCenterPreviewServer({
 
     if (url.pathname === "/work-surface" || url.pathname === "/work-surface.html") {
       const surface = buildCoreWorkSurface({ root, now });
-      respondHtml(response, 200, buildCoreWorkSurfaceHtml({ surface }), {
+      respondHtml(response, 200, secureHtml(buildCoreWorkSurfaceHtml({ surface })), {
         "x-gpao-t-surface": "core-work-surface",
+        "set-cookie": sessionCookie,
       });
       return;
     }
@@ -727,8 +825,9 @@ export async function startControlCenterPreviewServer({
 
     if (url.pathname === "/gpao-t-workspace" || url.pathname === "/gpao-t-workspace.html") {
       const shell = buildGpaoTWorkspaceShell({ root, now });
-      respondHtml(response, 200, buildGpaoTWorkspaceShellHtml({ root, shell }), {
+      respondHtml(response, 200, secureHtml(buildGpaoTWorkspaceShellHtml({ root, shell })), {
         "x-gpao-t-surface": "workspace-shell",
+        "set-cookie": sessionCookie,
       });
       return;
     }
@@ -947,8 +1046,9 @@ export async function startControlCenterPreviewServer({
         "content-type": "text/html; charset=utf-8",
         "cache-control": "no-store",
         "x-gpao-t-surface": "stage-4-production-hardening",
+        "set-cookie": sessionCookie,
       });
-      response.end(buildStage4ProductionHardeningHtml({ state }));
+      response.end(secureHtml(buildStage4ProductionHardeningHtml({ state })));
       return;
     }
 
@@ -957,8 +1057,9 @@ export async function startControlCenterPreviewServer({
         "content-type": "text/html; charset=utf-8",
         "cache-control": "no-store",
         "x-gpao-t-surface": "tauri-readonly-shell-preview",
+        "set-cookie": sessionCookie,
       });
-      response.end(buildTauriReadOnlyShellHtml());
+      response.end(secureHtml(buildTauriReadOnlyShellHtml()));
       return;
     }
 
@@ -967,10 +1068,11 @@ export async function startControlCenterPreviewServer({
         "content-type": "text/html; charset=utf-8",
         "cache-control": "no-store",
         "x-gpao-t-surface": "browser-local-app-shell",
+        "set-cookie": sessionCookie,
       });
-      response.end(buildBrowserLocalAppShellHtml({
+      response.end(secureHtml(buildBrowserLocalAppShellHtml({
         state: buildBrowserLocalAppShellState({ root, now }),
-      }));
+      })));
       return;
     }
 
@@ -979,8 +1081,9 @@ export async function startControlCenterPreviewServer({
         "content-type": "text/html; charset=utf-8",
         "cache-control": "no-store",
         "x-gpao-t-surface": "local-control-center-preview",
+        "set-cookie": sessionCookie,
       });
-      response.end(pageHtml);
+      response.end(secureHtml(pageHtml));
       return;
     }
 
@@ -997,6 +1100,7 @@ export async function startControlCenterPreviewServer({
 
   const address = server.address();
   const actualPort = typeof address === "object" && address ? address.port : port;
+  boundPort = actualPort;
   const url = `http://${host}:${actualPort}/control-center`;
 
   return {
@@ -1006,6 +1110,16 @@ export async function startControlCenterPreviewServer({
     url,
     host,
     port: actualPort,
+    security: {
+      schema: "gpao_t.control_center_mutation_session.v1",
+      sessionToken,
+      csrfToken,
+      cookieName: SESSION_COOKIE_NAME,
+      cookieHeader: `${SESSION_COOKIE_NAME}=${sessionToken}`,
+      origin: `http://${formatHostForUrl(host)}:${actualPort}`,
+      allowedOrigins: normalizedAllowedOrigins({ host, port: actualPort, allowedOrigins }),
+    },
+    configuredWorkspaceRoot: canonicalWorkspaceRoot,
     render,
     contract: buildControlCenterServingContract({ host, port: actualPort }),
     close: () => new Promise((resolve, reject) => {
@@ -1043,6 +1157,9 @@ export async function verifyControlCenterPreviewServing({
       headers: {
         "accept": "application/json",
         "content-type": "application/x-www-form-urlencoded",
+        "origin": preview.security.origin,
+        "x-gpao-t-session-token": preview.security.sessionToken,
+        "x-gpao-t-csrf-token": preview.security.csrfToken,
       },
       body: new URLSearchParams({
         request: "serve-check local record",
@@ -1087,7 +1204,23 @@ export async function verifyControlCenterPreviewServing({
     const modelInvocationVerify = await fetchJson(`http://${host}:${preview.port}/adapters/model-invocation/verify`);
     const executionRuntime = await fetchJson(`http://${host}:${preview.port}/connectors/execution-runtime`);
     const executionRuntimeVerify = await fetchJson(`http://${host}:${preview.port}/connectors/execution-runtime/verify`);
-    const executionDryRunInvocation = await fetchJson(`http://${host}:${preview.port}/connectors/execution-runtime/invoke-dry-run`);
+    const executionDryRunGet = await fetchJson(
+      `http://${host}:${preview.port}/connectors/execution-runtime/invoke-dry-run`,
+    );
+    const executionDryRunInvocation = await fetchJson(
+      `http://${host}:${preview.port}/connectors/execution-runtime/invoke-dry-run`,
+      {
+        method: "POST",
+        headers: {
+          "accept": "application/json",
+          "content-type": "application/json",
+          "origin": preview.security.origin,
+          "x-gpao-t-session-token": preview.security.sessionToken,
+          "x-gpao-t-csrf-token": preview.security.csrfToken,
+        },
+        body: JSON.stringify({ commandId: "model-invocation-check" }),
+      },
+    );
     const executionRuntimeInvocationVerify = await fetchJson(`http://${host}:${preview.port}/connectors/execution-runtime/invocation/verify`);
     const readOnlyInspection = await fetchJson(`http://${host}:${preview.port}/connectors/read-only-inspect`);
     const blockedPost = await fetchJson(`http://${host}:${preview.port}/app-shell`, { method: "POST" });
@@ -1367,8 +1500,11 @@ export async function verifyControlCenterPreviewServing({
     if (executionRuntimeVerify.status !== 200 || executionRuntimeVerify.body.status !== "ready") {
       findings.push("execution_runtime_verify_not_ready");
     }
-    if (executionDryRunInvocation.status !== 200 || executionDryRunInvocation.body.status !== "completed_dry_run_invocation") {
-      findings.push("execution_dry_run_invocation_not_ready");
+    if (executionDryRunGet.status !== 405 || executionDryRunGet.body.reason !== "mutation_route_requires_post") {
+      findings.push("execution_dry_run_get_not_blocked");
+    }
+    if (executionDryRunInvocation.status !== 409 || executionDryRunInvocation.body.status !== "blocked") {
+      findings.push("execution_dry_run_missing_approval_not_blocked");
     }
     if (executionRuntimeInvocationVerify.status !== 200 || executionRuntimeInvocationVerify.body.status !== "ready") {
       findings.push("execution_runtime_invocation_verify_not_ready");
@@ -1447,6 +1583,7 @@ export async function verifyControlCenterPreviewServing({
       executionRuntimeStatus: executionRuntime.status,
       executionRuntimeVerifyStatus: executionRuntimeVerify.status,
       executionDryRunInvocationStatus: executionDryRunInvocation.status,
+      executionDryRunGetStatus: executionDryRunGet.status,
       executionRuntimeInvocationVerifyStatus: executionRuntimeInvocationVerify.status,
       readOnlyInspectionStatus: readOnlyInspection.status,
       blockedPostStatus: blockedPost.status,
@@ -1462,10 +1599,223 @@ export async function verifyControlCenterPreviewServing({
   }
 }
 
-function respondJson(response, statusCode, value) {
+function verifyMutationRequestEnvelope({ request, boundPort, allowedOrigins, sessionToken }) {
+  const remoteAddress = String(request.socket?.remoteAddress || "");
+  if (!isLoopbackAddress(remoteAddress)) {
+    return blockedMutationRequest(403, "remote_address_not_loopback");
+  }
+
+  const hostHeader = String(request.headers.host || "");
+  const parsedHost = parseHostHeader(hostHeader);
+  if (!parsedHost || !isLoopbackHostname(parsedHost.hostname) || parsedHost.port !== Number(boundPort)) {
+    return blockedMutationRequest(421, "loopback_host_required");
+  }
+
+  const origin = normalizeOrigin(request.headers.origin);
+  const sameOrigin = origin === normalizeOrigin(`http://${hostHeader}`);
+  const allowed = new Set(normalizedAllowedOrigins({
+    host: parsedHost.hostname,
+    port: boundPort,
+    allowedOrigins,
+  }));
+  if (!origin || (!sameOrigin && !allowed.has(origin))) {
+    return blockedMutationRequest(403, origin ? "origin_not_allowed" : "origin_required");
+  }
+
+  const cookies = parseCookies(request.headers.cookie);
+  const suppliedSessionToken = request.headers["x-gpao-t-session-token"] || cookies[SESSION_COOKIE_NAME];
+  if (!safeTokenEqual(suppliedSessionToken, sessionToken)) {
+    return blockedMutationRequest(401, "authenticated_session_token_required");
+  }
+  return {
+    schema: "gpao_t.control_center_mutation_request_check.v1",
+    status: "ready",
+    statusCode: 200,
+    origin,
+  };
+}
+
+function verifyMutationCsrf({ request, parsedBody, csrfToken }) {
+  const suppliedCsrf = request.headers["x-gpao-t-csrf-token"] || parsedBody?._csrf;
+  if (!safeTokenEqual(suppliedCsrf, csrfToken)) {
+    return blockedMutationRequest(403, "csrf_token_required_or_invalid");
+  }
+  return {
+    schema: "gpao_t.control_center_mutation_request_check.v1",
+    status: "ready",
+    statusCode: 200,
+  };
+}
+
+function blockedMutationRequest(statusCode, reason) {
+  return {
+    schema: "gpao_t.control_center_mutation_request_check.v1",
+    status: "blocked",
+    statusCode,
+    reason,
+  };
+}
+
+function parseHostHeader(hostHeader) {
+  try {
+    const parsed = new URL(`http://${hostHeader}`);
+    const port = parsed.port ? Number(parsed.port) : 80;
+    if (!Number.isInteger(port) || port < 1 || port > 65_535) return null;
+    return {
+      hostname: parsed.hostname.replace(/^\[|\]$/g, ""),
+      port,
+    };
+  } catch {
+    return null;
+  }
+}
+
+function isLoopbackHostname(hostname) {
+  const normalized = String(hostname || "").toLowerCase().replace(/^\[|\]$/g, "");
+  return normalized === "localhost" || normalized === "127.0.0.1" || normalized === "::1";
+}
+
+function isLoopbackAddress(address) {
+  const normalized = String(address || "").toLowerCase();
+  return normalized === "127.0.0.1" || normalized === "::1" || normalized === "::ffff:127.0.0.1";
+}
+
+function normalizedAllowedOrigins({ host, port, allowedOrigins = [] }) {
+  const origins = new Set([
+    `http://127.0.0.1:${port}`,
+    `http://localhost:${port}`,
+    `http://[::1]:${port}`,
+    `http://${formatHostForUrl(host)}:${port}`,
+  ]);
+  for (const origin of allowedOrigins || []) {
+    const normalized = normalizeOrigin(origin);
+    if (normalized) origins.add(normalized);
+  }
+  return [...origins];
+}
+
+function normalizeOrigin(origin) {
+  if (!origin) return "";
+  try {
+    return new URL(String(origin)).origin;
+  } catch {
+    return "";
+  }
+}
+
+function formatHostForUrl(host) {
+  const normalized = String(host || "").replace(/^\[|\]$/g, "");
+  return normalized.includes(":") ? `[${normalized}]` : normalized;
+}
+
+function parseCookies(cookieHeader) {
+  return String(cookieHeader || "")
+    .split(";")
+    .map((part) => part.trim())
+    .filter(Boolean)
+    .reduce((cookies, part) => {
+      const separator = part.indexOf("=");
+      if (separator > 0) cookies[part.slice(0, separator)] = part.slice(separator + 1);
+      return cookies;
+    }, {});
+}
+
+function safeTokenEqual(actual, expected) {
+  const actualBuffer = Buffer.from(String(actual || ""));
+  const expectedBuffer = Buffer.from(String(expected || ""));
+  return actualBuffer.length === expectedBuffer.length && timingSafeEqual(actualBuffer, expectedBuffer);
+}
+
+function injectCsrfIntoPostForms(html, csrfToken) {
+  return String(html || "").replace(/<form\b([^>]*)>/gi, (form, attributes) => {
+    if (!/\bmethod\s*=\s*["']?post\b/i.test(attributes)) return form;
+    if (/\bname\s*=\s*["']_csrf["']/i.test(attributes)) return form;
+    return `${form}<input type="hidden" name="_csrf" value="${escapeHtml(csrfToken)}">`;
+  });
+}
+
+function verifyWelcomeWorkspaceBoundary({ configuredWorkspaceRoot, callerWorkspaceRoot }) {
+  const workspaceRoot = canonicalizePathAllowMissing(configuredWorkspaceRoot);
+  if (callerWorkspaceRoot) {
+    const callerResolved = resolve(callerWorkspaceRoot);
+    const canonicalCaller = canonicalizePathAllowMissing(callerResolved);
+    if (canonicalCaller !== workspaceRoot) {
+      return {
+        schema: "gpao_t.runtime_workspace_welcome_boundary.v1",
+        status: "blocked",
+        reason: "caller_workspace_root_not_canonical_configured_root",
+        workspaceRoot,
+      };
+    }
+  }
+
+  if (existsSync(workspaceRoot) && !statSync(workspaceRoot).isDirectory()) {
+    return {
+      schema: "gpao_t.runtime_workspace_welcome_boundary.v1",
+      status: "blocked",
+      reason: "configured_workspace_root_not_directory",
+      workspaceRoot,
+    };
+  }
+  for (const filename of WELCOME_WRITE_FILES) {
+    const target = resolve(workspaceRoot, filename);
+    if (!isPathInside(workspaceRoot, target)) {
+      return blockedWelcomeTarget(workspaceRoot, filename, "welcome_target_outside_workspace");
+    }
+    if (!existsSync(target)) continue;
+    const stats = lstatSync(target);
+    if (stats.isSymbolicLink()) {
+      return blockedWelcomeTarget(workspaceRoot, filename, "welcome_target_symlink_rejected");
+    }
+    const canonicalTarget = realpathSync(target);
+    if (!isPathInside(workspaceRoot, canonicalTarget)) {
+      return blockedWelcomeTarget(workspaceRoot, filename, "welcome_target_symlink_escape");
+    }
+    if (!stats.isFile()) {
+      return blockedWelcomeTarget(workspaceRoot, filename, "welcome_target_not_regular_file");
+    }
+  }
+  return {
+    schema: "gpao_t.runtime_workspace_welcome_boundary.v1",
+    status: "ready",
+    workspaceRoot,
+  };
+}
+
+function blockedWelcomeTarget(workspaceRoot, filename, reason) {
+  return {
+    schema: "gpao_t.runtime_workspace_welcome_boundary.v1",
+    status: "blocked",
+    reason,
+    workspaceRoot,
+    filename,
+  };
+}
+
+function canonicalizePathAllowMissing(inputPath) {
+  const absolute = resolve(inputPath || DEFAULT_WORKSPACE_ROOT);
+  let existing = absolute;
+  const missingSegments = [];
+  while (!existsSync(existing)) {
+    const parent = dirname(existing);
+    if (parent === existing) break;
+    missingSegments.unshift(basename(existing));
+    existing = parent;
+  }
+  const canonicalExisting = existsSync(existing) ? realpathSync(existing) : existing;
+  return resolve(canonicalExisting, ...missingSegments);
+}
+
+function isPathInside(root, candidate) {
+  const pathFromRoot = relative(root, candidate);
+  return pathFromRoot === "" || (!pathFromRoot.startsWith("..") && !isAbsolute(pathFromRoot));
+}
+
+function respondJson(response, statusCode, value, headers = {}) {
   response.writeHead(statusCode, {
     "content-type": "application/json; charset=utf-8",
     "cache-control": "no-store",
+    ...headers,
   });
   response.end(JSON.stringify(value, null, 2));
 }
@@ -1501,6 +1851,8 @@ function parseGenericRequestBody(body, contentType = "") {
     }
   }
   const params = new URLSearchParams(body || "");
+  const commandId = params.get("commandId") || undefined;
+  const approvalConfirmed = params.get("approvalConfirmed");
   return {
     request: params.get("request") || undefined,
     action: params.get("action") || undefined,
@@ -1518,6 +1870,19 @@ function parseGenericRequestBody(body, contentType = "") {
     heartbeatEnabled: params.get("heartbeatEnabled") === "true",
     heartbeatApproved: params.get("heartbeatApproved") === "true",
     approvalToken: params.get("approvalToken") || undefined,
+    _csrf: params.get("_csrf") || undefined,
+    commandId,
+    approval: commandId || approvalConfirmed !== null
+      ? {
+        confirmed: approvalConfirmed === "true",
+        commandId,
+        authorityTier: params.get("approvalAuthorityTier") || undefined,
+        allowMutation: params.get("approvalAllowMutation") === "true",
+        allowRecursiveSurface: params.get("approvalAllowRecursiveSurface") === "true",
+        sessionKey: params.get("approvalSessionKey") || undefined,
+        runId: params.get("approvalRunId") || undefined,
+      }
+      : undefined,
     confirmationChoice: params.get("confirmationChoice") || undefined,
     confirmationState: params.get("confirmationState") || undefined,
   };

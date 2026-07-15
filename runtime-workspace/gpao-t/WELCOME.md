@@ -17,7 +17,7 @@ Start with:
 1. What should I call you?
 2. What should you call me? Keep `GPAO-T` as product identity, but choose a companion persona name if desired.
 3. What tone should I use? Examples: warm honorific, concise professional, playful companion, strict operator.
-4. What should I remember automatically?
+4. What may I prepare automatically as a review-only memory candidate?
 5. What must I never remember unless explicitly asked?
 6. What actions require approval? Examples: sending messages, spending money, deleting files, changing rules, public posts.
 7. Should heartbeat/self-check remain off by default?
@@ -27,7 +27,7 @@ Start with:
 - `IDENTITY.md`: companion name, vibe, emoji/avatar.
 - `USER.md`: user name, address, timezone, tone preference.
 - `SOUL.md`: conversational stance.
-- `MEMORY.md`: only if the user explicitly approves durable initial memory.
+- `MEMORY.md`: only if the user explicitly approves a durable initial memory item.
 - `HEARTBEAT.md`: only if the user explicitly enables proactive checks.
 
 ## Safety Contract

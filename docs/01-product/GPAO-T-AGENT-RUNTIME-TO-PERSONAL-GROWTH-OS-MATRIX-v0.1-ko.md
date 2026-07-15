@@ -57,7 +57,7 @@ The short criterion:
 4. Any remaining user-visible OpenClaw/Gateway/ClawHub residue is a product
    identity leak unless it is in explicit attribution, comparison,
    compatibility, or historical evidence.
-5. Release/test-team wording must say what is verified, what is blocked by
+5. Release wording must say what is verified, what is blocked by
    environment, and what remains a planned lane.
 
 ## Current Phase 2 Reading

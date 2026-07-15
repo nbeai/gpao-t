@@ -1,8 +1,15 @@
 # GPAO-T OpenClaw Absorption Constitution v0.1
 
-Status: active constitutional directive
+Status: superseded historical architecture record
 Date: 2026-07-10
 Owner: 윤
+
+Superseded on 2026-07-13 by
+`GPAO-T-PRODUCT-CHARTER-v0.1-ko.md` and the Phase 2 independent-product
+decision. This file is retained to preserve engineering provenance. Its
+statements that OpenClaw is GPAO-T's body, primary material, or constitutional
+owner are not current product doctrine. OpenClaw is now a separate comparison
+product and compatibility reference.
 
 ## 0. Core Thesis
 
@@ -60,7 +67,7 @@ As of authenticated GitHub inspection on 2026-07-10, the relevant nbeai reposito
 
 When GPAO-T work needs prior code, package behavior, or theory evidence, inspect these repositories first instead of relying on memory.
 
-`nbeai/gpao-t-hardware-engine` is explicitly excluded from the current GPAO-T/OpenClaw absorption scope. It must not be treated as active source truth, a required dependency, a project blocker, or a test-team completion gate unless 윤 explicitly reopens that lane.
+`nbeai/gpao-t-hardware-engine` is explicitly excluded from the current GPAO-T product and third-party compatibility scope. It must not be treated as active source truth, a required dependency, a project blocker, or a production completion gate unless 윤 explicitly reopens that lane.
 
 ## 3. Absorption Rule
 

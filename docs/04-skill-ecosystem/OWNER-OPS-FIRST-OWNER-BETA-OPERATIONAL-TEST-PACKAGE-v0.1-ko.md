@@ -43,7 +43,7 @@ GET /owner-ops/first-owner-beta-operational-package/verify
 ## 순서
 
 ```text
-local package candidate
+internal production package readback
 -> team alpha handoff
 -> first-owner beta handoff
 -> first-owner beta operational test package

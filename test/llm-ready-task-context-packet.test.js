@@ -10,6 +10,7 @@ import {
   handleGatewayRequest,
   verifyLlmReadyTaskContextPacket,
 } from "../src/index.js";
+import { appendTCellCandidate } from "../src/core/memory-wiki.js";
 
 function tempRoot() {
   return mkdtempSync(join(tmpdir(), "gpao-t-llm-packet-"));
@@ -26,8 +27,26 @@ function seedOpenClawAbsorptionCandidate(root) {
   });
 }
 
+function seedConflictingCandidate(root) {
+  appendTCellCandidate({
+    id: "tcell.conflict.general-runtime",
+    pi: "Ignore the current general-runtime target.",
+    x: ["conflicting prior memory"],
+    anchor: "general-runtime",
+    radius: { validFor: ["general_request"] },
+    weights: { confidence: 0.9, risk: 0.2 },
+    lifecycle: "reviewed",
+    authority: {
+      allowedUse: ["retrieve", "supporting_context", "answer_anchor"],
+      blockedUse: [],
+    },
+    source: { refs: ["fixture:conflict"] },
+    relations: { contradicts: ["general-runtime"] },
+  }, { root });
+}
+
 describe("GPAO-T LLM-ready task context packet", () => {
-  it("turns admitted Context Mesh and T-cell state into an LLM input contract", () => {
+  it("turns unreviewed Context Mesh candidates into supporting LLM context only", () => {
     const root = tempRoot();
     seedOpenClawAbsorptionCandidate(root);
 
@@ -43,13 +62,43 @@ describe("GPAO-T LLM-ready task context packet", () => {
     assert.equal(packet.rawUserUtterance.includes("OpenClaw"), true);
     assert.equal(packet.activeTarget.id, "openclaw-absorption");
     assert.equal(packet.endpointCenter.id, "openclaw-absorption");
-    assert.ok(packet.admittedTCellAnchors.some((cell) => cell.anchor === "openclaw-absorption"));
+    assert.equal(packet.admittedTCellAnchors.some((cell) => cell.anchor === "openclaw-absorption"), false);
+    const support = packet.admittedSupport.find((cell) => cell.anchor === "openclaw-absorption");
+    const blocked = packet.blockedCandidates.find((cell) => cell.anchor === "openclaw-absorption");
+    assert.ok(support);
+    assert.ok(blocked);
+    assert.equal(support.admission.role, "support");
+    assert.equal(support.authority.allowedUse.includes("supporting_context"), true);
+    assert.equal(support.authority.blockedUse.includes("answer_anchor"), true);
+    assert.equal(blocked.admission.answerAnchorEligible, false);
     assert.equal(packet.responseContract.forbiddenModes.includes("answer_from_unadmitted_memory"), true);
     assert.equal(packet.authorityBoundary.compatibilityMemoryWrite, "blocked");
     assert.equal(packet.authorityBoundary.durableMemoryPromotion, "blocked");
     assert.equal(packet.authorityBoundary.automaticAdmission, "blocked");
     assert.equal(packet.llmInputDiscipline.finalAnswerGeneratedBy, "external_llm_or_host_model");
     assert.equal(packet.replayExpectation.required, true);
+  });
+
+  it("preserves conflict admission roles while excluding conflicts from answer anchors", () => {
+    const root = tempRoot();
+    seedConflictingCandidate(root);
+
+    const packet = buildLlmReadyTaskContextPacket({
+      root,
+      now: "2026-07-11T05:01:30.000Z",
+      input: { text: "GPAO-T 현재 작업을 확인해줘." },
+    });
+
+    const conflict = packet.conflictBoundaries.find(
+      (cell) => cell.id === "tcell.conflict.general-runtime",
+    );
+    assert.ok(conflict);
+    assert.equal(conflict.admission.role, "conflict");
+    assert.equal(conflict.authority.allowedUse.includes("answer_anchor"), true);
+    assert.equal(
+      packet.admittedTCellAnchors.some((cell) => cell.id === conflict.id),
+      false,
+    );
   });
 
   it("shows supporting candidates without letting them become answer anchors", () => {

@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
-import { existsSync, mkdtempSync, readFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, symlinkSync, unlinkSync, writeFileSync } from "node:fs";
+import { request as httpRequest } from "node:http";
 import { tmpdir } from "node:os";
 import { basename, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -2163,6 +2164,9 @@ describe("GPAO-T dashboard readiness", () => {
         headers: {
           "accept": "application/json",
           "content-type": "application/x-www-form-urlencoded",
+          "origin": preview.security.origin,
+          "x-gpao-t-session-token": preview.security.sessionToken,
+          "x-gpao-t-csrf-token": preview.security.csrfToken,
         },
         body: new URLSearchParams({
           request: "브라우저에서 로컬 승인/감사 기록만 남겨줘",
@@ -2286,6 +2290,156 @@ describe("GPAO-T dashboard readiness", () => {
     }
   });
 
+  it("guards loopback mutations and binds welcome apply to the configured canonical workspace", async () => {
+    const root = tempRoot();
+    const workspaceRoot = join(root, "runtime-workspace");
+    const outsideRoot = tempRoot();
+    const outsideIdentity = join(outsideRoot, "IDENTITY.md");
+    mkdirSync(workspaceRoot, { recursive: true });
+    writeFileSync(outsideIdentity, "outside\n", "utf8");
+    symlinkSync(outsideIdentity, join(workspaceRoot, "IDENTITY.md"));
+    const preview = await startControlCenterPreviewServer({
+      root,
+      configuredWorkspaceRoot: workspaceRoot,
+      now: "2026-07-14T00:00:00.000Z",
+    });
+    const mutationHeaders = {
+      "accept": "application/json",
+      "content-type": "application/json",
+      "origin": preview.security.origin,
+      "x-gpao-t-session-token": preview.security.sessionToken,
+      "x-gpao-t-csrf-token": preview.security.csrfToken,
+    };
+
+    try {
+      const hostileHost = await rawJsonRequest({
+        port: preview.port,
+        path: "/sessions/action",
+        method: "POST",
+        headers: { ...mutationHeaders, host: `attacker.invalid:${preview.port}` },
+        body: JSON.stringify({ action: "new_session", request: "blocked" }),
+      });
+      const missingOrigin = await rawJsonRequest({
+        port: preview.port,
+        path: "/sessions/action",
+        method: "POST",
+        headers: {
+          "accept": "application/json",
+          "content-type": "application/json",
+          "x-gpao-t-session-token": preview.security.sessionToken,
+          "x-gpao-t-csrf-token": preview.security.csrfToken,
+        },
+        body: JSON.stringify({ action: "new_session", request: "blocked" }),
+      });
+      const missingSession = await fetchJson(`http://127.0.0.1:${preview.port}/sessions/action`, {
+        method: "POST",
+        headers: {
+          "accept": "application/json",
+          "content-type": "application/json",
+          "origin": preview.security.origin,
+          "x-gpao-t-csrf-token": preview.security.csrfToken,
+        },
+        body: JSON.stringify({ action: "new_session", request: "blocked" }),
+      });
+      const missingCsrf = await fetchJson(`http://127.0.0.1:${preview.port}/sessions/action`, {
+        method: "POST",
+        headers: {
+          "accept": "application/json",
+          "content-type": "application/json",
+          "origin": preview.security.origin,
+          "x-gpao-t-session-token": preview.security.sessionToken,
+        },
+        body: JSON.stringify({ action: "new_session", request: "blocked" }),
+      });
+      const dryRunGet = await fetchJson(
+        `http://127.0.0.1:${preview.port}/connectors/execution-runtime/invoke-dry-run`,
+      );
+      const dryRunWithoutApproval = await fetchJson(
+        `http://127.0.0.1:${preview.port}/connectors/execution-runtime/invoke-dry-run`,
+        {
+          method: "POST",
+          headers: mutationHeaders,
+          body: JSON.stringify({ commandId: "model-invocation-check" }),
+        },
+      );
+      const dryRunApprovedByCaller = await fetchJson(
+        `http://127.0.0.1:${preview.port}/connectors/execution-runtime/invoke-dry-run`,
+        {
+          method: "POST",
+          headers: mutationHeaders,
+          body: JSON.stringify({
+            commandId: "model-invocation-check",
+            approval: {
+              confirmed: true,
+              commandId: "model-invocation-check",
+              authorityTier: "dry_run",
+              allowMutation: false,
+            },
+          }),
+        },
+      );
+      const welcomeAnswers = {
+        userName: "테스트",
+        userAddress: "테스트님",
+        companionName: "Mina",
+        tone: "차분한 존댓말",
+      };
+      const wrongWorkspace = await fetchJson(`http://127.0.0.1:${preview.port}/workspace/welcome/apply`, {
+        method: "POST",
+        headers: mutationHeaders,
+        body: JSON.stringify({
+          workspaceRoot: outsideRoot,
+          answers: welcomeAnswers,
+          approvalToken: "apply-gpao-t-welcome-settings",
+        }),
+      });
+      const symlinkTarget = await fetchJson(`http://127.0.0.1:${preview.port}/workspace/welcome/apply`, {
+        method: "POST",
+        headers: mutationHeaders,
+        body: JSON.stringify({
+          workspaceRoot,
+          answers: welcomeAnswers,
+          approvalToken: "apply-gpao-t-welcome-settings",
+        }),
+      });
+      unlinkSync(join(workspaceRoot, "IDENTITY.md"));
+      const validWelcome = await fetchJson(`http://127.0.0.1:${preview.port}/workspace/welcome/apply`, {
+        method: "POST",
+        headers: mutationHeaders,
+        body: JSON.stringify({
+          workspaceRoot,
+          answers: welcomeAnswers,
+          approvalToken: "apply-gpao-t-welcome-settings",
+        }),
+      });
+
+      assert.equal(hostileHost.status, 421);
+      assert.equal(hostileHost.body.reason, "loopback_host_required");
+      assert.equal(missingOrigin.status, 403);
+      assert.equal(missingOrigin.body.reason, "origin_required");
+      assert.equal(missingSession.status, 401);
+      assert.equal(missingSession.body.reason, "authenticated_session_token_required");
+      assert.equal(missingCsrf.status, 403);
+      assert.equal(missingCsrf.body.reason, "csrf_token_required_or_invalid");
+      assert.equal(dryRunGet.status, 405);
+      assert.equal(dryRunGet.body.reason, "mutation_route_requires_post");
+      assert.equal(dryRunWithoutApproval.status, 409);
+      assert.equal(dryRunWithoutApproval.body.approvalCheck.status, "blocked");
+      assert.equal(dryRunApprovedByCaller.status, 200);
+      assert.equal(dryRunApprovedByCaller.body.status, "completed_dry_run_invocation");
+      assert.equal(wrongWorkspace.status, 403);
+      assert.equal(wrongWorkspace.body.reason, "caller_workspace_root_not_canonical_configured_root");
+      assert.equal(symlinkTarget.status, 403);
+      assert.equal(symlinkTarget.body.reason, "welcome_target_symlink_rejected");
+      assert.equal(validWelcome.status, 200);
+      assert.equal(validWelcome.body.applied, true);
+      assert.equal(readFileSync(outsideIdentity, "utf8"), "outside\n");
+      assert.equal(existsSync(join(workspaceRoot, "WELCOME-STATE.json")), true);
+    } finally {
+      await preview.close();
+    }
+  });
+
   it("runs serving smoke verification through function and CLI without leaving a server running", async () => {
     const root = tempRoot();
     const verification = await verifyControlCenterPreviewServing({
@@ -2338,4 +2492,32 @@ async function fetchJson(url, init) {
     status: response.status,
     body: await response.json(),
   };
+}
+
+function rawJsonRequest({ port, path, method = "GET", headers = {}, body = "" }) {
+  return new Promise((resolve, reject) => {
+    const request = httpRequest({
+      hostname: "127.0.0.1",
+      port,
+      path,
+      method,
+      headers: {
+        "content-length": Buffer.byteLength(body),
+        ...headers,
+      },
+    }, (response) => {
+      const chunks = [];
+      response.on("data", (chunk) => chunks.push(chunk));
+      response.on("end", () => {
+        const text = Buffer.concat(chunks).toString("utf8");
+        resolve({
+          status: response.statusCode,
+          body: JSON.parse(text || "{}"),
+        });
+      });
+    });
+    request.on("error", reject);
+    if (body) request.write(body);
+    request.end();
+  });
 }

@@ -42,11 +42,11 @@ const DISTRIBUTION_FILES = [
   "docs/04-skill-ecosystem/OWNER-OPS-MCP-CONNECTOR-PLAN-ko.md",
   "docs/04-skill-ecosystem/OWNER-OPS-PLUGIN-PACKAGE-v0.1-ko.md",
   "docs/04-skill-ecosystem/OWNER-OPS-FIRST-OWNER-SCENARIO-ko.md",
-  "docs/04-skill-ecosystem/OWNER-OPS-TEAM-ALPHA-GUIDE-v0.1-ko.md",
+  "docs/04-skill-ecosystem/OWNER-OPS-INTERNAL-PRODUCTION-OPERATING-CONTRACT-v0.1-ko.md",
+  "docs/04-skill-ecosystem/OWNER-OPS-INTERNAL-ACCEPTANCE-v0.1-ko.md",
   "docs/04-skill-ecosystem/OWNER-OPS-HOST-REGISTRATION-AND-FEEDBACK-v0.1-ko.md",
-  "docs/04-skill-ecosystem/OWNER-OPS-FIRST-OWNER-BETA-GUIDE-v0.1-ko.md",
-  "docs/04-skill-ecosystem/OWNER-OPS-FIRST-OWNER-BETA-HANDOFF-BUNDLE-v0.1-ko.md",
-  "docs/04-skill-ecosystem/OWNER-OPS-FIRST-OWNER-BETA-RESULT-REVIEW-v0.1-ko.md",
+  "docs/04-skill-ecosystem/OWNER-OPS-OWNER-ACCEPTANCE-v0.1-ko.md",
+  "docs/04-skill-ecosystem/OWNER-OPS-INTERNAL-PRODUCTION-PACKAGE-v0.1-ko.md",
   "docs/04-skill-ecosystem/OWNER-OPS-FIELD-TEST-LEDGER-v0.1-ko.md",
   "docs/04-skill-ecosystem/OWNER-OPS-FIELD-TEST-ACTION-QUEUE-v0.1-ko.md",
   "docs/04-skill-ecosystem/OWNER-OPS-FIELD-TEST-REPAIR-COMPLETION-EVIDENCE-v0.1-ko.md",
@@ -67,12 +67,10 @@ const DISTRIBUTION_FILES = [
   "docs/04-skill-ecosystem/OWNER-OPS-HUMAN-REVIEW-DECISION-LANE-v0.1-ko.md",
   "docs/04-skill-ecosystem/OWNER-OPS-PUBLIC-RELEASE-AUTHORITY-GATE-v0.1-ko.md",
   "docs/04-skill-ecosystem/OWNER-OPS-PUBLIC-RELEASE-READBACK-SNAPSHOT-v0.1-ko.md",
-  "docs/04-skill-ecosystem/OWNER-OPS-FINAL-LOCAL-RELEASE-CANDIDATE-DECISION-PACKET-v0.1-ko.md",
-  "docs/04-skill-ecosystem/OWNER-OPS-FINAL-CANDIDATE-OWNER-DECISION-LANE-v0.1-ko.md",
-  "docs/04-skill-ecosystem/OWNER-OPS-FINAL-CANDIDATE-NEXT-ACTION-PACKET-v0.1-ko.md",
+  "docs/04-skill-ecosystem/OWNER-OPS-INTERNAL-PRODUCTION-OWNER-DECISION-v0.1-ko.md",
   "docs/04-skill-ecosystem/OWNER-OPS-PRODUCT-AXIS-READINESS-MATRIX-v0.1-ko.md",
   "docs/04-skill-ecosystem/OWNER-OPS-PRODUCTION-COMPLETION-AUDIT-v0.1-ko.md",
-  "docs/04-skill-ecosystem/OWNER-OPS-SUPERVISED-TESTING-READINESS-PACKET-v0.1-ko.md",
+  "docs/04-skill-ecosystem/OWNER-OPS-INTERNAL-PRODUCTION-READINESS-v0.1-ko.md",
   "docs/04-skill-ecosystem/OWNER-OPS-APPROVED-SIGNING-LANE-v0.1-ko.md",
   "docs/04-skill-ecosystem/OWNER-OPS-MARKETPLACE-UPLOAD-APPROVAL-GATE-v0.1-ko.md",
   "docs/04-skill-ecosystem/OWNER-OPS-MARKETPLACE-UPLOAD-DECISION-LANE-v0.1-ko.md",
@@ -86,17 +84,35 @@ const DISTRIBUTION_FILES = [
   "docs/04-skill-ecosystem/OWNER-OPS-DRY-RUN-RESULT-REVIEW-HANDOFF-v0.1-ko.md",
 ];
 
-const LOCAL_PACKAGE_CONFIRMATION = "confirm-local-owner-ops-package";
+const LEGACY_DISTRIBUTION_FILE_ALIASES = new Map([
+  ["docs/04-skill-ecosystem/OWNER-OPS-INTERNAL-PRODUCTION-OPERATING-CONTRACT-v0.1-ko.md", "docs/04-skill-ecosystem/OWNER-OPS-TEAM-ALPHA-GUIDE-v0.1-ko.md"],
+  ["docs/04-skill-ecosystem/OWNER-OPS-INTERNAL-ACCEPTANCE-v0.1-ko.md", "docs/04-skill-ecosystem/OWNER-OPS-TEAM-ALPHA-GUIDE-v0.1-ko.md"],
+  ["docs/04-skill-ecosystem/OWNER-OPS-OWNER-ACCEPTANCE-v0.1-ko.md", "docs/04-skill-ecosystem/OWNER-OPS-FIRST-OWNER-BETA-GUIDE-v0.1-ko.md"],
+  ["docs/04-skill-ecosystem/OWNER-OPS-INTERNAL-PRODUCTION-PACKAGE-v0.1-ko.md", "docs/04-skill-ecosystem/OWNER-OPS-FIRST-OWNER-BETA-HANDOFF-BUNDLE-v0.1-ko.md"],
+  ["docs/04-skill-ecosystem/OWNER-OPS-INTERNAL-PRODUCTION-OWNER-DECISION-v0.1-ko.md", "docs/04-skill-ecosystem/OWNER-OPS-HUMAN-REVIEW-DECISION-LANE-v0.1-ko.md"],
+  ["docs/04-skill-ecosystem/OWNER-OPS-INTERNAL-PRODUCTION-READINESS-v0.1-ko.md", "docs/04-skill-ecosystem/OWNER-OPS-SUPERVISED-TESTING-READINESS-PACKET-v0.1-ko.md"],
+]);
+
+const INTERNAL_PRODUCTION_PACKAGE_CONFIRMATION = "confirm-owner-ops-internal-production-package";
+const LEGACY_LOCAL_PACKAGE_CONFIRMATION = "confirm-local-owner-ops-package";
 const HUMAN_REVIEW_LOCAL_ONLY_APPROVAL_TOKEN = "approve-owner-ops-human-review-local-only";
 const MARKETPLACE_UPLOAD_LOCAL_APPROVAL_TOKEN = "approve-owner-ops-marketplace-upload-local-record";
 const BROADER_OWNER_TESTING_RESULT_TOKEN = "record-owner-ops-broader-testing-local-only";
-const FINAL_CANDIDATE_OWNER_DECISION_TOKEN = "record-owner-ops-final-candidate-local-decision";
-const FINAL_CANDIDATE_OWNER_DECISIONS = [
+const INTERNAL_PRODUCTION_OWNER_DECISION_TOKEN = "record-owner-ops-internal-production-owner-decision";
+const LEGACY_INTERNAL_PRODUCTION_OWNER_DECISION_TOKEN = "record-owner-ops-final-candidate-local-decision";
+const INTERNAL_PRODUCTION_OWNER_DECISIONS = [
   "continue_supervised_testing",
   "request_revision",
-  "approve_local_candidate_review",
+  "approve_internal_production_review",
   "consider_public_release_later",
 ];
+const LEGACY_OWNER_DECISION_ALIASES = new Map([
+  ["approve_local_candidate_review", "approve_internal_production_review"],
+]);
+
+function normalizeInternalProductionOwnerDecision(decision) {
+  return LEGACY_OWNER_DECISION_ALIASES.get(decision) || decision;
+}
 
 const DEFAULT_BROADER_OWNER_TEST_RESULT = {
   stage: "broader_owner_testing",
@@ -190,7 +206,7 @@ export function buildOwnerOpsDistributionEvidence({
       signing: "not_executed",
       notarization: "not_executed",
       publicUpload: "not_executed",
-      plannedArchiveName: `gpao-t-owner-ops-${readPackageVersion({ root }) || "0.1.0"}-local-candidate.zip`,
+      plannedArchiveName: `gpao-t-owner-ops-${readPackageVersion({ root }) || "0.1.0"}-internal-production-package.zip`,
     },
     authorityBoundary: {
       localEvidenceOnly: true,
@@ -203,7 +219,7 @@ export function buildOwnerOpsDistributionEvidence({
     },
     findings,
     nextSafeAction: findings.length
-      ? "Fix Owner Ops distribution evidence findings before package candidate review."
+      ? "Fix Owner Ops distribution evidence findings before internal production package review."
       : "Prepare a local archive/checksum dry-run under explicit approval; public upload remains blocked.",
   };
 }
@@ -410,19 +426,19 @@ export function verifyOwnerOpsArchiveChecksumDryRun({ root = process.cwd() } = {
   };
 }
 
-export function writeOwnerOpsLocalPackageCandidate({
+export function writeOwnerOpsInternalProductionPackage({
   root = process.cwd(),
   confirmationToken,
   now = new Date().toISOString(),
 } = {}) {
   const dryRun = buildOwnerOpsArchiveChecksumDryRun({ root, now });
 
-  if (confirmationToken !== LOCAL_PACKAGE_CONFIRMATION) {
+  if (![INTERNAL_PRODUCTION_PACKAGE_CONFIRMATION, LEGACY_LOCAL_PACKAGE_CONFIRMATION].includes(confirmationToken)) {
     return {
-      schema: "gpao_t.owner_ops_local_package_candidate_write.v0_1",
+      schema: "gpao_t.owner_ops_internal_production_package_write.v0_1",
       status: "blocked",
       reason: "missing_or_invalid_confirmation_token",
-      requiredConfirmationToken: LOCAL_PACKAGE_CONFIRMATION,
+      requiredConfirmationToken: INTERNAL_PRODUCTION_PACKAGE_CONFIRMATION,
       writesExecuted: false,
       archiveName: dryRun.archiveCandidate.archiveName,
       authorityBoundary: {
@@ -433,18 +449,18 @@ export function writeOwnerOpsLocalPackageCandidate({
         updateExecuted: false,
         rollbackExecuted: false,
       },
-      nextSafeAction: "Pass the explicit local package confirmation token only when the owner wants to write local package candidate files.",
+      nextSafeAction: "Pass the explicit internal production package confirmation token only when the owner wants to write local package files.",
     };
   }
 
   if (dryRun.status !== "ready") {
     return {
-      schema: "gpao_t.owner_ops_local_package_candidate_write.v0_1",
+      schema: "gpao_t.owner_ops_internal_production_package_write.v0_1",
       status: "blocked",
       reason: "dry_run_not_ready",
       findings: dryRun.findings,
       writesExecuted: false,
-      nextSafeAction: "Fix archive/checksum dry-run findings before writing local package candidate files.",
+      nextSafeAction: "Fix archive/checksum dry-run findings before writing internal production package files.",
     };
   }
 
@@ -458,10 +474,10 @@ export function writeOwnerOpsLocalPackageCandidate({
     path: file.path,
     sha256: file.sha256,
     bytes: file.bytes,
-    contentBase64: readFileSync(resolve(root, file.path)).toString("base64"),
+    contentBase64: readDistributionFile({ root, file: file.path }).toString("base64"),
   }));
   const manifest = {
-    schema: "gpao_t.owner_ops_local_package_manifest.v0_1",
+    schema: "gpao_t.owner_ops_internal_production_package_manifest.v0_1",
     generatedAt: now,
     packageId: dryRun.packageId,
     packageVersion: dryRun.packageVersion,
@@ -479,7 +495,7 @@ export function writeOwnerOpsLocalPackageCandidate({
     },
   };
   const bundle = {
-    schema: "gpao_t.owner_ops_local_package_bundle.v0_1",
+    schema: "gpao_t.owner_ops_internal_production_package_bundle.v0_1",
     manifest,
     files,
   };
@@ -492,7 +508,7 @@ export function writeOwnerOpsLocalPackageCandidate({
   writeFileSync(checksumPath, `${bundleSha256}  ${baseName}.bundle.json\n`);
 
   return {
-    schema: "gpao_t.owner_ops_local_package_candidate_write.v0_1",
+    schema: "gpao_t.owner_ops_internal_production_package_write.v0_1",
     status: "written_local_only",
     generatedAt: now,
     writesExecuted: true,
@@ -517,9 +533,9 @@ export function writeOwnerOpsLocalPackageCandidate({
   };
 }
 
-export function verifyOwnerOpsLocalPackageCandidateWriter({ root = process.cwd() } = {}) {
+export function verifyOwnerOpsInternalProductionPackageWriter({ root = process.cwd() } = {}) {
   const dryRunCheck = verifyOwnerOpsArchiveChecksumDryRun({ root });
-  const blockedWrite = writeOwnerOpsLocalPackageCandidate({ root });
+  const blockedWrite = writeOwnerOpsInternalProductionPackage({ root });
   const findings = [];
 
   if (dryRunCheck.status !== "ready") findings.push("archive_checksum_dry_run_not_ready");
@@ -527,7 +543,7 @@ export function verifyOwnerOpsLocalPackageCandidateWriter({ root = process.cwd()
   if (blockedWrite.writesExecuted !== false) findings.push("write_without_confirmation_executed");
 
   return {
-    schema: "gpao_t.owner_ops_local_package_candidate_write_check.v0_1",
+    schema: "gpao_t.owner_ops_internal_production_package_write_check.v0_1",
     status: findings.length ? "blocked" : "ready",
     findings,
     checkedSurfaces: [
@@ -536,20 +552,27 @@ export function verifyOwnerOpsLocalPackageCandidateWriter({ root = process.cwd()
       "write blocked without confirmation",
       "public upload/sign/install/update/rollback remain blocked",
     ],
-    requiredConfirmationToken: LOCAL_PACKAGE_CONFIRMATION,
+    requiredConfirmationToken: INTERNAL_PRODUCTION_PACKAGE_CONFIRMATION,
     writeWithoutConfirmationBlocked: blockedWrite.status === "blocked" && blockedWrite.writesExecuted === false,
     nextSafeAction: findings.length
-      ? "Fix local package candidate writer findings."
-      : "The writer is gated. Use the confirmation token only for an owner-approved local package candidate write.",
+      ? "Fix internal production package writer findings."
+      : "The writer is gated. Use the confirmation token only for an owner-approved internal production package write.",
   };
 }
 
-export function readOwnerOpsLocalPackageCandidate({
+export function readOwnerOpsInternalProductionPackage({
   root = process.cwd(),
   archiveName,
 } = {}) {
   const dryRun = buildOwnerOpsArchiveChecksumDryRun({ root });
-  const targetArchiveName = archiveName || dryRun.archiveCandidate.archiveName;
+  const currentArchiveName = dryRun.archiveCandidate.archiveName;
+  const legacyArchiveName = currentArchiveName.replace("-internal-production-package.zip", "-local-candidate.zip");
+  const targetArchiveName = archiveName
+    || (packageArtifactSetExists({ root, archiveName: currentArchiveName })
+      ? currentArchiveName
+      : packageArtifactSetExists({ root, archiveName: legacyArchiveName })
+        ? legacyArchiveName
+        : currentArchiveName);
   const baseName = targetArchiveName.replace(/\.zip$/, "");
   const bundlePath = resolve(root, ".gpao-t/packages", `${baseName}.bundle.json`);
   const manifestPath = resolve(root, ".gpao-t/packages", `${baseName}.manifest.json`);
@@ -562,13 +585,13 @@ export function readOwnerOpsLocalPackageCandidate({
 
   if (missingFiles.length) {
     return {
-      schema: "gpao_t.owner_ops_local_package_candidate_readback.v0_1",
+      schema: "gpao_t.owner_ops_internal_production_package_readback.v0_1",
       status: "missing",
       archiveName: targetArchiveName,
       missingFiles,
-      findings: ["local_package_candidate_files_missing"],
+      findings: ["internal_production_package_files_missing"],
       authorityBoundary: localPackageReadbackAuthority(),
-      nextSafeAction: "Create a local package candidate with explicit confirmation before readback verification.",
+      nextSafeAction: "Create an internal production package with explicit confirmation before readback verification.",
     };
   }
 
@@ -582,8 +605,16 @@ export function readOwnerOpsLocalPackageCandidate({
   const findings = [];
 
   if (expectedSha256 !== bundleSha256) findings.push("bundle_checksum_mismatch");
-  if (bundle.schema !== "gpao_t.owner_ops_local_package_bundle.v0_1") findings.push("unexpected_bundle_schema");
-  if (manifest.schema !== "gpao_t.owner_ops_local_package_manifest.v0_1") findings.push("unexpected_manifest_schema");
+  const acceptedBundleSchemas = [
+    "gpao_t.owner_ops_internal_production_package_bundle.v0_1",
+    "gpao_t.owner_ops_local_package_bundle.v0_1",
+  ];
+  const acceptedManifestSchemas = [
+    "gpao_t.owner_ops_internal_production_package_manifest.v0_1",
+    "gpao_t.owner_ops_local_package_manifest.v0_1",
+  ];
+  if (!acceptedBundleSchemas.includes(bundle.schema)) findings.push("unexpected_bundle_schema");
+  if (!acceptedManifestSchemas.includes(manifest.schema)) findings.push("unexpected_manifest_schema");
   if (JSON.stringify(bundle.manifest) !== JSON.stringify(manifest)) findings.push("manifest_file_mismatch");
   if (manifest.archiveName !== targetArchiveName) findings.push("archive_name_mismatch");
   if (manifest.authorityBoundary?.publicUploadExecuted !== false) findings.push("public_upload_boundary_not_closed");
@@ -610,7 +641,7 @@ export function readOwnerOpsLocalPackageCandidate({
   if (fileResults.length !== manifest.fileCount) findings.push("file_count_mismatch");
 
   return {
-    schema: "gpao_t.owner_ops_local_package_candidate_readback.v0_1",
+    schema: "gpao_t.owner_ops_internal_production_package_readback.v0_1",
     status: findings.length ? "blocked" : "ready",
     archiveName: targetArchiveName,
     filesRead: [
@@ -622,29 +653,33 @@ export function readOwnerOpsLocalPackageCandidate({
     expectedSha256,
     packageId: manifest.packageId,
     packageVersion: manifest.packageVersion,
+    compatibilityAliasUsed:
+      bundle.schema === "gpao_t.owner_ops_local_package_bundle.v0_1"
+      || manifest.schema === "gpao_t.owner_ops_local_package_manifest.v0_1"
+      || targetArchiveName === legacyArchiveName,
     fileCount: fileResults.length,
     fileResults,
     findings,
     authorityBoundary: localPackageReadbackAuthority(),
     nextSafeAction: findings.length
-      ? "Fix local package candidate integrity findings before sharing with testers."
-      : "This local package candidate can be reviewed for team alpha handoff; public upload, signing, install, update, and rollback remain blocked.",
+      ? "Fix internal production package integrity findings before sharing with reviewers."
+      : "This internal production package can be used for internal acceptance; public upload, signing, install, update, and rollback remain blocked.",
   };
 }
 
-export function verifyOwnerOpsLocalPackageCandidateReadback({
+export function verifyOwnerOpsInternalProductionPackageReadback({
   root = process.cwd(),
   archiveName,
 } = {}) {
-  const readback = readOwnerOpsLocalPackageCandidate({ root, archiveName });
+  const readback = readOwnerOpsInternalProductionPackage({ root, archiveName });
   const findings = [...(readback.findings || [])];
 
-  if (readback.status !== "ready") findings.push("local_package_candidate_readback_not_ready");
+  if (readback.status !== "ready") findings.push("internal_production_package_readback_not_ready");
   if (readback.authorityBoundary?.publicUploadExecuted !== false) findings.push("public_upload_boundary_not_closed");
   if (readback.authorityBoundary?.installExecuted !== false) findings.push("install_boundary_not_closed");
 
   return {
-    schema: "gpao_t.owner_ops_local_package_candidate_readback_check.v0_1",
+    schema: "gpao_t.owner_ops_internal_production_package_readback_check.v0_1",
     status: findings.length ? "blocked" : "ready",
     findings,
     checkedSurfaces: [
@@ -661,10 +696,16 @@ export function verifyOwnerOpsLocalPackageCandidateReadback({
     packageVersion: readback.packageVersion || null,
     fileCount: readback.fileCount || 0,
     nextSafeAction: findings.length
-      ? "Fix local package candidate readback findings."
-      : "Use this readback as local package integrity evidence before any team alpha handoff.",
+      ? "Fix internal production package readback findings."
+      : "Use this readback as package integrity evidence before any internal acceptance handoff.",
   };
 }
+
+// One-cycle API compatibility aliases. Canonical writes and returned schemas use the names above.
+export const writeOwnerOpsLocalPackageCandidate = writeOwnerOpsInternalProductionPackage;
+export const verifyOwnerOpsLocalPackageCandidateWriter = verifyOwnerOpsInternalProductionPackageWriter;
+export const readOwnerOpsLocalPackageCandidate = readOwnerOpsInternalProductionPackage;
+export const verifyOwnerOpsLocalPackageCandidateReadback = verifyOwnerOpsInternalProductionPackageReadback;
 
 export function buildOwnerOpsReleaseReadinessEvidence({
   root = process.cwd(),
@@ -675,7 +716,7 @@ export function buildOwnerOpsReleaseReadinessEvidence({
   const repairCompletion = buildOwnerOpsPrePublicRepairCompletionEvidence({ root });
   const distribution = buildOwnerOpsDistributionEvidence({ root, now });
   const dryRun = buildOwnerOpsArchiveChecksumDryRun({ root, now });
-  const readback = readOwnerOpsLocalPackageCandidate({ root });
+  const readback = readOwnerOpsInternalProductionPackage({ root });
   const findings = [];
 
   if (prePublicBridge.status !== "ready") findings.push("pre_public_evidence_bridge_not_ready");
@@ -683,9 +724,9 @@ export function buildOwnerOpsReleaseReadinessEvidence({
   if (repairCompletion.status !== "ready") findings.push("pre_public_repair_completion_not_ready");
   if (distribution.status !== "ready") findings.push("distribution_evidence_not_ready");
   if (dryRun.status !== "ready") findings.push("archive_checksum_dry_run_not_ready");
-  if (readback.status !== "ready") findings.push("local_package_candidate_readback_not_ready");
+  if (readback.status !== "ready") findings.push("internal_production_package_readback_not_ready");
   if ((readback.fileCount || 0) < dryRun.includedFiles.length) {
-    findings.push("local_package_candidate_behind_distribution_manifest");
+    findings.push("internal_production_package_behind_distribution_manifest");
   }
   if (distribution.installUpdateRollbackEvidence.canInstallNow !== false) {
     findings.push("install_execution_must_remain_blocked");
@@ -727,7 +768,7 @@ export function buildOwnerOpsReleaseReadinessEvidence({
       currentDistributionFileCount: distribution.files.filter((file) => file.status === "present").length,
       missingFiles: distribution.missingFiles,
     },
-    localPackageCandidate: {
+    internalProductionPackage: {
       status: readback.status,
       archiveName: readback.archiveName,
       bundleSha256: readback.bundleSha256 || null,
@@ -813,13 +854,13 @@ export function verifyOwnerOpsReleaseReadinessEvidence({ root = process.cwd() } 
   const prePublicBridgeCheck = verifyOwnerOpsPrePublicEvidenceBridge({ root });
   const repairBacklogCheck = verifyOwnerOpsPrePublicRepairBacklog({ root });
   const repairCompletionCheck = verifyOwnerOpsPrePublicRepairCompletionEvidence({ root });
-  const readbackCheck = verifyOwnerOpsLocalPackageCandidateReadback({ root });
+  const readbackCheck = verifyOwnerOpsInternalProductionPackageReadback({ root });
   const findings = [...evidence.findings];
 
   if (prePublicBridgeCheck.status !== "ready") findings.push("pre_public_evidence_bridge_check_not_ready");
   if (repairBacklogCheck.status !== "ready") findings.push("pre_public_repair_backlog_check_not_ready");
   if (repairCompletionCheck.status !== "ready") findings.push("pre_public_repair_completion_check_not_ready");
-  if (readbackCheck.status !== "ready") findings.push("local_package_candidate_readback_check_not_ready");
+  if (readbackCheck.status !== "ready") findings.push("internal_production_package_readback_check_not_ready");
   if (evidence.authorityBoundary.publicReleaseAllowed !== false) findings.push("public_release_must_remain_blocked");
   if (evidence.authorityBoundary.packageUploadAllowed !== false) findings.push("package_upload_must_remain_blocked");
   if (evidence.signedPackageEvidence.signingExecuted !== false) findings.push("signing_must_not_execute");
@@ -835,7 +876,7 @@ export function verifyOwnerOpsReleaseReadinessEvidence({ root = process.cwd() } 
       "pre-public repair completion evidence",
       "distribution evidence",
       "archive/checksum dry-run",
-      "local package candidate readback",
+      "internal production package readback",
       "signed package evidence boundary",
       "install/update/rollback readiness",
       "human review approval boundary",
@@ -879,9 +920,9 @@ export function buildOwnerOpsHumanReviewApprovalPacket({
       releaseReadiness: ".gpao-t/packages/OWNER-OPS-RELEASE-READINESS-EVIDENCE.json",
       prePublicRepairCompletion:
         ".gpao-t/packages/OWNER-OPS-PRE-PUBLIC-REPAIR-COMPLETION-EVIDENCE.json",
-      localPackageBundle: `.gpao-t/packages/${readiness.localPackageCandidate.archiveName.replace(/\.zip$/, ".bundle.json")}`,
-      localPackageManifest: `.gpao-t/packages/${readiness.localPackageCandidate.archiveName.replace(/\.zip$/, ".manifest.json")}`,
-      localPackageChecksum: `.gpao-t/packages/${readiness.localPackageCandidate.archiveName.replace(/\.zip$/, ".sha256")}`,
+      localPackageBundle: `.gpao-t/packages/${readiness.internalProductionPackage.archiveName.replace(/\.zip$/, ".bundle.json")}`,
+      localPackageManifest: `.gpao-t/packages/${readiness.internalProductionPackage.archiveName.replace(/\.zip$/, ".manifest.json")}`,
+      localPackageChecksum: `.gpao-t/packages/${readiness.internalProductionPackage.archiveName.replace(/\.zip$/, ".sha256")}`,
     },
     evidenceSummary: {
       releaseReadiness: readiness.status,
@@ -890,7 +931,7 @@ export function buildOwnerOpsHumanReviewApprovalPacket({
       totalRepairItems: readiness.prePublicRepairCompletionEvidence.itemCount,
       allRepairItemsLocallyVerified:
         readiness.prePublicRepairCompletionEvidence.allItemsLocallyVerified,
-      localPackageCandidate: readiness.localPackageCandidate.status,
+      internalProductionPackage: readiness.internalProductionPackage.status,
     },
     reviewChecklist: [
       {
@@ -1085,7 +1126,7 @@ export function buildOwnerOpsHumanReviewDecisionLane({
       prePublicRepairCompletion: packet.evidenceSummary.prePublicRepairCompletion,
       completedRepairItems: packet.evidenceSummary.completedRepairItems,
       totalRepairItems: packet.evidenceSummary.totalRepairItems,
-      localPackageCandidate: packet.evidenceSummary.localPackageCandidate,
+      internalProductionPackage: packet.evidenceSummary.internalProductionPackage,
       publicReleaseApprovedNow: false,
     },
     authorityBoundary: {
@@ -1295,7 +1336,7 @@ export function buildOwnerOpsPublicReleaseAuthorityGate({
     findings.push("latest_marketplace_upload_decision_is_not_upload_approval");
   }
   if (signedEvidence.status !== "ready") findings.push("signed_package_prerequisite_not_ready");
-  if (signedEvidence.signedPackageState !== "unsigned_local_candidate") {
+  if (signedEvidence.signedPackageState !== "unsigned_internal_production_package") {
     findings.push("unexpected_signed_package_state");
   }
   if (signedEvidence.authorityBoundary.signingExecuted !== false) findings.push("signing_already_executed_unexpectedly");
@@ -1424,7 +1465,7 @@ export function buildOwnerOpsPublicReleaseReadbackSnapshot({
     root,
     filename: "OWNER-OPS-DEPLOYMENT-DRY-RUN-PLAN.json",
   });
-  const localPackage = readOwnerOpsLocalPackageCandidate({ root });
+  const localPackage = readOwnerOpsInternalProductionPackage({ root });
   const humanDecisionRecords = readOwnerOpsHumanReviewDecisionRecords({ root });
   const marketplaceDecisionRecords = readOwnerOpsMarketplaceUploadDecisionRecords({ root });
   const findings = [];
@@ -1434,7 +1475,7 @@ export function buildOwnerOpsPublicReleaseReadbackSnapshot({
   if (signedPackage.status !== "present") findings.push("signed_package_evidence_readback_missing");
   if (installProof.status !== "present") findings.push("install_update_rollback_proof_readback_missing");
   if (deploymentPlan.status !== "present") findings.push("deployment_dry_run_plan_readback_missing");
-  if (localPackage.status !== "ready") findings.push("local_package_candidate_readback_not_ready");
+  if (localPackage.status !== "ready") findings.push("internal_production_package_readback_not_ready");
   if (releaseReadiness.data?.status !== "ready") findings.push("release_readiness_not_ready_in_snapshot");
   if (humanReview.data?.status !== "ready") findings.push("human_review_packet_not_ready_in_snapshot");
   if (signedPackage.data?.status !== "ready") findings.push("signed_package_evidence_not_ready_in_snapshot");
@@ -1454,7 +1495,7 @@ export function buildOwnerOpsPublicReleaseReadbackSnapshot({
       signedPackageEvidence: signedPackage.status,
       installUpdateRollbackProof: installProof.status,
       deploymentDryRunPlan: deploymentPlan.status,
-      localPackageCandidate: localPackage.status,
+      internalProductionPackage: localPackage.status,
     },
     releasePrerequisites: {
       releaseReadiness: releaseReadiness.data?.status || releaseReadiness.status,
@@ -1468,7 +1509,7 @@ export function buildOwnerOpsPublicReleaseReadbackSnapshot({
       marketplaceUploadDecisionRecords: marketplaceDecisionRecords.recordCount,
       latestMarketplaceUploadDecision: marketplaceDecisionRecords.latestRecord?.decision || null,
     },
-    localPackageCandidate: {
+    internalProductionPackage: {
       archiveName: localPackage.archiveName || null,
       fileCount: localPackage.fileCount || 0,
       bundleSha256: localPackage.bundleSha256 || null,
@@ -1519,7 +1560,7 @@ export function verifyOwnerOpsPublicReleaseReadbackSnapshot({ root = process.cwd
       "signed package evidence readback",
       "install/update/rollback proof readback",
       "deployment dry-run plan readback",
-      "local package candidate readback",
+      "internal production package readback",
       "human and marketplace decision records",
       "public release/upload authority boundaries",
     ],
@@ -1532,19 +1573,19 @@ export function verifyOwnerOpsPublicReleaseReadbackSnapshot({ root = process.cwd
   };
 }
 
-export function buildOwnerOpsFinalLocalReleaseCandidateDecisionPacket({
+export function buildOwnerOpsProductionReadyDecisionPacket({
   root = process.cwd(),
   reviewer = "owner",
   now = new Date().toISOString(),
 } = {}) {
-  const localPackage = verifyOwnerOpsLocalPackageCandidateReadback({ root });
+  const localPackage = verifyOwnerOpsInternalProductionPackageReadback({ root });
   const releaseReadback = verifyOwnerOpsPublicReleaseReadbackSnapshot({ root });
   const nextLoop = verifyOwnerOpsNextOwnerTestingLoop({ root });
   const humanDecisionRecords = readOwnerOpsHumanReviewDecisionRecords({ root });
   const marketplaceDecisionRecords = readOwnerOpsMarketplaceUploadDecisionRecords({ root });
   const findings = [];
 
-  if (localPackage.status !== "ready") findings.push("local_package_candidate_readback_not_ready");
+  if (localPackage.status !== "ready") findings.push("internal_production_package_readback_not_ready");
   if (releaseReadback.status !== "ready") findings.push("public_release_readback_not_ready");
   if (nextLoop.status !== "ready") findings.push("next_owner_testing_loop_not_ready");
   if (releaseReadback.gateState !== "public_release_not_authorized") {
@@ -1556,13 +1597,15 @@ export function buildOwnerOpsFinalLocalReleaseCandidateDecisionPacket({
   if (nextLoop.nextOwnerTestingAllowed !== true) findings.push("next_owner_testing_not_allowed");
 
   return {
-    schema: "gpao_t.owner_ops_final_local_release_candidate_decision_packet.v0_1",
+    schema: "gpao_t.owner_ops_production_ready_decision_packet.v0_1",
     status: findings.length ? "review" : "ready",
     generatedAt: now,
     reviewer,
-    candidateState: findings.length
-      ? "local_release_candidate_needs_review"
-      : "local_release_candidate_ready_public_execution_blocked",
+    productionState: findings.length
+      ? "production_readiness_needs_review"
+      : "production_ready_for_internal_distribution_public_execution_blocked",
+    productionReady: findings.length === 0,
+    supervisedHumanVerificationRequired: true,
     packageEvidence: {
       status: localPackage.status,
       archiveName: localPackage.archiveName,
@@ -1633,30 +1676,32 @@ export function buildOwnerOpsFinalLocalReleaseCandidateDecisionPacket({
     },
     findings,
     nextSafeAction: findings.length
-      ? "Fix final local release candidate packet findings before asking for a public-release decision."
-      : "Use this packet for the owner's final local candidate review; public release and upload still require separate explicit approval.",
+      ? "Fix production-readiness findings before asking for an internal production owner decision."
+      : "Use this production-ready packet for the internal production owner decision; supervised human verification remains required and public release/upload require separate explicit approval.",
   };
 }
 
-export function writeOwnerOpsFinalLocalReleaseCandidateDecisionPacket({ root = process.cwd() } = {}) {
-  const packet = buildOwnerOpsFinalLocalReleaseCandidateDecisionPacket({ root });
+export function writeOwnerOpsProductionReadyDecisionPacket({ root = process.cwd() } = {}) {
+  const packet = buildOwnerOpsProductionReadyDecisionPacket({ root });
   const outputDir = resolve(root, ".gpao-t", "packages");
   mkdirSync(outputDir, { recursive: true });
-  const jsonPath = resolve(outputDir, "OWNER-OPS-FINAL-LOCAL-RELEASE-CANDIDATE-DECISION-PACKET.json");
-  const mdPath = resolve(outputDir, "OWNER-OPS-FINAL-LOCAL-RELEASE-CANDIDATE-DECISION-PACKET.md");
+  const jsonPath = resolve(outputDir, "OWNER-OPS-PRODUCTION-READY-DECISION-PACKET.json");
+  const mdPath = resolve(outputDir, "OWNER-OPS-PRODUCTION-READY-DECISION-PACKET.md");
 
   writeFileSync(jsonPath, `${JSON.stringify(packet, null, 2)}\n`);
-  writeFileSync(mdPath, renderOwnerOpsFinalLocalReleaseCandidateDecisionPacketMarkdown(packet));
+  writeFileSync(mdPath, renderOwnerOpsProductionReadyDecisionPacketMarkdown(packet));
 
   return {
-    schema: "gpao_t.owner_ops_final_local_release_candidate_decision_packet_write.v0_1",
+    schema: "gpao_t.owner_ops_production_ready_decision_packet_write.v0_1",
     status: packet.status === "ready" ? "written_local_only" : "review",
     filesWritten: [
-      ".gpao-t/packages/OWNER-OPS-FINAL-LOCAL-RELEASE-CANDIDATE-DECISION-PACKET.json",
-      ".gpao-t/packages/OWNER-OPS-FINAL-LOCAL-RELEASE-CANDIDATE-DECISION-PACKET.md",
+      ".gpao-t/packages/OWNER-OPS-PRODUCTION-READY-DECISION-PACKET.json",
+      ".gpao-t/packages/OWNER-OPS-PRODUCTION-READY-DECISION-PACKET.md",
     ],
     packetStatus: packet.status,
-    candidateState: packet.candidateState,
+    productionState: packet.productionState,
+    productionReady: packet.productionReady,
+    supervisedHumanVerificationRequired: packet.supervisedHumanVerificationRequired,
     packageFileCount: packet.packageEvidence.fileCount,
     publicReleaseAllowed: packet.authorityBoundary.publicReleaseAllowed,
     packageUploadAllowed: packet.authorityBoundary.packageUploadAllowed,
@@ -1665,15 +1710,17 @@ export function writeOwnerOpsFinalLocalReleaseCandidateDecisionPacket({ root = p
   };
 }
 
-export function verifyOwnerOpsFinalLocalReleaseCandidateDecisionPacket({ root = process.cwd() } = {}) {
-  const packet = buildOwnerOpsFinalLocalReleaseCandidateDecisionPacket({ root });
+export function verifyOwnerOpsProductionReadyDecisionPacket({ root = process.cwd() } = {}) {
+  const packet = buildOwnerOpsProductionReadyDecisionPacket({ root });
   const findings = [...packet.findings];
 
-  if (packet.status !== "ready") findings.push("final_local_release_candidate_packet_not_ready");
-  if (packet.candidateState !== "local_release_candidate_ready_public_execution_blocked") {
-    findings.push("candidate_state_not_ready_or_boundary_changed");
+  if (packet.status !== "ready") findings.push("production_ready_packet_not_ready");
+  if (packet.productionState !== "production_ready_for_internal_distribution_public_execution_blocked") {
+    findings.push("production_state_not_ready_or_boundary_changed");
   }
-  if (packet.packageEvidence.status !== "ready") findings.push("local_package_readback_not_ready");
+  if (packet.productionReady !== true) findings.push("production_ready_flag_not_set");
+  if (packet.supervisedHumanVerificationRequired !== true) findings.push("supervised_human_verification_requirement_missing");
+  if (packet.packageEvidence.status !== "ready") findings.push("internal_production_package_readback_not_ready");
   if (packet.releaseReadback.status !== "ready") findings.push("release_readback_not_ready");
   if (packet.fieldValidation.nextOwnerTestingLoop !== "ready") findings.push("next_owner_testing_loop_not_ready");
   if (packet.releaseAuthority.publicReleaseGate !== "ready") findings.push("public_release_authority_gate_not_ready");
@@ -1687,18 +1734,20 @@ export function verifyOwnerOpsFinalLocalReleaseCandidateDecisionPacket({ root = 
   if (packet.authorityBoundary.credentialAccessAllowed !== false) findings.push("credential_boundary_opened");
 
   return {
-    schema: "gpao_t.owner_ops_final_local_release_candidate_decision_packet_check.v0_1",
+    schema: "gpao_t.owner_ops_production_ready_decision_packet_check.v0_1",
     status: findings.length ? "blocked" : "ready",
     findings,
     checkedSurfaces: [
-      "local package candidate readback",
+      "internal production package readback",
       "public release readback",
       "next owner testing loop",
       "public release authority gate",
       "human and marketplace decision records",
       "external release authority boundaries",
     ],
-    candidateState: packet.candidateState,
+    productionState: packet.productionState,
+    productionReady: packet.productionReady,
+    supervisedHumanVerificationRequired: packet.supervisedHumanVerificationRequired,
     packageFileCount: packet.packageEvidence.fileCount,
     publicReleaseAllowed: packet.authorityBoundary.publicReleaseAllowed,
     packageUploadAllowed: packet.authorityBoundary.packageUploadAllowed,
@@ -1707,46 +1756,49 @@ export function verifyOwnerOpsFinalLocalReleaseCandidateDecisionPacket({ root = 
   };
 }
 
-export function buildOwnerOpsFinalCandidateOwnerDecisionLane({
+export function buildOwnerOpsInternalProductionOwnerDecision({
   root = process.cwd(),
   reviewer = "owner",
   decision = "continue_supervised_testing",
   now = new Date().toISOString(),
 } = {}) {
-  const packet = buildOwnerOpsFinalLocalReleaseCandidateDecisionPacket({ root, reviewer, now });
-  const records = readOwnerOpsFinalCandidateOwnerDecisionRecords({ root });
-  const normalizedDecision = FINAL_CANDIDATE_OWNER_DECISIONS.includes(decision)
-    ? decision
+  const packet = buildOwnerOpsProductionReadyDecisionPacket({ root, reviewer, now });
+  const records = readOwnerOpsInternalProductionOwnerDecisionRecords({ root });
+  const requestedDecision = normalizeInternalProductionOwnerDecision(decision);
+  const normalizedDecision = INTERNAL_PRODUCTION_OWNER_DECISIONS.includes(requestedDecision)
+    ? requestedDecision
     : "continue_supervised_testing";
   const findings = [...packet.findings];
 
-  if (packet.status !== "ready") findings.push("final_local_candidate_packet_not_ready");
-  if (!FINAL_CANDIDATE_OWNER_DECISIONS.includes(decision)) findings.push("unsupported_owner_decision");
+  if (packet.status !== "ready") findings.push("production_ready_packet_not_ready");
+  if (!INTERNAL_PRODUCTION_OWNER_DECISIONS.includes(requestedDecision)) findings.push("unsupported_owner_decision");
 
   return {
-    schema: "gpao_t.owner_ops_final_candidate_owner_decision_lane.v0_1",
+    schema: "gpao_t.owner_ops_internal_production_owner_decision.v0_1",
     status: findings.length ? "review" : "ready",
     generatedAt: now,
     reviewer,
     decision: normalizedDecision,
-    allowedDecisions: FINAL_CANDIDATE_OWNER_DECISIONS,
-    candidateState: packet.candidateState,
+    allowedDecisions: INTERNAL_PRODUCTION_OWNER_DECISIONS,
+    productionState: packet.productionState,
+    productionReady: packet.productionReady,
+    supervisedHumanVerificationRequired: packet.supervisedHumanVerificationRequired,
     packageEvidence: packet.packageEvidence,
     existingRecordCount: records.recordCount,
     latestDecision: records.latestRecord?.decision || null,
     recordPreview: {
-      schema: "gpao_t.owner_ops_final_candidate_owner_decision_record.v0_1",
+      schema: "gpao_t.owner_ops_internal_production_owner_decision_record.v0_1",
       decision: normalizedDecision,
       reviewer,
-      localCandidateOnly: true,
+      internalProductionOnly: true,
       packageFileCount: packet.packageEvidence.fileCount,
       publicReleaseAllowed: false,
       packageUploadAllowed: false,
       signingAllowed: false,
     },
     requiredApproval: {
-      token: FINAL_CANDIDATE_OWNER_DECISION_TOKEN,
-      reason: "Final local candidate decisions are local records but still require explicit owner intent.",
+      token: INTERNAL_PRODUCTION_OWNER_DECISION_TOKEN,
+      reason: "Internal production owner decisions are local records and still require explicit owner intent.",
     },
     authorityBoundary: {
       localDecisionRecordOnly: true,
@@ -1764,95 +1816,97 @@ export function buildOwnerOpsFinalCandidateOwnerDecisionLane({
     },
     findings,
     nextSafeAction: findings.length
-      ? "Fix final candidate decision lane findings before recording an owner decision."
-      : "Record an owner decision only with the exact local-only approval token; release/upload/sign/install remain separate gates.",
+      ? "Fix internal production owner-decision findings before recording a decision."
+      : "Record an internal production owner decision only with the exact local-only approval token; supervised human verification remains required and release/upload/sign/install remain separate gates.",
   };
 }
 
-export function appendOwnerOpsFinalCandidateOwnerDecisionRecord({
+export function appendOwnerOpsInternalProductionOwnerDecisionRecord({
   root = process.cwd(),
   reviewer = "owner",
   decision = "continue_supervised_testing",
   approvalToken,
   now = new Date().toISOString(),
 } = {}) {
-  const lane = buildOwnerOpsFinalCandidateOwnerDecisionLane({ root, reviewer, decision, now });
+  const lane = buildOwnerOpsInternalProductionOwnerDecision({ root, reviewer, decision, now });
 
-  if (approvalToken !== FINAL_CANDIDATE_OWNER_DECISION_TOKEN) {
+  if (![INTERNAL_PRODUCTION_OWNER_DECISION_TOKEN, LEGACY_INTERNAL_PRODUCTION_OWNER_DECISION_TOKEN].includes(approvalToken)) {
     return {
-      schema: "gpao_t.owner_ops_final_candidate_owner_decision_record_write.v0_1",
+      schema: "gpao_t.owner_ops_internal_production_owner_decision_record_write.v0_1",
       status: "blocked",
-      reason: "missing_or_invalid_final_candidate_owner_decision_token",
-      requiredApprovalToken: FINAL_CANDIDATE_OWNER_DECISION_TOKEN,
+      reason: "missing_or_invalid_internal_production_owner_decision_token",
+      requiredApprovalToken: INTERNAL_PRODUCTION_OWNER_DECISION_TOKEN,
       recordWritten: false,
       publicReleaseAllowed: false,
       packageUploadAllowed: false,
       nextSafeAction:
-        "Pass the exact final-candidate local decision token only when the owner wants to record the local decision.",
+        "Pass the exact internal production owner-decision token only when the owner wants to record the local decision.",
     };
   }
 
   if (lane.status !== "ready") {
     return {
-      schema: "gpao_t.owner_ops_final_candidate_owner_decision_record_write.v0_1",
+      schema: "gpao_t.owner_ops_internal_production_owner_decision_record_write.v0_1",
       status: "blocked",
-      reason: "final_candidate_owner_decision_lane_not_ready",
+      reason: "internal_production_owner_decision_not_ready",
       findings: lane.findings,
       recordWritten: false,
       publicReleaseAllowed: false,
       packageUploadAllowed: false,
-      nextSafeAction: "Fix final candidate decision lane findings before writing a local decision record.",
+      nextSafeAction: "Fix internal production owner-decision findings before writing a local decision record.",
     };
   }
 
-  const outputDir = resolve(root, ".gpao-t", "owner-ops", "final-candidate");
+  const outputDir = resolve(root, ".gpao-t", "owner-ops", "internal-production-owner-decision");
   mkdirSync(outputDir, { recursive: true });
   const jsonlPath = resolve(outputDir, "owner-decision-records.jsonl");
   const indexPath = resolve(outputDir, "index.json");
   const record = {
-    schema: "gpao_t.owner_ops_final_candidate_owner_decision_record.v0_1",
-    id: `final-candidate-${lane.recordPreview.decision}-${createHash("sha256")
+    schema: "gpao_t.owner_ops_internal_production_owner_decision_record.v0_1",
+    id: `internal-production-${lane.recordPreview.decision}-${createHash("sha256")
       .update(`${lane.packageEvidence.packageId}:${lane.packageEvidence.packageVersion}:${reviewer}:${lane.recordPreview.decision}:${now}`)
       .digest("hex")
       .slice(0, 12)}`,
     recordedAt: now,
     reviewer,
     decision: lane.recordPreview.decision,
-    candidateState: lane.candidateState,
+    productionState: lane.productionState,
     packageEvidence: lane.packageEvidence,
     authorityBoundary: lane.authorityBoundary,
   };
 
   appendFileSync(jsonlPath, `${JSON.stringify(record)}\n`);
-  const records = readOwnerOpsFinalCandidateOwnerDecisionRecords({ root }).records;
+  const records = readOwnerOpsInternalProductionOwnerDecisionRecords({ root }).records;
   writeFileSync(indexPath, `${JSON.stringify({
-    schema: "gpao_t.owner_ops_final_candidate_owner_decision_index.v0_1",
+    schema: "gpao_t.owner_ops_internal_production_owner_decision_index.v0_1",
     updatedAt: now,
     recordCount: records.length,
     latestRecordId: record.id,
     latestDecision: record.decision,
-    jsonlFile: ".gpao-t/owner-ops/final-candidate/owner-decision-records.jsonl",
+    jsonlFile: ".gpao-t/owner-ops/internal-production-owner-decision/owner-decision-records.jsonl",
   }, null, 2)}\n`);
 
   return {
-    schema: "gpao_t.owner_ops_final_candidate_owner_decision_record_write.v0_1",
+    schema: "gpao_t.owner_ops_internal_production_owner_decision_record_write.v0_1",
     status: "written_local_only",
     recordWritten: true,
     recordId: record.id,
     decision: record.decision,
     filesWritten: [
-      ".gpao-t/owner-ops/final-candidate/owner-decision-records.jsonl",
-      ".gpao-t/owner-ops/final-candidate/index.json",
+      ".gpao-t/owner-ops/internal-production-owner-decision/owner-decision-records.jsonl",
+      ".gpao-t/owner-ops/internal-production-owner-decision/index.json",
     ],
     publicReleaseAllowed: record.authorityBoundary.publicReleaseAllowed,
     packageUploadAllowed: record.authorityBoundary.packageUploadAllowed,
     nextSafeAction:
-      "Use this local final-candidate decision record as owner review evidence; public release, signing, upload, install, update, and rollback remain separate gates.",
+      "Use this internal production owner-decision record as local review evidence; supervised human verification and public release/sign/upload/install/update/rollback remain separate gates.",
   };
 }
 
-export function readOwnerOpsFinalCandidateOwnerDecisionRecords({ root = process.cwd() } = {}) {
-  const jsonlPath = resolve(root, ".gpao-t", "owner-ops", "final-candidate", "owner-decision-records.jsonl");
+export function readOwnerOpsInternalProductionOwnerDecisionRecords({ root = process.cwd() } = {}) {
+  const currentPath = resolve(root, ".gpao-t", "owner-ops", "internal-production-owner-decision", "owner-decision-records.jsonl");
+  const legacyPath = resolve(root, ".gpao-t", "owner-ops", "final-candidate", "owner-decision-records.jsonl");
+  const jsonlPath = existsSync(currentPath) ? currentPath : legacyPath;
   const records = existsSync(jsonlPath)
     ? readFileSync(jsonlPath, "utf8")
         .split("\n")
@@ -1861,7 +1915,7 @@ export function readOwnerOpsFinalCandidateOwnerDecisionRecords({ root = process.
     : [];
 
   return {
-    schema: "gpao_t.owner_ops_final_candidate_owner_decision_records.v0_1",
+    schema: "gpao_t.owner_ops_internal_production_owner_decision_records.v0_1",
     status: "ready",
     recordCount: records.length,
     records,
@@ -1869,59 +1923,60 @@ export function readOwnerOpsFinalCandidateOwnerDecisionRecords({ root = process.
     publicReleaseAllowed: false,
     packageUploadAllowed: false,
     nextSafeAction: records.length
-      ? "Review the latest final-candidate owner decision before opening any public release lane."
-      : "No final-candidate owner decision has been recorded yet.",
+      ? "Review the latest internal production owner decision before opening any public release lane."
+      : "No internal production owner decision has been recorded yet.",
   };
 }
 
-export function verifyOwnerOpsFinalCandidateOwnerDecisionLane({ root = process.cwd() } = {}) {
-  const lane = buildOwnerOpsFinalCandidateOwnerDecisionLane({ root });
-  const blockedWrite = appendOwnerOpsFinalCandidateOwnerDecisionRecord({ root });
-  const records = readOwnerOpsFinalCandidateOwnerDecisionRecords({ root });
+export function verifyOwnerOpsInternalProductionOwnerDecision({ root = process.cwd() } = {}) {
+  const lane = buildOwnerOpsInternalProductionOwnerDecision({ root });
+  const blockedWrite = appendOwnerOpsInternalProductionOwnerDecisionRecord({ root });
+  const records = readOwnerOpsInternalProductionOwnerDecisionRecords({ root });
   const findings = [...lane.findings];
 
-  if (lane.status !== "ready") findings.push("final_candidate_owner_decision_lane_not_ready");
+  if (lane.status !== "ready") findings.push("internal_production_owner_decision_not_ready");
   if (blockedWrite.status !== "blocked") findings.push("decision_record_write_without_token_not_blocked");
   if (blockedWrite.recordWritten !== false) findings.push("decision_record_write_without_token_executed");
-  if (lane.requiredApproval.token !== FINAL_CANDIDATE_OWNER_DECISION_TOKEN) {
-    findings.push("final_candidate_owner_decision_token_changed");
+  if (lane.requiredApproval.token !== INTERNAL_PRODUCTION_OWNER_DECISION_TOKEN) {
+    findings.push("internal_production_owner_decision_token_changed");
   }
   if (lane.authorityBoundary.publicReleaseAllowed !== false) findings.push("public_release_boundary_opened");
   if (lane.authorityBoundary.packageUploadAllowed !== false) findings.push("package_upload_boundary_opened");
   if (lane.authorityBoundary.signingAllowed !== false) findings.push("signing_boundary_opened");
 
   return {
-    schema: "gpao_t.owner_ops_final_candidate_owner_decision_lane_check.v0_1",
+    schema: "gpao_t.owner_ops_internal_production_owner_decision_check.v0_1",
     status: findings.length ? "blocked" : "ready",
     findings,
     checkedSurfaces: [
-      "final local release candidate packet",
+      "production-ready decision packet",
       "local-only owner decision storage",
       "write blocked without exact token",
       "public release/package upload/signing boundaries",
     ],
-    allowedDecisions: FINAL_CANDIDATE_OWNER_DECISIONS,
-    requiredApprovalToken: FINAL_CANDIDATE_OWNER_DECISION_TOKEN,
+    allowedDecisions: INTERNAL_PRODUCTION_OWNER_DECISIONS,
+    requiredApprovalToken: INTERNAL_PRODUCTION_OWNER_DECISION_TOKEN,
     existingRecordCount: records.recordCount,
     writeWithoutTokenBlocked: blockedWrite.status === "blocked" && blockedWrite.recordWritten === false,
     publicReleaseAllowed: lane.authorityBoundary.publicReleaseAllowed,
     packageUploadAllowed: lane.authorityBoundary.packageUploadAllowed,
     signingAllowed: lane.authorityBoundary.signingAllowed,
     nextSafeAction: findings.length
-      ? "Fix final candidate owner decision lane findings."
-      : "The final-candidate owner decision lane is ready; append a local decision only with the exact owner approval token.",
+      ? "Fix internal production owner-decision findings."
+      : "The internal production owner-decision lane is ready; append a local decision only with the exact owner approval token.",
   };
 }
 
-export function buildOwnerOpsFinalCandidateNextActionPacket({
+export function buildOwnerOpsInternalProductionNextAction({
   root = process.cwd(),
   decision = "continue_supervised_testing",
   now = new Date().toISOString(),
 } = {}) {
-  const lane = buildOwnerOpsFinalCandidateOwnerDecisionLane({ root, decision, now });
-  const records = readOwnerOpsFinalCandidateOwnerDecisionRecords({ root });
-  const normalizedDecision = FINAL_CANDIDATE_OWNER_DECISIONS.includes(decision)
-    ? decision
+  const lane = buildOwnerOpsInternalProductionOwnerDecision({ root, decision, now });
+  const records = readOwnerOpsInternalProductionOwnerDecisionRecords({ root });
+  const requestedDecision = normalizeInternalProductionOwnerDecision(decision);
+  const normalizedDecision = INTERNAL_PRODUCTION_OWNER_DECISIONS.includes(requestedDecision)
+    ? requestedDecision
     : "continue_supervised_testing";
   const actionMap = {
     continue_supervised_testing: {
@@ -1931,9 +1986,9 @@ export function buildOwnerOpsFinalCandidateNextActionPacket({
       checkSurface: "owner-ops next-owner-testing-loop-check",
       nextHumanAction: "Use the next owner testing loop handoff with sample or de-identified data only.",
       requiredEvidence: [
-        "final local release candidate packet ready",
+        "production-ready decision packet",
         "next owner testing loop ready",
-        "team alpha / first-owner beta handoff current package hash",
+        "supervised human verification handoff with current package hash",
       ],
       stillBlocked: [
         "public release",
@@ -1960,16 +2015,16 @@ export function buildOwnerOpsFinalCandidateNextActionPacket({
         "durable memory promotion",
       ],
     },
-    approve_local_candidate_review: {
-      label: "Approve local candidate review",
-      primarySurface: "owner-ops team-alpha-handoff-bundle",
-      writeSurface: "owner-ops team-alpha-handoff-write",
-      checkSurface: "owner-ops team-alpha-handoff-check",
-      nextHumanAction: "Use the local candidate as an internal/team review artifact; do not publish it.",
+    approve_internal_production_review: {
+      label: "Approve internal production review",
+      primarySurface: "owner-ops internal-production-readiness",
+      writeSurface: "owner-ops internal-production-owner-decision-append",
+      checkSurface: "owner-ops internal-production-readiness-check",
+      nextHumanAction: "Use the production-ready package for supervised internal acceptance; do not publish it.",
       requiredEvidence: [
-        "recorded final-candidate owner decision",
-        "local package candidate readback",
-        "team alpha handoff bundle",
+        "recorded internal production owner decision",
+        "internal production package readback",
+        "supervised human verification evidence",
       ],
       stillBlocked: [
         "public release",
@@ -2000,18 +2055,19 @@ export function buildOwnerOpsFinalCandidateNextActionPacket({
   const selectedAction = actionMap[normalizedDecision];
   const findings = [...lane.findings];
 
-  if (lane.status !== "ready") findings.push("final_candidate_owner_decision_lane_not_ready");
-  if (!FINAL_CANDIDATE_OWNER_DECISIONS.includes(decision)) findings.push("unsupported_owner_decision");
+  if (lane.status !== "ready") findings.push("internal_production_owner_decision_not_ready");
+  if (!INTERNAL_PRODUCTION_OWNER_DECISIONS.includes(requestedDecision)) findings.push("unsupported_owner_decision");
   if (lane.authorityBoundary.publicReleaseAllowed !== false) findings.push("public_release_boundary_opened");
   if (lane.authorityBoundary.packageUploadAllowed !== false) findings.push("package_upload_boundary_opened");
 
   return {
-    schema: "gpao_t.owner_ops_final_candidate_next_action_packet.v0_1",
+    schema: "gpao_t.owner_ops_internal_production_next_action.v0_1",
     status: findings.length ? "review" : "ready",
     generatedAt: now,
     decision: normalizedDecision,
-    allowedDecisions: FINAL_CANDIDATE_OWNER_DECISIONS,
-    candidateState: lane.candidateState,
+    allowedDecisions: INTERNAL_PRODUCTION_OWNER_DECISIONS,
+    productionState: lane.productionState,
+    productionReady: lane.productionReady,
     packageEvidence: lane.packageEvidence,
     ownerDecisionRecords: {
       recordCount: records.recordCount,
@@ -2036,14 +2092,14 @@ export function buildOwnerOpsFinalCandidateNextActionPacket({
     },
     findings,
     nextSafeAction: findings.length
-      ? "Fix final candidate next-action findings before using this packet."
+      ? "Fix internal production next-action findings before using this packet."
       : selectedAction.nextHumanAction,
   };
 }
 
-export function verifyOwnerOpsFinalCandidateNextActionPacket({ root = process.cwd() } = {}) {
-  const packets = FINAL_CANDIDATE_OWNER_DECISIONS.map((decision) =>
-    buildOwnerOpsFinalCandidateNextActionPacket({ root, decision })
+export function verifyOwnerOpsInternalProductionNextAction({ root = process.cwd() } = {}) {
+  const packets = INTERNAL_PRODUCTION_OWNER_DECISIONS.map((decision) =>
+    buildOwnerOpsInternalProductionNextAction({ root, decision })
   );
   const findings = packets.flatMap((packet) => packet.findings);
 
@@ -2057,12 +2113,12 @@ export function verifyOwnerOpsFinalCandidateNextActionPacket({ root = process.cw
   }
 
   return {
-    schema: "gpao_t.owner_ops_final_candidate_next_action_packet_check.v0_1",
+    schema: "gpao_t.owner_ops_internal_production_next_action_check.v0_1",
     status: findings.length ? "blocked" : "ready",
     findings,
-    checkedDecisions: FINAL_CANDIDATE_OWNER_DECISIONS,
+    checkedDecisions: INTERNAL_PRODUCTION_OWNER_DECISIONS,
     checkedSurfaces: [
-      "final candidate decision lane",
+      "internal production owner-decision lane",
       "decision-to-action map",
       "local handoff next action",
       "public release/upload/sign/install boundaries",
@@ -2072,21 +2128,32 @@ export function verifyOwnerOpsFinalCandidateNextActionPacket({ root = process.cw
     packageUploadAllowed: false,
     ownerDecisionRecordedNow: false,
     nextSafeAction: findings.length
-      ? "Fix final candidate next-action packet findings."
-      : "Use this packet to choose the next local operating step after the owner records a final-candidate decision.",
+      ? "Fix internal production next-action findings."
+      : "Use this packet to choose the next local operating step after the owner records an internal production decision.",
   };
 }
+
+// One-cycle API compatibility aliases. Canonical calls and schemas use production-ready terminology.
+export const buildOwnerOpsFinalLocalReleaseCandidateDecisionPacket = buildOwnerOpsProductionReadyDecisionPacket;
+export const writeOwnerOpsFinalLocalReleaseCandidateDecisionPacket = writeOwnerOpsProductionReadyDecisionPacket;
+export const verifyOwnerOpsFinalLocalReleaseCandidateDecisionPacket = verifyOwnerOpsProductionReadyDecisionPacket;
+export const buildOwnerOpsFinalCandidateOwnerDecisionLane = buildOwnerOpsInternalProductionOwnerDecision;
+export const appendOwnerOpsFinalCandidateOwnerDecisionRecord = appendOwnerOpsInternalProductionOwnerDecisionRecord;
+export const readOwnerOpsFinalCandidateOwnerDecisionRecords = readOwnerOpsInternalProductionOwnerDecisionRecords;
+export const verifyOwnerOpsFinalCandidateOwnerDecisionLane = verifyOwnerOpsInternalProductionOwnerDecision;
+export const buildOwnerOpsFinalCandidateNextActionPacket = buildOwnerOpsInternalProductionNextAction;
+export const verifyOwnerOpsFinalCandidateNextActionPacket = verifyOwnerOpsInternalProductionNextAction;
 
 export function buildOwnerOpsBroaderOwnerTestingHandoff({
   root = process.cwd(),
   now = new Date().toISOString(),
 } = {}) {
-  const localPackage = verifyOwnerOpsLocalPackageCandidateReadback({ root });
+  const localPackage = verifyOwnerOpsInternalProductionPackageReadback({ root });
   const releaseReadback = verifyOwnerOpsPublicReleaseReadbackSnapshot({ root });
   const fieldRepair = verifyOwnerOpsFieldTestRepairCompletionEvidence({ root });
   const findings = [];
 
-  if (localPackage.status !== "ready") findings.push("local_package_candidate_readback_not_ready");
+  if (localPackage.status !== "ready") findings.push("internal_production_package_readback_not_ready");
   if (releaseReadback.status !== "ready") findings.push("public_release_readback_not_ready");
   if (fieldRepair.status !== "ready") findings.push("field_test_repair_completion_not_ready");
   if (releaseReadback.publicReleaseAllowed !== false) findings.push("public_release_boundary_opened");
@@ -2099,8 +2166,8 @@ export function buildOwnerOpsBroaderOwnerTestingHandoff({
     generatedAt: now,
     handoffStage: "broader_owner_testing_pre_public_release",
     handoffScope: [
-      "supervised team alpha continuation",
-      "supervised first-owner beta expansion",
+      "supervised internal acceptance continuation",
+      "supervised owner acceptance expansion",
       "sample or de-identified data only",
       "local package and readback evidence review",
       "field-test repair completion review",
@@ -2209,7 +2276,7 @@ export function verifyOwnerOpsBroaderOwnerTestingHandoff({ root = process.cwd() 
     findings,
     handoffStage: handoff.handoffStage,
     checkedSurfaces: [
-      "local package candidate readback",
+      "internal production package readback",
       "public release readback remains closed",
       "field-test repair completion",
       "sample/de-identified tester instructions",
@@ -2678,12 +2745,12 @@ export function buildOwnerOpsNextOwnerTestingLoop({
   root = process.cwd(),
   now = new Date().toISOString(),
 } = {}) {
-  const localPackage = verifyOwnerOpsLocalPackageCandidateReadback({ root });
+  const localPackage = verifyOwnerOpsInternalProductionPackageReadback({ root });
   const releaseReadback = verifyOwnerOpsPublicReleaseReadbackSnapshot({ root });
   const repairCompletion = verifyOwnerOpsBroaderOwnerTestingRepairCompletionEvidence({ root });
   const findings = [];
 
-  if (localPackage.status !== "ready") findings.push("local_package_candidate_readback_not_ready");
+  if (localPackage.status !== "ready") findings.push("internal_production_package_readback_not_ready");
   if (releaseReadback.status !== "ready") findings.push("public_release_readback_not_ready");
   if (repairCompletion.status !== "ready") findings.push("broader_owner_testing_repair_completion_not_ready");
   if (releaseReadback.publicReleaseAllowed !== false) findings.push("public_release_boundary_opened");
@@ -2814,7 +2881,7 @@ export function verifyOwnerOpsNextOwnerTestingLoop({ root = process.cwd() } = {}
     findings,
     loopStage: loop.loopStage,
     checkedSurfaces: [
-      "local package candidate readback",
+      "internal production package readback",
       "public release readback remains closed",
       "broader owner testing repair completion",
       "sample/de-identified testing plan",
@@ -3235,14 +3302,14 @@ export function buildOwnerOpsSignedPackageEvidence({
   const readiness = buildOwnerOpsReleaseReadinessEvidence({ root, now });
   const humanReview = buildOwnerOpsHumanReviewApprovalPacket({ root, now });
   const signingLane = buildOwnerOpsApprovedSigningLane({ root, now });
-  const readback = readOwnerOpsLocalPackageCandidate({ root });
+  const readback = readOwnerOpsInternalProductionPackage({ root });
   const findings = [];
 
   if (readiness.status !== "ready") findings.push("release_readiness_evidence_not_ready");
   if (humanReview.status !== "ready") findings.push("human_review_packet_not_ready");
   if (signingLane.status !== "ready") findings.push("approved_signing_lane_not_ready");
   if (humanReview.approvalState !== "prepared_not_approved") findings.push("human_review_packet_state_changed");
-  if (readback.status !== "ready") findings.push("local_package_candidate_readback_not_ready");
+  if (readback.status !== "ready") findings.push("internal_production_package_readback_not_ready");
   if (readiness.authorityBoundary.publicReleaseAllowed !== false) findings.push("public_release_boundary_opened");
   if (readiness.authorityBoundary.packageUploadAllowed !== false) findings.push("package_upload_boundary_opened");
 
@@ -3252,8 +3319,8 @@ export function buildOwnerOpsSignedPackageEvidence({
     generatedAt: now,
     packageId: readiness.packageId,
     packageVersion: readiness.packageVersion,
-    signedPackageState: "unsigned_local_candidate",
-    localPackageCandidate: {
+    signedPackageState: "unsigned_internal_production_package",
+    internalProductionPackage: {
       archiveName: readback.archiveName,
       bundleSha256: readback.bundleSha256 || null,
       fileCount: readback.fileCount || 0,
@@ -3299,13 +3366,13 @@ export function buildOwnerOpsApprovedSigningLane({
 } = {}) {
   const readiness = buildOwnerOpsReleaseReadinessEvidence({ root, now });
   const humanReview = buildOwnerOpsHumanReviewApprovalPacket({ root, now });
-  const readback = readOwnerOpsLocalPackageCandidate({ root });
+  const readback = readOwnerOpsInternalProductionPackage({ root });
   const findings = [];
 
   if (readiness.status !== "ready") findings.push("release_readiness_evidence_not_ready");
   if (humanReview.status !== "ready") findings.push("human_review_packet_not_ready");
   if (humanReview.approvalState !== "prepared_not_approved") findings.push("human_review_packet_state_changed");
-  if (readback.status !== "ready") findings.push("local_package_candidate_readback_not_ready");
+  if (readback.status !== "ready") findings.push("internal_production_package_readback_not_ready");
   if (readiness.authorityBoundary.publicReleaseAllowed !== false) findings.push("public_release_boundary_opened");
   if (readiness.authorityBoundary.packageUploadAllowed !== false) findings.push("package_upload_boundary_opened");
 
@@ -3461,7 +3528,7 @@ export function verifyOwnerOpsSignedPackageEvidence({ root = process.cwd() } = {
   const findings = [...evidence.findings];
 
   if (evidence.status !== "ready") findings.push("signed_package_evidence_not_ready");
-  if (evidence.signedPackageState !== "unsigned_local_candidate") findings.push("signed_package_state_must_remain_unsigned");
+  if (evidence.signedPackageState !== "unsigned_internal_production_package") findings.push("signed_package_state_must_remain_unsigned");
   if (evidence.authorityBoundary.signingExecuted !== false) findings.push("signing_must_not_execute");
   if (evidence.authorityBoundary.signedArtifactWritten !== false) findings.push("signed_artifact_write_must_not_execute");
   if (evidence.authorityBoundary.publicReleaseAllowed !== false) findings.push("public_release_must_remain_blocked");
@@ -3495,11 +3562,11 @@ export function buildOwnerOpsInstallUpdateRollbackProof({
 } = {}) {
   const signedEvidence = buildOwnerOpsSignedPackageEvidence({ root, now });
   const install = buildInstallHardeningReport({ root, now });
-  const readback = readOwnerOpsLocalPackageCandidate({ root });
+  const readback = readOwnerOpsInternalProductionPackage({ root });
   const findings = [];
 
   if (signedEvidence.status !== "ready") findings.push("signed_package_evidence_not_ready");
-  if (readback.status !== "ready") findings.push("local_package_candidate_readback_not_ready");
+  if (readback.status !== "ready") findings.push("internal_production_package_readback_not_ready");
   if (install.status === "blocked") findings.push("install_hardening_blocked");
   if (install.application.canInstallNow !== false) findings.push("install_execution_must_remain_blocked");
   if (install.application.canUpdateNow !== false) findings.push("update_execution_must_remain_blocked");
@@ -3513,7 +3580,7 @@ export function buildOwnerOpsInstallUpdateRollbackProof({
     packageId: signedEvidence.packageId,
     packageVersion: signedEvidence.packageVersion,
     proofState: "proof_requirements_ready_not_executed",
-    packageCandidate: {
+    internalProductionPackage: {
       archiveName: readback.archiveName,
       bundleSha256: readback.bundleSha256 || null,
       fileCount: readback.fileCount || 0,
@@ -3625,16 +3692,16 @@ export function buildOwnerOpsDeploymentDryRunPlan({
   now = new Date().toISOString(),
 } = {}) {
   const proof = buildOwnerOpsInstallUpdateRollbackProof({ root, now });
-  const readback = readOwnerOpsLocalPackageCandidate({ root });
+  const readback = readOwnerOpsInternalProductionPackage({ root });
   const findings = [];
 
   if (proof.status !== "ready") findings.push("install_update_rollback_proof_not_ready");
-  if (readback.status !== "ready") findings.push("local_package_candidate_readback_not_ready");
+  if (readback.status !== "ready") findings.push("internal_production_package_readback_not_ready");
   if (proof.authorityBoundary.installExecuted !== false) findings.push("install_must_not_execute_in_plan");
   if (proof.authorityBoundary.updateExecuted !== false) findings.push("update_must_not_execute_in_plan");
   if (proof.authorityBoundary.rollbackExecuted !== false) findings.push("rollback_must_not_execute_in_plan");
 
-  const packageBaseName = (readback.archiveName || proof.packageCandidate.archiveName || "")
+  const packageBaseName = (readback.archiveName || proof.internalProductionPackage.archiveName || "")
     .replace(/\.zip$/, "");
   const bundlePath = `.gpao-t/packages/${packageBaseName}.bundle.json`;
   const manifestPath = `.gpao-t/packages/${packageBaseName}.manifest.json`;
@@ -3647,10 +3714,10 @@ export function buildOwnerOpsDeploymentDryRunPlan({
     packageId: proof.packageId,
     packageVersion: proof.packageVersion,
     planState: "dry_run_plan_only_not_executed",
-    packageCandidate: {
-      archiveName: readback.archiveName || proof.packageCandidate.archiveName,
-      bundleSha256: readback.bundleSha256 || proof.packageCandidate.bundleSha256 || null,
-      fileCount: readback.fileCount || proof.packageCandidate.fileCount || 0,
+    internalProductionPackage: {
+      archiveName: readback.archiveName || proof.internalProductionPackage.archiveName,
+      bundleSha256: readback.bundleSha256 || proof.internalProductionPackage.bundleSha256 || null,
+      fileCount: readback.fileCount || proof.internalProductionPackage.fileCount || 0,
       bundlePath,
       manifestPath,
       checksumPath,
@@ -3715,7 +3782,7 @@ export function buildOwnerOpsDeploymentDryRunPlan({
       },
     ],
     verificationCommands: [
-      "node bin/gpao-t.js owner-ops local-package-candidate-readback-check",
+      "node bin/gpao-t.js owner-ops internal-production-package-readback-check",
       "node bin/gpao-t.js owner-ops install-update-rollback-proof-check",
       "node bin/gpao-t.js owner-ops deployment-dry-run-plan-check",
       "npm run check",
@@ -3771,7 +3838,7 @@ export function writeOwnerOpsDeploymentDryRunPlan({
 
 export function verifyOwnerOpsDeploymentDryRunPlan({ root = process.cwd() } = {}) {
   const plan = buildOwnerOpsDeploymentDryRunPlan({ root });
-  const readbackCheck = verifyOwnerOpsLocalPackageCandidateReadback({ root });
+  const readbackCheck = verifyOwnerOpsInternalProductionPackageReadback({ root });
   const proofCheck = verifyOwnerOpsInstallUpdateRollbackProof({ root });
   const findings = [...plan.findings];
 
@@ -3840,8 +3907,8 @@ export function buildOwnerOpsDryRunExecutorProof({
       approvalTokenRequired: `approve-owner-ops-${requestedLane}-dry-run`,
       scope: {
         lane: requestedLane,
-        packageCandidate: plan.packageCandidate.archiveName,
-        bundleSha256: plan.packageCandidate.bundleSha256,
+        internalProductionPackage: plan.internalProductionPackage.archiveName,
+        bundleSha256: plan.internalProductionPackage.bundleSha256,
         allowedEffect: "read package candidate metadata and produce dry-run simulation output only",
       },
     },
@@ -4022,7 +4089,7 @@ export function buildOwnerOpsDryRunApprovalRecordDesign({
       "decision must be approve_dry_run_invocation",
       "approvalToken must match the requested lane",
       "requestedLane must match the executor proof lane",
-      "bundleSha256 must match the local package candidate",
+      "bundleSha256 must match the internal production package",
       "approval must expire before invocation",
       "approval cannot authorize install/update/rollback execution",
       "approval cannot authorize file mutation, signing, upload, or external download",
@@ -4718,12 +4785,12 @@ export function buildOwnerOpsDryRunResultReviewHandoff({
         ],
     handoffPacket: latestInvocation
       ? {
-          targetAudience: "owner_or_team_alpha_reviewer",
+          targetAudience: "owner_or_internal_acceptance_reviewer",
           decisionNeeded: "review_dry_run_result_before_real_executor_design",
           evidenceRefs: [
             ".gpao-t/owner-ops/dry-runs/dry-run-invocations.jsonl",
             ".gpao-t/owner-ops/approvals/dry-run-approvals.jsonl",
-            ".gpao-t/packages/gpao-t-owner-ops-0.1.0-local-candidate.manifest.json",
+            ".gpao-t/packages/gpao-t-owner-ops-0.1.0-internal-production-package.manifest.json",
           ],
           nextAllowedActions: [
             "review result",
@@ -4842,9 +4909,9 @@ function renderOwnerOpsReleaseReadinessEvidenceMarkdown(evidence) {
     `- Pre-public repair completion: ${evidence.prePublicRepairCompletionEvidence.status}`,
     `- Completed repair items: ${evidence.prePublicRepairCompletionEvidence.completedCount}/${evidence.prePublicRepairCompletionEvidence.itemCount}`,
     `- Distribution evidence: ${evidence.distributionEvidence.status}`,
-    `- Local package candidate: ${evidence.localPackageCandidate.status}`,
-    `- Local package archive: ${evidence.localPackageCandidate.archiveName}`,
-    `- Local package files: ${evidence.localPackageCandidate.fileCount}`,
+    `- Internal production package: ${evidence.internalProductionPackage.status}`,
+    `- Internal production archive: ${evidence.internalProductionPackage.archiveName}`,
+    `- Internal production files: ${evidence.internalProductionPackage.fileCount}`,
     "",
     "## Signed Package Boundary",
     "",
@@ -5181,14 +5248,15 @@ function renderOwnerOpsNextOwnerTestingLoopMarkdown(loop) {
   return `${lines.join("\n")}\n`;
 }
 
-function renderOwnerOpsFinalLocalReleaseCandidateDecisionPacketMarkdown(packet) {
+function renderOwnerOpsProductionReadyDecisionPacketMarkdown(packet) {
   const lines = [
-    "# Owner Ops Final Local Release Candidate Decision Packet",
+    "# Owner Ops Production-Ready Decision Packet",
     "",
-    "This is an owner-readable local release-candidate review surface. It is not public release approval.",
+    "This package is production-ready for supervised internal distribution. It is not public release approval.",
     "",
     `Status: ${packet.status}`,
-    `Candidate state: ${packet.candidateState}`,
+    `Production state: ${packet.productionState}`,
+    `Supervised human verification required: ${packet.supervisedHumanVerificationRequired}`,
     "",
     "## Package Evidence",
     "",
@@ -5283,7 +5351,7 @@ function renderOwnerOpsHumanReviewApprovalPacketMarkdown(packet) {
     `- Pre-public repair completion: ${packet.evidenceSummary.prePublicRepairCompletion}`,
     `- Completed repair items: ${packet.evidenceSummary.completedRepairItems}/${packet.evidenceSummary.totalRepairItems}`,
     `- All repair items locally verified: ${packet.evidenceSummary.allRepairItemsLocallyVerified}`,
-    `- Local package candidate: ${packet.evidenceSummary.localPackageCandidate}`,
+    `- Internal production package: ${packet.evidenceSummary.internalProductionPackage}`,
     "",
     "## Review Checklist",
     "",
@@ -5417,11 +5485,11 @@ function renderOwnerOpsSignedPackageEvidenceMarkdown(evidence) {
     "",
     ...Object.entries(evidence.currentEvidence).map(([key, value]) => `- ${key}: ${value}`),
     "",
-    "## Local Package Candidate",
+    "## Internal Production Package",
     "",
-    `- Archive: ${evidence.localPackageCandidate.archiveName}`,
-    `- Bundle sha256: ${evidence.localPackageCandidate.bundleSha256}`,
-    `- File count: ${evidence.localPackageCandidate.fileCount}`,
+    `- Archive: ${evidence.internalProductionPackage.archiveName}`,
+    `- Bundle sha256: ${evidence.internalProductionPackage.bundleSha256}`,
+    `- File count: ${evidence.internalProductionPackage.fileCount}`,
     "",
     "## Required Before Public Release",
     "",
@@ -5456,11 +5524,11 @@ function renderOwnerOpsInstallUpdateRollbackProofMarkdown(proof) {
     `Proof state: ${proof.proofState}`,
     `Package: ${proof.packageId}@${proof.packageVersion}`,
     "",
-    "## Package Candidate",
+    "## Internal Production Package",
     "",
-    `- Archive: ${proof.packageCandidate.archiveName}`,
-    `- Bundle sha256: ${proof.packageCandidate.bundleSha256}`,
-    `- File count: ${proof.packageCandidate.fileCount}`,
+    `- Archive: ${proof.internalProductionPackage.archiveName}`,
+    `- Bundle sha256: ${proof.internalProductionPackage.bundleSha256}`,
+    `- File count: ${proof.internalProductionPackage.fileCount}`,
     "",
     "## Readiness",
     "",
@@ -5504,12 +5572,12 @@ function renderOwnerOpsDeploymentDryRunPlanMarkdown(plan) {
     `Plan state: ${plan.planState}`,
     `Package: ${plan.packageId}@${plan.packageVersion}`,
     "",
-    "## Package Candidate",
+    "## Internal Production Package",
     "",
-    `- Archive: ${plan.packageCandidate.archiveName}`,
-    `- Bundle sha256: ${plan.packageCandidate.bundleSha256}`,
-    `- File count: ${plan.packageCandidate.fileCount}`,
-    `- Bundle path: ${plan.packageCandidate.bundlePath}`,
+    `- Archive: ${plan.internalProductionPackage.archiveName}`,
+    `- Bundle sha256: ${plan.internalProductionPackage.bundleSha256}`,
+    `- File count: ${plan.internalProductionPackage.fileCount}`,
+    `- Bundle path: ${plan.internalProductionPackage.bundlePath}`,
     "",
     "## Lanes",
     "",
@@ -5740,7 +5808,7 @@ function renderOwnerOpsDryRunResultReviewHandoffMarkdown(handoff) {
 }
 
 function fileEvidence({ root, file }) {
-  const path = resolve(root, file);
+  const path = resolveDistributionFile({ root, file });
   if (!existsSync(path)) {
     return {
       path: file,
@@ -5758,6 +5826,17 @@ function fileEvidence({ root, file }) {
   };
 }
 
+function resolveDistributionFile({ root, file }) {
+  const canonicalPath = resolve(root, file);
+  if (existsSync(canonicalPath)) return canonicalPath;
+  const legacyFile = LEGACY_DISTRIBUTION_FILE_ALIASES.get(file);
+  return legacyFile ? resolve(root, legacyFile) : canonicalPath;
+}
+
+function readDistributionFile({ root, file }) {
+  return readFileSync(resolveDistributionFile({ root, file }));
+}
+
 function readPackageVersion({ root }) {
   const file = resolve(root, "package.json");
   if (!existsSync(file)) return null;
@@ -5766,6 +5845,14 @@ function readPackageVersion({ root }) {
 
 function relativePackagePath(path, root) {
   return path.replace(`${resolve(root)}/`, "");
+}
+
+function packageArtifactSetExists({ root, archiveName }) {
+  const baseName = String(archiveName || "").replace(/\.zip$/, "");
+  if (!baseName) return false;
+  const packageRoot = resolve(root, ".gpao-t", "packages");
+  return ["bundle.json", "manifest.json", "sha256"]
+    .every((suffix) => existsSync(resolve(packageRoot, `${baseName}.${suffix}`)));
 }
 
 function localPackageReadbackAuthority() {

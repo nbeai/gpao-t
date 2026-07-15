@@ -78,7 +78,14 @@ describe("GPAO-T runtime workspace pack", () => {
     assert.equal(existsSync(join(liveWorkspace, "WELCOME.md")), true);
     assert.equal(existsSync(join(liveWorkspace, "gpao-logo.jpeg")), true);
     assert.match(readFileSync(join(liveWorkspace, "AGENTS.md"), "utf8"), /GPAO-T Runtime Constitution/);
-    assert.match(readFileSync(join(liveWorkspace, "memory", "2026-07-12.md"), "utf8"), /GPAO-T runtime workspace absorption/);
+    const day = new Date().toISOString().slice(0, 10);
+    assert.match(
+      readFileSync(join(liveWorkspace, "memory", `${day}.md`), "utf8"),
+      /GPAO-T runtime workspace contract applied/,
+    );
+    const tools = readFileSync(join(liveWorkspace, "TOOLS.md"), "utf8");
+    assert.match(tools, /127\.0\.0\.1:18799/);
+    assert.doesNotMatch(tools, /~\/\.openclaw|\/Users\/jyp\/\.openclaw/);
     assert.ok(applied.backedUp.some((entry) => entry.file === "AGENTS.md" && entry.status === "backed_up"));
 
     const verified = runTool([
@@ -92,5 +99,25 @@ describe("GPAO-T runtime workspace pack", () => {
     ]);
     assert.equal(verified.status, "verified_live");
     assert.equal(verified.verification.status, "pass");
+  });
+
+  it("accepts an absolute canonical GPAO-T live root in a personalized workspace", async () => {
+    const root = tempRoot();
+    const sourcePack = join(root, "source-pack");
+    const evidenceRoot = join(root, "evidence");
+    await cp(SOURCE_PACK, sourcePack, { recursive: true });
+    const toolsPath = join(sourcePack, "TOOLS.md");
+    const tools = readFileSync(toolsPath, "utf8").replaceAll("~/.gpao-t", "/Users/tester/.gpao-t");
+    await writeFile(toolsPath, tools);
+
+    const report = runTool([
+      "--source-pack",
+      sourcePack,
+      "--evidence-root",
+      evidenceRoot,
+    ]);
+
+    assert.equal(report.status, "dry_run");
+    assert.equal(report.verification.status, "pass");
   });
 });

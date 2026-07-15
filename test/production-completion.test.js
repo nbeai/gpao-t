@@ -3,26 +3,27 @@ import { execFileSync } from "node:child_process";
 import { existsSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { describe, it } from "node:test";
+import { handleGatewayRequest } from "../src/index.js";
 import {
-  buildStages5To8Completion,
-  handleGatewayRequest,
-  verifyStages5To8Completion,
-  verifyTeamAlphaPackage,
-  writeTeamAlphaPackage,
-} from "../src/index.js";
+  buildProductionCompletion,
+  verifyProductionCompletion,
+  verifyInternalProductionPackage,
+  writeInternalProductionPackage,
+} from "../src/core/production-completion.js";
 
 const CLI = fileURLToPath(new URL("../bin/gpao-t.js", import.meta.url));
 const ROOT = fileURLToPath(new URL("..", import.meta.url));
 
-describe("GPAO-T production completion stages 5-8", () => {
-  it("builds stages 5-8 as a local production candidate without external distribution", () => {
-    const completion = buildStages5To8Completion({ root: ROOT });
-    const verification = verifyStages5To8Completion({ root: ROOT });
+describe("GPAO-T production completion", () => {
+  it("reports production-ready while keeping external distribution closed", () => {
+    const completion = buildProductionCompletion({ root: ROOT });
+    const verification = verifyProductionCompletion({ root: ROOT });
 
-    assert.equal(completion.schema, "gpao_t.stages_5_to_8_completion.v1");
+    assert.equal(completion.schema, "gpao_t.production_completion.v1");
     assert.equal(completion.status, "ready");
     assert.equal(completion.stages.length, 4);
-    assert.equal(completion.productionBoundary.localProductionCandidate, true);
+    assert.equal(completion.productionBoundary.productionReady, true);
+    assert.equal(completion.productionBoundary.supervisedHumanVerificationRequired, true);
     assert.equal(completion.productionBoundary.externalDistributionExecuted, false);
     assert.equal(completion.productionBoundary.realProviderCredentialStored, false);
     assert.ok(completion.stillApprovalBound.includes("paid provider call"));
@@ -31,11 +32,11 @@ describe("GPAO-T production completion stages 5-8", () => {
     assert.deepEqual(verification.findings, []);
   });
 
-  it("writes and verifies a local-only team alpha package manifest", () => {
-    const result = writeTeamAlphaPackage({ root: ROOT, now: "2026-07-09T00:00:00.000Z" });
-    const verification = verifyTeamAlphaPackage({ root: ROOT });
+  it("writes and verifies an internal production package manifest", () => {
+    const result = writeInternalProductionPackage({ root: ROOT, now: "2026-07-09T00:00:00.000Z" });
+    const verification = verifyInternalProductionPackage({ root: ROOT });
 
-    assert.equal(result.schema, "gpao_t.team_alpha_package_write.v1");
+    assert.equal(result.schema, "gpao_t.internal_production_package_write.v1");
     assert.equal(result.status, "written_local_only");
     assert.equal(result.externalDistributionExecuted, false);
     assert.equal(existsSync(result.manifestPath), true);
@@ -47,26 +48,26 @@ describe("GPAO-T production completion stages 5-8", () => {
   });
 
   it("exposes production completion through CLI and Gateway", () => {
-    const cliCompletion = JSON.parse(execFileSync(process.execPath, [CLI, "production", "stages-5-8"], {
+    const cliCompletion = JSON.parse(execFileSync(process.execPath, [CLI, "production", "completion"], {
       cwd: ROOT,
       encoding: "utf8",
     }));
-    const cliCheck = JSON.parse(execFileSync(process.execPath, [CLI, "production", "stages-5-8-check"], {
+    const cliCheck = JSON.parse(execFileSync(process.execPath, [CLI, "production", "completion-check"], {
       cwd: ROOT,
       encoding: "utf8",
     }));
-    const cliAlpha = JSON.parse(execFileSync(process.execPath, [CLI, "production", "alpha-package"], {
+    const cliAlpha = JSON.parse(execFileSync(process.execPath, [CLI, "production", "internal-production-package"], {
       cwd: ROOT,
       encoding: "utf8",
     }));
-    const cliAlphaCheck = JSON.parse(execFileSync(process.execPath, [CLI, "production", "alpha-package-check"], {
+    const cliAlphaCheck = JSON.parse(execFileSync(process.execPath, [CLI, "production", "internal-production-package-check"], {
       cwd: ROOT,
       encoding: "utf8",
     }));
-    const gatewayCompletion = handleGatewayRequest({ root: ROOT, method: "GET", path: "/production/stages-5-8" });
-    const gatewayCheck = handleGatewayRequest({ root: ROOT, method: "GET", path: "/production/stages-5-8/verify" });
-    const gatewayAlpha = handleGatewayRequest({ root: ROOT, method: "POST", path: "/production/team-alpha-package" });
-    const gatewayAlphaCheck = handleGatewayRequest({ root: ROOT, method: "GET", path: "/production/team-alpha-package/verify" });
+    const gatewayCompletion = handleGatewayRequest({ root: ROOT, method: "GET", path: "/production/completion" });
+    const gatewayCheck = handleGatewayRequest({ root: ROOT, method: "GET", path: "/production/completion/verify" });
+    const gatewayAlpha = handleGatewayRequest({ root: ROOT, method: "POST", path: "/production/internal-production-package" });
+    const gatewayAlphaCheck = handleGatewayRequest({ root: ROOT, method: "GET", path: "/production/internal-production-package/verify" });
 
     assert.equal(cliCompletion.status, "ready");
     assert.equal(cliCheck.status, "ready");

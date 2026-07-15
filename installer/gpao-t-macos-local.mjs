@@ -25,6 +25,7 @@ Safety:
 
 Options:
   --release <path>             Distribution root
+  --node-path <path>           Node executable to install with the runtime
   --state-home <path>          GPAO-T state root (default: ~/.gpao-t)
   --compat-home <path>         Existing compatibility state root
   --launch-agents-dir <path>   LaunchAgents directory
@@ -45,6 +46,7 @@ function parseArgs(argv, defaults) {
   const options = { ...defaults, command, snapshotId: null };
   const valueFlags = new Map([
     ["--release", "release"],
+    ["--node-path", "nodePath"],
     ["--state-home", "stateHome"],
     ["--compat-home", "openclawHome"],
     ["--launch-agents-dir", "launchAgentsDir"],
@@ -67,6 +69,7 @@ function parseArgs(argv, defaults) {
     }
   }
   options.release = resolve(options.release);
+  if (options.nodePath) options.nodePath = resolve(options.nodePath);
   options.stateHome = resolve(options.stateHome);
   options.openclawHome = resolve(options.openclawHome);
   options.launchAgentsDir = resolve(options.launchAgentsDir);

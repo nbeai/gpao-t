@@ -132,6 +132,9 @@ describe("GPAO-T First Real OS Turn Pipeline", () => {
         headers: {
           accept: "application/json",
           "content-type": "application/x-www-form-urlencoded",
+          origin: preview.security.origin,
+          "x-gpao-t-session-token": preview.security.sessionToken,
+          "x-gpao-t-csrf-token": preview.security.csrfToken,
         },
         body: new URLSearchParams({
           request: "브라우저 제출 경로도 GPAO-T OS 턴을 남기는지 확인해줘.",

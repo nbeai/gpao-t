@@ -4,11 +4,10 @@ This file records local tool conventions and runtime equipment notes. It does no
 
 ## Runtime Roots
 
-- GPAO-T live runtime state: local absorbed runtime state directory
-- GPAO-T live runtime workspace: local absorbed runtime workspace
-- GPAO-T core repository: `/Users/jyp/Developer/gpao-t`
-- Technical source reference: clean upstream runtime source kept for engineering comparison
-- GPAO-T lab reference: patched dashboard lab kept for engineering comparison
+- GPAO-T live runtime state: `~/.gpao-t`
+- GPAO-T live runtime workspace: `~/.gpao-t/workspace`
+- GPAO-T core repository on the owner Mac: `/Users/jyp/Developer/gpao-t`
+- Compatibility sources are engineering references only; they are not live state or product identity.
 
 ## Gateway
 
@@ -16,6 +15,17 @@ This file records local tool conventions and runtime equipment notes. It does no
 - Gateway mode: local loopback
 - Do not expose or print gateway auth tokens.
 - Use authenticated Safari session for visual QA when Playwright lacks auth context.
+
+## Current Tool Surface
+
+- Web search: local DuckDuckGo plugin, P0.
+- Web page reading: readability/fetch path, P0.
+- Browser interaction: enabled in the `coding` profile; user-visible calls are logged.
+- Local files: provider-native patch and bounded command execution in `coding/full`; there is no separate model tool named `read` in the current transport.
+- Paired-node file transfer: separate `file-transfer` capability; disabled until node, paths, and explicit authority are configured.
+- Documents: `document-extract` handles PDF extraction; browser picker-to-answer QA still requires an authenticated upload-capable driver.
+- Memory: `local_hybrid_memory_search`; external embedding quota is not required for the default path.
+- Self-growth: routine turns may be classified automatically, but only source-linked review candidates may be captured. Approval and live apply are never fabricated.
 
 ## Core Product Commands
 
@@ -25,7 +35,8 @@ Run from `/Users/jyp/Developer/gpao-t`:
 - Main tests: `npm test`
 - Targeted live/memory tests:
   - `node --test test/live-turn-absorption-bridge.test.js test/connector-governance.test.js test/memory-candidate-review-queue.test.js --test-concurrency=1 --test-timeout=180000 --test-reporter=spec`
-- Runtime status: use the GPAO-T dashboard health and local runtime status checks
+- Runtime health: `curl -fsS http://127.0.0.1:18799/health`
+- Plugin diagnostics: run the GPAO-T runtime plugin doctor through the installed local runtime command lane.
 
 ## Runtime Workspace Pack
 

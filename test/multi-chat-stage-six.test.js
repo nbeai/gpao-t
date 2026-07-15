@@ -108,7 +108,7 @@ describe("GPAO-T multi-chat fixed stages 1-6", () => {
     assert.equal(completion.status, "ready");
     assert.equal(completion.progress.completedStageCount, 6);
     assert.equal(completion.progress.percent, 100);
-    assert.deepEqual(completion.progress.remainingFixedStages, ["Test-team dispatch/update packet refresh"]);
+    assert.deepEqual(completion.progress.remainingFixedStages, ["Internal production distribution/update packet refresh"]);
     assert.equal(check.status, "ready");
     assert.equal(completion.authorityBoundaries.durableMemoryPromotion, "blocked");
     assert.equal(completion.authorityBoundaries.compatibilityMemoryWrite, "blocked");

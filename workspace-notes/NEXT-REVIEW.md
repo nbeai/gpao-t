@@ -2,7 +2,7 @@
 
 ## Next Safe Action
 
-Run beai scenario --apply before scenario verification.
+Resolve completion gate blockers before declaring the product complete.
 
 ## Review Before Continuing
 
@@ -13,12 +13,12 @@ Run beai scenario --apply before scenario verification.
 
 ## Session Resume
 
-Run beai scenario --apply before scenario verification.
+Apply the newer source guidance to implementation or explicitly mark it out of scope before claiming completion.
 
 ## Recent Evidence
 
-- preflight: Read-only workspace check completed for gpao-t.
-- preflight: Read-only workspace check completed for gpao-t.
-- route: Routed work as standard.
 - plan: Saved build plan.
+- doctor: Doctor status: blocked.
 - verify: Detected 2 checks without running them.
+- scenario: Saved scenario for Guided First Workflow.
+- verify: Executed 2 checks.

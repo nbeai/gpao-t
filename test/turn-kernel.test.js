@@ -1,7 +1,15 @@
 import assert from "node:assert/strict";
+import { mkdtempSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { describe, it } from "node:test";
 import { runDoctor, runTurn } from "../src/index.js";
+import { appendTCellCandidate } from "../src/core/memory-wiki.js";
 import releaseFixture from "../fixtures/replay/release-file-active-target.json" with { type: "json" };
+
+function tempRoot() {
+  return mkdtempSync(join(tmpdir(), "gpao-t-turn-kernel-"));
+}
 
 describe("GPAO-T turn kernel", () => {
   it("recovers the active target for a short Korean follow-up", () => {
@@ -45,6 +53,80 @@ describe("GPAO-T turn kernel", () => {
     assert.ok(result.authorityDecision.requiredApprovals.includes("public_release_or_distribution"));
     assert.ok(result.toolPlan.admittedTools.includes("local_draft"));
     assert.ok(result.authorityDecision.blockedActions.includes("public_release"));
+  });
+
+  it("does not treat the substring it inside a word as a follow-up", () => {
+    const result = runTurn({
+      root: tempRoot(),
+      input: { text: "Audit runtime behavior and summarize the result." },
+      priorFlow: releaseFixture.priorFlow,
+    });
+
+    assert.equal(result.inputSignal.kind, "general_request");
+    assert.equal(result.sessionOverlay.activeTargetId, "general-runtime");
+    assert.equal(result.sessionOverlay.continuityState, "fresh");
+    assert.equal(result.sessionOverlay.stalePriorTarget, true);
+  });
+
+  it("keeps role-conflict cells out of admission and the TaskPacket", () => {
+    const root = tempRoot();
+    const conflictId = "tcell.reviewed.release-file-conflict";
+    appendTCellCandidate({
+      id: conflictId,
+      pi: "Use an obsolete release-file target even when it conflicts with the current target.",
+      x: ["그럼 배포파일은?"],
+      anchor: "release-file",
+      radius: { scope: "project", validFor: ["follow_up"], invalidFor: [] },
+      depth: { evidenceStrength: 0.9, stability: 0.8, replayPassRate: 1 },
+      source: { refs: ["test:role-conflict"], surface: "test", evidenceLevel: "reviewed" },
+      relations: { supports: [], contradicts: ["release-file"], supersedes: [], sameSphere: [] },
+      weights: { relevance: 0.9, confidence: 0.9, freshness: 0.9, risk: 0.2, cost: 0.1 },
+      lifecycle: "reviewed",
+      authority: {
+        allowedUse: ["answer_anchor", "supporting_context"],
+        blockedUse: ["external_action"],
+      },
+      trace: { createdFrom: "test:role-conflict" },
+    }, { root });
+
+    const result = runTurn({
+      root,
+      input: releaseFixture.input,
+      priorFlow: releaseFixture.priorFlow,
+    });
+    const conflict = result.admissionPacket.rejectedCells.find((cell) => cell.id === conflictId);
+
+    assert.equal(conflict?.role, "conflict");
+    assert.equal(conflict?.admitted, false);
+    assert.equal(result.admissionPacket.admittedCells.some((cell) => cell.id === conflictId), false);
+    assert.equal(result.taskPacket.admittedTCells.some((cell) => cell.id === conflictId), false);
+  });
+
+  it("rechecks recovered high-risk execution targets through authority", () => {
+    const result = runTurn({
+      root: tempRoot(),
+      input: { text: "Then do it." },
+      priorFlow: releaseFixture.priorFlow,
+    });
+
+    assert.equal(result.inputSignal.kind, "follow_up");
+    assert.equal(result.admissionPacket.targetSource, "prior_flow_follow_up");
+    assert.equal(result.admissionPacket.activeTargetId, "release-file");
+    assert.equal(result.authorityDecision.status, "needs_approval");
+    assert.ok(result.authorityDecision.requiredApprovals.includes("public_release_or_distribution"));
+  });
+
+  it("treats explicit high-risk negation as non-execution", () => {
+    const result = runTurn({
+      root: tempRoot(),
+      input: { text: "Do not deploy it." },
+      priorFlow: releaseFixture.priorFlow,
+    });
+
+    assert.equal(result.inputSignal.kind, "follow_up");
+    assert.equal(result.admissionPacket.targetSource, "prior_flow_follow_up");
+    assert.equal(result.authorityDecision.status, "allowed");
+    assert.equal(result.authorityDecision.requiredApprovals.includes("public_release_or_distribution"), false);
   });
 
   it("adds intent-based skill routing to the task packet and user-visible state", () => {

@@ -64,7 +64,7 @@ Allowed:
 
 - stages 1-6 local/Gateway/preview completion package is implemented
 - stage 1-6 verification is ready
-- next fixed stage is test-team dispatch/update packet refresh
+- next fixed stage is internal-production package/internal-verification packet refresh
 
 Not allowed:
 
@@ -77,4 +77,4 @@ Not allowed:
 
 ## Next Fixed Stage
 
-7. Test-team dispatch/update packet refresh.
+7. Internal-production package/internal-verification packet refresh.

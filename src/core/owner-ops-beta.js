@@ -1,11 +1,14 @@
 import { buildOwnerOpsFirstOwnerScenarioFixture } from "./owner-ops-scenarios.js";
-import { buildOwnerOpsAlphaFeedbackForm, verifyOwnerOpsHostAlphaHandoff } from "./owner-ops-alpha-handoff.js";
+import {
+  buildOwnerOpsInternalAcceptanceFeedbackForm,
+  verifyOwnerOpsHostInternalAcceptanceHandoff,
+} from "./owner-ops-alpha-handoff.js";
 
 export function buildOwnerOpsSampleDataKit() {
   return {
     schema: "gpao_t.owner_ops_sample_data_kit.v0_1",
     status: "ready",
-    title: "Owner Ops 첫 사장님 테스트 샘플 데이터 키트",
+    title: "Owner Ops 사장님 수용 검토 샘플 데이터 키트",
     purpose:
       "실제 고객 개인정보를 넣기 전에 리뷰, 문의, 예약 흐름을 안전하게 체감하도록 만든 비식별 샘플 자료다.",
     samples: [
@@ -35,7 +38,7 @@ export function buildOwnerOpsSampleDataKit() {
       "실명, 전화번호, 주소, 계좌번호, 주문번호는 샘플로 바꾼다.",
       "민감한 고객 불만은 의미만 남기고 식별 가능한 상황 설명은 제거한다.",
       "실제 플랫폼 계정이나 API 키는 절대 넣지 않는다.",
-      "처음 테스트는 반드시 샘플 데이터로 시작한다.",
+      "첫 수용 검토는 반드시 샘플 데이터로 시작한다.",
     ],
     blockedActions: [
       "customer_message_send",
@@ -47,14 +50,14 @@ export function buildOwnerOpsSampleDataKit() {
   };
 }
 
-export function buildOwnerOpsFirstOwnerBetaGuide() {
+export function buildOwnerOpsOwnerAcceptanceGuide() {
   const scenario = buildOwnerOpsFirstOwnerScenarioFixture();
-  const feedback = buildOwnerOpsAlphaFeedbackForm();
+  const feedback = buildOwnerOpsInternalAcceptanceFeedbackForm();
 
   return {
-    schema: "gpao_t.owner_ops_first_owner_beta_guide.v0_1",
+    schema: "gpao_t.owner_ops_owner_acceptance_guide.v0_1",
     status: "ready",
-    title: "Owner Ops 첫 사장님 Beta 안내서",
+    title: "Owner Ops 사장님 수용 검토 안내서",
     audience: ["한국 자영업자", "1인/소규모 사업 운영자", "AI 도구 초심자"],
     goal:
       "사장님이 샘플 또는 비식별 자료를 넣고, 분류와 답변 초안을 확인한 뒤, 고객에게 직접 보낼지 판단할 수 있게 한다.",
@@ -65,7 +68,7 @@ export function buildOwnerOpsFirstOwnerBetaGuide() {
       "먼저 분류하고, 답변 초안을 만들고, 확인용 기록만 남깁니다.",
       "초안이 마음에 들면 사장님이 직접 복사해서 고쳐 쓰면 됩니다.",
     ],
-    testFlow: [
+    acceptanceFlow: [
       "샘플 CSV 또는 비식별 문의를 붙여넣는다.",
       "문의 유형 분류와 답변 초안을 확인한다.",
       "환불/취소/외부 전송이 잠겨 있는지 확인한다.",
@@ -93,19 +96,19 @@ export function buildOwnerOpsFirstOwnerBetaGuide() {
       "공개 마켓 게시",
     ],
     nextSafeAction:
-      "첫 사장님 beta 피드백을 업종별 템플릿 후보와 owner-facing UX copy에 반영한 뒤, beta 반복 테스트를 진행한다.",
+      "사장님 수용 피드백을 업종별 템플릿 후보와 owner-facing UX copy에 반영한 뒤, 필요한 감독형 검토를 반복한다.",
   };
 }
 
-export function verifyOwnerOpsFirstOwnerBetaReadiness({ root } = {}) {
-  const alpha = verifyOwnerOpsHostAlphaHandoff({ root });
+export function verifyOwnerOpsOwnerAcceptanceReadiness({ root } = {}) {
+  const internalAcceptance = verifyOwnerOpsHostInternalAcceptanceHandoff({ root });
   const kit = buildOwnerOpsSampleDataKit();
-  const guide = buildOwnerOpsFirstOwnerBetaGuide();
+  const guide = buildOwnerOpsOwnerAcceptanceGuide();
   const findings = [];
 
-  if (alpha.status !== "ready") findings.push("host_alpha_handoff_not_ready");
+  if (internalAcceptance.status !== "ready") findings.push("host_internal_acceptance_handoff_not_ready");
   if (kit.status !== "ready") findings.push("sample_data_kit_not_ready");
-  if (guide.status !== "ready") findings.push("first_owner_beta_guide_not_ready");
+  if (guide.status !== "ready") findings.push("owner_acceptance_guide_not_ready");
   if (kit.samples.length < 3) findings.push("not_enough_sample_data");
   if (!kit.redactionRules.some((rule) => rule.includes("전화번호"))) findings.push("missing_pii_redaction_rule");
   if (!guide.stopConditions.some((condition) => condition.includes("개인정보"))) {
@@ -114,22 +117,26 @@ export function verifyOwnerOpsFirstOwnerBetaReadiness({ root } = {}) {
   if (!guide.stillBlocked.includes("고객 자동 발송")) findings.push("missing_customer_send_block");
 
   return {
-    schema: "gpao_t.owner_ops_first_owner_beta_readiness_check.v0_1",
+    schema: "gpao_t.owner_ops_owner_acceptance_readiness_check.v0_1",
     status: findings.length ? "blocked" : "ready",
     findings,
     checkedSurfaces: [
-      "host alpha handoff",
+      "host internal acceptance handoff",
       "sample data kit",
-      "first owner beta guide",
+      "owner acceptance guide",
       "owner stop conditions",
       "blocked live actions",
     ],
-    betaStage: "first_owner_beta_candidate",
+    acceptanceStage: "owner_acceptance",
     publicRelease: "not_published",
     liveAccountConnection: "blocked",
     externalActionsRemainBlocked: true,
     nextSafeAction: findings.length
-      ? "Fix first owner beta readiness findings before inviting a real owner."
-      : "Run one supervised first-owner beta with sample or de-identified data only; do not publish or connect live accounts.",
+      ? "Fix owner acceptance readiness findings before inviting a real owner."
+      : "Run one supervised owner acceptance with sample or de-identified data only; do not publish or connect live accounts.",
   };
 }
+
+// One-cycle API compatibility aliases. Canonical output remains internal-production terminology.
+export const buildOwnerOpsFirstOwnerBetaGuide = buildOwnerOpsOwnerAcceptanceGuide;
+export const verifyOwnerOpsFirstOwnerBetaReadiness = verifyOwnerOpsOwnerAcceptanceReadiness;

@@ -3,7 +3,7 @@
 Status: out of scope for the current GPAO-T/OpenClaw absorption project
 Date: 2026-07-12
 
-`gpao-t-hardware-engine` is not part of the current GPAO-T test-team candidate, live OpenClaw absorption path, source seal, package seal, or completion gate.
+`gpao-t-hardware-engine` is not part of the current GPAO-T product, active compatibility path, source seal, package seal, or completion gate.
 
 The local folder was moved out of the active workspace path:
 

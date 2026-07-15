@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import { access, mkdtemp, rm } from "node:fs/promises";
 import { join, resolve } from "node:path";
-import { tmpdir } from "node:os";
+import { homedir, tmpdir } from "node:os";
 import { fileURLToPath } from "node:url";
 import {
   extractZipArchive,
@@ -11,14 +11,12 @@ import {
   verifyArchiveChecksum,
   verifyCurrentSourceBuild,
   verifyDistributionManifest,
-} from "./gpao-t-test-team-distribution-seal.mjs";
+} from "./gpao-t-production-distribution-seal.mjs";
 
 const PROJECT_ROOT = fileURLToPath(new URL("..", import.meta.url));
 const DEFAULT_SOURCE_BUILD = resolve(
-  PROJECT_ROOT,
-  "..",
-  "gpao-t-lab",
-  "gpao-t-openclaw-dashboard-lab",
+  process.env.GPAO_T_RUNTIME_SOURCE_BUILD ||
+  join(homedir(), ".gpao-t", "current", "compatibility", "gpao-t"),
 );
 
 function arg(name, fallback) {
@@ -43,7 +41,7 @@ async function main() {
   const archiveValue = arg("--archive", process.argv[2]?.startsWith("-") ? undefined : process.argv[2]);
   if (!archiveValue) {
     throw new Error(
-      "usage: node tools/verify-gpao-t-test-team-distribution.mjs --archive <archive.zip> [--checksum <archive.zip.sha256>] [--source-build <path>] [--skip-source-build-check]",
+      "usage: node tools/verify-gpao-t-production-distribution.mjs --archive <archive.zip> [--checksum <archive.zip.sha256>] [--source-build <path>] [--skip-source-build-check]",
     );
   }
   const archive = resolve(archiveValue);

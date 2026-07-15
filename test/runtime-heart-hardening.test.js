@@ -20,7 +20,7 @@ function authReadyFixture() {
   const compatibilityDir = join(legacyStateDir, "agents", "main", "agent");
   mkdirSync(canonicalDir, { recursive: true });
   mkdirSync(compatibilityDir, { recursive: true });
-  writeFileSync(join(canonicalDir, "gpao-t-agent.sqlite"), "test-auth-store");
+  writeFileSync(join(canonicalDir, "openclaw-agent.sqlite"), "test-auth-store");
   writeFileSync(join(compatibilityDir, "openclaw-agent.sqlite"), "test-auth-store");
   return { root: SOURCE_ROOT, stateDir, legacyStateDir };
 }

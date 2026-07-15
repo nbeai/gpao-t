@@ -1,6 +1,6 @@
 # GPAO-T Three-Track Process Guard v0.1
 
-Status: active process guard  
+Status: historical v0.1 process guard; track names retained, absorption rule superseded
 Date: 2026-07-11  
 Owner: 윤  
 Synthesis Lead: Codex  
@@ -13,7 +13,7 @@ This document turns the remaining GPAO-T work into three large tracks so the pro
 The guard exists for one reason:
 
 ```text
-Every work unit must move live OpenClaw closer to becoming GPAO-T from the inside.
+Every work unit must move GPAO-T closer to an independent, testable Personal Growth OS.
 ```
 
 ## 1. Three Tracks
@@ -63,7 +63,7 @@ The visible user operating environment.
 
 Includes:
 
-- OpenClaw Gateway Dashboard absorption
+- GPAO-T dashboard and compatibility-surface replacement
 - Codex-like multi-session / multi-work-pane UX
 - chat condition and progress affordances
 - session rail
@@ -93,7 +93,7 @@ Includes:
 
 - model routing
 - local CLI/MCP/tool execution
-- OpenClaw runtime absorption and module replacement
+- independent GPAO-T runtime and compatibility-module replacement
 - install/update/rollback
 - doctor/health check
 - long replay
@@ -308,4 +308,3 @@ Evidence:
 
 Next Single Action:
 ```
-

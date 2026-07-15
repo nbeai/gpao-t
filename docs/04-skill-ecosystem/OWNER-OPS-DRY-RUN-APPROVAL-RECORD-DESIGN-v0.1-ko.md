@@ -59,7 +59,7 @@ approve_dry_run_invocation
 - decision은 `approve_dry_run_invocation`이어야 한다.
 - approvalToken은 요청 lane과 일치해야 한다.
 - requestedLane은 executor proof lane과 일치해야 한다.
-- bundleSha256은 local package candidate와 일치해야 한다.
+- bundleSha256은 내부 프로덕션 패키지와 일치해야 한다.
 - approval은 invocation 전에 만료되지 않아야 한다.
 - approval은 install/update/rollback 실행 권한이 아니다.
 - approval은 file mutation, signing, upload, external download 권한이 아니다.

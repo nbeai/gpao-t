@@ -33,17 +33,17 @@ function seedAppliedContextMeshCandidate(root) {
     now: "2026-07-11T00:00:00.000Z",
     request: "GPAO-T applied context mesh replay seed",
     source: {
-      kind: "openclaw_live_dashboard",
-      refs: ["session:agent:main:main", "docs:GPAO-T-OPENCLAW-ABSORPTION-ONE-STOP-2026-07-11.md"],
-      label: "Live OpenClaw memory review state",
-      rawExcerpt: "GPAO-T memory candidates must stay review-only until replay, apply request, and rollback receipt exist.",
+      kind: "gpao_t_dashboard",
+      refs: ["session:agent:main:main", "docs:GPAO-T-SELF-GROWTH-LOOP-CONTRACT-v0.1-ko.md"],
+      label: "GPAO-T memory review state",
+      rawExcerpt: "GPAO-T memory candidates remain review-only until replay, scoped approval, apply request, and rollback receipt exist.",
     },
     candidate: {
-      title: "Live OpenClaw memory candidates stay review-only before replay",
+      title: "GPAO-T memory candidates stay review-only before replay",
       operatingPrinciple:
-        "When GPAO-T extracts memory candidates from live OpenClaw state, keep them review-only until source truth, replay evidence, apply request, and rollback receipt exist.",
+        "When GPAO-T extracts memory candidates, keep them review-only until source truth, replay evidence, scoped approval, apply request, and rollback receipt exist.",
       reason: "This prevents raw session state or UI signals from becoming durable memory or runtime authority too early.",
-      expectedBenefit: "Preserve source trace and reduce unsafe memory promotion while developing GPAO-T inside OpenClaw.",
+      expectedBenefit: "Preserve source trace and reduce unsafe memory promotion inside the GPAO-T runtime.",
       invalidConditions: ["The user explicitly opens a broader durable memory promotion task."],
       anchor: "memory-review-queue",
     },
@@ -54,7 +54,15 @@ function seedAppliedContextMeshCandidate(root) {
     now: "2026-07-11T00:01:00.000Z",
     beforeOutput: "메모리를 저장합니다.",
     afterOutput:
-      "OpenClaw live state에서 추출한 memory candidate는 source truth, replay evidence, apply request, rollback receipt 전까지 review-only로 유지합니다.",
+      "GPAO-T가 추출한 memory candidate는 source truth, replay evidence, scoped approval, apply request, rollback receipt 전까지 review-only로 유지합니다.",
+    replayCase: {
+      mode: "independent_observation",
+      stage: "pre_apply",
+      requestRef: "user-turn:memory-wiki-seed-replay",
+      observationRef: "model-output:memory-wiki-seed-replay",
+      evaluatorRef: "replay-evaluator:memory-wiki-seed-replay",
+      candidatePrincipleInjectedByHarness: false,
+    },
   });
   const applyRequest = appendMemoryApplyRequest({
     root,
@@ -67,15 +75,39 @@ function seedAppliedContextMeshCandidate(root) {
   const bridge = appendMemoryApplyApprovalAuditBridge({
     root,
     applyRequest,
-    confirmationState: "confirmed_for_local_context_mesh_apply",
+    approval: {
+      decision: "approved",
+      candidateId: candidate.id,
+      target: applyRequest.target,
+      userTurnRef: "user-turn:memory-wiki-seed-approval",
+      approvalReference: "approval-receipt:memory-wiki-seed",
+    },
     now: "2026-07-11T00:03:00.000Z",
   });
-  return appendMemoryReversibleApply({
+  const applied = appendMemoryReversibleApply({
     root,
     applyRequest,
     approvalAuditBridge: bridge,
     now: "2026-07-11T00:04:00.000Z",
   });
+  appendMemoryReplayEvidence({
+    root,
+    candidateRecord: candidate,
+    applyRecord: applied,
+    now: "2026-07-11T00:04:30.000Z",
+    beforeOutput: "메모리 후보를 즉시 답변 기준으로 사용합니다.",
+    afterOutput:
+      "GPAO-T memory candidate는 source truth, replay evidence, scoped approval, apply request, rollback receipt를 확인한 뒤에만 답변 기준으로 사용합니다.",
+    replayCase: {
+      mode: "independent_observation",
+      stage: "post_apply",
+      requestRef: "user-turn:memory-wiki-seed-post-apply",
+      observationRef: "model-output:memory-wiki-seed-post-apply",
+      evaluatorRef: "replay-evaluator:memory-wiki-seed-post-apply",
+      candidatePrincipleInjectedByHarness: false,
+    },
+  });
+  return applied;
 }
 
 describe("GPAO-T Memory Wiki and Context Mesh", () => {
@@ -95,6 +127,9 @@ describe("GPAO-T Memory Wiki and Context Mesh", () => {
     assert.equal(candidates.length, 1);
     assert.equal(candidates[0].anchor, "release-file");
     assert.equal(candidates[0].lifecycle, "candidate");
+    assert.ok(candidates[0].authority.allowedUse.includes("candidate_evidence"));
+    assert.ok(candidates[0].authority.allowedUse.includes("supporting_context"));
+    assert.ok(candidates[0].authority.blockedUse.includes("answer_anchor"));
     assert.ok(candidates[0].authority.blockedUse.includes("durable_promotion"));
   });
 
@@ -115,6 +150,10 @@ describe("GPAO-T Memory Wiki and Context Mesh", () => {
     assert.equal(mesh.status, "ready");
     assert.equal(mesh.retrievedCandidates[0].anchor, "release-file");
     assert.match(mesh.retrievedCandidates[0].pi, /GPAO-T Operating Package/);
+    assert.equal(mesh.retrievedCandidates[0].lifecycle, "candidate");
+    assert.equal(mesh.retrievedCandidates[0].admissionRole, "supporting_context");
+    assert.equal(mesh.retrievedCandidates[0].answerAnchorEligible, false);
+    assert.match(mesh.retrievedCandidates[0].downgradeReason, /cannot become answer_anchor before review/);
     assert.match(mesh.boundary, /not admitted context/);
   });
 
@@ -153,10 +192,16 @@ describe("GPAO-T Memory Wiki and Context Mesh", () => {
       priorFlow: { flowKey: "gpao-t-dev-flow", activeTargetId: "release-file" },
     });
     const admittedIds = result.admissionPacket.admittedCells.map((cell) => cell.id);
+    const candidateCell = result.admissionPacket.admittedCells.find((cell) => cell.id.includes("tcell.candidate"));
 
     assert.equal(result.contextRuntime.memoryWiki.retrievedCandidateCount, 1);
     assert.equal(result.contextRuntime.mesh.status, "ready");
     assert.equal(admittedIds.some((id) => id.includes("tcell.candidate")), true);
+    assert.equal(candidateCell?.role, "support");
+    assert.equal(
+      result.admissionPacket.admittedCells.some((cell) => cell.id.includes("tcell.candidate") && cell.role === "anchor"),
+      false,
+    );
     assert.equal(result.taskPacket.activeTargetId, "release-file");
   });
 

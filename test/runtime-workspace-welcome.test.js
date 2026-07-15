@@ -28,7 +28,12 @@ async function seedWorkspace(root) {
     "WELCOME.md",
     "RUNTIME-MANIFEST.json",
   ]) {
-    await writeFile(join(root, file), file === "WELCOME.md" ? "# WELCOME\n\n## Required Setup Questions\n" : "nBeAI. GPAO-T\nUser Name\n");
+    await writeFile(
+      join(root, file),
+      file === "WELCOME.md"
+        ? "# WELCOME\n\n## Required Setup Questions\n"
+        : "nBeAI. GPAO-T\nIndependent, local-first Growth Personal AI Operating System\nUser Name\n",
+    );
   }
 }
 
@@ -74,8 +79,27 @@ describe("runtime workspace welcome setup", () => {
     assert.equal(applied.status, "applied");
     assert.equal(existsSync(join(root, "WELCOME-STATE.json")), true);
     assert.match(readFileSync(join(root, "IDENTITY.md"), "utf8"), /Companion Persona Name/);
+    assert.match(
+      readFileSync(join(root, "IDENTITY.md"), "utf8"),
+      /Independent, local-first Growth Personal AI Operating System/,
+    );
+    assert.match(
+      readFileSync(join(root, "SOUL.md"), "utf8"),
+      /independent, local-first Growth Personal AI Operating System/,
+    );
     assert.match(readFileSync(join(root, "MEMORY.md"), "utf8"), /GPAO-T를 개발 중이다/);
     assert.equal(verifyRuntimeWorkspaceWelcome({ workspaceRoot: root }).status, "ready");
+  });
+
+  it("blocks a personalized workspace that drops the independent product contract", async () => {
+    const root = tempRoot();
+    await seedWorkspace(root);
+    await writeFile(join(root, "IDENTITY.md"), "nBeAI. GPAO-T\n");
+
+    const verified = verifyRuntimeWorkspaceWelcome({ workspaceRoot: root });
+
+    assert.equal(verified.status, "blocked");
+    assert.ok(verified.findings.includes("identity_independent_product_contract_missing"));
   });
 
   it("does not inject a private default companion before personalization", async () => {

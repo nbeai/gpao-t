@@ -32,7 +32,7 @@ GET  /owner-ops/next-owner-testing-loop/verify
 
 ## 준비 조건
 
-- local package candidate readback: `ready`
+- internal production package readback: `ready`
 - public release readback: `ready`, 단 public release authority는 closed
 - broader owner testing repair completion: `ready`
 - 이전 수리 항목이 다음 테스트 시나리오에 반영됨

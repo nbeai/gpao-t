@@ -8,17 +8,9 @@ import { fileURLToPath } from "node:url";
 import {
   appendOwnerOpsBroaderOwnerTestingResult,
   appendOwnerOpsFieldTestRecord,
-  buildOwnerOpsFinalLocalReleaseCandidateDecisionPacket,
-  buildOwnerOpsFinalCandidateOwnerDecisionLane,
-  buildOwnerOpsFinalCandidateNextActionPacket,
   buildOwnerOpsProductionCompletionAudit,
-  buildOwnerOpsSupervisedTestingReadinessPacket,
   handleGatewayRequest,
-  verifyOwnerOpsFinalCandidateNextActionPacket,
-  verifyOwnerOpsFinalCandidateOwnerDecisionLane,
-  verifyOwnerOpsFinalLocalReleaseCandidateDecisionPacket,
   verifyOwnerOpsProductionCompletionAudit,
-  verifyOwnerOpsSupervisedTestingReadinessPacket,
   writeOwnerOpsBetaFeedbackActionQueue,
   writeOwnerOpsBroaderOwnerTestingHandoff,
   writeOwnerOpsBroaderOwnerTestingRepairCompletionEvidence,
@@ -31,7 +23,6 @@ import {
   writeOwnerOpsFirstOwnerBetaResultReview,
   writeOwnerOpsHumanReviewApprovalPacket,
   writeOwnerOpsInstallUpdateRollbackProof,
-  writeOwnerOpsLocalPackageCandidate,
   writeOwnerOpsMarketEvidenceBundle,
   writeOwnerOpsNextOwnerTestingLoop,
   writeOwnerOpsPrePublicRepairBacklog,
@@ -40,6 +31,19 @@ import {
   writeOwnerOpsSignedPackageEvidence,
   writeOwnerOpsTeamAlphaHandoffBundle,
 } from "../src/index.js";
+import {
+  buildOwnerOpsProductionReadyDecisionPacket,
+  buildOwnerOpsInternalProductionOwnerDecision,
+  buildOwnerOpsInternalProductionNextAction,
+  verifyOwnerOpsProductionReadyDecisionPacket,
+  verifyOwnerOpsInternalProductionOwnerDecision,
+  verifyOwnerOpsInternalProductionNextAction,
+  writeOwnerOpsInternalProductionPackage,
+} from "../src/core/owner-ops-distribution.js";
+import {
+  buildOwnerOpsInternalProductionReadiness,
+  verifyOwnerOpsInternalProductionReadiness,
+} from "../src/core/owner-ops-product-readiness.js";
 
 const CLI = fileURLToPath(new URL("../bin/gpao-t.js", import.meta.url));
 
@@ -75,11 +79,11 @@ function populateDistributionRoot(root) {
     "docs/04-skill-ecosystem/OWNER-OPS-MCP-CONNECTOR-PLAN-ko.md",
     "docs/04-skill-ecosystem/OWNER-OPS-PLUGIN-PACKAGE-v0.1-ko.md",
     "docs/04-skill-ecosystem/OWNER-OPS-FIRST-OWNER-SCENARIO-ko.md",
-    "docs/04-skill-ecosystem/OWNER-OPS-TEAM-ALPHA-GUIDE-v0.1-ko.md",
+    "docs/04-skill-ecosystem/OWNER-OPS-INTERNAL-PRODUCTION-OPERATING-CONTRACT-v0.1-ko.md",
+    "docs/04-skill-ecosystem/OWNER-OPS-INTERNAL-ACCEPTANCE-v0.1-ko.md",
     "docs/04-skill-ecosystem/OWNER-OPS-HOST-REGISTRATION-AND-FEEDBACK-v0.1-ko.md",
-    "docs/04-skill-ecosystem/OWNER-OPS-FIRST-OWNER-BETA-GUIDE-v0.1-ko.md",
-    "docs/04-skill-ecosystem/OWNER-OPS-FIRST-OWNER-BETA-HANDOFF-BUNDLE-v0.1-ko.md",
-    "docs/04-skill-ecosystem/OWNER-OPS-FIRST-OWNER-BETA-RESULT-REVIEW-v0.1-ko.md",
+    "docs/04-skill-ecosystem/OWNER-OPS-OWNER-ACCEPTANCE-v0.1-ko.md",
+    "docs/04-skill-ecosystem/OWNER-OPS-INTERNAL-PRODUCTION-PACKAGE-v0.1-ko.md",
     "docs/04-skill-ecosystem/OWNER-OPS-FIELD-TEST-LEDGER-v0.1-ko.md",
     "docs/04-skill-ecosystem/OWNER-OPS-FIELD-TEST-ACTION-QUEUE-v0.1-ko.md",
     "docs/04-skill-ecosystem/OWNER-OPS-FIELD-TEST-REPAIR-COMPLETION-EVIDENCE-v0.1-ko.md",
@@ -88,9 +92,7 @@ function populateDistributionRoot(root) {
     "docs/04-skill-ecosystem/OWNER-OPS-BROADER-OWNER-TESTING-REPAIR-QUEUE-v0.1-ko.md",
     "docs/04-skill-ecosystem/OWNER-OPS-BROADER-OWNER-TESTING-REPAIR-COMPLETION-EVIDENCE-v0.1-ko.md",
     "docs/04-skill-ecosystem/OWNER-OPS-NEXT-OWNER-TESTING-LOOP-v0.1-ko.md",
-    "docs/04-skill-ecosystem/OWNER-OPS-FINAL-LOCAL-RELEASE-CANDIDATE-DECISION-PACKET-v0.1-ko.md",
-    "docs/04-skill-ecosystem/OWNER-OPS-FINAL-CANDIDATE-OWNER-DECISION-LANE-v0.1-ko.md",
-    "docs/04-skill-ecosystem/OWNER-OPS-FINAL-CANDIDATE-NEXT-ACTION-PACKET-v0.1-ko.md",
+    "docs/04-skill-ecosystem/OWNER-OPS-INTERNAL-PRODUCTION-OWNER-DECISION-v0.1-ko.md",
     "docs/04-skill-ecosystem/OWNER-OPS-MARKET-READINESS-GATE-v0.1-ko.md",
     "docs/04-skill-ecosystem/OWNER-OPS-MARKET-EVIDENCE-BUNDLE-v0.1-ko.md",
     "docs/04-skill-ecosystem/OWNER-OPS-PRE-PUBLIC-PACKAGE-REVIEW-v0.1-ko.md",
@@ -105,7 +107,7 @@ function populateDistributionRoot(root) {
     "docs/04-skill-ecosystem/OWNER-OPS-PUBLIC-RELEASE-READBACK-SNAPSHOT-v0.1-ko.md",
     "docs/04-skill-ecosystem/OWNER-OPS-PRODUCT-AXIS-READINESS-MATRIX-v0.1-ko.md",
     "docs/04-skill-ecosystem/OWNER-OPS-PRODUCTION-COMPLETION-AUDIT-v0.1-ko.md",
-    "docs/04-skill-ecosystem/OWNER-OPS-SUPERVISED-TESTING-READINESS-PACKET-v0.1-ko.md",
+    "docs/04-skill-ecosystem/OWNER-OPS-INTERNAL-PRODUCTION-READINESS-v0.1-ko.md",
     "docs/04-skill-ecosystem/OWNER-OPS-APPROVED-SIGNING-LANE-v0.1-ko.md",
     "docs/04-skill-ecosystem/OWNER-OPS-MARKETPLACE-UPLOAD-APPROVAL-GATE-v0.1-ko.md",
     "docs/04-skill-ecosystem/OWNER-OPS-MARKETPLACE-UPLOAD-DECISION-LANE-v0.1-ko.md",
@@ -139,7 +141,7 @@ function populateDistributionRoot(root) {
 function prepareFinalCandidateRoot() {
   const root = tempRoot();
   populateDistributionRoot(root);
-  writeOwnerOpsLocalPackageCandidate({ root, confirmationToken: "confirm-local-owner-ops-package" });
+  writeOwnerOpsInternalProductionPackage({ root, confirmationToken: "confirm-owner-ops-internal-production-package" });
   writeOwnerOpsTeamAlphaHandoffBundle({ root });
   writeOwnerOpsFirstOwnerBetaHandoffBundle({ root });
   writeOwnerOpsFirstOwnerBetaOperationalTestPackage({ root });
@@ -201,26 +203,26 @@ function prepareFinalCandidateRoot() {
   return root;
 }
 
-describe("Owner Ops final local release candidate", () => {
-  it("exposes a ready local candidate packet while keeping external release authority closed", () => {
+describe("Owner Ops production-ready owner decision", () => {
+  it("exposes production-ready internal distribution while keeping external release authority closed", () => {
     const root = prepareFinalCandidateRoot();
 
-    const packet = buildOwnerOpsFinalLocalReleaseCandidateDecisionPacket({ root });
-    const lane = buildOwnerOpsFinalCandidateOwnerDecisionLane({ root });
-    const laneCheck = verifyOwnerOpsFinalCandidateOwnerDecisionLane({ root });
-    const nextAction = buildOwnerOpsFinalCandidateNextActionPacket({
+    const packet = buildOwnerOpsProductionReadyDecisionPacket({ root });
+    const lane = buildOwnerOpsInternalProductionOwnerDecision({ root });
+    const laneCheck = verifyOwnerOpsInternalProductionOwnerDecision({ root });
+    const nextAction = buildOwnerOpsInternalProductionNextAction({
       root,
       decision: "continue_supervised_testing",
     });
-    const nextActionCheck = verifyOwnerOpsFinalCandidateNextActionPacket({ root });
+    const nextActionCheck = verifyOwnerOpsInternalProductionNextAction({ root });
     const completionAudit = buildOwnerOpsProductionCompletionAudit({ root });
     const completionAuditCheck = verifyOwnerOpsProductionCompletionAudit({ root });
-    const supervisedTesting = buildOwnerOpsSupervisedTestingReadinessPacket({ root });
-    const supervisedTestingCheck = verifyOwnerOpsSupervisedTestingReadinessPacket({ root });
+    const supervisedTesting = buildOwnerOpsInternalProductionReadiness({ root });
+    const supervisedTestingCheck = verifyOwnerOpsInternalProductionReadiness({ root });
     const write = execFileSync(process.execPath, [
       CLI,
       "owner-ops",
-      "final-local-release-candidate-write",
+      "production-ready-write",
     ], {
       cwd: root,
       encoding: "utf8",
@@ -228,7 +230,7 @@ describe("Owner Ops final local release candidate", () => {
     const cliCheck = JSON.parse(execFileSync(process.execPath, [
       CLI,
       "owner-ops",
-      "final-local-release-candidate-check",
+      "production-ready-check",
     ], {
       cwd: root,
       encoding: "utf8",
@@ -236,7 +238,7 @@ describe("Owner Ops final local release candidate", () => {
     const cliLaneCheck = JSON.parse(execFileSync(process.execPath, [
       CLI,
       "owner-ops",
-      "final-candidate-owner-decision-check",
+      "internal-production-owner-decision-check",
     ], {
       cwd: root,
       encoding: "utf8",
@@ -244,7 +246,7 @@ describe("Owner Ops final local release candidate", () => {
     const cliNextActionCheck = JSON.parse(execFileSync(process.execPath, [
       CLI,
       "owner-ops",
-      "final-candidate-next-action-check",
+      "internal-production-next-action-check",
     ], {
       cwd: root,
       encoding: "utf8",
@@ -260,7 +262,7 @@ describe("Owner Ops final local release candidate", () => {
     const cliSupervisedTestingCheck = JSON.parse(execFileSync(process.execPath, [
       CLI,
       "owner-ops",
-      "supervised-testing-readiness-check",
+      "internal-production-readiness-check",
     ], {
       cwd: root,
       encoding: "utf8",
@@ -268,26 +270,26 @@ describe("Owner Ops final local release candidate", () => {
     const cliBlockedAppend = JSON.parse(execFileSync(process.execPath, [
       CLI,
       "owner-ops",
-      "final-candidate-owner-decision-append",
+      "internal-production-owner-decision-append",
       "continue_supervised_testing",
     ], {
       cwd: root,
       encoding: "utf8",
     }));
-    const check = verifyOwnerOpsFinalLocalReleaseCandidateDecisionPacket({ root });
+    const check = verifyOwnerOpsProductionReadyDecisionPacket({ root });
     const gatewayCheck = handleGatewayRequest({
       method: "GET",
-      path: "/owner-ops/final-local-release-candidate/verify",
+      path: "/owner-ops/production-ready/verify",
       root,
     });
     const gatewayLaneCheck = handleGatewayRequest({
       method: "GET",
-      path: "/owner-ops/final-candidate-owner-decision-lane/verify",
+      path: "/owner-ops/internal-production-owner-decision/verify",
       root,
     });
     const gatewayNextActionCheck = handleGatewayRequest({
       method: "GET",
-      path: "/owner-ops/final-candidate-next-action/verify",
+      path: "/owner-ops/internal-production-next-action/verify",
       root,
     });
     const gatewayCompletionAuditCheck = handleGatewayRequest({
@@ -297,13 +299,15 @@ describe("Owner Ops final local release candidate", () => {
     });
     const gatewaySupervisedTestingCheck = handleGatewayRequest({
       method: "GET",
-      path: "/owner-ops/supervised-testing-readiness/verify",
+      path: "/owner-ops/internal-production-readiness/verify",
       root,
     });
 
-    assert.equal(packet.schema, "gpao_t.owner_ops_final_local_release_candidate_decision_packet.v0_1");
+    assert.equal(packet.schema, "gpao_t.owner_ops_production_ready_decision_packet.v0_1");
     assert.equal(packet.status, "ready", JSON.stringify(packet.findings));
-    assert.equal(packet.candidateState, "local_release_candidate_ready_public_execution_blocked");
+    assert.equal(packet.productionState, "production_ready_for_internal_distribution_public_execution_blocked");
+    assert.equal(packet.productionReady, true);
+    assert.equal(packet.supervisedHumanVerificationRequired, true);
     assert.equal(packet.authorityBoundary.publicReleaseAllowed, false);
     assert.equal(packet.authorityBoundary.marketplaceUploadAllowed, false);
     assert.equal(packet.authorityBoundary.packageUploadAllowed, false);
@@ -324,7 +328,8 @@ describe("Owner Ops final local release candidate", () => {
     assert.equal(completionAudit.authorityBoundary.publicReleaseAllowed, false);
     assert.equal(completionAuditCheck.status, "ready", JSON.stringify(completionAuditCheck.findings));
     assert.equal(supervisedTesting.status, "ready", JSON.stringify(supervisedTesting.findings));
-    assert.equal(supervisedTesting.testingState, "supervised_testing_ready_public_release_closed");
+    assert.equal(supervisedTesting.testingState, "production_ready_supervised_human_verification_required_public_release_closed");
+    assert.equal(supervisedTesting.supervisedHumanVerificationRequired, true);
     assert.equal(supervisedTesting.ownerDecisionRecordedNow, false);
     assert.equal(supervisedTesting.authorityBoundary.publicReleaseAllowed, false);
     assert.equal(supervisedTesting.authorityBoundary.customerSendAllowed, false);
@@ -340,7 +345,7 @@ describe("Owner Ops final local release candidate", () => {
     assert.equal(cliBlockedAppend.status, "blocked");
     assert.equal(cliBlockedAppend.recordWritten, false);
     assert.equal(JSON.parse(write).status, "written_local_only");
-    assert.equal(existsSync(join(root, ".gpao-t/packages/OWNER-OPS-FINAL-LOCAL-RELEASE-CANDIDATE-DECISION-PACKET.md")), true);
+    assert.equal(existsSync(join(root, ".gpao-t/packages/OWNER-OPS-PRODUCTION-READY-DECISION-PACKET.md")), true);
     assert.equal(check.status, "ready");
     assert.equal(cliCheck.status, "ready");
     assert.equal(gatewayCheck.status, 200);

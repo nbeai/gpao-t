@@ -2,7 +2,7 @@
 
 ## 목적
 
-이 문서는 2026-07-12 라이브 GPAO-T 런타임 수습 이후 남은 항목을 “지금 당장 런타임을 깨는 문제”와 “테스트팀 전/후 보강해야 할 제품 위생”으로 분리한다.
+이 문서는 2026-07-12 라이브 GPAO-T 런타임 수습 이후 남은 항목을 “지금 당장 런타임을 깨는 문제”와 “내부 프로덕션 검증 전/후 보강해야 할 제품 위생”으로 분리한다.
 
 라이브 OpenClaw는 이제 이 프로젝트에서 공식적으로 라이브 GPAO-T로 부른다.
 
@@ -26,7 +26,7 @@
 
 ### H1. SecretRef 전환
 
-현재 일부 설정은 secret-bearing 값을 평문 필드로 보관한다. 지금은 로컬 owner runtime이고 상태 진단상 runtime blocker는 아니지만, 테스트팀 배포 전 보안 위생 항목이다.
+현재 일부 설정은 secret-bearing 값을 평문 필드로 보관한다. 지금은 로컬 owner runtime이고 상태 진단상 runtime blocker는 아니지만, 내부 프로덕션 패키지 검증 전 보안 위생 항목이다.
 
 처리 기준:
 
@@ -52,7 +52,7 @@
 
 - 대시보드에는 “비활성/승인 필요”로 보여야 한다.
 - 시스템 오류처럼 보이면 안 된다.
-- 테스트팀 패킷에서는 외부 발송 기능을 제외하거나 별도 승인 시나리오로 분리한다.
+- 내부 검증 패킷에서는 외부 발송 기능을 제외하거나 별도 승인 시나리오로 분리한다.
 
 ### H4. Browser Visual QA Auth Boundary
 
@@ -66,13 +66,13 @@ Safari 또는 브라우저 자동 로그인 상태는 사용자 세션 권한에
 
 ### H5. Runtime Overlay Durability
 
-현재 live runtime repair overlay는 재현 가능한 공정으로 봉인되었다. 다음 단계는 이것을 테스트팀 배포 직전의 packaging lane으로 승격하는 것이다.
+현재 live runtime repair overlay는 재현 가능한 공정으로 봉인되었다. 다음 단계는 이것을 내부 프로덕션 packaging lane으로 승격하는 것이다.
 
 처리 기준:
 
 - pure OpenClaw source 기준과 live GPAO-T overlay 기준을 분리한다.
 - repair/rollback manifest를 package evidence에 포함한다.
-- 테스트팀 배포 전 `source seal -> install/readback -> live smoke -> rollback smoke` 순서를 고정한다.
+- 내부 프로덕션 패키지 검증에서 `source seal -> install/readback -> live smoke -> rollback smoke` 순서를 고정한다.
 
 ### H6. Conversation Output Hygiene - 닫힘
 
@@ -119,7 +119,7 @@ Safari 또는 브라우저 자동 로그인 상태는 사용자 세션 권한에
 3. 사용자에게 보이는 진단 오류/경고 문구 정리.
 4. Runtime overlay packaging lane 설계.
 5. Conversation latency watch.
-6. 테스트팀 pre-release evidence packet 갱신.
+6. 내부 프로덕션 검증 evidence packet 갱신.
 
 ## 완료 기준
 
@@ -128,4 +128,4 @@ Safari 또는 브라우저 자동 로그인 상태는 사용자 세션 권한에
 - live GPAO-T health가 오류 없이 유지된다.
 - 사용자가 보는 진단 화면에서 runtime blocker와 optional warning이 분리된다.
 - secret-bearing 값이 소스/문서/테스트 증거에 노출되지 않는다.
-- repair/rollback/install/readback 경로가 테스트팀 패킷 안에 포함된다.
+- repair/rollback/install/readback 경로가 내부 프로덕션 패키지 안에 포함된다.

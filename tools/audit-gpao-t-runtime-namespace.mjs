@@ -3,9 +3,9 @@ import { readdir, readFile, stat, writeFile, mkdir } from "node:fs/promises";
 import { join, relative, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
-const DEFAULT_LIVE_CONTROL_UI =
+export const DEFAULT_LIVE_CONTROL_UI =
   process.env.GPAO_T_LIVE_CONTROL_UI ||
-  "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui";
+  "/Users/jyp/.gpao-t/current/compatibility/gpao-t/dist/control-ui";
 
 const NAMESPACE_PATTERNS = [
   { id: "service_worker_cache", pattern: /["']openclaw-control-["']/g, risk: "cache_migration_required" },
@@ -52,7 +52,9 @@ function migrationStageFor(hit) {
 
 export async function auditGpaoTRuntimeNamespace({ liveRoot = DEFAULT_LIVE_CONTROL_UI } = {}) {
   const files = await collectFiles(liveRoot, liveRoot);
+  const liveRootReadable = files.length > 0;
   const hits = [];
+  const preservedAliases = [];
   const migrationEvidence = {
     storageMirrorScript: false,
     serviceWorkerGpaoCachePrefix: false,
@@ -101,15 +103,35 @@ export async function auditGpaoTRuntimeNamespace({ liveRoot = DEFAULT_LIVE_CONTR
       if (line.includes("var legacyElementNames = ")) return;
       for (const item of NAMESPACE_PATTERNS) {
         item.pattern.lastIndex = 0;
-        if (!item.pattern.test(line)) continue;
-        hits.push({
-          id: item.id,
-          path: relPath,
-          line: index + 1,
-          risk: item.risk,
-          migrationStage: migrationStageFor(item),
-          text: line.trim().slice(0, 240),
-        });
+        for (const match of line.matchAll(item.pattern)) {
+          const mirroredStorageKey = item.id === "storage_key"
+            ? match[0].replace(/^openclaw\./, "gpao-t.")
+            : null;
+          const isMirroredStorage = mirroredStorageKey && source.includes(mirroredStorageKey);
+          const isLegacyCacheCleanup =
+            item.id === "custom_element" &&
+            match[0].startsWith("openclaw-control-") &&
+            line.includes("gpao-t-control-");
+          if (isMirroredStorage || isLegacyCacheCleanup) {
+            preservedAliases.push({
+              id: item.id,
+              path: relPath,
+              line: index + 1,
+              legacy: match[0],
+              mirror: isMirroredStorage ? mirroredStorageKey : "gpao-t-control-*",
+              status: "compatibility_alias_preserved",
+            });
+            continue;
+          }
+          hits.push({
+            id: item.id,
+            path: relPath,
+            line: index + 1,
+            risk: item.risk,
+            migrationStage: migrationStageFor(item),
+            text: line.trim().slice(0, 240),
+          });
+        }
       }
     });
   }
@@ -126,7 +148,9 @@ export async function auditGpaoTRuntimeNamespace({ liveRoot = DEFAULT_LIVE_CONTR
   const bundleAliasBridgeReady = stageOneReady
     && migrationEvidence.customElementAliasBridge
     && migrationEvidence.customElementAliasCount >= 3;
-  const status = hits.length
+  const status = !liveRootReadable
+    ? "audit_target_missing"
+    : hits.length
     ? bundleAliasBridgeReady
       ? "bundle_alias_bridge_ready_rebuild_required"
       : stageOneReady
@@ -137,20 +161,28 @@ export async function auditGpaoTRuntimeNamespace({ liveRoot = DEFAULT_LIVE_CONTR
     schema: "gpao_t.runtime_namespace_audit.v1",
     generatedAt: new Date().toISOString(),
     liveRoot,
+    liveRootReadable,
+    scannedFileCount: files.length,
     status,
     hitCount: hits.length,
+    preservedAliasCount: preservedAliases.length,
+    preservedAliases,
     byRisk,
     migrationEvidence,
     stageOneReady,
     bundleAliasBridgeReady,
     remainingRisk:
-      hits.length && bundleAliasBridgeReady
+      !liveRootReadable
+        ? "The configured live control UI is missing or contains no scannable files."
+        : hits.length && bundleAliasBridgeReady
         ? "Inherited OpenClaw runtime identifiers remain in built chunks and fallback compatibility code. Runtime now has manifest-backed GPAO-T custom element aliases for bundle-level compatibility; a source rebuild is still required to remove the old identifiers completely."
         : hits.length && stageOneReady
           ? "Inherited OpenClaw runtime identifiers remain in built chunks and fallback compatibility code. Stage one now mirrors storage/cache/notification boundaries and seeds GPAO-T element aliases, but bundle-level custom element migration still requires a rebuild or manifest-backed compatibility patch."
         : hits.length
           ? "Runtime namespace migration evidence is incomplete."
-          : "No inherited namespace hits found.",
+          : preservedAliases.length
+            ? "Legacy namespace aliases remain only as explicit GPAO-T migration compatibility mirrors."
+            : "No inherited namespace hits found.",
     hits,
     migrationRule:
       "Do not blind-replace runtime namespace keys. Add GPAO-T mirrors, preserve existing sessions, then cut over with rollback evidence.",
@@ -167,6 +199,7 @@ async function main() {
     await writeFile(out, json);
   }
   console.log(json);
+  if (audit.status === "audit_target_missing") process.exitCode = 1;
 }
 
 if (fileURLToPath(import.meta.url) === process.argv[1]) {

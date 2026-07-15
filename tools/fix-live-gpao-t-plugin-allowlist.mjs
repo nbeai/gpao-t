@@ -1,13 +1,14 @@
 #!/usr/bin/env node
 import { createHash } from "node:crypto";
 import { existsSync } from "node:fs";
-import { cp, mkdir, readFile, writeFile } from "node:fs/promises";
+import { chmod, cp, mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 
 const DEFAULT_CONFIG_PATH = "/Users/jyp/.gpao-t/gpao-t.json";
+const DEFAULT_STATE_HOME = "/Users/jyp/.gpao-t";
 const DEFAULT_EVIDENCE_ROOT =
   "/Users/jyp/Developer/gpao-t/docs/03-verification/evidence/live-plugin-allowlist";
-const DEFAULT_ALLOWED_PLUGINS = ["telegram", "openai", "memory-core"];
+const DEFAULT_ALLOWED_PLUGINS = ["codex", "telegram", "openai", "memory-core"];
 const REQUIRED_APPROVAL_TOKEN = "GPAO-T-LIVE-PLUGIN-ALLOWLIST-2026-07-12";
 
 function hasArg(name) {
@@ -40,16 +41,13 @@ async function sha256(path) {
   return createHash("sha256").update(content).digest("hex");
 }
 
-function normalizeOpenClawConfig(config, allowedPlugins) {
+function normalizeGpaoTConfig(config, allowedPlugins) {
   const next = JSON.parse(JSON.stringify(config));
   next.plugins = next.plugins && typeof next.plugins === "object" ? next.plugins : {};
   next.plugins.allow = stableUnique(allowedPlugins);
   next.plugins.entries = next.plugins.entries && typeof next.plugins.entries === "object"
     ? next.plugins.entries
     : {};
-  if (next.plugins.entries.codex && typeof next.plugins.entries.codex === "object") {
-    next.plugins.entries.codex = { enabled: false };
-  }
   for (const pluginId of next.plugins.allow) {
     next.plugins.entries[pluginId] = {
       ...(next.plugins.entries[pluginId] && typeof next.plugins.entries[pluginId] === "object"
@@ -63,7 +61,7 @@ function normalizeOpenClawConfig(config, allowedPlugins) {
 
 async function buildManifest({ configPath, evidenceRoot, allowedPlugins, apply, backupPath }) {
   const before = JSON.parse(await readFile(configPath, "utf8"));
-  const after = normalizeOpenClawConfig(before, allowedPlugins);
+  const after = normalizeGpaoTConfig(before, allowedPlugins);
   const beforeAllow = Array.isArray(before.plugins?.allow) ? before.plugins.allow : [];
   const afterText = `${JSON.stringify(after, null, 2)}\n`;
   const beforeText = `${JSON.stringify(before, null, 2)}\n`;
@@ -96,7 +94,7 @@ async function buildManifest({ configPath, evidenceRoot, allowedPlugins, apply, 
       "backup ~/.gpao-t/gpao-t.json",
       "set explicit plugins.allow for trusted live GPAO-T plugins",
       "enable matching installed plugins.entries ids",
-      "disable codex plugin entry unless a first-class GPAO-T Codex plugin is installed",
+      "enable the installed Codex runtime plugin when codex is in the trusted allowlist",
       "leave bundled provider discovery and channel configuration unchanged",
     ],
     rollback: {
@@ -108,14 +106,17 @@ async function buildManifest({ configPath, evidenceRoot, allowedPlugins, apply, 
 
 async function main() {
   const configPath = readArg("--config", DEFAULT_CONFIG_PATH);
+  const stateHome = readArg("--state-home", DEFAULT_STATE_HOME);
   const evidenceRoot = readArg("--evidence-root", DEFAULT_EVIDENCE_ROOT);
   const allowedPlugins = stableUnique(readCsvArg("--allow", DEFAULT_ALLOWED_PLUGINS));
   const apply = hasArg("--apply");
-  const backupDir = join(evidenceRoot, `plugin-allowlist-${isoStamp()}`);
-  const backupPath = join(backupDir, "openclaw.json.before");
+  const stamp = isoStamp();
+  const evidenceDir = join(evidenceRoot, `plugin-allowlist-${stamp}`);
+  const backupDir = join(stateHome, "backups", "plugin-allowlist", stamp);
+  const backupPath = join(backupDir, "gpao-t.json.before");
 
   if (!existsSync(configPath)) {
-    throw new Error(`openclaw_config_missing:${configPath}`);
+    throw new Error(`gpao_t_config_missing:${configPath}`);
   }
 
   const manifest = await buildManifest({
@@ -127,9 +128,8 @@ async function main() {
   });
 
   if (!apply) {
-    const dryRunDir = join(evidenceRoot, `plugin-allowlist-${isoStamp()}`);
-    await mkdir(dryRunDir, { recursive: true });
-    await writeFile(join(dryRunDir, "dry-run-manifest.json"), `${JSON.stringify(manifest, null, 2)}\n`);
+    await mkdir(evidenceDir, { recursive: true });
+    await writeFile(join(evidenceDir, "dry-run-manifest.json"), `${JSON.stringify(manifest, null, 2)}\n`);
     console.log(JSON.stringify(manifest, null, 2));
     return;
   }
@@ -152,8 +152,9 @@ async function main() {
 
   await mkdir(dirname(backupPath), { recursive: true });
   await cp(configPath, backupPath);
+  await chmod(backupPath, 0o600);
   const before = JSON.parse(await readFile(configPath, "utf8"));
-  const after = normalizeOpenClawConfig(before, allowedPlugins);
+  const after = normalizeGpaoTConfig(before, allowedPlugins);
   await writeFile(configPath, `${JSON.stringify(after, null, 2)}\n`);
 
   const applied = {
@@ -168,7 +169,8 @@ async function main() {
       afterSha256: await sha256(configPath),
     },
   };
-  await writeFile(join(backupDir, "manifest.json"), `${JSON.stringify(applied, null, 2)}\n`);
+  await mkdir(evidenceDir, { recursive: true });
+  await writeFile(join(evidenceDir, "manifest.json"), `${JSON.stringify(applied, null, 2)}\n`);
   console.log(JSON.stringify(applied, null, 2));
 }
 

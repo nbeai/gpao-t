@@ -10,6 +10,7 @@ import {
   buildAutoMemoryGrowthPolicy,
   buildAutoMemoryGrowthSummary,
   classifyAutoMemoryGrowthAuthority,
+  classifyAutoMemoryGrowthSignal,
   readAutoMemoryGrowthRuns,
   runAutoMemoryGrowthLoop,
   verifyAutoMemoryGrowthLoop,
@@ -233,6 +234,11 @@ import {
   inspectProviderAuthStores,
   verifyProviderAuthHeart,
 } from "./core/provider-auth-heart.js";
+import {
+  buildModelConnectionSettingsState,
+  renderModelConnectionSettingsHtml,
+  verifyModelConnectionSettingsState,
+} from "./core/model-connection-settings.js";
 import {
   buildDashboardForkMap,
   buildLabUiSlicePackage,
@@ -653,6 +659,7 @@ export {
   buildModelRouterBoundary,
   buildModelRouterPolicy,
   buildModelInvocationPacket,
+  buildModelConnectionSettingsState,
   buildModelProviderRegistry,
   buildDashboardForkMap,
   buildLabUiSlicePackage,
@@ -803,6 +810,7 @@ export {
   verifyModelRouterBoundary,
   verifyModelRouterPolicy,
   verifyModelInvocation,
+  verifyModelConnectionSettingsState,
   verifyProviderAuthHeart,
   verifyDoctorRecoveryHeart,
   verifyMemoryApplyGateState,
@@ -834,6 +842,7 @@ export {
   verifyGpaoTOsTurn,
   verifyGpaoTFirstCompletionAudit,
   renderControlCenterHtml,
+  renderModelConnectionSettingsHtml,
   renderTauriInstallDryRunPreview,
   startControlCenterPreviewServer,
   validateControlCenterUiSnapshot,
@@ -869,6 +878,7 @@ export {
   buildAutoMemoryGrowthPolicy,
   buildAutoMemoryGrowthSummary,
   classifyAutoMemoryGrowthAuthority,
+  classifyAutoMemoryGrowthSignal,
   readAutoMemoryGrowthRuns,
   runAutoMemoryGrowthLoop,
   verifyAutoMemoryGrowthLoop,

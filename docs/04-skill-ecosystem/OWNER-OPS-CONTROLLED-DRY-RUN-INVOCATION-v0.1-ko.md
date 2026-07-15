@@ -12,7 +12,7 @@
 
 controlled dry-run invocation은 다음 조건을 만족해야 한다.
 
-- local package candidate가 준비되어 있어야 한다.
+- 내부 프로덕션 패키지 readback이 준비되어 있어야 한다.
 - deployment dry-run plan이 ready여야 한다.
 - dry-run executor proof가 ready여야 한다.
 - dry-run approval record design이 ready여야 한다.

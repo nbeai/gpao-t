@@ -18,7 +18,7 @@ Owner Ops Human Review Decision Lane은 공개 배포를 실행하기 전에 사
 - release readiness evidence: `ready`
 - pre-public repair completion evidence: `ready`
 - repair items: 6/6 locally verified
-- local package candidate: `ready`
+- internal production package readback: `ready`
 - human review approval packet: `prepared_not_approved`
 
 ## Local Record Storage

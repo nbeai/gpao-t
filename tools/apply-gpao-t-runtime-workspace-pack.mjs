@@ -8,13 +8,13 @@ import { fileURLToPath } from "node:url";
 const SCRIPT_DIR = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(SCRIPT_DIR, "..");
 const DEFAULT_SOURCE_PACK = join(REPO_ROOT, "runtime-workspace", "gpao-t");
-const DEFAULT_LIVE_WORKSPACE = "/Users/jyp/.openclaw/workspace";
+const DEFAULT_LIVE_WORKSPACE = join(process.env.HOME || "/Users/jyp", ".gpao-t", "workspace");
 const DEFAULT_EVIDENCE_ROOT = join(
   REPO_ROOT,
   "docs",
   "03-verification",
   "evidence",
-  "runtime-workspace-absorption-2026-07-12",
+  "runtime-workspace-pack",
 );
 const APPLY_TOKEN = "apply-gpao-t-runtime-workspace";
 const DEFAULT_LOGO_SOURCE =
@@ -67,6 +67,8 @@ async function verifyWorkspace({ workspace, requiredFiles }) {
   const pass = (id, ok, detail = "") => {
     checks.push({ id, status: ok ? "pass" : "fail", detail });
   };
+  const hasCanonicalLiveRoot = (value) =>
+    /(?:~|\/Users\/[^/]+)\/\.gpao-t(?:\/|\b)/.test(value);
 
   for (const file of requiredFiles) {
     pass(`exists:${file}`, exists(file), join(workspace, file));
@@ -82,10 +84,17 @@ async function verifyWorkspace({ workspace, requiredFiles }) {
 
   pass("agents.constitution", agents.includes("GPAO-T Runtime Constitution"));
   pass("agents.product_identity", agents.includes("nBeAI. GPAO-T"));
+  pass("agents.canonical_live_root", hasCanonicalLiveRoot(agents));
+  pass("agents.default_memory_path", agents.includes("`local_hybrid_memory_search`"));
+  pass("agents.capability_truth", agents.includes("### Capability Truth"));
   pass("soul.gpao_t_identity", soul.includes("nBeAI. GPAO-T"));
   pass("identity.gpao_t_product", /Product Name:\*\*\s*\n\s*nBeAI\. GPAO-T/i.test(identity));
   pass("tools.secret_boundary", tools.includes("Do not expose or print gateway auth tokens"));
+  pass("tools.canonical_live_root", hasCanonicalLiveRoot(tools));
+  pass("tools.canonical_dashboard_port", tools.includes("127.0.0.1:18799"));
+  pass("tools.no_legacy_live_root", !tools.includes("~/.openclaw") && !tools.includes("/Users/jyp/.openclaw"));
   pass("memory.north_star", memory.includes("GPAO-T North Star"));
+  pass("memory.independent_product", memory.includes("separate comparison product"));
   pass("welcome.personalization", welcome.includes("First-install Personalization") && welcome.includes("Required Setup Questions"));
   pass("heartbeat.default_inactive", heartbeat.includes("inactive by default"));
 
@@ -159,15 +168,16 @@ async function copyPackFiles({ sourcePack, liveWorkspace, files }) {
 
 async function appendDailyMemoryNote({ liveWorkspace }) {
   const memoryDir = join(liveWorkspace, "memory");
-  const dailyFile = join(memoryDir, "2026-07-12.md");
-  const marker = "GPAO-T runtime workspace absorption";
+  const day = new Date().toISOString().slice(0, 10);
+  const dailyFile = join(memoryDir, `${day}.md`);
+  const marker = "GPAO-T runtime workspace contract applied";
   await mkdir(memoryDir, { recursive: true });
   const existing = existsSync(dailyFile) ? await readFile(dailyFile, "utf8") : "";
   if (existing.includes(marker)) {
     return { file: dailyFile, status: "already_present" };
   }
   const prefix = existing.trim() ? `${existing.trimEnd()}\n\n` : "";
-  const next = `${prefix}# 2026-07-12\n\n- ${marker}: OpenClaw template workspace files were replaced with the nBeAI. GPAO-T runtime contract pack. Durable memory remains review-gated; this note records the workspace baseline change only.\n`;
+  const next = `${prefix}# ${day}\n\n- ${marker}: the nBeAI. GPAO-T identity, tool, memory, and authority contract pack was applied. Durable memory remains review-gated; this note records the workspace baseline change only.\n`;
   await writeFile(dailyFile, next);
   return { file: dailyFile, status: "appended" };
 }
@@ -225,7 +235,7 @@ async function writeReport({ evidenceRoot, stamp, report }) {
       "",
       "## Scope",
       "",
-      "This run applies and verifies the GPAO-T runtime workspace markdown contract pack. It replaces OpenClaw bootstrap-style workspace prompt files with nBeAI. GPAO-T identity, memory, tool, heartbeat, and first-install welcome contracts.",
+      "This run applies and verifies the GPAO-T runtime workspace markdown contract pack. It installs nBeAI. GPAO-T identity, memory, tool, heartbeat, and first-install welcome contracts into the canonical GPAO-T workspace.",
       "",
     ].join("\n"),
   );
@@ -267,7 +277,13 @@ async function main() {
 
   const report = {
     schema: "gpao_t.runtime_workspace_absorption_run.v0_1",
-    status: apply ? "applied" : verifyLiveOnly ? "verified_live" : "dry_run",
+    status: verification.status !== "pass"
+      ? "blocked"
+      : apply
+        ? "applied"
+        : verifyLiveOnly
+          ? "verified_live"
+          : "dry_run",
     createdAt: new Date().toISOString(),
     applyToken: APPLY_TOKEN,
     sourcePack,
@@ -280,7 +296,7 @@ async function main() {
     logo,
     verification,
     nextChecks: [
-      "Ask GPAO-T to inspect its workspace and confirm it reports nBeAI. GPAO-T identity, not OpenClaw template identity.",
+      "Ask GPAO-T to inspect its workspace and confirm it reports nBeAI. GPAO-T identity and current canonical runtime paths.",
       "Wire WELCOME.md into first-install onboarding UI/CLI.",
       "Keep durable memory promotion behind review and replay gates.",
     ],

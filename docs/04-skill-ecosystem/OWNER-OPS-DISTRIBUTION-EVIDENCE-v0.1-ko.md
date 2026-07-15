@@ -2,7 +2,7 @@
 
 ## 목적
 
-이 문서는 `사장님 자동화 도우미`를 팀원 alpha, 첫 사장님 beta, 향후 공개 제출 후보로 넘기기 전에 확인해야 하는 로컬 배포 증거 계약이다.
+이 문서는 `사장님 자동화 도우미`를 팀원 alpha, 첫 사장님 beta, 향후 공개 제출 검토로 넘기기 전에 확인해야 하는 로컬 배포 증거 계약이다.
 
 이 단계는 배포 실행이 아니다. archive 생성, 서명, 공증, 공개 업로드, 설치, 업데이트, 롤백 실행은 계속 차단된다.
 
@@ -35,6 +35,10 @@ plugin package manifest
 
 ## CLI 확인 명령
 
+아래 `local-package-candidate*` 명령과 route는 현재 런타임 호환
+식별자다. 이 문서에서 사람이 읽는 제품 용어는 `내부 프로덕션 패키지`로
+통일한다.
+
 ```bash
 node bin/gpao-t.js owner-ops distribution-evidence
 node bin/gpao-t.js owner-ops distribution-readme
@@ -44,7 +48,7 @@ node bin/gpao-t.js owner-ops pre-public-repair-completion-check
 node bin/gpao-t.js owner-ops archive-checksum-dry-run
 node bin/gpao-t.js owner-ops archive-checksum-dry-run-check
 node bin/gpao-t.js owner-ops local-package-candidate
-node bin/gpao-t.js owner-ops local-package-candidate confirm-local-owner-ops-package
+node bin/gpao-t.js owner-ops local-package-candidate confirm-owner-ops-internal-production-package
 node bin/gpao-t.js owner-ops local-package-candidate-check
 node bin/gpao-t.js owner-ops local-package-candidate-readback
 node bin/gpao-t.js owner-ops local-package-candidate-readback-check
@@ -129,14 +133,14 @@ GET /owner-ops/team-alpha-handoff-bundle/verify
 
 이 dry-run이 통과해도 파일 쓰기 권한이 열린 것은 아니다.
 
-## Local Package Candidate Writer
+## Internal Production Package Writer
 
 `local-package-candidate`는 기본 호출에서는 차단된다.
 
 파일 쓰기는 다음 확인 토큰이 있을 때만 열린다.
 
 ```text
-confirm-local-owner-ops-package
+confirm-owner-ops-internal-production-package
 ```
 
 확인 토큰이 있으면 `.gpao-t/packages/` 아래에 다음 로컬 파일만 쓴다.
@@ -145,11 +149,11 @@ confirm-local-owner-ops-package
 - `.manifest.json`
 - `.sha256`
 
-이 파일들은 로컬 검토용 패키지 후보이며, 공개 업로드/서명/공증/설치/업데이트/롤백 실행을 의미하지 않는다.
+이 파일들은 내부 프로덕션 패키지 검토 자료이며, 공개 업로드/서명/공증/설치/업데이트/롤백 실행을 의미하지 않는다.
 
-## Local Package Candidate Readback
+## Internal Production Package Readback
 
-`local-package-candidate-readback`은 `.gpao-t/packages/`에 생성된 로컬 패키지 후보를 다시 읽어 다음을 검증한다.
+`local-package-candidate-readback`은 `.gpao-t/packages/`에 생성된 내부 프로덕션 패키지를 다시 읽어 다음을 검증한다.
 
 - `.bundle.json` 존재 여부
 - `.manifest.json` 존재 여부
@@ -163,11 +167,11 @@ confirm-local-owner-ops-package
 
 ## Team Alpha Handoff Bundle
 
-`team-alpha-handoff-bundle`은 검증된 로컬 패키지 후보를 팀원 alpha 테스트 순서로 묶는다.
+`team-alpha-handoff-bundle`은 검증된 내부 프로덕션 패키지를 감독된 팀원 alpha 테스트 순서로 묶는다.
 
 포함 표면:
 
-- local package candidate readback
+- internal production package readback
 - team alpha guide
 - host registration guide
 - sample data kit
@@ -180,6 +184,6 @@ confirm-local-owner-ops-package
 
 ## 다음 단계
 
-distribution evidence와 archive/checksum dry-run이 통과하면 사용자 명시 승인 아래에서만 local package candidate writer를 열 수 있다.
+distribution evidence와 archive/checksum dry-run이 통과하면 사용자 명시 승인 아래에서만 internal production package writer를 열 수 있다.
 
 공개 제출, 서명, 업로드, 설치/업데이트/롤백 실행은 별도의 권한 gate와 검증 증거가 필요하다.

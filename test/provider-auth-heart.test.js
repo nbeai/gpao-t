@@ -30,14 +30,15 @@ function storePath(root, name) {
 }
 
 describe("Provider/Auth Heart", () => {
-  it("defines canonical GPAO-T auth store without making compatibility identity user-facing", () => {
+  it("defines the active store under the GPAO-T state root without making compatibility identity user-facing", () => {
     const stateDir = tempState();
     const legacyStateDir = tempState();
     const contract = buildProviderAuthHeartContract({ stateDir, legacyStateDir });
 
     assert.equal(contract.schema, "gpao_t.provider_auth_heart_contract.v1");
-    assert.equal(contract.canonicalStore, storePath(stateDir, "gpao-t-agent.sqlite"));
-    assert.equal(contract.compatibilityStores.includes(storePath(stateDir, "openclaw-agent.sqlite")), true);
+    assert.equal(contract.canonicalStateRoot, stateDir);
+    assert.equal(contract.activeRuntimeStore, storePath(stateDir, "openclaw-agent.sqlite"));
+    assert.equal(contract.productNamedMirror, storePath(stateDir, "gpao-t-agent.sqlite"));
     assert.equal(contract.productBoundary.userFacingName, "GPAO-T");
     assert.equal(contract.productBoundary.openClawVisibleToUser, false);
     assert.equal(contract.invariants.freshChatRequiredAfterRepair, true);
@@ -47,19 +48,19 @@ describe("Provider/Auth Heart", () => {
   it("detects repairable split auth state without reading or recording secret values", () => {
     const stateDir = tempState();
     const legacyStateDir = tempState();
-    writeStore(storePath(stateDir, "openclaw-agent.sqlite"), "portable-profile");
+    writeStore(storePath(stateDir, "gpao-t-agent.sqlite"), "portable-profile");
     const inventory = inspectProviderAuthStores({ stateDir, legacyStateDir });
     const repairPlan = buildProviderAuthRepairPlan({ inventory });
     const verification = verifyProviderAuthHeart({ inventory, repairPlan });
 
     assert.equal(inventory.status, "repair_required");
-    assert.equal(inventory.findings.includes("canonical_auth_store_missing"), true);
+    assert.equal(inventory.findings.includes("active_auth_store_missing"), true);
     assert.equal(inventory.findings.includes("repairable_from_compatibility_store"), true);
     assert.equal(inventory.secretSafety.readsSecretValues, false);
     assert.equal(inventory.secretSafety.recordsSecretValues, false);
     assert.equal(repairPlan.status, "repair_available");
     assert.equal(repairPlan.requiredApplyGate, true);
-    assert.equal(repairPlan.actions[0].id, "copy_compatibility_store_to_canonical");
+    assert.equal(repairPlan.actions[0].id, "copy_compatibility_store_to_active_runtime");
     assert.equal(repairPlan.requiredVerificationAfterRepair.includes("fresh_chat_turn"), true);
     assert.equal(repairPlan.forbiddenActions.includes("print_api_key_or_oauth_token"), true);
     assert.equal(verification.status, "ready");
@@ -69,7 +70,6 @@ describe("Provider/Auth Heart", () => {
   it("keeps completion blocked even when canonical metadata is present", () => {
     const stateDir = tempState();
     const legacyStateDir = tempState();
-    writeStore(storePath(stateDir, "gpao-t-agent.sqlite"), "portable-profile");
     writeStore(storePath(stateDir, "openclaw-agent.sqlite"), "portable-profile");
     const inventory = inspectProviderAuthStores({ stateDir, legacyStateDir });
     const repairPlan = buildProviderAuthRepairPlan({ inventory });
@@ -83,7 +83,7 @@ describe("Provider/Auth Heart", () => {
     assert.match(verification.completionClaimReason, /fresh chat/i);
   });
 
-  it("requires review instead of overwrite when auth store metadata drifts", () => {
+  it("does not treat an inactive product-named mirror size difference as an auth outage", () => {
     const stateDir = tempState();
     const legacyStateDir = tempState();
     writeStore(storePath(stateDir, "gpao-t-agent.sqlite"), "canonical-profile");
@@ -91,11 +91,10 @@ describe("Provider/Auth Heart", () => {
     const inventory = inspectProviderAuthStores({ stateDir, legacyStateDir });
     const repairPlan = buildProviderAuthRepairPlan({ inventory });
 
-    assert.equal(inventory.status, "repair_required");
-    assert.equal(inventory.findings.includes("auth_store_size_drift"), true);
-    assert.equal(repairPlan.actions.some((action) => action.id === "compare_store_metadata_before_sync"), true);
-    assert.equal(repairPlan.actions.some((action) => action.status === "review_required"), true);
-    assert.match(repairPlan.userVisibleRecoveryMessage, /백업/);
+    assert.equal(inventory.status, "ready");
+    assert.equal(inventory.findings.includes("product_named_mirror_stale_after_runtime_activity"), true);
+    assert.equal(repairPlan.status, "no_repair_needed");
+    assert.equal(repairPlan.actions.length, 0);
   });
 
   it("exposes Provider/Auth Heart through gateway and CLI readback", () => {

@@ -71,6 +71,10 @@ package_review
 
 ## CLI 확인 명령
 
+아래 `local-package-candidate*` 명령과 route는 현재 런타임 호환
+식별자이며, 제품 성숙도 명칭이 아니다. 이 검토에서 사람이 읽는 산출물
+명칭은 `내부 프로덕션 패키지`다.
+
 ```bash
 node bin/gpao-t.js owner-ops template-replay-fixtures
 node bin/gpao-t.js owner-ops privacy-copy-pack
@@ -135,4 +139,4 @@ GET /owner-ops/local-package-candidate/readback/verify
 
 pre-public package review가 통과하면 `OWNER-OPS-BETA-FEEDBACK-ACTION-QUEUE-v0.1-ko.md`의 개선 항목을 `OWNER-OPS-PRE-PUBLIC-REPAIR-BACKLOG-v0.1-ko.md`의 공개 전 수리 backlog로 전환한 뒤 `OWNER-OPS-DISTRIBUTION-EVIDENCE-v0.1-ko.md`의 로컬 배포 증거를 확인한다. 공개 제출은 별도 승인 전까지 계속 차단한다.
 
-로컬 패키지 후보를 만든 경우에는 public submission으로 넘어가기 전에 `local-package-candidate-readback-check`로 bundle / manifest / checksum / embedded file integrity를 다시 확인한다.
+내부 프로덕션 패키지를 만든 경우에는 public submission으로 넘어가기 전에 `local-package-candidate-readback-check`로 bundle / manifest / checksum / embedded file integrity를 다시 확인한다.

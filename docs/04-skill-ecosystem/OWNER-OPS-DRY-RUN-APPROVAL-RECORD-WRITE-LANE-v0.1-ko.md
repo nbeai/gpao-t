@@ -15,7 +15,7 @@
 - `requestedLane`은 `install`, `update`, `rollback` 중 하나여야 한다.
 - `decision`은 `approve_dry_run_invocation`이어야 한다.
 - `approvalToken`은 `approve-owner-ops-<lane>-dry-run`과 정확히 일치해야 한다.
-- local package candidate의 bundle checksum과 approval record design의 checksum이 맞아야 한다.
+- 내부 프로덕션 패키지의 bundle checksum과 approval record design의 checksum이 맞아야 한다.
 - `expiresAt`은 현재 시각 이후여야 한다.
 - 승인 범위는 dry-run invocation 준비까지만 허용한다.
 

@@ -19,6 +19,19 @@ Current development is governed by three tracks:
 - `Runtime & Productization`: model/tool routing, CLI/MCP/local execution, GPAO-T runtime lifecycle, install/update/rollback, doctor, Docker distribution, packaging, and long-run verification.
 - `Comparison & Compatibility`: source-attributed compatibility boundaries and measured comparison against other AI runtimes, including OpenClaw as a distinct external product.
 
+Current owner-Mac runtime:
+
+- source: `/Users/jyp/Developer/gpao-t`
+- live state: `~/.gpao-t`
+- live workspace: `~/.gpao-t/workspace`
+- dashboard: `http://127.0.0.1:18799/`
+
+Verified local core as of 2026-07-14 includes provider-backed chat, web search,
+webpage reading, browser interaction, local file work, local-hybrid memory
+retrieval, replay, and review-only self-growth candidate handling. Credential
+migration, paired-node file transfer, browser attachment upload E2E, signed
+installers, and public release remain separately gated.
+
 Process guard:
 
 - `docs/02-workflow/GPAO-T-THREE-TRACK-PROCESS-GUARD-v0.1-ko.md`
@@ -43,3 +56,5 @@ curl -fsS http://127.0.0.1:18799/health
 ```
 
 Docker is the universal-distribution lane. macOS LaunchAgent installation remains the local-owner lane.
+
+Documentation authority and current evidence are indexed in `docs/README.md`.

@@ -324,14 +324,23 @@ function buildProviderDecision({ auth, providerMode }) {
 
 function buildMemorySearchForTurn({ root, text }) {
   try {
-    const search = searchMemory({ stateDir: runtimePaths({ root }).runtimeRoot, query: text, limit: 5 });
+    const search = searchMemory({
+      stateDir: runtimePaths({ root }).runtimeRoot,
+      query: text,
+      limit: 5,
+      allowBuild: false,
+    });
     return {
       schema: "gpao_t.os_turn_memory_state.v0_1",
-      status: "ready",
-      visibleLabel: search.results.length ? "관련 기억 확인" : "관련 기억 없음",
+      status: search.status === "ready" ? "ready" : "needs_index",
+      visibleLabel: search.status === "ready"
+        ? (search.results.length ? "관련 기억 확인" : "관련 기억 없음")
+        : "기억 색인 준비 필요",
       engine: search.engine?.mode || "local_hybrid_memory_search",
       resultCount: search.results.length,
       results: search.results,
+      findings: search.findings || [],
+      nextSafeAction: search.nextSafeAction || null,
       boundary: "Search results are context evidence, not automatic durable memory promotion.",
     };
   } catch (error) {

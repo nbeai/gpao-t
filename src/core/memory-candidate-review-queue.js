@@ -1,6 +1,10 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
-import { writeApprovalAuditLocalRecords } from "./approval-audit-records.js";
+import {
+  readApprovalRecords,
+  readAuditRecords,
+  writeApprovalAuditLocalRecords,
+} from "./approval-audit-records.js";
 import { buildAppliedContextMeshReplay } from "./context-mesh-replay.js";
 import { appendTCellCandidate, memoryWikiPaths, readTCellCandidates } from "./memory-wiki.js";
 import { runtimePaths } from "./storage.js";
@@ -21,6 +25,8 @@ const APPROVAL_STATES = new Set([
 ]);
 const LOCAL_CONTEXT_MESH_APPLY_TOKEN = "apply-context-mesh-local";
 const LOCAL_CONTEXT_MESH_ROLLBACK_TOKEN = "rollback-context-mesh-local";
+const EXPLICIT_APPROVAL_CONFIRMATION = "explicit_user_approval_recorded";
+const INDEPENDENT_REPLAY_MODE = "independent_observation";
 
 export function memoryReviewQueuePath({ root } = {}) {
   return resolve(runtimePaths({ root }).runtimeRoot, REVIEW_QUEUE_FILE);
@@ -114,11 +120,12 @@ export function buildReadOnlyMemoryReplay({
   candidateRecord,
   beforeOutput = "",
   afterOutput = "",
+  replayCase,
   now = new Date().toISOString(),
 } = {}) {
   if (!candidateRecord || candidateRecord.recordType !== "memory_candidate") {
     return {
-      schema: "gpao_t.memory_replay_evidence.v0_1",
+      schema: "gpao_t.memory_replay_evidence.v0_2",
       recordType: "memory_replay_evidence",
       status: "blocked",
       createdAt: now,
@@ -136,14 +143,20 @@ export function buildReadOnlyMemoryReplay({
   const afterScore = scoreOutput(afterOutput, expectedTokens);
   const delta = Number((afterScore - beforeScore).toFixed(3));
   const improved = delta > 0;
+  const independentReplay = normalizeIndependentReplayCase(replayCase);
+  const proofPassed = improved && independentReplay.passed;
+  const findings = [
+    ...(improved ? [] : ["no_measurable_replay_improvement"]),
+    ...independentReplay.findings,
+  ];
 
   return {
-    schema: "gpao_t.memory_replay_evidence.v0_1",
+    schema: "gpao_t.memory_replay_evidence.v0_2",
     recordType: "memory_replay_evidence",
     id: `memreplay.${Date.parse(now) || 0}.${candidateRecord.id}`,
     candidateId: candidateRecord.id,
     createdAt: now,
-    status: improved ? "improved" : "review",
+    status: proofPassed ? "passed" : "review",
     mode: "read_only_before_after",
     before: {
       output: beforeOutput,
@@ -154,25 +167,32 @@ export function buildReadOnlyMemoryReplay({
       score: afterScore,
     },
     delta,
+    replayCase: independentReplay.value,
+    proof: {
+      status: proofPassed ? "passed" : "not_proven",
+      independent: independentReplay.passed,
+      measurableImprovement: improved,
+      candidatePrincipleInjectedByHarness: independentReplay.value.candidatePrincipleInjectedByHarness,
+    },
     evidence: {
       expectedTokens,
-      interpretation: improved
-        ? "Candidate-bearing output covered more expected operating-principle signals."
-        : "Candidate-bearing output did not prove measurable improvement yet.",
+      interpretation: proofPassed
+        ? "An independently referenced replay covered more expected operating-principle signals."
+        : "Replay remains review evidence until independent observation references and measurable improvement both pass.",
     },
     authority: {
       mutationAllowed: false,
       durableMemoryPromotion: "blocked",
       compatibilityMemoryWrite: "blocked",
-      contextMeshAdmission: improved ? "eligible_for_apply_request_review" : "blocked",
+      contextMeshAdmission: proofPassed ? "eligible_for_apply_request_review" : "blocked",
     },
     applyGate: {
-      status: improved ? "replay_evidence_ready" : "blocked",
-      nextRequired: improved
+      status: proofPassed ? "independent_replay_proof_ready" : "blocked",
+      nextRequired: proofPassed
         ? "Create a scoped apply request with target and rollback receipt."
-        : "Add stronger evidence or keep the candidate review-only.",
+        : "Run an independent replay with request, observation, and evaluator references; keep the candidate review-only.",
     },
-    findings: improved ? [] : ["no_measurable_replay_improvement"],
+    findings,
   };
 }
 
@@ -181,19 +201,26 @@ export function appendMemoryReplayEvidence({
   candidateRecord,
   beforeOutput,
   afterOutput,
+  replayCase,
+  applyRecord,
   now = new Date().toISOString(),
 } = {}) {
   const evidence = buildReadOnlyMemoryReplay({
     candidateRecord,
     beforeOutput,
     afterOutput,
+    replayCase,
     now,
   });
   if (evidence.status === "blocked" && evidence.findings?.includes("candidate_record_missing")) {
     return evidence;
   }
-  appendQueueRecord(evidence, { root });
-  return evidence;
+  const lifecycleReview = applyRecord
+    ? reviewAppliedCandidateLifecycle({ root, candidateRecord, applyRecord, replayEvidence: evidence, now })
+    : null;
+  const record = lifecycleReview ? { ...evidence, lifecycleReview } : evidence;
+  appendQueueRecord(record, { root });
+  return record;
 }
 
 export function buildMemoryApplyRequest({
@@ -212,27 +239,22 @@ export function buildMemoryApplyRequest({
   if (!replayEvidence || replayEvidence.recordType !== "memory_replay_evidence") {
     findings.push("replay_evidence_missing");
   }
-  if (replayEvidence?.status !== "improved") {
-    findings.push("replay_not_improved");
+  if (!isIndependentReplayProof(replayEvidence)) {
+    findings.push("independent_replay_proof_missing");
   }
   if (replayEvidence?.candidateId && candidateRecord?.id && replayEvidence.candidateId !== candidateRecord.id) {
     findings.push("candidate_replay_mismatch");
   }
 
-  const approvalPassed = normalizedApproval === "approved_for_apply";
   const targetPolicy = buildTargetPolicy(normalizedTarget);
   const readyForHumanApplyReview = findings.length === 0;
 
   return {
-    schema: "gpao_t.memory_apply_request.v0_1",
+    schema: "gpao_t.memory_apply_request.v0_2",
     recordType: "memory_apply_request",
     id: `memapply.${Date.parse(now) || 0}.${candidateRecord?.id || "unknown"}`,
     createdAt: now,
-    status: readyForHumanApplyReview
-      ? approvalPassed
-        ? "approved_but_not_applied"
-        : "awaiting_approval"
-      : "blocked",
+    status: readyForHumanApplyReview ? "awaiting_approval" : "blocked",
     candidateId: candidateRecord?.id || null,
     replayEvidenceId: replayEvidence?.id || null,
     target: targetPolicy,
@@ -247,10 +269,22 @@ export function buildMemoryApplyRequest({
       : null,
     approvalGate: {
       required: true,
-      state: normalizedApproval,
-      passed: approvalPassed,
+      state: "awaiting_explicit_bound_receipt",
+      passed: false,
       allowedStates: [...APPROVAL_STATES],
+      legacyCallerState: normalizedApproval,
+      bindingRequired: [
+        "candidate_id",
+        "target_id",
+        "target_scope",
+        "explicit_user_turn_ref",
+        "approval_reference",
+        "local_approval_record_id",
+        "local_audit_record_id",
+      ],
+      callerDeclaredStateGrantsAuthority: false,
     },
+    replayProof: compactReplayProof(replayEvidence),
     auditGate: {
       required: true,
       status: readyForHumanApplyReview ? "record_required_before_apply" : "blocked",
@@ -279,7 +313,7 @@ export function buildMemoryApplyRequest({
         "This record scopes and audits the request only; a separate reversible apply engine must perform any mutation.",
     },
     findings,
-    nextSafeAction: buildApplyNextSafeAction({ findings, approvalPassed, target: normalizedTarget }),
+    nextSafeAction: buildApplyNextSafeAction({ findings, target: normalizedTarget }),
   };
 }
 
@@ -307,7 +341,7 @@ export function appendMemoryApplyRequest({
 
 export function buildMemoryApplyApprovalAuditBridge({
   applyRequest,
-  confirmationState = "confirmed_for_local_record_only",
+  approval,
   now = new Date().toISOString(),
 } = {}) {
   const findings = [];
@@ -320,12 +354,17 @@ export function buildMemoryApplyApprovalAuditBridge({
   if (!applyRequest?.rollbackReceipt?.plan) {
     findings.push("rollback_receipt_missing");
   }
+  if (!isIndependentReplayProof(applyRequest?.replayProof)) {
+    findings.push("independent_replay_proof_missing");
+  }
+  const approvalBinding = normalizeExplicitApprovalBinding({ approval, applyRequest });
+  findings.push(...approvalBinding.findings);
   const proposal = applyRequest && !findings.length
-    ? buildApprovalProposalFromApplyRequest(applyRequest)
+    ? buildApprovalProposalFromApplyRequest(applyRequest, approvalBinding.value)
     : null;
 
   return {
-    schema: "gpao_t.memory_apply_approval_audit_bridge.v0_1",
+    schema: "gpao_t.memory_apply_approval_audit_bridge.v0_2",
     recordType: "memory_apply_approval_audit",
     id: `memapproval.${Date.parse(now) || 0}.${applyRequest?.id || "unknown"}`,
     createdAt: now,
@@ -333,7 +372,8 @@ export function buildMemoryApplyApprovalAuditBridge({
     applyRequestId: applyRequest?.id || null,
     candidateId: applyRequest?.candidateId || null,
     target: applyRequest?.target || null,
-    confirmationState,
+    confirmationState: EXPLICIT_APPROVAL_CONFIRMATION,
+    approvalBinding: approvalBinding.value,
     proposal,
     approvalAudit: {
       writesLocalApprovalAuditNow: false,
@@ -362,12 +402,12 @@ export function buildMemoryApplyApprovalAuditBridge({
 export function appendMemoryApplyApprovalAuditBridge({
   root,
   applyRequest,
-  confirmationState = "confirmed_for_local_record_only",
+  approval,
   now = new Date().toISOString(),
 } = {}) {
   const bridge = buildMemoryApplyApprovalAuditBridge({
     applyRequest,
-    confirmationState,
+    approval,
     now,
   });
   if (bridge.status === "blocked") {
@@ -376,16 +416,45 @@ export function appendMemoryApplyApprovalAuditBridge({
   const writeResult = writeApprovalAuditLocalRecords({
     root,
     proposal: bridge.proposal,
-    request: `Memory apply request review: ${applyRequest.id}`,
-    confirmationState,
+    request: `Explicit memory apply approval for ${applyRequest.id} from ${bridge.approvalBinding.userTurnRef}`,
+    confirmationState: EXPLICIT_APPROVAL_CONFIRMATION,
     now,
   });
+  const ledgerVerified = writeResult.status === "written_local_only"
+    && writeResult.replay?.status === "ready"
+    && writeResult.approvalRecord?.proposalId === bridge.proposal.id
+    && writeResult.approvalRecord?.confirmationState === EXPLICIT_APPROVAL_CONFIRMATION
+    && writeResult.approvalRecord?.expectedEffect === bridge.proposal.expectedEffect
+    && writeResult.auditRecord?.approvalRecordId === writeResult.approvalRecord?.id
+    && writeResult.auditRecord?.userConfirmationState === EXPLICIT_APPROVAL_CONFIRMATION
+    && writeResult.auditRecord?.expectedEffect === bridge.proposal.expectedEffect;
+  const approvalReceipt = ledgerVerified
+    ? {
+        schema: "gpao_t.memory_apply_approval_receipt.v0_2",
+        status: "recorded_and_verified",
+        decision: "approved",
+        candidateId: bridge.approvalBinding.candidateId,
+        target: bridge.approvalBinding.target,
+        userTurnRef: bridge.approvalBinding.userTurnRef,
+        approvalReference: bridge.approvalBinding.approvalReference,
+        applyRequestId: applyRequest.id,
+        proposalId: bridge.proposal.id,
+        ledger: {
+          approvalRecordId: writeResult.approvalRecord.id,
+          auditRecordId: writeResult.auditRecord.id,
+          approvalRecordPath: ".gpao-t/approval/approval-records.jsonl",
+          auditRecordPath: ".gpao-t/approval/audit-records.jsonl",
+          replayStatus: writeResult.replay.status,
+        },
+      }
+    : null;
   const record = {
     ...bridge,
-    status: writeResult.status === "written_local_only" ? "recorded_local_only" : "blocked",
+    status: ledgerVerified ? "recorded_local_only" : "blocked",
+    approvalReceipt,
     approvalAudit: {
       ...bridge.approvalAudit,
-      writesLocalApprovalAuditNow: writeResult.status === "written_local_only",
+      writesLocalApprovalAuditNow: ledgerVerified,
       writeResultStatus: writeResult.status,
       approvalRecordId: writeResult.approvalRecord?.id || null,
       auditRecordId: writeResult.auditRecord?.id || null,
@@ -395,9 +464,11 @@ export function appendMemoryApplyApprovalAuditBridge({
       ...bridge.authority,
       mutationAllowedNow: false,
     },
-    findings: writeResult.status === "written_local_only" ? [] : (writeResult.findings || ["approval_audit_write_failed"]),
-    nextSafeAction: writeResult.status === "written_local_only"
-      ? "Approval/audit record is local-only; build a separate reversible apply engine before mutation."
+    findings: ledgerVerified
+      ? []
+      : (writeResult.findings || ["approval_receipt_or_ledger_verification_failed"]),
+    nextSafeAction: ledgerVerified
+      ? "Bound approval receipt is recorded locally; verify it against both ledgers before reversible apply."
       : "Repair approval/audit write findings before any apply engine work.",
   };
   if (record.status !== "blocked") {
@@ -407,11 +478,12 @@ export function appendMemoryApplyApprovalAuditBridge({
 }
 
 export function buildMemoryReversibleApply({
+  root,
   applyRequest,
   approvalAuditBridge,
   now = new Date().toISOString(),
 } = {}) {
-  const findings = validateReversibleApply({ applyRequest, approvalAuditBridge });
+  const findings = validateReversibleApply({ root, applyRequest, approvalAuditBridge });
   const targetId = applyRequest?.target?.id || null;
   const canApply = findings.length === 0;
   const candidate = canApply
@@ -419,13 +491,14 @@ export function buildMemoryReversibleApply({
     : null;
 
   return {
-    schema: "gpao_t.memory_reversible_apply.v0_1",
+    schema: "gpao_t.memory_reversible_apply.v0_2",
     recordType: "memory_reversible_apply",
     id: `memapplyrun.${Date.parse(now) || 0}.${applyRequest?.id || "unknown"}`,
     createdAt: now,
     status: canApply ? "ready_to_apply_context_mesh_candidate" : "blocked",
     applyRequestId: applyRequest?.id || null,
     approvalAuditBridgeId: approvalAuditBridge?.id || null,
+    approvalReceiptId: approvalAuditBridge?.approvalReceipt?.ledger?.approvalRecordId || null,
     candidateId: applyRequest?.candidateId || null,
     target: applyRequest?.target || null,
     proposedCandidate: candidate,
@@ -454,7 +527,7 @@ export function buildMemoryReversibleApply({
     },
     findings,
     nextSafeAction: canApply
-      ? "Append the Context Mesh candidate locally and record the line-count rollback receipt."
+      ? "Append the Context Mesh candidate as applied-pending-review and record the line-count rollback receipt."
       : "Repair approval, audit, target, and rollback findings before reversible apply.",
   };
 }
@@ -465,7 +538,7 @@ export function appendMemoryReversibleApply({
   approvalAuditBridge,
   now = new Date().toISOString(),
 } = {}) {
-  const preview = buildMemoryReversibleApply({ applyRequest, approvalAuditBridge, now });
+  const preview = buildMemoryReversibleApply({ root, applyRequest, approvalAuditBridge, now });
   if (preview.status === "blocked") {
     return preview;
   }
@@ -487,6 +560,7 @@ export function appendMemoryReversibleApply({
       ...preview.authority,
       mutationAllowedNow: false,
       automaticAdmission: "still_blocked_until_context_mesh_admission",
+      answerAnchor: "blocked_until_independent_post_apply_replay",
     },
     rollbackReceipt: {
       ...preview.rollbackReceipt,
@@ -499,7 +573,7 @@ export function appendMemoryReversibleApply({
       },
     },
     nextSafeAction:
-      "Run Context Mesh resolve/replay before admitting this candidate into a current answer.",
+      "Run and record an independent post-apply replay before changing lifecycle to reviewed.",
   };
   appendQueueRecord(record, { root });
   return record;
@@ -586,6 +660,7 @@ export function buildMemoryLocalApplyInvocationContract({
   const latestApplyRecord = latestRecord(records, "memory_reversible_apply");
   const latestRollback = latestRecord(records, "memory_reversible_apply_rollback");
   const preview = buildMemoryReversibleApply({
+    root,
     applyRequest: latestApplyRequest,
     approvalAuditBridge: latestApprovalAudit,
     now,
@@ -661,7 +736,13 @@ export function buildMemoryLocalApplyInvocationContract({
       scopedApplyRequest: latestApplyRequest?.target?.id === "context_mesh_candidate",
       localApprovalAuditRecord: latestApprovalAudit?.status === "recorded_local_only",
       rollbackReceipt: preview.rollbackReceipt?.status === "ready" || latestApplyRecord?.rollbackReceipt?.status === "recorded",
-      postApplyReplayResult: postApplyReplay.status === "passed" || postApplyReplay.status === "review",
+      postApplyReplayResult: postApplyReplay.status === "passed",
+      lifecycleReviewed: activeApplyRecord
+        ? readTCellCandidates({ root, limit: 100000 }).some((candidate) =>
+            candidate.id === activeApplyRecord.applyResult?.appliedCandidateId
+              && candidate.lifecycle === "reviewed"
+          )
+        : false,
     },
     postApplyReplay,
     authority: blockedLocalApplyAuthority(),
@@ -670,7 +751,7 @@ export function buildMemoryLocalApplyInvocationContract({
     nextSafeAction: canInvokeApply
       ? "Invoke only the local Context Mesh apply action with an explicit token, then run post-apply replay."
       : canInvokeRollback
-      ? "Rollback remains available for the active local Context Mesh apply record; run post-apply replay before relying on it."
+        ? "Rollback remains available; a review-status replay is not proof and cannot promote lifecycle."
       : "Prepare improved replay, approved scoped apply request, and local approval/audit record before invocation.",
   };
 }
@@ -754,7 +835,7 @@ export function buildMemoryReviewQueueSummary({ root } = {}) {
       status: applyRequest
         ? applyRequest.status
         : replay
-        ? replay.status === "improved"
+        ? isIndependentReplayProof(replay)
           ? "replay_ready_for_apply_request"
           : "replay_review"
         : "replay_pending",
@@ -806,7 +887,7 @@ export function buildMemoryApplyGateState({ root, now = new Date().toISOString()
   const latestApprovalAudit = latestRecord(records, "memory_apply_approval_audit");
   const latestReversibleApply = latestRecord(records, "memory_reversible_apply");
   const latestRollback = latestRecord(records, "memory_reversible_apply_rollback");
-  const replayReady = summary.counts.applyReady > 0 || latestReplay?.status === "improved";
+  const replayReady = summary.counts.applyReady > 0 || isIndependentReplayProof(latestReplay);
   const applyRequestReady = Boolean(latestApplyRequest && latestApplyRequest.status !== "blocked");
   const approvalAuditReady = Boolean(latestApprovalAudit && latestApprovalAudit.status === "recorded_local_only");
   const contextMeshLocalApplyRecorded = summary.counts.contextMeshApplied > 0;
@@ -1130,19 +1211,19 @@ export function verifyMemoryLocalApplyInvocationContract({ root } = {}) {
     now: "2026-07-11T04:01:00.000Z",
     beforeOutput: "기존 런타임만 개선합니다.",
     afterOutput: "기존 런타임을 GPAO-T material body로 흡수하며 개선합니다.",
+    replayCase: buildVerificationReplayCase("local-apply", "pre_apply"),
   });
   const applyRequest = appendMemoryApplyRequest({
     root,
     candidateRecord: candidate,
     replayEvidence: replay,
     target: "context_mesh_candidate",
-    approvalState: "approved_for_apply",
     now: "2026-07-11T04:02:00.000Z",
   });
   const approvalAuditBridge = appendMemoryApplyApprovalAuditBridge({
     root,
     applyRequest,
-    confirmationState: "confirmed_for_local_record_only",
+    approval: buildVerificationApproval(applyRequest, "local-apply"),
     now: "2026-07-11T04:03:00.000Z",
   });
   const before = buildMemoryLocalApplyInvocationContract({
@@ -1208,7 +1289,212 @@ export function verifyMemoryLocalApplyInvocationContract({ root } = {}) {
   };
 }
 
-function validateReversibleApply({ applyRequest, approvalAuditBridge }) {
+function normalizeIndependentReplayCase(replayCase) {
+  const value = {
+    mode: replayCase?.mode || "unverified",
+    stage: replayCase?.stage || "pre_apply",
+    requestRef: String(replayCase?.requestRef || "").trim() || null,
+    observationRef: String(replayCase?.observationRef || "").trim() || null,
+    evaluatorRef: String(replayCase?.evaluatorRef || "").trim() || null,
+    candidatePrincipleInjectedByHarness:
+      replayCase?.candidatePrincipleInjectedByHarness === true,
+  };
+  const findings = [];
+  if (value.mode !== INDEPENDENT_REPLAY_MODE) findings.push("independent_replay_mode_required");
+  if (!["pre_apply", "post_apply"].includes(value.stage)) findings.push("replay_stage_invalid");
+  if (!value.requestRef) findings.push("replay_request_ref_missing");
+  if (!value.observationRef) findings.push("replay_observation_ref_missing");
+  if (!value.evaluatorRef) findings.push("replay_evaluator_ref_missing");
+  if (value.candidatePrincipleInjectedByHarness) {
+    findings.push("candidate_principle_injected_by_harness");
+  }
+  return { value, findings, passed: findings.length === 0 };
+}
+
+function buildVerificationReplayCase(id, stage) {
+  return {
+    mode: INDEPENDENT_REPLAY_MODE,
+    stage,
+    requestRef: `fixture-request:${id}`,
+    observationRef: `fixture-observation:${id}`,
+    evaluatorRef: `fixture-evaluator:${id}`,
+    candidatePrincipleInjectedByHarness: false,
+  };
+}
+
+function buildVerificationApproval(applyRequest, id) {
+  return {
+    decision: "approved",
+    candidateId: applyRequest.candidateId,
+    target: {
+      id: applyRequest.target.id,
+      scope: applyRequest.target.scope,
+    },
+    userTurnRef: `fixture-user-turn:${id}`,
+    approvalReference: `fixture-approval:${id}`,
+  };
+}
+
+function isIndependentReplayProof(value) {
+  return value?.status === "passed"
+    && value?.proof?.independent === true
+    && value?.proof?.measurableImprovement === true
+    && value?.proof?.candidatePrincipleInjectedByHarness !== true;
+}
+
+function compactReplayProof(replayEvidence) {
+  return {
+    status: isIndependentReplayProof(replayEvidence) ? "passed" : "not_proven",
+    evidenceId: replayEvidence?.id || null,
+    candidateId: replayEvidence?.candidateId || null,
+    proof: {
+      independent: replayEvidence?.proof?.independent === true,
+      measurableImprovement: replayEvidence?.proof?.measurableImprovement === true,
+      candidatePrincipleInjectedByHarness:
+        replayEvidence?.proof?.candidatePrincipleInjectedByHarness === true,
+    },
+    replayCase: replayEvidence?.replayCase || null,
+  };
+}
+
+function normalizeExplicitApprovalBinding({ approval, applyRequest }) {
+  const value = {
+    decision: approval?.decision || null,
+    candidateId: approval?.candidateId || null,
+    target: {
+      id: approval?.target?.id || null,
+      scope: approval?.target?.scope || null,
+    },
+    userTurnRef: String(approval?.userTurnRef || "").trim() || null,
+    approvalReference: String(approval?.approvalReference || "").trim() || null,
+  };
+  const findings = [];
+  if (!approval) findings.push("explicit_user_approval_missing");
+  if (approval?.source && !approval?.userTurnRef) {
+    findings.push("caller_declared_source_is_not_approval");
+  }
+  if (value.decision !== "approved") findings.push("explicit_user_approval_decision_missing");
+  if (!value.candidateId) findings.push("approval_candidate_id_missing");
+  if (value.candidateId && value.candidateId !== applyRequest?.candidateId) {
+    findings.push("approval_candidate_mismatch");
+  }
+  if (value.target.id !== applyRequest?.target?.id) findings.push("approval_target_mismatch");
+  if (value.target.scope !== applyRequest?.target?.scope) findings.push("approval_scope_mismatch");
+  if (!value.userTurnRef) findings.push("explicit_user_turn_ref_missing");
+  if (!value.approvalReference) findings.push("approval_reference_missing");
+  return { value, findings };
+}
+
+function validateApprovalLedgerReceipt({ root, approvalAuditBridge }) {
+  const receipt = approvalAuditBridge?.approvalReceipt;
+  if (!root) return ["approval_ledger_readback_required"];
+  if (!receipt?.ledger?.approvalRecordId || !receipt?.ledger?.auditRecordId) {
+    return ["approval_ledger_receipt_ids_missing"];
+  }
+  const approvalRecord = readApprovalRecords({ root, limit: 500 })
+    .find((record) => record.id === receipt.ledger.approvalRecordId);
+  const auditRecord = readAuditRecords({ root, limit: 500 })
+    .find((record) => record.id === receipt.ledger.auditRecordId);
+  const findings = [];
+  if (!approvalRecord) findings.push("approval_record_not_found_in_ledger");
+  if (!auditRecord) findings.push("audit_record_not_found_in_ledger");
+  if (approvalRecord && approvalRecord.proposalId !== receipt.proposalId) {
+    findings.push("approval_ledger_proposal_mismatch");
+  }
+  if (approvalRecord && approvalRecord.confirmationState !== EXPLICIT_APPROVAL_CONFIRMATION) {
+    findings.push("approval_ledger_confirmation_not_explicit");
+  }
+  if (approvalRecord && approvalRecord.expectedEffect !== approvalAuditBridge?.proposal?.expectedEffect) {
+    findings.push("approval_ledger_binding_trace_mismatch");
+  }
+  if (auditRecord && auditRecord.approvalRecordId !== receipt.ledger.approvalRecordId) {
+    findings.push("audit_ledger_approval_record_mismatch");
+  }
+  if (auditRecord && auditRecord.proposalId !== receipt.proposalId) {
+    findings.push("audit_ledger_proposal_mismatch");
+  }
+  if (auditRecord && auditRecord.userConfirmationState !== EXPLICIT_APPROVAL_CONFIRMATION) {
+    findings.push("audit_ledger_confirmation_not_explicit");
+  }
+  if (auditRecord && auditRecord.expectedEffect !== approvalAuditBridge?.proposal?.expectedEffect) {
+    findings.push("audit_ledger_binding_trace_mismatch");
+  }
+  const binding = approvalAuditBridge?.approvalBinding;
+  if (receipt?.candidateId !== binding?.candidateId) findings.push("approval_receipt_binding_candidate_mismatch");
+  if (receipt?.target?.id !== binding?.target?.id) findings.push("approval_receipt_binding_target_mismatch");
+  if (receipt?.target?.scope !== binding?.target?.scope) findings.push("approval_receipt_binding_scope_mismatch");
+  if (receipt?.userTurnRef !== binding?.userTurnRef) findings.push("approval_receipt_binding_user_turn_mismatch");
+  if (receipt?.approvalReference !== binding?.approvalReference) {
+    findings.push("approval_receipt_binding_reference_mismatch");
+  }
+  return findings;
+}
+
+function reviewAppliedCandidateLifecycle({ root, candidateRecord, applyRecord, replayEvidence, now }) {
+  const findings = [];
+  if (applyRecord?.recordType !== "memory_reversible_apply"
+    || applyRecord?.status !== "applied_context_mesh_candidate_local_only") {
+    findings.push("applied_candidate_record_missing");
+  }
+  if (applyRecord?.candidateId !== candidateRecord?.id) findings.push("applied_candidate_review_mismatch");
+  if (!isIndependentReplayProof(replayEvidence)) findings.push("independent_replay_proof_missing");
+  if (replayEvidence?.replayCase?.stage !== "post_apply") findings.push("post_apply_replay_stage_required");
+  const appliedCandidateId = applyRecord?.applyResult?.appliedCandidateId || null;
+  if (!appliedCandidateId) findings.push("applied_candidate_id_missing");
+
+  const paths = memoryWikiPaths({ root });
+  const candidates = readTCellCandidates({ root, limit: 100000 });
+  const candidateIndex = candidates.findIndex((candidate) => candidate.id === appliedCandidateId);
+  if (candidateIndex < 0) findings.push("applied_candidate_not_found");
+  if (findings.length) {
+    return {
+      schema: "gpao_t.memory_candidate_lifecycle_review.v0_2",
+      status: "blocked",
+      appliedCandidateId,
+      findings,
+    };
+  }
+
+  const current = candidates[candidateIndex];
+  candidates[candidateIndex] = {
+    ...current,
+    lifecycle: "reviewed",
+    authority: {
+      ...current.authority,
+      allowedUse: ["retrieve", "review", "supporting_context", "admit_for_current_turn", "answer_anchor", "explain"],
+      blockedUse: (current.authority?.blockedUse || []).filter((use) => use !== "answer_anchor"),
+    },
+    replay: {
+      required: true,
+      status: "passed",
+      independent: true,
+      evidenceId: replayEvidence.id,
+      reviewedLifecycleAllowed: true,
+      reviewedAt: now,
+    },
+    trace: {
+      ...current.trace,
+      lifecycleReviewReplayEvidenceId: replayEvidence.id,
+      lifecycleReviewedAt: now,
+    },
+  };
+  mkdirSync(dirname(paths.tcellCandidateFile), { recursive: true });
+  writeFileSync(
+    paths.tcellCandidateFile,
+    `${candidates.map((candidate) => JSON.stringify(candidate)).join("\n")}\n`,
+  );
+  return {
+    schema: "gpao_t.memory_candidate_lifecycle_review.v0_2",
+    status: "reviewed_after_independent_replay",
+    appliedCandidateId,
+    replayEvidenceId: replayEvidence.id,
+    previousLifecycle: current.lifecycle,
+    lifecycle: "reviewed",
+    findings: [],
+  };
+}
+
+function validateReversibleApply({ root, applyRequest, approvalAuditBridge }) {
   const findings = [];
   if (!applyRequest || applyRequest.recordType !== "memory_apply_request") {
     findings.push("apply_request_missing");
@@ -1216,11 +1502,14 @@ function validateReversibleApply({ applyRequest, approvalAuditBridge }) {
   if (!approvalAuditBridge || approvalAuditBridge.recordType !== "memory_apply_approval_audit") {
     findings.push("approval_audit_bridge_missing");
   }
-  if (applyRequest?.status !== "approved_but_not_applied") {
-    findings.push("apply_request_not_approved_for_apply");
+  if (applyRequest?.status !== "awaiting_approval") {
+    findings.push("apply_request_not_ready_for_bound_approval");
   }
   if (approvalAuditBridge?.status !== "recorded_local_only") {
     findings.push("approval_audit_not_recorded");
+  }
+  if (!isIndependentReplayProof(applyRequest?.replayProof)) {
+    findings.push("independent_replay_proof_missing");
   }
   if (applyRequest?.target?.id !== "context_mesh_candidate") {
     findings.push("target_not_context_mesh_candidate");
@@ -1231,6 +1520,23 @@ function validateReversibleApply({ applyRequest, approvalAuditBridge }) {
   if (approvalAuditBridge?.candidateId && applyRequest?.candidateId && approvalAuditBridge.candidateId !== applyRequest.candidateId) {
     findings.push("approval_candidate_mismatch");
   }
+  const receipt = approvalAuditBridge?.approvalReceipt;
+  if (receipt?.status !== "recorded_and_verified") {
+    findings.push("bound_approval_receipt_missing");
+  }
+  if (receipt?.candidateId !== applyRequest?.candidateId) {
+    findings.push("approval_receipt_candidate_mismatch");
+  }
+  if (receipt?.target?.id !== applyRequest?.target?.id) {
+    findings.push("approval_receipt_target_mismatch");
+  }
+  if (receipt?.target?.scope !== applyRequest?.target?.scope) {
+    findings.push("approval_receipt_scope_mismatch");
+  }
+  if (!receipt?.userTurnRef || !receipt?.approvalReference) {
+    findings.push("approval_receipt_user_reference_missing");
+  }
+  findings.push(...validateApprovalLedgerReceipt({ root, approvalAuditBridge }));
   if (!applyRequest?.rollbackReceipt?.plan) {
     findings.push("rollback_receipt_missing");
   }
@@ -1268,7 +1574,7 @@ function resolveApplyGateStage({
   if (latestReversibleApply?.status === "applied_context_mesh_candidate_local_only") return "post_apply_replay";
   if (latestApprovalAudit?.status === "recorded_local_only") return "reversible_apply";
   if (latestApplyRequest?.status && latestApplyRequest.status !== "blocked") return "approval_audit";
-  if (latestReplay?.status === "improved") return "apply_request";
+  if (isIndependentReplayProof(latestReplay)) return "apply_request";
   if (latestCandidate) return "replay_evidence";
   return "source_truth";
 }
@@ -1394,10 +1700,11 @@ function buildContextMeshCandidateFromApplyRequest({ applyRequest, approvalAudit
       risk: 0.22,
       cost: 0.08,
     },
-    lifecycle: "reviewed",
+    lifecycle: "applied_pending_independent_replay",
     authority: {
-      allowedUse: ["retrieve", "review", "admit_for_current_turn", "explain"],
+      allowedUse: ["retrieve", "review", "candidate_evidence", "supporting_context", "explain"],
       blockedUse: [
+        "answer_anchor",
         "durable_promotion",
         "external_action",
         "live_rule_mutation",
@@ -1413,6 +1720,19 @@ function buildContextMeshCandidateFromApplyRequest({ applyRequest, approvalAudit
       approvalRecordId: approvalAuditBridge.approvalAudit?.approvalRecordId || null,
       auditRecordId: approvalAuditBridge.approvalAudit?.auditRecordId || null,
       appliedAt: now,
+      approvalReceipt: {
+        candidateId: approvalAuditBridge.approvalReceipt.candidateId,
+        target: approvalAuditBridge.approvalReceipt.target,
+        userTurnRef: approvalAuditBridge.approvalReceipt.userTurnRef,
+        approvalReference: approvalAuditBridge.approvalReceipt.approvalReference,
+        approvalRecordId: approvalAuditBridge.approvalReceipt.ledger.approvalRecordId,
+        auditRecordId: approvalAuditBridge.approvalReceipt.ledger.auditRecordId,
+      },
+    },
+    replay: {
+      required: true,
+      status: "pending_independent_post_apply_replay",
+      reviewedLifecycleAllowed: false,
     },
   };
 }
@@ -1447,25 +1767,25 @@ export function verifyMemoryReviewQueue({ root } = {}) {
     beforeOutput: "기존 런타임 대시보드를 개선합니다.",
     afterOutput:
       "기존 런타임을 GPAO-T의 재료 몸체로 흡수하는 방향을 유지하며 대시보드를 수정합니다.",
+    replayCase: buildVerificationReplayCase("review-queue", "pre_apply"),
   });
   const applyRequest = appendMemoryApplyRequest({
     root,
     candidateRecord: candidate,
     replayEvidence: replay,
     target: "context_mesh_candidate",
-    approvalState: "requested",
     now: "2026-07-11T00:02:00.000Z",
   });
   const approvalAuditBridge = appendMemoryApplyApprovalAuditBridge({
     root,
     applyRequest,
-    confirmationState: "confirmed_for_local_record_only",
+    approval: buildVerificationApproval(applyRequest, "review-queue"),
     now: "2026-07-11T00:03:00.000Z",
   });
   const summary = buildMemoryReviewQueueSummary({ root });
   const findings = [];
   if (candidate.status !== "review_only") findings.push("candidate_not_review_only");
-  if (replay.status !== "improved") findings.push("replay_not_improved");
+  if (replay.status !== "passed") findings.push("independent_replay_not_passed");
   if (applyRequest.status !== "awaiting_approval") findings.push("apply_request_not_awaiting_approval");
   if (approvalAuditBridge.status !== "recorded_local_only") findings.push("approval_audit_bridge_not_recorded");
   if (summary.counts.candidates !== 1) findings.push("candidate_count_mismatch");
@@ -1485,26 +1805,43 @@ export function verifyMemoryReviewQueue({ root } = {}) {
   };
 }
 
-function buildApprovalProposalFromApplyRequest(applyRequest) {
+function buildApprovalProposalFromApplyRequest(applyRequest, approvalBinding) {
+  const bindingTrace = JSON.stringify({
+    candidateId: applyRequest.candidateId,
+    targetId: applyRequest.target.id,
+    targetScope: applyRequest.target.scope,
+    userTurnRef: approvalBinding.userTurnRef,
+    approvalReference: approvalBinding.approvalReference,
+  });
   return {
     id: `proposal.${applyRequest.id}`,
     source: "gpao_t.memory_apply_request",
     toolKind: "memory",
     actionType: "write",
     authorityLevel: "write",
-    expectedEffect:
-      `Record approval/audit evidence for memory apply target ${applyRequest.target.id}; no target mutation occurs in this bridge.`,
+    expectedEffect: `Record bound memory apply approval without target mutation. binding=${bindingTrace}`,
     risk:
       "User may confuse local approval/audit record with actual memory application, so apply engine remains blocked.",
     rollbackReference: applyRequest.rollbackReceipt.plan.rollbackAction,
     target: applyRequest.target.id,
+    targetScope: applyRequest.target.scope,
     applyRequestId: applyRequest.id,
+    candidateId: applyRequest.candidateId,
+    userTurnRef: approvalBinding.userTurnRef,
+    approvalReference: approvalBinding.approvalReference,
   };
 }
 
 function buildTargetPolicy(target) {
   const base = {
     id: target,
+    scope: target === "context_mesh_candidate"
+      ? "local_context_mesh_candidate_append"
+      : target === "gpao_t_memory_wiki"
+        ? "durable_gpao_t_memory_write"
+        : target === "openclaw_memory"
+          ? "live_runtime_memory_write"
+          : "session_metadata_write",
     mutationNow: false,
     requiresApproval: true,
     requiresRollbackReceipt: true,
@@ -1561,14 +1898,11 @@ function buildRollbackReceipt({ candidateRecord, replayEvidence, targetPolicy })
   };
 }
 
-function buildApplyNextSafeAction({ findings, approvalPassed, target }) {
+function buildApplyNextSafeAction({ findings, target }) {
   if (findings.length) {
     return "Repair candidate and replay evidence before requesting apply review.";
   }
-  if (!approvalPassed) {
-    return `Review target ${target}, then request explicit apply approval if this should affect runtime behavior.`;
-  }
-  return "Approval is recorded, but apply remains blocked until a separate reversible apply engine exists.";
+  return `Review target ${target}, then record explicit approval bound to candidate, scope, user turn, and both local ledgers.`;
 }
 
 function appendQueueRecord(record, { root } = {}) {

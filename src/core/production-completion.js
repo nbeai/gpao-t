@@ -22,14 +22,14 @@ const STAGES = [
     productMeaning: "AI/developer가 첫 작업 루프, 빈 상태, 실패/복구, 모델/도구 경계를 반복 검증합니다.",
   },
   {
-    id: "stage_7_team_alpha",
-    label: "7단계 팀원 alpha",
-    productMeaning: "팀원이 로컬에서 검토할 수 있는 패키지 manifest, 실행 순서, 권한 경계를 준비합니다.",
+    id: "stage_7_internal_production_package",
+    label: "7단계 내부 프로덕션 패키지",
+    productMeaning: "내부 사용자가 검토할 수 있는 프로덕션 패키지 manifest, 실행 순서, 권한 경계를 준비합니다.",
   },
   {
-    id: "stage_8_tester_distribution",
-    label: "8단계 테스트필더 배포 준비",
-    productMeaning: "외부 전송 전 배포 후보, 업데이트/롤백 기준, 승인 경계를 로컬 산출물로 고정합니다.",
+    id: "stage_8_internal_distribution_readiness",
+    label: "8단계 내부 배포 준비",
+    productMeaning: "외부 전송 전 내부 배포 패키지, 업데이트/롤백 기준, 승인 경계를 로컬 산출물로 고정합니다.",
   },
 ];
 
@@ -60,28 +60,29 @@ const STILL_APPROVAL_BOUND = [
   "durable memory promotion",
 ];
 
-export function buildStages5To8Completion({
+export function buildProductionCompletion({
   root = PROJECT_ROOT,
   now = new Date().toISOString(),
   writePackage = false,
 } = {}) {
   const stage5 = buildStage5DesktopProductHardening({ root, now });
   const stage6 = buildStage6FirstProduction({ root, now });
-  const stage7 = buildStage7TeamAlpha({ root, now, writePackage });
-  const stage8 = buildStage8TesterDistribution({ root, now, alphaPackage: stage7 });
+  const stage7 = buildStage7InternalProductionPackage({ root, now, writePackage });
+  const stage8 = buildStage8InternalDistributionReadiness({ root, now, internalProductionPackage: stage7 });
   const stages = [stage5, stage6, stage7, stage8];
   const findings = stages.flatMap((stage) => stage.findings.map((finding) => `${stage.id}:${finding}`));
 
   return {
-    schema: "gpao_t.stages_5_to_8_completion.v1",
+    schema: "gpao_t.production_completion.v1",
     status: findings.length ? "review" : "ready",
     generatedAt: now,
     stages,
     stageLabels: STAGES,
     productionBoundary: {
-      localProductionCandidate: findings.length === 0,
-      teamAlphaPackagePrepared: stage7.packageStatus === "written_local_only" || stage7.packageStatus === "preview_only",
-      testerDistributionPrepared: stage8.status === "ready",
+      productionReady: findings.length === 0,
+      internalProductionPackagePrepared: stage7.packageStatus === "written_local_only" || stage7.packageStatus === "preview_only",
+      internalDistributionPrepared: stage8.status === "ready",
+      supervisedHumanVerificationRequired: true,
       externalDistributionExecuted: false,
       realProviderCredentialStored: false,
       publicReleasePublished: false,
@@ -89,47 +90,47 @@ export function buildStages5To8Completion({
     stillApprovalBound: STILL_APPROVAL_BOUND,
     findings,
     nextSafeAction: findings.length
-      ? "Repair stage findings before declaring local production candidate."
-      : "Run human scenario acceptance, then decide whether to open real provider credentials, packaged build, and team distribution.",
+      ? "Repair stage findings before declaring the package production-ready."
+      : "Run supervised human verification, then decide whether to open real provider credentials, packaged build, and external distribution.",
   };
 }
 
-export function verifyStages5To8Completion({
+export function verifyProductionCompletion({
   root = PROJECT_ROOT,
 } = {}) {
-  const completion = buildStages5To8Completion({ root });
+  const completion = buildProductionCompletion({ root });
   const findings = [...completion.findings];
 
-  if (completion.schema !== "gpao_t.stages_5_to_8_completion.v1") findings.push("invalid_schema");
+  if (completion.schema !== "gpao_t.production_completion.v1") findings.push("invalid_schema");
   if (completion.stages.length !== 4) findings.push("stage_count_mismatch");
   if (!completion.stages.every((stage) => stage.status === "ready")) findings.push("stage_not_ready");
   if (completion.productionBoundary.externalDistributionExecuted !== false) findings.push("external_distribution_executed");
   if (completion.productionBoundary.realProviderCredentialStored !== false) findings.push("credential_storage_open");
 
   return {
-    schema: "gpao_t.stages_5_to_8_completion_verification.v1",
+    schema: "gpao_t.production_completion_verification.v1",
     status: findings.length ? "blocked" : "ready",
     findings,
     checkedStages: completion.stages.map((stage) => stage.id),
     nextSafeAction: findings.length
       ? "Fix stages 5-8 completion findings."
-      : "Write the local team alpha package manifest and keep external distribution behind approval.",
+      : "Write the internal production package manifest and keep external distribution behind approval.",
   };
 }
 
-export function writeTeamAlphaPackage({
+export function writeInternalProductionPackage({
   root = PROJECT_ROOT,
   now = new Date().toISOString(),
 } = {}) {
   const outputDir = join(root, ".gpao-t", "release");
   mkdirSync(outputDir, { recursive: true });
-  const stage7 = buildStage7TeamAlpha({ root, now, writePackage: false });
-  const stage8 = buildStage8TesterDistribution({ root, now, alphaPackage: stage7 });
+  const stage7 = buildStage7InternalProductionPackage({ root, now, writePackage: false });
+  const stage8 = buildStage8InternalDistributionReadiness({ root, now, internalProductionPackage: stage7 });
   const manifest = {
-    schema: "gpao_t.team_alpha_package_manifest.v1",
+    schema: "gpao_t.internal_production_package_manifest.v1",
     status: stage7.findings.length || stage8.findings.length ? "review" : "ready",
     generatedAt: now,
-    packageName: "GPAO-T Local Alpha Package",
+    packageName: "GPAO-T Internal Production Package",
     packageVersion: readPackageJson({ root })?.version || "0.1.0",
     includedFiles: stage7.includedFiles,
     installCommand: "npm run verify",
@@ -147,36 +148,40 @@ export function writeTeamAlphaPackage({
       publicRelease: "not_included",
       destructiveRollback: "not_included",
     },
-    testerInstructions: [
+    supervisedHumanVerification: [
       "Open Work Surface first, not the Control Center.",
       "Run local verification before judging product behavior.",
-      "Do not add real API keys, OAuth accounts, or external sends during alpha without a separate approval pass.",
+      "Do not add real API keys, OAuth accounts, or external sends without a separate approval pass.",
       "Report friction in speed, session flow, authority wording, and work-loop clarity.",
     ],
   };
-  const manifestPath = join(outputDir, "gpao-t-team-alpha-package-manifest.json");
-  const guidePath = join(outputDir, "TEAM-ALPHA-README.md");
+  const manifestPath = join(outputDir, "gpao-t-internal-production-package-manifest.json");
+  const guidePath = join(outputDir, "INTERNAL-PRODUCTION-README.md");
   writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
-  writeFileSync(guidePath, renderTeamAlphaReadme({ manifest }));
+  writeFileSync(guidePath, renderInternalProductionReadme({ manifest }));
 
   return {
-    schema: "gpao_t.team_alpha_package_write.v1",
+    schema: "gpao_t.internal_production_package_write.v1",
     status: manifest.status === "ready" ? "written_local_only" : "review",
     outputDir,
     manifestPath,
     guidePath,
     manifest,
     externalDistributionExecuted: false,
-    nextSafeAction: "Review the local alpha package, then explicitly approve any real sharing or upload.",
+    nextSafeAction: "Complete supervised human verification of the internal production package, then explicitly approve any real sharing or upload.",
   };
 }
 
-export function verifyTeamAlphaPackage({
+export function verifyInternalProductionPackage({
   root = PROJECT_ROOT,
 } = {}) {
   const outputDir = join(root, ".gpao-t", "release");
-  const manifestPath = join(outputDir, "gpao-t-team-alpha-package-manifest.json");
-  const guidePath = join(outputDir, "TEAM-ALPHA-README.md");
+  const currentManifestPath = join(outputDir, "gpao-t-internal-production-package-manifest.json");
+  const currentGuidePath = join(outputDir, "INTERNAL-PRODUCTION-README.md");
+  const legacyManifestPath = join(outputDir, "gpao-t-team-alpha-package-manifest.json");
+  const legacyGuidePath = join(outputDir, "TEAM-ALPHA-README.md");
+  const manifestPath = existsSync(currentManifestPath) ? currentManifestPath : legacyManifestPath;
+  const guidePath = existsSync(currentGuidePath) ? currentGuidePath : legacyGuidePath;
   const findings = [];
 
   if (!existsSync(manifestPath)) findings.push("manifest_missing");
@@ -189,14 +194,14 @@ export function verifyTeamAlphaPackage({
   }
 
   return {
-    schema: "gpao_t.team_alpha_package_verification.v1",
+    schema: "gpao_t.internal_production_package_verification.v1",
     status: findings.length ? "blocked" : "ready",
     findings,
     manifestPath,
     guidePath,
     nextSafeAction: findings.length
-      ? "Regenerate the local alpha package."
-      : "Keep local package ready; external sharing remains a separate approval boundary.",
+      ? "Regenerate the internal production package."
+      : "Keep the production-ready package under supervised human verification; external sharing remains a separate approval boundary.",
   };
 }
 
@@ -274,7 +279,7 @@ function buildStage6FirstProduction({ root, now }) {
   };
 }
 
-function buildStage7TeamAlpha({ root, now, writePackage }) {
+function buildStage7InternalProductionPackage({ root, now, writePackage }) {
   const includedFiles = LOCAL_RELEASE_FILES.map((file) => ({
     file,
     status: existsSync(join(root, file)) ? "present" : "missing",
@@ -288,17 +293,17 @@ function buildStage7TeamAlpha({ root, now, writePackage }) {
   if (!packageJson?.scripts?.verify) findings.push("verify_script_missing");
 
   return {
-    id: "stage_7_team_alpha",
+    id: "stage_7_internal_production_package",
     status: findings.length ? "review" : "ready",
     generatedAt: now,
     packageStatus: writePackage ? "write_requested" : "preview_only",
     includedFiles,
-    alphaUsePath: [
+    internalProductionUsePath: [
       "clone_or_copy_local_package",
       "npm run verify",
       "node bin/gpao-t.js control serve-check",
       "node bin/gpao-t.js control work-surface",
-      "record team feedback without external sends",
+      "record supervised human verification feedback without external sends",
     ],
     comparisonQuestions: [
       "다른 AI 런타임보다 작업 시작이 이해하기 쉬운가?",
@@ -310,31 +315,31 @@ function buildStage7TeamAlpha({ root, now, writePackage }) {
   };
 }
 
-function buildStage8TesterDistribution({ root, now, alphaPackage }) {
+function buildStage8InternalDistributionReadiness({ root, now, internalProductionPackage }) {
   const findings = [];
-  const alphaReady = alphaPackage.status === "ready" || alphaPackage.packageStatus === "preview_only";
+  const packageReady = internalProductionPackage.status === "ready" || internalProductionPackage.packageStatus === "preview_only";
   const hasGit = existsSync(join(root, ".git"));
   const packageJson = readPackageJson({ root });
 
-  if (!alphaReady) findings.push("alpha_package_not_ready");
+  if (!packageReady) findings.push("internal_production_package_not_ready");
   if (!hasGit) findings.push("git_rollback_not_available");
   if (!packageJson?.version) findings.push("version_missing");
 
   return {
-    id: "stage_8_tester_distribution",
+    id: "stage_8_internal_distribution_readiness",
     status: findings.length ? "review" : "ready",
     generatedAt: now,
     distributionMode: "local_package_ready_no_external_send",
     version: packageJson?.version || null,
     channels: [
       {
-        id: "team_alpha",
-        status: alphaReady ? "ready" : "review",
+        id: "internal_distribution",
+        status: packageReady ? "ready" : "review",
         externalSendExecuted: false,
       },
       {
-        id: "tester_field",
-        status: alphaReady && hasGit ? "ready_after_explicit_distribution_approval" : "review",
+        id: "external_distribution",
+        status: packageReady && hasGit ? "ready_after_explicit_distribution_approval" : "review",
         externalSendExecuted: false,
       },
     ],
@@ -353,8 +358,8 @@ function readPackageJson({ root }) {
   return JSON.parse(readFileSync(file, "utf8"));
 }
 
-function renderTeamAlphaReadme({ manifest }) {
-  return `# GPAO-T Team Alpha Package
+function renderInternalProductionReadme({ manifest }) {
+  return `# GPAO-T Internal Production Package
 
 Status: ${manifest.status}
 Version: ${manifest.packageVersion}
@@ -380,6 +385,12 @@ ${manifest.verificationCommands.map((command) => `- \`${command}\``).join("\n")}
 
 ## Tester Notes
 
-${manifest.testerInstructions.map((item) => `- ${item}`).join("\n")}
+${manifest.supervisedHumanVerification.map((item) => `- ${item}`).join("\n")}
 `;
 }
+
+// Undocumented compatibility aliases for the previous maturity labels.
+export const buildStages5To8Completion = buildProductionCompletion;
+export const verifyStages5To8Completion = verifyProductionCompletion;
+export const writeTeamAlphaPackage = writeInternalProductionPackage;
+export const verifyTeamAlphaPackage = verifyInternalProductionPackage;

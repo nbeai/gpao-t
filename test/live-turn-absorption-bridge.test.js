@@ -57,14 +57,14 @@ describe("GPAO-T live turn absorption bridge", () => {
     assert.equal(summary.progressLane.uxContract.hasMidProgressBeforeComplete, true);
   });
 
-  it("connects answer capture to replay evaluation and local auto-growth records", () => {
+  it("connects a meaningful user signal to replay and review-only growth records", () => {
     const root = tempRoot();
     const run = runLiveTurnAbsorptionBridge({
       root,
       now: "2026-07-11T08:20:00.000Z",
-      message: "OpenClaw 흡수 방향을 기준으로 작업 상태를 설명해줘.",
+      message: "앞으로 현재 요청을 과거 기억보다 우선한다는 원칙을 기억해줘.",
       answerText:
-        "OpenClaw 흡수 방향을 기준으로 GPAO-T preflight, replay, local growth 기록을 연결했습니다.",
+        "현재 요청을 과거 기억보다 우선한다는 GPAO-T 원칙을 검토 후보로 기록했습니다.",
       sessionKey: "agent:main:main",
       source: "telegram_direct",
       sourceRef: "telegram:8601204821",
@@ -76,9 +76,11 @@ describe("GPAO-T live turn absorption bridge", () => {
     assert.equal(run.postAnswerRecord.status, "review_only");
     assert.equal(run.answerReplayEvaluation.status, "review_only");
     assert.equal(run.answerMemoryCandidatePreview.status, "review_only");
-    assert.equal(run.autoMemoryGrowth.status, "completed_local_auto_loop");
+    assert.equal(run.autoMemoryGrowth.status, "captured_review_only");
     assert.equal(run.progressEvents.some((event) => event.phase === "self_growth_review"), true);
-    assert.equal(run.autoMemoryGrowth.automation.localContextMeshApplied, true);
+    assert.equal(run.autoMemoryGrowth.automation.localContextMeshApplied, false);
+    assert.equal(run.autoMemoryGrowth.applyRequest.status, "blocked");
+    assert.equal(run.autoMemoryGrowth.approvalAudit, null);
     assert.equal(run.traceLink.gpaoSessionId, "session.telegram.direct");
     assert.equal(run.traceLink.gpaoThreadId, "thread.telegram.direct");
     assert.equal(run.traceLink.preflightId, run.preflightRecord.id);

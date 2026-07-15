@@ -5,7 +5,7 @@ import { tmpdir } from "node:os";
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { auditPackageIntegrity } from "../tools/audit-gpao-t-final-supercar-seal.mjs";
+import { auditPackageIntegrity } from "../tools/audit-gpao-t-production-seal.mjs";
 
 function sha256Text(text) {
   return createHash("sha256").update(text).digest("hex");
@@ -13,7 +13,7 @@ function sha256Text(text) {
 
 test("auditPackageIntegrity accepts a manifest-backed local package", async () => {
   const packageRoot = await mkdtemp(join(tmpdir(), "gpao-t-package-"));
-  const packageBase = "gpao-t-owner-ops-0.1.0-local-candidate";
+  const packageBase = "gpao-t-owner-ops-0.1.0-internal-production";
   const archiveBody = "local package archive";
   const archiveName = `${packageBase}.zip`;
   const bundleName = `${packageBase}.bundle.json`;
@@ -39,7 +39,7 @@ test("auditPackageIntegrity accepts a manifest-backed local package", async () =
 
 test("auditPackageIntegrity blocks hash drift", async () => {
   const packageRoot = await mkdtemp(join(tmpdir(), "gpao-t-package-"));
-  const packageBase = "gpao-t-owner-ops-0.1.0-local-candidate";
+  const packageBase = "gpao-t-owner-ops-0.1.0-internal-production";
   const archiveName = `${packageBase}.zip`;
   const bundleName = `${packageBase}.bundle.json`;
   const manifestName = `${packageBase}.manifest.json`;

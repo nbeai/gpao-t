@@ -1,6 +1,6 @@
 # GPAO-T Program Control And Work Sequence v0.1
 
-Status: active control frame
+Status: historical v0.1 control frame; superseded by Phase 2 work orders
 Date: 2026-07-11
 Owner: 윤
 
@@ -11,9 +11,9 @@ This document fixes the next GPAO-T work order and the program-control role need
 The goal is not to manage more for the sake of management. The goal is to keep one hard line:
 
 ```text
-OpenClaw is the current body and material.
-GPAO-T must absorb, replace, strengthen, and eventually transform that body.
-Do not drift into a disconnected mock surface, OpenClaw improvement project, MVP shortcut, or plugin-only attachment.
+GPAO-T is the product body and owner of its runtime contract.
+Compatibility code must be replaced or isolated when it leaks identity or blocks reliability.
+Do not drift into a comparison-product improvement project, MVP shortcut, or plugin-only shell.
 ```
 
 ## 1. Decision
@@ -246,7 +246,7 @@ Each report must say where the current work unit stands:
 
 Each report must also restate the locked remaining project stages from the current endpoint.
 
-For the current post test-team-candidate phase, the fixed remaining stages are:
+For the current post internal-production-verification phase, the fixed remaining stages are:
 
 1. Completed: OpenClaw live session RPC/event layer absorption
 2. Completed: Live dashboard action readback for rename/archive/delete-pending/restore
@@ -254,7 +254,7 @@ For the current post test-team-candidate phase, the fixed remaining stages are:
 4. Completed: Memory candidate review queue filtered by active thread/session
 5. Completed: Mobile session action sheet and inspector sheet visual QA
 6. Completed: Controlled live smoke gate after backup, rollback, and authority gate
-7. Remaining: Test-team dispatch/update packet refresh
+7. Remaining: Internal-production package/internal-verification packet refresh
 
 When a stage is completed, Codex must mark it as completed and keep the remaining list visible. Do not replace the list with a new vague roadmap unless 윤 explicitly changes the endpoint.
 

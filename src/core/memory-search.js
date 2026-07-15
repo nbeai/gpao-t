@@ -1,7 +1,10 @@
 import { createHash } from "node:crypto";
 import {
+  closeSync,
   existsSync,
+  openSync,
   mkdirSync,
+  readSync,
   readFileSync,
   readdirSync,
   statSync,
@@ -27,9 +30,11 @@ export function memorySearchPaths({ stateDir } = {}) {
 
 export function buildMemorySearchIndex({ stateDir, now = new Date().toISOString() } = {}) {
   const paths = memorySearchPaths({ stateDir });
+  const startedAt = Date.now();
   const documents = [
     ...collectMemoryDocuments(paths.runtimeRoot),
     ...collectChatDocuments(paths.runtimeRoot),
+    ...collectAgentSessionDocuments(paths.runtimeRoot),
     ...collectWorkspaceDocuments(paths.runtimeRoot),
     ...collectAuditDocuments(paths.runtimeRoot),
   ];
@@ -48,12 +53,20 @@ export function buildMemorySearchIndex({ stateDir, now = new Date().toISOString(
       documents: documents.length,
       sources: summarizeSources(documents),
     },
+    performance: {
+      boundedReads: true,
+      maxTextBytes: MAX_TEXT_BYTES,
+      maxJsonlTailBytes: MAX_JSONL_BYTES,
+      maxDocumentText: MAX_DOCUMENT_TEXT,
+      elapsedMs: 0,
+    },
     documents: documents.map((document) => ({
       ...document,
       tokens: tokens(document.text).slice(0, 300),
       embedding: embedText(`${document.title}\n${document.text}`),
     })),
   };
+  index.performance.elapsedMs = Date.now() - startedAt;
   mkdirSync(dirname(paths.indexFile), { recursive: true });
   writeFileSync(paths.indexFile, `${JSON.stringify(index, null, 2)}\n`);
   return index;
@@ -104,13 +117,34 @@ export function getMemorySearchStatus({ stateDir } = {}) {
   };
 }
 
-export function searchMemory({ query = "", stateDir, limit = 8 } = {}) {
+export function searchMemory({ query = "", stateDir, limit = 8, allowBuild = true } = {}) {
   const normalizedQuery = String(query).trim();
   if (!normalizedQuery) {
     throw new Error("memory search requires query");
   }
   let index = readMemorySearchIndex({ stateDir });
   if (index.status !== "ready") {
+    if (!allowBuild) {
+      return {
+        schema: "gpao_t.memory_search_result.v0_1",
+        status: "needs_index",
+        query: normalizedQuery,
+        engine: {
+          mode: "local_hybrid_memory_search",
+          lexical: "local_token_overlap",
+          semantic: EMBEDDING_VERSION,
+          meaning:
+            "Fast-lane search does not rebuild the index during a live turn; schedule a background index rebuild instead.",
+        },
+        index: {
+          generatedAt: null,
+          documents: 0,
+        },
+        results: [],
+        findings: ["memory_search_index_missing"],
+        nextSafeAction: "schedule_memory_index_rebuild",
+      };
+    }
     index = buildMemorySearchIndex({ stateDir });
   }
   const queryTokens = tokens(normalizedQuery);
@@ -207,6 +241,41 @@ function collectChatDocuments(root) {
   ];
 }
 
+function collectAgentSessionDocuments(root) {
+  const sessionsRoot = join(root, "agents", "main", "sessions");
+  const sessionsIndex = readJsonFileSafe(join(sessionsRoot, "sessions.json"));
+  return listFiles(sessionsRoot, { extensions: [".jsonl"], maxDepth: 1 })
+    .filter((path) => !path.includes(".trajectory.") && !path.includes(".deleted."))
+    .flatMap((path) => {
+      const read = readTextTailSafe(path, MAX_JSONL_BYTES);
+      if (!read.ok) return [];
+      const sessionId = path.split("/").pop()?.replace(/\.jsonl$/u, "") || "unknown-session";
+      const lines = [];
+      let latestCreatedAt = null;
+      for (const line of read.text.split("\n").filter(Boolean)) {
+        try {
+          const record = JSON.parse(line);
+          const message = record.message || record;
+          const role = message.role || record.role || record.type || "event";
+          const text = messageText(message.content ?? record.content);
+          const createdAt = normalizeCreatedAt(record.timestamp || message.timestamp || record.createdAt);
+          if (createdAt) latestCreatedAt = createdAt;
+          if (text) lines.push(`[${role}] ${text}`);
+        } catch {
+          // Ignore malformed tail fragments. Search must never block live turns.
+        }
+      }
+      if (!lines.length) return [];
+      return [makeDocument({
+        source: "agent_session_transcript",
+        path,
+        title: sessionTitle(sessionsIndex, sessionId),
+        text: lines.slice(-24).join("\n"),
+        createdAt: latestCreatedAt,
+      })];
+    });
+}
+
 function collectWorkspaceDocuments(root) {
   const workspaceRoot = join(root, "workspace");
   const docs = [];
@@ -240,6 +309,7 @@ function inspectSearchSources(root) {
     ["memory/review-queue.jsonl", "memory_review_queue"],
     ["chat/preflight-records.jsonl", "chat_preflight"],
     ["chat/post-answer-replay-records.jsonl", "chat_answer"],
+    ["agents/main/sessions", "agent_session_transcript"],
     ["workspace/MEMORY.md", "workspace_memory"],
     ["events/audit.jsonl", "audit_events"],
   ].map(([relativePath, id]) => {
@@ -249,7 +319,9 @@ function inspectSearchSources(root) {
     return {
       id,
       path,
-      status: stat.size > 0 && Number.isFinite(stat.blocks) && stat.blocks === 0 ? "degraded" : "ready",
+      status: !stat.isDirectory() && stat.size > 0 && Number.isFinite(stat.blocks) && stat.blocks === 0
+        ? "degraded"
+        : "ready",
       size: stat.size,
       blocks: stat.blocks,
     };
@@ -276,6 +348,50 @@ function readJsonlDocuments(path, { source, titleOf, textOf, createdAtOf = () =>
         return [];
       }
     });
+}
+
+function messageText(content) {
+  if (typeof content === "string") return content;
+  if (Array.isArray(content)) {
+    return content
+      .map((item) => {
+        if (!item || typeof item !== "object") return "";
+        if (item.type === "thinking") return "";
+        if (item.type === "text") return item.text || "";
+        if (item.type === "toolCall") return `도구 호출: ${item.name || ""} ${JSON.stringify(item.arguments || {})}`;
+        if (item.type === "toolResult") return `도구 결과: ${item.toolName || ""}`;
+        return "";
+      })
+      .filter(Boolean)
+      .join("\n");
+  }
+  if (content && typeof content === "object") {
+    if (typeof content.text === "string") return content.text;
+    if (typeof content.message === "string") return content.message;
+  }
+  return "";
+}
+
+function normalizeCreatedAt(value) {
+  if (!value) return null;
+  if (typeof value === "number") return new Date(value).toISOString();
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date.toISOString();
+}
+
+function sessionTitle(index, sessionId) {
+  const fallback = `Session transcript ${sessionId}`;
+  const records = [
+    ...(Array.isArray(index?.sessions) ? index.sessions : []),
+    ...Object.values(index?.sessions || {}).filter((item) => item && typeof item === "object"),
+  ];
+  const match = records.find((record) => (
+    record.id === sessionId
+    || record.sessionId === sessionId
+    || record.file === `${sessionId}.jsonl`
+    || record.path?.endsWith?.(`${sessionId}.jsonl`)
+  ));
+  return match?.title || match?.name || fallback;
 }
 
 function readJsonFileSafe(path) {
@@ -306,8 +422,28 @@ function readTextTailSafe(path, maxBytes) {
   if (stat.size > 0 && Number.isFinite(stat.blocks) && stat.blocks === 0) {
     return { ok: false, reason: "offloaded-or-sparse-file" };
   }
-  const text = readFileSync(path, "utf8");
-  return { ok: true, text: text.slice(-maxBytes) };
+  const length = Math.min(stat.size, maxBytes);
+  const start = Math.max(0, stat.size - length);
+  const fd = openSync(path, "r");
+  try {
+    const buffer = Buffer.alloc(length);
+    const bytesRead = readSync(fd, buffer, 0, length, start);
+    let text = buffer.subarray(0, bytesRead).toString("utf8");
+    if (start > 0) {
+      const firstNewline = text.indexOf("\n");
+      text = firstNewline >= 0 ? text.slice(firstNewline + 1) : "";
+    }
+    return {
+      ok: true,
+      text,
+      boundedTailRead: true,
+      bytesRead,
+      fileSize: stat.size,
+      truncatedFromStart: start > 0,
+    };
+  } finally {
+    closeSync(fd);
+  }
 }
 
 function listFiles(root, { extensions, maxDepth, depth = 0 } = {}) {
@@ -357,7 +493,9 @@ function scoreDocument(document, queryTokens, query, queryEmbedding) {
   }
   if (haystack.includes(query.toLowerCase())) lexicalScore += 10;
   const semanticScore = cosineSimilarity(queryEmbedding, document.embedding || []);
-  const sourceBoost = document.source === "chat_preflight" || document.source === "chat_answer" ? 1 : 0;
+  const sourceBoost = document.source === "agent_session_transcript"
+    ? 2
+    : document.source === "chat_preflight" || document.source === "chat_answer" ? 1 : 0;
   const score = lexicalScore + Math.round(semanticScore * 12) + sourceBoost;
   document.scoreBreakdown = {
     lexical: lexicalScore,

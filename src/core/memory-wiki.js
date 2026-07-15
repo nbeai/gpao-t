@@ -201,8 +201,14 @@ function buildTCellCandidateFromMemory(entry) {
     },
     lifecycle: "candidate",
     authority: {
-      allowedUse: ["retrieve", "review", "admit_for_current_turn", "explain"],
-      blockedUse: ["durable_promotion", "external_action", "live_rule_mutation"],
+      allowedUse: ["retrieve", "review", "candidate_evidence", "supporting_context", "explain"],
+      blockedUse: [
+        "answer_anchor",
+        "automatic_answer_anchor",
+        "durable_promotion",
+        "external_action",
+        "live_rule_mutation",
+      ],
     },
     trace: {
       createdFrom: entry.id,

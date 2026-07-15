@@ -2,13 +2,13 @@
 
 ## 목적
 
-`Owner Ops Signed Package Evidence`는 Owner Ops 로컬 패키지 후보를 공개 배포나 팀 배포로 넘기기 전에, 서명/검증/설치 증거가 무엇이어야 하는지 고정하는 로컬 증거 게이트다.
+`Owner Ops Signed Package Evidence`는 Owner Ops 내부 프로덕션 패키지를 공개 배포 검토나 감독된 내부 배포로 넘기기 전에, 서명/검증/설치 증거가 무엇이어야 하는지 고정하는 로컬 증거 게이트다.
 
 이 문서는 서명을 실행했다는 뜻이 아니다. 현재 v0.1 상태는 `unsigned_local_candidate`이며, 실제 서명, 공증, 업로드, 설치, 업데이트, 롤백은 모두 닫혀 있다.
 
 ## 현재 허용되는 것
 
-- 로컬 패키지 후보 readback 확인
+- 내부 프로덕션 패키지 readback 확인
 - release readiness evidence 확인
 - human review approval packet 확인
 - approved signing lane 준비 상태 확인

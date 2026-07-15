@@ -1,547 +1,129 @@
-# GPAO-T Runtime Skeleton
+# GPAO-T Documentation Map
+
+Status: current documentation entry point
+Updated: 2026-07-14
+
+GPAO-T is an independent local-first Personal Growth OS. OpenClaw is a
+separate comparison product and a compatibility reference. Technical
+compatibility identifiers may remain inside implementation provenance, but
+they do not define GPAO-T's product identity, live state root, or user surface.
+
+## Authority Order
+
+Use current documents in this order:
+
+1. The user's latest instruction.
+2. `docs/00-canon/GPAO-T-PRODUCT-CHARTER-v0.1-ko.md`.
+3. Current runtime and authority contracts in `docs/00-canon/`.
+4. Current Phase 2 engineering and product plans dated 2026-07-13 or later.
+5. Current verification evidence from the intended user path.
+6. Historical design/research documents, only as provenance.
+
+A historical document cannot override a newer canon, current source, live
+runtime evidence, or the user's current decision.
+
+## Active Product Contracts
+
+- Product identity and mission:
+  `00-canon/GPAO-T-PRODUCT-CHARTER-v0.1-ko.md`
+- Human-centered response behavior:
+  `00-canon/GPAO-T-HUMAN-CENTERED-RESPONSE-CANON-ko.md`
+- Memory and self-growth authority:
+  `00-canon/GPAO-T-SELF-GROWTH-LOOP-CONTRACT-v0.1-ko.md`
+- Runtime/iCloud boundary:
+  `00-canon/GPAO-T-RUNTIME-AND-ICLOUD-BOUNDARY-2026-07-13.md`
+- Runtime heart hardening:
+  `03-engineering/GPAO-T-RUNTIME-HEART-HARDENING-PLAN-2026-07-13-ko.md`
+- First real OS turn:
+  `03-engineering/GPAO-T-FIRST-REAL-OS-TURN-PIPELINE-WORK-ORDER-2026-07-13-ko.md`
+- Phase 2 program:
+  `03-engineering/GPAO-T-PHASE-2-PERSONAL-GROWTH-OS-WORK-ORDER-v0.1-ko.md`
+- Tool readiness gate:
+  `03-engineering/GPAO-T-TOOL-PARITY-GATE-v0.1-ko.md`
+
+## Current Design And App-Shell Contracts
+
+- Dashboard design recipe:
+  `GPAO-T-DASHBOARD-DESIGN-RECIPE.md`
+  - required operating-desk structure: `Work / Context / Evidence / Growth / Authority`
+- Human readability verification:
+  `03-verification/CONTROL-CENTER-HUMAN-READABILITY-CHECK.md`
+- App-shell decision gate:
+  `03-engineering/APP-SHELL-DECISION-GATE.md`
+- App-shell technology decision:
+  `03-engineering/APP-SHELL-TECHNOLOGY-DECISION.md`
+
+The current first app-shell slice is a browser-local shell over `127.0.0.1` read-mostly HTTP.
+Packaged desktop work follows the separate technology and authority decisions
+in the documents above; it does not silently widen runtime or external-action
+authority.
+
+## Current Verified Runtime
+
+Canonical owner-Mac paths:
+
+- source: `/Users/jyp/Developer/gpao-t`
+- live state: `~/.gpao-t`
+- live workspace: `~/.gpao-t/workspace`
+- dashboard: `http://127.0.0.1:18799/`
+
+Verified local capabilities as of 2026-07-14:
+
+- real provider-backed chat turns
+- multi-session dashboard and user-visible tool activity
+- DuckDuckGo web search and webpage readability
+- browser interaction in the active coding profile
+- local file patch and bounded command-read path
+- local-hybrid memory retrieval without external embedding quota
+- source-linked memory support candidates with admission boundaries
+- replay and review-only self-growth candidate handling
+- PDF extraction at the live handler boundary
+
+Current boundaries:
+
+- credential migration to secret references requires explicit authority
+- paired-node file transfer requires node/path/tool approval
+- fresh browser attachment-picker-to-answer QA needs an authenticated
+  upload-capable driver
+- public release, signed installers, and unsupervised automatic update are not
+  claimed by the local runtime evidence
+
+## Current Evidence
+
+- Code/runtime consistency:
+  `03-verification/evidence/phase-1-code-runtime-consistency-2026-07-14/`
+- Dashboard human QA loop 1:
+  `03-verification/evidence/phase-2-dashboard-human-qa-2026-07-14/`
+- Tools, memory, context, and self-growth:
+  `03-verification/evidence/phase-3-tools-memory-growth-2026-07-14/`
+- Tool parity audit:
+  `03-verification/evidence/tool-parity-audit/`
+
+Completion still requires broad regression, final release sealing, and human QA
+loop 2 through the live dashboard.
 
-Status: first local implementation target
+## Historical Documents
 
-GPAO-T is the Growth Personal AI Operating System with T-cell theory as kernel doctrine.
+Documents dated 2026-07-10 through 2026-07-12 that describe OpenClaw as
+GPAO-T's body, primary material, or constitutional owner are retained as
+engineering history. They explain how the compatibility layer was studied and
+absorbed. They are not active product doctrine after the Product Charter and
+Phase 2 identity decision.
 
-This directory is intentionally separate from `beai-harness-for-codex`. BEAI/GPAO for Codex remains the development harness and evidence layer; `gpao-t` is the new product runtime target.
+This includes:
 
-GPAO-T is now treated as an independent local product repository. Local git is the source-control and rollback substrate for product source, docs, tests, schemas, and fixtures. This does not imply public GitHub publication, deployment, installer execution, external account setup, or connector activation.
+- `00-canon/GPAO-T-OPENCLAW-ABSORPTION-CONSTITUTION-v0.1-ko.md`
+- `03-engineering/GPAO-T-OPENCLAW-ABSORPTION-PASS-001-v0.1-ko.md`
+- early dashboard fork/live-patch plans
+- early owner/workflow guides whose scope says "OpenClaw absorption"
 
-Development guidance is maintained in `docs/DEVELOPMENT-PRINCIPLES.md`: GPAO-T should absorb OpenClaw-grade local runtime stability, Codex-grade work rhythm, and prove its originality through concrete T-cell / Context Mesh / Memory Wiki / Self-Growth runtime behavior.
+Historical evidence under `03-verification/evidence/` remains immutable
+evidence of what was true at the time. It must not be rewritten to make old
+results look current.
 
-The OpenClaw absorption constitution is maintained in `docs/00-canon/GPAO-T-OPENCLAW-ABSORPTION-CONSTITUTION-v0.1-ko.md`. It fixes the main line: use the nbeai GitHub repositories as the source library, discard hidden previous-work result storage as active truth, avoid final sidecar/plugin-only integration, and transform OpenClaw into GPAO-T through internal absorption, replacement, modification, and verified strengthening. The Ferrari rule applies: GPAO-T must understand OpenClaw and the wider AI operating-system engineering field deeply before changing the live body.
+## Verification Rule
 
-OpenClaw absorption Pass 001 is maintained in `docs/03-engineering/GPAO-T-OPENCLAW-ABSORPTION-PASS-001-v0.1-ko.md`. It completes the current one-stop planning slice through step 4: nbeai source inventory, OpenClaw circuit-to-absorption map, Codex GPAO / T-cell kernel extraction, and Gateway Dashboard -> GPAO-T Control Center design direction. Step 5, live OpenClaw mutation, remains a controlled discussion boundary.
-
-Test-team release completion is governed by `docs/03-engineering/GPAO-T-TEST-TEAM-RELEASE-COMPLETION-PLAN-v0.1-ko.md`. It fixes the next completion standard: GPAO-T cannot be called test-team release complete until the live OpenClaw/Telegram turn path is closed through GPAO-T preflight/admission/LLM-ready packet, post-answer replay, auto memory/self-growth, Control Center trace, and package evidence. The release/QA appendix is `docs/03-verification/GPAO-T-TEST-TEAM-RELEASE-COMPLETION-PLAN-v0.1-ko.md`.
-
-Pre-release candidate work is governed by `docs/03-engineering/GPAO-T-PRE-RELEASE-CANDIDATE-WORK-PLAN-v0.1-ko.md`. It fixes the target as the supervised test-team candidate immediately before distribution, not public release: release scope seal, fresh verification, live hook preview diff / rollback manifest, package/archive/checksum/readback, sealed visual QA, tester guide, feedback ledger, and owner decision lane must close before any live apply or distribution language is used.
-
-Research-first OS strategy is maintained in `docs/01-product/GPAO-T-RESEARCH-FIRST-OS-STRATEGY-v0.1-ko.md`. It resets the project away from MVP-first or OpenClaw-patch-first work and requires comparative study of OpenClaw, Codex, Claude, local AI tools, agent runtimes, UI/UX, and user-perceived performance before narrowing implementation. The current Runtime / Substrate Lab is the live OpenClaw body plus the pure OpenClaw lab copy, not `gpao-t-hardware-engine`.
-
-Comparative UX and operating-principle research is maintained in `docs/01-product/GPAO-T-COMPARATIVE-UX-OPERATING-PRINCIPLE-MATRIX-v0.1-ko.md`. It translates source-grounded evidence from Codex, Claude Code, OpenClaw, OpenHands, Open Interpreter, Khoj, Letta, LangGraph, CrewAI, and AutoGPT into GPAO-T OS pillars: Work Surface, Context / Memory Kernel, Authority Center, Model / Tool Router, Replay / Growth Loop, and Runtime / Substrate.
-
-Deep ecosystem, OpenClaw absorption, and T-cell application research is maintained in `docs/01-product/GPAO-T-DEEP-ECOSYSTEM-OPENCLAW-TCELL-APPLICATION-RESEARCH-v0.1-ko.md`. It extends the research map to GitHub Copilot cloud agent, Cline, Aider, Roo Code, Microsoft Agent Framework, AutoGen, Mem0, Zep, AIOS, OS-Copilot, Agent libOS, MemX, MCP/tool-layer research, and coding-agent configuration studies. Any previous Hardware Engine references are retired for this project unless 윤 explicitly reopens that lane.
-
-First real OS flow guidance is maintained in `docs/01-product/GPAO-T-FIRST-REAL-OS-FLOW-v0.1-ko.md`. It turns the research matrix into the first user-perceived operating flow: request intake, intent restoration, context selection, authority check, route selection, preview/result/proposal, verification, growth candidate, and next safe action. Future Pass 010 prompt narrowing and live OpenClaw work must preserve this flow.
-
-First real OS flow scenario guidance is maintained in `docs/01-product/GPAO-T-FIRST-REAL-OS-FLOW-SCENARIO-SPEC-v0.1-ko.md`. It makes the first flow replayable through direction-request, follow-up recovery, live-execution boundary, growth-candidate, and user-result-review scenarios, with acceptance criteria, UI state, authority boundaries, fixture shapes, and recommended next implementation order.
-
-Owner-side operation guidance is maintained in `docs/01-product/GPAO-T-OWNER-OPERATING-GUIDE-v0.1-ko.md`. It defines how 윤 participates as product owner and direction judge while Codex handles local inspection, documentation, implementation, verification, research, and technical translation. The guide preserves the beginner-facing rule: 윤 should not have to operate the project as a professional developer.
-
-Multi-agent operating guidance is maintained in `docs/02-workflow/GPAO-T-MULTI-AGENT-OPERATING-PROTOCOL-v0.1-ko.md`. Codex may propose, configure, and lead role-based agents for research, architecture, runtime, implementation, QA, security/authority, UX, and synthesis when that improves GPAO-T quality. The protocol also records that completed projects in the GitHub `nbeai` account are an important source-of-truth reference, while the current request and GPAO-T OS purpose remain the active target.
-
-Program control and the immediate work sequence are maintained in `docs/02-workflow/GPAO-T-PROGRAM-CONTROL-AND-WORK-SEQUENCE-v0.1-ko.md`. It establishes the `GPAO-T Flow Keeper` role as a drift / blocker / evidence / authority / next-action monitor, and fixes the next work order as Memory and Knowledge Control Architecture -> Source Call-Path Pass -> Dashboard Fork Map -> Lab/Fork UI Slice -> Replay and Visual QA -> Live Diff Review Package -> Explicit Live Apply.
-
-The first one-stop execution of that sequence is recorded in `docs/03-verification/evidence/GPAO-T-OPENCLAW-ABSORPTION-ONE-STOP-2026-07-11.md`. Phase 1 through Phase 4 are locally closed as architecture, source call-path, dashboard fork map, lab UI patch package, and testable runtime control contract. The detailed documents are `docs/03-engineering/GPAO-T-MEMORY-KNOWLEDGE-CONTROL-ARCHITECTURE-v0.1-ko.md`, `docs/03-engineering/GPAO-T-OPENCLAW-SOURCE-CALL-PATH-PASS-001-v0.1-ko.md`, and `docs/03-engineering/GPAO-T-DASHBOARD-FORK-MAP-AND-LAB-UI-SLICE-001-v0.1-ko.md`; the review patch package is `docs/03-engineering/patches/openclaw-dashboard-gpao-workpane-slice-001.patch`.
-
-Competitive and field research is maintained in `docs/01-product/GPAO-T-COMPETITIVE-RESEARCH-v0.1-ko.md`. It maps AutoGPT, OpenInterpreter, Khoj, Letta/MemGPT, MemoryOS, OpenHands, ChatDev, MetaGPT, CrewAI, LangGraph, OS-Copilot, OpenJarvis, AgentOS, AOHP, and local-first memory research into GPAO-T's product opportunity: a local-first, authority-bounded, self-growing personal AI OS rather than another raw agent framework.
-
-GPAO-T self-growth governance is maintained in `docs/00-canon/GPAO-T-SELF-GROWTH-LOOP-CONTRACT-v0.1-ko.md`. The official loop is `Observe -> Diagnose -> Extract -> Propose -> Replay -> Apply Gate -> Observe Again -> Stabilize or Rollback`; hidden durable memory promotion, hidden live rule mutation, external sends, connector writes, recurring automation, account/secret changes, public release, and other authority actions remain approval-gated.
-
-GPAO-T OpenClaw absorption is governed by `docs/00-canon/GPAO-T-OPENCLAW-ABSORPTION-CONSTITUTION-v0.1-ko.md`. This is the current constitutional directive for the project: live OpenClaw is the primary material, the pure OpenClaw lab copy is the research object, nbeai GitHub repositories are the source library, and GPAO-T must be built by analyzing OpenClaw down to file/module/route/prompt/UI circuits, preserving strengths, improving weaknesses, and absorbing GPAO/T-cell/BEAI research into that body. Separate Workspace Shell work is now auxiliary evidence, not the main product path.
-
-OpenClaw conversion Stage 1 is governed by `docs/03-engineering/OPENCLAW-CONVERSION-STAGE-1-WORK-ORDER-v0.1-ko.md`. The next safe conversion step is live inventory, prompt-path packet checking, controlled OpenClaw smoke, search route observation, and a pass/patch-required/hold decision before any broader OpenClaw mutation or UI redesign.
-
-OpenClaw Gateway Dashboard fork and chat condition work is governed by `docs/03-engineering/OPENCLAW-GATEWAY-DASHBOARD-FORK-AND-CHAT-CONDITION-WORK-ORDER-v0.1-ko.md`. It treats OpenClaw Control Dashboard as the local runtime shell reference, Codex as the multi-chat work rhythm reference, and GPAO-T Work Surface as the product-owned user environment. The first separate GPAO-T Workspace Shell slice is exposed through `gpao-t control workspace-shell`, `gpao-t control workspace-shell-html`, `gpao-t control workspace-shell-check`, `GET /gpao-t-workspace`, `GET /gpao-t-workspace/state`, and `GET /gpao-t-workspace/verify`; it shows session rail, active work session, right inspector, and chat condition status without live OpenClaw mutation. Its baseline desktop/mobile visual QA evidence is captured in `docs/03-verification/evidence/WORKSPACE-SHELL-VISUAL-QA-2026-07-10.md`, OS Pass 001 evidence is captured in `docs/03-verification/evidence/WORKSPACE-SHELL-OS-PASS-001-2026-07-10.md`, and OS Pass 002 evidence is captured in `docs/03-verification/evidence/WORKSPACE-SHELL-OS-PASS-002-2026-07-10.md`. The next visual passes must not harden this into a box/card dashboard; the primary OS surface should favor workspace planes, status strips, progress lanes, command/composer bars, tabs, drawers, sheets, and inspectors.
-
-Hardware Engine material has been retired from the current GPAO-T project scope. The archived notes are under `docs/99-out-of-scope/retired-hardware-engine/` and must not be used as a source, dependency, blocker, or completion gate for the current OpenClaw absorption/test-team candidate path.
-
-GPAO-T dashboard design guidance is maintained in `docs/GPAO-T-DASHBOARD-DESIGN-RECIPE.md`. It adapts BEAI Harness `design.md` into the GPAO-T visual UI contract before any desktop/web surface is built.
-
-GPAO-T design reference gating is now a required UI/UX contract. `gpao-t control design-reference-gate`, `gpao-t control design-reference-gate-check`, `GET /control-center/design-reference-gate`, and `GET /control-center/design-reference-gate/verify` expose the Codex-level visual/conversation UX, Claude-Code-level operating/authority UX, Korean-first UI, visual system, and tone-unity requirements that every future UI/UX slice must prove with desktop/mobile screenshot evidence and human visual review. The Control Center `Design Reference` panel shows this gate without opening approval writes, audit writes, dry-run invocation, tool/CLI/MCP execution, connector activation, credential access, external send, paid/destructive action, or durable memory promotion.
-
-Control Center human-readability QA is maintained in `docs/03-verification/CONTROL-CENTER-HUMAN-READABILITY-CHECK.md`. It keeps first-scan clarity, state comprehension, authority visibility, next-safe-action visibility, mobile action visibility, and no-script/no-external-activation boundaries explicit before app-shell work.
-
-The app-shell transition is governed by `docs/03-engineering/APP-SHELL-DECISION-GATE.md`, the closed technology decision in `docs/03-engineering/APP-SHELL-TECHNOLOGY-DECISION.md`, the packaged desktop boundary in `docs/03-engineering/TAURI-PACKAGED-DESKTOP-GATE.md`, the install/update/rollback readiness gate in `docs/03-engineering/TAURI-INSTALL-UPDATE-ROLLBACK-READINESS-GATE.md`, the prerequisite doctor / dry-run contract in `docs/03-engineering/TAURI-PREREQUISITE-DOCTOR-AND-DRY-RUN-CONTRACT.md`, and the packaged desktop planning review in `docs/03-engineering/PACKAGED-DESKTOP-PLANNING-REVIEW.md`. GPAO-T's first app-shell target is a browser-local shell over `127.0.0.1` read-mostly HTTP; Tauri is the first packaged desktop target after browser-local proof; Electron is deferred. The current Tauri slice is a read-mostly source scaffold with desktop/mobile visual QA baseline evidence, a read-only install/update/rollback readiness gate, contract-only prerequisite/dry-run gates, approval-gated dry-run implementation design, pure dry-run plan/verify/preview JSON objects, a refined Control Center approval/preview UX baseline, and a stop-line review that redirects the next large step back to the user-facing GPAO-T core work surface. It is not a built Tauri app, packaging step, signing step, dry-run invocation, approval-record write, or install/update/rollback executor.
-
-Stage 4 local app / desktop production hardening is documented in `docs/03-engineering/STAGE-4-LOCAL-APP-PRODUCTION-HARDENING.md`. It adds `/app-shell/production-hardening`, `gpao-t control stage-4-production-hardening`, `gpao-t control stage-4-production-hardening-check`, and matching Gateway routes so the browser-local proof, Tauri scaffold, local approval/audit records, replay/rollback reference, screenshot baseline, and local git rollback posture are visible as one product-readiness surface. This still does not open Tauri build, dependency install, bundle/signing, install/update/rollback execution, IPC commands, live model calls, tool/CLI/MCP execution, connector activation, credential access, external send, paid/destructive action, public release/deployment, durable memory promotion, or self-growth apply.
-
-Control Center approval/preview UX evidence is maintained in `docs/03-verification/evidence/control-center-approval-preview-ux-qa-2026-07-09.json` and `docs/03-verification/evidence/CONTROL-CENTER-APPROVAL-PREVIEW-UX-QA-2026-07-09.md`. The `Approval / Preview` panel must make five stages visually distinct, explain that nothing has executed yet, present blocked actions as calm locked states, preserve mobile topbar action visibility, and keep no-script/no-external-activation/no-overflow boundaries.
-
-The first GPAO-T core work surface is now exposed as a user-facing local work slice. It gives the user a draft work input area, a preview thread, a compact task understanding summary, native no-script readability details for task brief / context route / authority boundary, current task state, Context Mesh / Memory Wiki / T-cell candidate summary, Skill Pack route preview, model/tool route preview, authority/approval summary, closed action list, and next safe action. Stage 3 adds one explicit browser-local confirmation action: `의도와 맞음 · 로컬 기록만 남기기`. That action writes only local approval/audit JSONL records and returns a local result page with replay/rollback reference. It is intentionally not a live chat executor yet: input submission to a model, external model calls, tool execution, connector activation, dry-run invocation, durable memory promotion, self-growth apply, deployment, messenger send, and recurring automation remain blocked.
-
-First Local Work Loop v1 is documented in `docs/03-engineering/FIRST-LOCAL-WORK-LOOP-V1.md`. It is the first local product loop behind the Work Surface: user work text becomes a local submission packet, task packet, Context Mesh evidence, Skill route, Model Router candidate, local draft preview, local approval/audit JSONL record, replay read, and rollback reference. Stage 3 extends that loop with a same-origin Work Surface form for explicit local record confirmation. The browser Work Surface remains no-script and does not write records while rendering; writes happen only when the user submits the local confirmation form or uses explicit CLI/Gateway local-loop commands. Records are limited to `.gpao-t/approval/*.jsonl`; live model calls, tool/CLI/MCP execution, connector activation, credential access, external send, paid/destructive action, install/update/rollback execution, public release, durable memory promotion, and self-growth live apply remain blocked.
-
-The work-surface submission decision gate is documented in `docs/03-engineering/WORK-SURFACE-SUBMISSION-DECISION-GATE.md`. It defines the future input packet schema, immediate preview state, Context Mesh / Skill route / Authority attachment, pre-submit confirmation, review/block conditions, and stop line before execution. It is design-only; live submission remains blocked.
-
-Work surface visual QA evidence is maintained in `docs/03-verification/evidence/work-surface-visual-qa-baseline-2026-07-09.json`, `docs/03-verification/evidence/WORK-SURFACE-VISUAL-QA-BASELINE-2026-07-09.md`, `docs/03-verification/evidence/work-surface-local-draft-preview-qa-2026-07-09.json`, `docs/03-verification/evidence/WORK-SURFACE-LOCAL-DRAFT-PREVIEW-QA-2026-07-09.md`, and `docs/03-verification/evidence/WORK-SURFACE-STAGE-3-COMPLETE-QA-2026-07-09.md`. The `/work-surface` baseline must preserve nonblank desktop/mobile viewports, visible draft input, task understanding summary, native readability details, confirmation card, first local draft preview, intent-match / needs-changes / hold confirmation flow, empty/blocked/review-needed preview states, visible task state, Context Mesh / Memory Wiki preview, Skill Pack route preview, authority boundary, closed action text, next safe action, mobile topbar action line, no horizontal overflow, no script, exactly one scoped local confirmation form, and no external activation as task interaction improves.
-
-First Local Work Loop v1 visual QA evidence is maintained in `docs/03-verification/evidence/first-local-work-loop-v1-visual-qa-2026-07-09.json` and `docs/03-verification/evidence/FIRST-LOCAL-WORK-LOOP-V1-VISUAL-QA-2026-07-09.md`. It includes Work Surface and Control Center desktop/mobile screenshots plus CDP overflow metrics. Open Design MCP was attempted first but unavailable in this run; the GPAO-T Visual Reference Pack was applied as fallback design authority.
-
-Execution proposal confirmation is now exposed as the next pre-execution authority surface. It combines execution proposal preview, approval packet validation, and audit write design into one user-visible axis. The Control Center `Execution Approval` panel and the core work surface must show the proposed tool kind, action type, authority level, expected effect, risk, rollback reference, required approval packet fields, validation rules, planned audit items, and audit/replay reference without opening any actual execution. Korean product-language authority labels are the default: `읽기 전용`, `미리보기만`, `저장 전 확인`, `외부 전송 전 확인`, `되돌리기 어려움`, and `비용 발생 가능`.
-
-Audit write design is currently proof-only. It defines what would be audit targets when an execution proposal exists: proposal id, source, requested action, authority level, expected effect, risk, rollback reference, and user confirmation state. These are visible as `기록 예정 항목` in Control Center and `기록될 예정인 항목` in the work surface. No audit event is written, no approval record is written, and no dry-run or tool invocation is opened.
-
-Approval record write UX/design has moved from proof-only into the Stage 3 local record substrate for the Work Surface execution governance loop. The earlier pre-write flow remains visible as review language, and the actual Stage 3 browser action writes only the local approval/audit record pair after `의도와 맞음`. It does not open live model calls, tool execution, connector activation, credential access, external send, paid/destructive action, dry-run invocation, or durable memory promotion.
-
-Execution approval UX evidence is maintained in `docs/03-verification/evidence/execution-approval-ux-qa-2026-07-09.json` and `docs/03-verification/evidence/EXECUTION-APPROVAL-UX-QA-2026-07-09.md`. This evidence keeps the design.md-based Korean status language, authority labels, icon/color/description pairing, mobile wrapping, no-overflow behavior, and no-write/no-invocation/no-external-activation boundary explicit before any future approval record write or execution invocation is considered.
-
-Approval record write UX evidence is maintained in `docs/03-verification/evidence/approval-record-write-ux-qa-2026-07-09.json` and `docs/03-verification/evidence/APPROVAL-RECORD-WRITE-UX-QA-2026-07-09.md`. It includes Control Center and Work Surface desktop/mobile viewport screenshots plus full-page screenshots so the pre-write flow, record preview fields, Korean product language, mobile topbar action line, and no-write/no-invocation boundaries are replayable.
-
-Design reference gate evidence is maintained in `docs/03-verification/evidence/design-reference-gate-qa-2026-07-09.json` and `docs/03-verification/evidence/DESIGN-REFERENCE-GATE-QA-2026-07-09.md`. It records the actual Control Center `Design Reference` desktop/mobile viewport and full-page screenshots, visual polish review, color quality, layout rhythm, icon alignment, Korean typography/line-break review, tone consistency, and user-perceived product quality risk.
-
-Skill ecosystem guidance is maintained in `docs/04-skill-ecosystem/GPAO-T-SKILL-ECOSYSTEM-MASTER-PLAN-ko.md`. GPAO-T skills must be research-grounded, practical, T-cell-shaped operating units, not prompt decorations or copied marketplace catalogs.
-
-Owner Ops Pack guidance is maintained in `docs/04-skill-ecosystem/GPAO-T-OWNER-OPS-PACK-DEVELOPMENT-PLAN-ko.md`, `docs/04-skill-ecosystem/OWNER-OPS-FIELD-CASEBOOK-ko.md`, `docs/04-skill-ecosystem/OWNER-OPS-AUTHORITY-MATRIX-ko.md`, `docs/04-skill-ecosystem/OWNER-OPS-FIRST-SCENARIOS-ko.md`, `docs/04-skill-ecosystem/OWNER-OPS-MCP-CONNECTOR-PLAN-ko.md`, `docs/04-skill-ecosystem/OWNER-OPS-FIRST-OWNER-SCENARIO-ko.md`, `docs/04-skill-ecosystem/OWNER-OPS-PLUGIN-PACKAGE-v0.1-ko.md`, `docs/04-skill-ecosystem/OWNER-OPS-TEAM-ALPHA-GUIDE-v0.1-ko.md`, `docs/04-skill-ecosystem/OWNER-OPS-HOST-REGISTRATION-AND-FEEDBACK-v0.1-ko.md`, `docs/04-skill-ecosystem/OWNER-OPS-FIRST-OWNER-BETA-GUIDE-v0.1-ko.md`, `docs/04-skill-ecosystem/OWNER-OPS-FIRST-OWNER-BETA-OPERATIONAL-TEST-PACKAGE-v0.1-ko.md`, `docs/04-skill-ecosystem/OWNER-OPS-BETA-FEEDBACK-ACTION-QUEUE-v0.1-ko.md`, `docs/04-skill-ecosystem/OWNER-OPS-MARKET-READINESS-GATE-v0.1-ko.md`, `docs/04-skill-ecosystem/OWNER-OPS-MARKET-EVIDENCE-BUNDLE-v0.1-ko.md`, `docs/04-skill-ecosystem/OWNER-OPS-PRE-PUBLIC-PACKAGE-REVIEW-v0.1-ko.md`, `docs/04-skill-ecosystem/OWNER-OPS-PRE-PUBLIC-EVIDENCE-BRIDGE-v0.1-ko.md`, `docs/04-skill-ecosystem/OWNER-OPS-PRE-PUBLIC-REPAIR-BACKLOG-v0.1-ko.md`, `docs/04-skill-ecosystem/OWNER-OPS-PRE-PUBLIC-REPAIR-COMPLETION-EVIDENCE-v0.1-ko.md`, `docs/04-skill-ecosystem/OWNER-OPS-DISTRIBUTION-EVIDENCE-v0.1-ko.md`, `docs/04-skill-ecosystem/OWNER-OPS-RELEASE-READINESS-EVIDENCE-v0.1-ko.md`, `docs/04-skill-ecosystem/OWNER-OPS-HUMAN-REVIEW-APPROVAL-PACKET-v0.1-ko.md`, `docs/04-skill-ecosystem/OWNER-OPS-SIGNED-PACKAGE-EVIDENCE-v0.1-ko.md`, `docs/04-skill-ecosystem/OWNER-OPS-INSTALL-UPDATE-ROLLBACK-PROOF-v0.1-ko.md`, `docs/04-skill-ecosystem/OWNER-OPS-DEPLOYMENT-DRY-RUN-PLAN-v0.1-ko.md`, `docs/04-skill-ecosystem/OWNER-OPS-DRY-RUN-EXECUTOR-PROOF-v0.1-ko.md`, `docs/04-skill-ecosystem/OWNER-OPS-DRY-RUN-APPROVAL-RECORD-DESIGN-v0.1-ko.md`, `docs/04-skill-ecosystem/OWNER-OPS-DRY-RUN-APPROVAL-RECORD-WRITE-LANE-v0.1-ko.md`, `docs/04-skill-ecosystem/OWNER-OPS-CONTROLLED-DRY-RUN-INVOCATION-v0.1-ko.md`, and `docs/04-skill-ecosystem/OWNER-OPS-DRY-RUN-RESULT-REVIEW-HANDOFF-v0.1-ko.md`. The first implementation exposes `gpao-t owner-ops ...` commands for Korean owner-operator no-API workflows: review reply, shopping inquiry classification, reservation inquiry drafts, local records, effect replay, MCP readiness, read-only connector planning, first owner-facing scenario smoke, local plugin/market package manifest, team alpha guidance, local host registration, alpha feedback collection, sample data, first-owner beta guidance, first-owner beta operational package, beta feedback action queue, beta feedback synthesis, industry template catalog, pre-market readiness gate, first-owner beta result review, market evidence bundle, template replay fixtures, privacy copy, pre-public package review, pre-public evidence bridge, pre-public repair backlog, pre-public repair completion evidence, local distribution evidence, release readiness evidence, human review approval packet, signed-package evidence prerequisites, install/update/rollback proof requirements, deployment dry-run planning, dry-run executor proof, dry-run approval record design, owner-token-gated local approval record write lane, controlled local dry-run simulation, and dry-run result review handoff. It is skill-pack-first: MCP/connectors and plugin/market packaging come after replay-proven local workflows.
-
-## First Slice
-
-The first slice implements a local, dependency-free runtime skeleton:
-
-- `GpaoTurnKernel`: deterministic pre-model turn sequence
-- `GpaoSessionOverlay`: flow continuity above chat sessions
-- `GpaoContextRuntime`: Memory Wiki / Context Mesh / T-cell stub
-- `GpaoAdmissionPacket`: retrieved context to admitted T-cells
-- `GpaoAuthorityRuntime`: approval boundary detection
-- `GpaoModelRouter`: fast recovery vs balanced reasoning route
-- `GpaoToolRuntime`: local-preview tool admission
-- `Adapter Boundary`: local model/tool adapter registry and execution boundary
-- `Connector / Tool Governance`: local connector registry plus tool / CLI / MCP / connector execution-candidate boundary
-- `Execution Approval Preview`: execution proposal confirmation, Korean authority-level labels, approval packet validation, and audit write design without actual writes or invocation
-- `Install / Update / Rollback Hardening`: local operational readiness and recovery contract
-- `GPAO-T Dashboard Contract`: one snapshot for runtime, ops, memory, recovery, growth, adapters, connectors, and authority
-- `GPAO-T Dashboard Design Recipe`: BEAI design doctrine adapted to GPAO-T UI implementation
-- `GPAO-T Design Reference Gate`: Codex-level work rhythm, Claude-Code-level authority UX, Korean-first visual/tone system, screenshot evidence, and human-eye design review required for every UI/UX slice
-- `Control Center Human Readability Check`: first-scan clarity and no-script/local-inspection QA before app-shell transition
-- `App Shell Decision Gate`: technology, authority, rollback, IPC/local-serving, screenshot, and recovery decisions before desktop shell implementation
-- `Skill Ecosystem Registry`: research-grounded base skill packs, manifest standard, routing, readiness, and future runtime integration contract
-- `Skill Candidate Atlas`: full skill production field, phased roadmap, and build queue before individual pack production
-- `Skill Production Status`: phase-1 production gate for registry, routing, execution contract, quality gate, replay, growth signal, and authority boundary
-- `Skill Execution Plan`: selected skill packs expanded into execution steps, artifact contracts, quality gates, authority boundaries, and replay signals
-- `Skill Execution Adapter`: selected skill execution plans converted into local artifact drafts, quality gate results, replay evidence, and growth signal candidates
-- `GpaoDoctor`: target health check
-- `GpaoRuntime`: persisted `.gpao-t` state and audit events
-- `GpaoLocalGateway`: local API contract for health, state, events, and turns
-- `Memory Wiki`: source-linked candidate memory entries
-- `Context Mesh Resolve`: retrieved T-cell candidates before admission
-- `Admission Scoring`: explains why retrieved candidates are admitted or rejected
-- `Replay Recovery View`: human-readable recovery report for wrong-anchor scenarios
-- `Replay Recovery History`: local replay recovery records and repeated-pattern summary
-- `Self-Growth Proposals`: review-only improvement candidates from replay-proven patterns
-- `Growth Application Gates`: replay, approval, audit, and rollback review before any growth proposal can become live behavior
-- `Core Work Surface`: the first read-only user-facing task surface with draft input, preview thread, context/skill route preview, authority summary, and next safe action
-- `First Local Work Loop`: explicit local submission into task packet, Context Mesh/Skill/Authority preview, local approval/audit JSONL write, replay read, and rollback reference while live execution remains blocked
-
-## Guided First Workflow
-
-The first real user path is intentionally small and inspectable:
-
-1. Start from the CLI command surface.
-2. Preview one vague or follow-up request, such as `그럼 배포파일은?`.
-3. Let `GpaoSessionOverlay` recover the active target.
-4. Let `GpaoAdmissionPacket` admit only the relevant T-cells.
-5. Let `GpaoAuthorityRuntime` keep distribution-like actions in local preview until approval.
-6. Show a Korean user-visible state with the next safe action.
-7. Verify the path with `npm run verify`.
-
-This maps the BEAI scenario goal into this first runtime slice: route a vague request, expose the plan/trace, run checks, and make the result understandable without reading the whole codebase.
-
-## Why This Starts Here
-
-The product priority is not messenger UX. The priority is a fast, safe, local-first kernel that can recover user intent, select context, gate authority, route models, and produce a traceable task packet before any UI or connector grows around it.
-
-## Commands
-
-```sh
-npm run check
-npm test
-npm run verify
-node bin/gpao-t.js init
-node bin/gpao-t.js doctor
-node bin/gpao-t.js turn "그럼 배포파일은?"
-node bin/gpao-t.js replay fixtures/replay/release-file-active-target.json
-node bin/gpao-t.js replay-view fixtures/replay/release-file-active-target.json
-node bin/gpao-t.js replay-record fixtures/replay/release-file-active-target.json
-node bin/gpao-t.js recovery history
-node bin/gpao-t.js recovery summary
-node bin/gpao-t.js growth preview release-file
-node bin/gpao-t.js growth propose release-file
-node bin/gpao-t.js growth proposals
-node bin/gpao-t.js growth gate release-file
-node bin/gpao-t.js growth gate-record release-file requested
-node bin/gpao-t.js growth gates
-node bin/gpao-t.js growth gate-summary
-node bin/gpao-t.js skill ecosystem
-node bin/gpao-t.js skill atlas
-node bin/gpao-t.js skill atlas phase-1
-node bin/gpao-t.js skill roadmap
-node bin/gpao-t.js skill build-queue phase-1
-node bin/gpao-t.js skill production-status phase-1
-node bin/gpao-t.js skill intent "디자인 좋은 웹앱을 만들어줘"
-node bin/gpao-t.js skill manifest
-node bin/gpao-t.js skill manual-first
-node bin/gpao-t.js skill packs
-node bin/gpao-t.js skill packs design
-node bin/gpao-t.js skill inspect gpao-visual-design-pack
-node bin/gpao-t.js skill route "디자인 좋은 웹앱을 만들어줘"
-node bin/gpao-t.js skill execute-plan "디자인 좋은 웹앱을 만들어줘"
-node bin/gpao-t.js skill execute "디자인 좋은 웹앱을 만들어줘"
-node bin/gpao-t.js skill execute-record "디자인 좋은 웹앱을 만들어줘"
-node bin/gpao-t.js skill execution-history
-node bin/gpao-t.js skill execution-summary
-node bin/gpao-t.js skill readiness
-node bin/gpao-t.js owner-ops skill-pack
-node bin/gpao-t.js owner-ops candidates "스마트스토어 배송 문의와 교환 문의가 많아요"
-node bin/gpao-t.js owner-ops workflow review_reply "음식은 맛있었는데 대기 시간이 너무 길었어요"
-node bin/gpao-t.js owner-ops record reservation_inquiry "이번 주 토요일 오후 3시에 예약 가능한가요?"
-node bin/gpao-t.js owner-ops replay
-node bin/gpao-t.js owner-ops check
-node bin/gpao-t.js owner-ops mcp-plan
-node bin/gpao-t.js owner-ops connector-catalog
-node bin/gpao-t.js owner-ops mcp-tools
-node bin/gpao-t.js owner-ops mcp-check
-node bin/gpao-t.js owner-ops mcp-server
-node bin/gpao-t.js owner-ops mcp-server-check
-node bin/gpao-t.js owner-ops intake-plan
-node bin/gpao-t.js owner-ops intake-paste review_reply "음식은 맛있었는데 대기 시간이 길었어요"
-node bin/gpao-t.js owner-ops intake-table shopping_inquiry smartstore.csv "문의,상태
-배송 언제 되나요?,신규"
-node bin/gpao-t.js owner-ops intake-file ./smartstore.csv shopping_inquiry
-node bin/gpao-t.js owner-ops intake-folder ./owner-data
-node bin/gpao-t.js owner-ops intake-check
-node bin/gpao-t.js owner-ops first-owner-scenario
-node bin/gpao-t.js owner-ops run-first-owner-scenario
-node bin/gpao-t.js owner-ops first-owner-scenario-check
-node bin/gpao-t.js owner-ops plugin-package
-node bin/gpao-t.js owner-ops market-listing
-node bin/gpao-t.js owner-ops plugin-package-check
-node bin/gpao-t.js owner-ops team-alpha-guide
-node bin/gpao-t.js owner-ops owner-ux-copy
-node bin/gpao-t.js owner-ops team-alpha-check
-node bin/gpao-t.js owner-ops host-registration-guide
-node bin/gpao-t.js owner-ops host-integration-matrix
-node bin/gpao-t.js owner-ops host-integration-matrix-check
-node bin/gpao-t.js owner-ops alpha-feedback-form
-node bin/gpao-t.js owner-ops host-alpha-check
-node bin/gpao-t.js owner-ops sample-data-kit
-node bin/gpao-t.js owner-ops first-owner-beta-guide
-node bin/gpao-t.js owner-ops first-owner-beta-check
-node bin/gpao-t.js owner-ops beta-feedback-synthesis
-node bin/gpao-t.js owner-ops industry-template-catalog
-node bin/gpao-t.js owner-ops market-readiness-gate
-node bin/gpao-t.js owner-ops market-readiness-check
-node bin/gpao-t.js owner-ops template-replay-fixtures
-node bin/gpao-t.js owner-ops privacy-copy-pack
-node bin/gpao-t.js owner-ops pre-public-package-review
-node bin/gpao-t.js owner-ops pre-public-package-check
-node bin/gpao-t.js owner-ops pre-public-evidence-bridge
-node bin/gpao-t.js owner-ops pre-public-evidence-bridge-check
-node bin/gpao-t.js owner-ops distribution-evidence
-node bin/gpao-t.js owner-ops distribution-readme
-node bin/gpao-t.js owner-ops distribution-evidence-check
-node bin/gpao-t.js owner-ops archive-checksum-dry-run
-node bin/gpao-t.js owner-ops archive-checksum-dry-run-check
-node bin/gpao-t.js owner-ops release-readiness-evidence
-node bin/gpao-t.js owner-ops release-readiness-write
-node bin/gpao-t.js owner-ops release-readiness-check
-node bin/gpao-t.js owner-ops human-review-approval-packet
-node bin/gpao-t.js owner-ops human-review-approval-write
-node bin/gpao-t.js owner-ops human-review-approval-check
-node bin/gpao-t.js owner-ops signed-package-evidence
-node bin/gpao-t.js owner-ops signed-package-evidence-write
-node bin/gpao-t.js owner-ops signed-package-evidence-check
-node bin/gpao-t.js owner-ops install-update-rollback-proof
-node bin/gpao-t.js owner-ops install-update-rollback-proof-write
-node bin/gpao-t.js owner-ops install-update-rollback-proof-check
-node bin/gpao-t.js owner-ops deployment-dry-run-plan
-node bin/gpao-t.js owner-ops deployment-dry-run-write
-node bin/gpao-t.js owner-ops deployment-dry-run-check
-node bin/gpao-t.js owner-ops dry-run-executor-proof install
-node bin/gpao-t.js owner-ops dry-run-executor-write install
-node bin/gpao-t.js owner-ops dry-run-executor-check install
-node bin/gpao-t.js owner-ops dry-run-approval-record-design install
-node bin/gpao-t.js owner-ops dry-run-approval-record-write install
-node bin/gpao-t.js owner-ops dry-run-approval-record-check install
-node bin/gpao-t.js owner-ops dry-run-approval-record-lane install
-node bin/gpao-t.js owner-ops dry-run-approval-record-append install approve-owner-ops-install-dry-run
-node bin/gpao-t.js owner-ops dry-run-approval-records
-node bin/gpao-t.js owner-ops dry-run-approval-record-lane-check install
-node bin/gpao-t.js owner-ops controlled-dry-run-gate install
-node bin/gpao-t.js owner-ops controlled-dry-run-invoke install
-node bin/gpao-t.js owner-ops controlled-dry-run-records
-node bin/gpao-t.js owner-ops controlled-dry-run-check install
-node bin/gpao-t.js owner-ops dry-run-result-handoff install
-node bin/gpao-t.js owner-ops dry-run-result-handoff-write install
-node bin/gpao-t.js owner-ops dry-run-result-handoff-check install
-node bin/gpao-t.js owner-ops local-package-candidate-check
-node bin/gpao-t.js owner-ops local-package-candidate-readback
-node bin/gpao-t.js owner-ops local-package-candidate-readback-check
-node bin/gpao-t.js owner-ops team-alpha-handoff-bundle
-node bin/gpao-t.js owner-ops team-alpha-handoff-write
-node bin/gpao-t.js owner-ops team-alpha-handoff-check
-node bin/gpao-t.js owner-ops first-owner-beta-handoff-bundle
-node bin/gpao-t.js owner-ops first-owner-beta-handoff-write
-node bin/gpao-t.js owner-ops first-owner-beta-handoff-check
-node bin/gpao-t.js owner-ops first-owner-beta-result-review
-node bin/gpao-t.js owner-ops first-owner-beta-result-write
-node bin/gpao-t.js owner-ops first-owner-beta-result-check
-node bin/gpao-t.js owner-ops market-evidence-bundle
-node bin/gpao-t.js owner-ops market-evidence-write
-node bin/gpao-t.js owner-ops market-evidence-check
-node bin/gpao-t-owner-ops-mcp.js
-node bin/gpao-t.js connectors list
-node bin/gpao-t.js connectors governance
-node bin/gpao-t.js connectors tool-governance
-node bin/gpao-t.js connectors tool-governance-check
-node bin/gpao-t.js connectors review github.oauth read
-node bin/gpao-t.js approval execution-proposal "로컬 미리보기 실행 후보를 확인해줘"
-node bin/gpao-t.js approval execution-proposal-check
-node bin/gpao-t.js approval audit-write-design "기록 예정 항목을 보여줘"
-node bin/gpao-t.js approval audit-write-design-check
-node bin/gpao-t.js approval approval-record-write-ux "저장 전 확인 흐름을 보여줘"
-node bin/gpao-t.js approval approval-record-write-ux-check
-node bin/gpao-t.js ops hardening
-node bin/gpao-t.js ops hardening-record
-node bin/gpao-t.js ops hardening-history
-node bin/gpao-t.js ops hardening-summary
-node bin/gpao-t.js adapters models
-node bin/gpao-t.js adapters tools
-node bin/gpao-t.js adapters model-router-boundary "GPAO-T 작업 표면 preview를 라우팅해줘"
-node bin/gpao-t.js adapters model-router-boundary-check
-node bin/gpao-t.js adapters model-router-policy "후속 질문의 route policy를 보여줘"
-node bin/gpao-t.js adapters model-router-policy-check
-node bin/gpao-t.js adapters plan "그럼 배포파일은?"
-node bin/gpao-t.js control snapshot
-node bin/gpao-t.js control summary
-node bin/gpao-t.js control work-surface
-node bin/gpao-t.js control work-surface-html
-node bin/gpao-t.js control work-surface-check
-node bin/gpao-t.js control sessions
-node bin/gpao-t.js control sessions-action new_session "새 로컬 작업 세션"
-node bin/gpao-t.js control sessions-check
-node bin/gpao-t.js control work-surface-local-loop "GPAO-T 첫 로컬 작업 루프를 확인해줘."
-node bin/gpao-t.js control work-surface-local-loop-check "GPAO-T 첫 로컬 작업 루프를 확인해줘."
-node bin/gpao-t.js control work-surface-submission-gate
-node bin/gpao-t.js control work-surface-submission-gate-check
-node bin/gpao-t.js control work-surface-submission-validation-gate
-node bin/gpao-t.js control work-surface-submission-validation-gate-check
-node bin/gpao-t.js control work-surface-execution-flow "실행 후보를 로컬 기록 기준으로 확인해줘."
-node bin/gpao-t.js control work-surface-execution-confirmation matches_intent
-node bin/gpao-t.js control work-surface-execution-flow-check "실행 후보를 로컬 기록 기준으로 확인해줘."
-node bin/gpao-t.js control work-surface-execution-record "실행 후보를 로컬 승인/감사 기록으로 남겨줘." matches_intent
-node bin/gpao-t.js control design
-node bin/gpao-t.js control ui-contract
-node bin/gpao-t.js control ui-snapshot
-node bin/gpao-t.js control ui-validate
-node bin/gpao-t.js control html
-node bin/gpao-t.js control render .gpao-t/control-center/index.html
-node bin/gpao-t.js control serve-contract
-node bin/gpao-t.js control serve-check
-node bin/gpao-t.js control serve 0
-node bin/gpao-t.js control app-shell-contract
-node bin/gpao-t.js control app-shell-state
-node bin/gpao-t.js control app-shell-check
-node bin/gpao-t.js control tauri-gate
-node bin/gpao-t.js control tauri-gate-check
-node bin/gpao-t.js control tauri-install-gate
-node bin/gpao-t.js control tauri-install-gate-check
-node bin/gpao-t.js control tauri-prerequisite-doctor
-node bin/gpao-t.js control tauri-prerequisite-doctor-check
-node bin/gpao-t.js control tauri-dry-run-contract
-node bin/gpao-t.js control tauri-dry-run-contract-check
-node bin/gpao-t.js control tauri-dry-run-design
-node bin/gpao-t.js control tauri-dry-run-design-check
-node bin/gpao-t.js control tauri-dry-run-plan
-node bin/gpao-t.js control tauri-dry-run-plan-check
-node bin/gpao-t.js control tauri-dry-run-preview
-node bin/gpao-t.js control tauri-dry-run-preview-check
-node bin/gpao-t.js control tauri-dry-run-invocation-approval
-node bin/gpao-t.js control tauri-dry-run-invocation-approval-check
-node bin/gpao-t.js control tauri-dry-run-approval-storage
-node bin/gpao-t.js control tauri-dry-run-approval-storage-check
-node bin/gpao-t.js control tauri-dry-run-approval-write-gate
-node bin/gpao-t.js control tauri-dry-run-approval-write-gate-check
-node bin/gpao-t.js control tauri-shell-slice
-node bin/gpao-t.js control tauri-shell-html
-node bin/gpao-t.js control tauri-shell-check
-node bin/gpao-t.js control stage-4-production-hardening
-node bin/gpao-t.js control stage-4-production-hardening-html
-node bin/gpao-t.js control stage-4-production-hardening-check
-node bin/gpao-t.js state
-node bin/gpao-t.js events
-node bin/gpao-t.js memory capture "배포파일 meaning" "배포파일 means GPAO Operating Package / GPAO for OpenClaw in this product flow."
-node bin/gpao-t.js memory list
-node bin/gpao-t.js mesh resolve "그럼 배포파일은?"
-node bin/gpao-t.js gateway POST /turn '{"input":{"text":"그럼 배포파일은?"}}'
-```
-
-## Current Boundary
-
-This skeleton does not connect external accounts, configure OAuth, store tokens or secrets, deploy, publish, execute host mutations, send externally, automate recurring actions, or promote durable memory. Authority actions are represented as local preview gates only.
-
-Local runtime evidence is stored under `.gpao-t/`:
-
-- `.gpao-t/state/runtime.json`: active flow and runtime counters
-- `.gpao-t/events/audit.jsonl`: local audit events for recovery and authority review
-- `.gpao-t/memory/wiki.json`: Memory Wiki entries
-- `.gpao-t/memory/tcell-candidates.jsonl`: T-cell candidates shaped from wiki entries
-- `.gpao-t/recovery/history.jsonl`: replay recovery records and pattern evidence
-- `.gpao-t/growth/proposals.jsonl`: review-only self-growth proposals
-- `.gpao-t/growth/application-gates.jsonl`: local application gate reviews for self-growth proposals
-- `.gpao-t/ops/install-hardening.jsonl`: local install/update/rollback readiness reviews
-
-These files are local runtime state, not durable memory promotion and not external telemetry.
-They are ignored by git and should not be committed as product source.
-
-Memory Wiki entries are not automatically trusted. The flow is:
-
-```text
-capture -> Memory Wiki entry -> T-cell candidate -> Context Mesh resolve -> AdmissionPacket -> TaskPacket
-```
-
-This keeps stored memory separate from admitted current-turn context.
-
-Admission results include:
-
-- `admissionScore`: a compact score for current-turn usefulness
-- `scoreBreakdown`: active target, input signal, mesh score, confidence, risk, and lifecycle signals
-- `recoveryHint`: why to use, review, or reject the cell
-
-Replay recovery views expose the same information without mutating runtime state.
-
-Replay recovery history is local evidence. It helps detect repeated active-target recovery cases before any self-growth proposal, durable promotion, or OS rule mutation is considered.
-
-Self-growth proposals are still local and review-only. They can describe a candidate operating principle, expected benefit, replay gate, and authority boundary, but they cannot promote memory, mutate OS rules, activate connectors, or take external action.
-
-Growth Application Gates review whether a proposal has enough replay evidence, approval state, audit requirements, and rollback plan. Even when those review gates are visible, this slice keeps live mutation blocked:
-
-- `growth gate <proposal-id|target>` previews application readiness without writing a record
-- `growth gate-record <proposal-id|target> [approval-status]` writes a local review record
-- `growth gates` lists recorded gate reviews
-- `growth gate-summary` summarizes blocked live mutations for the Control Center
-- `POST /growth/application-gate`, `POST /growth/application-gate/record`, `GET /growth/application-gates`, and `GET /growth/application-gates/summary` expose the same contract through the gateway
-
-This keeps self-growth practical without letting a good proposal silently become a live OS rule.
-
-Adapter Boundary keeps model freedom and tool safety separate:
-
-- local model stubs can be selected for preview routing
-- external model APIs are listed but blocked until provider setup and approval gates exist
-- `adapters model-router-boundary [text]` shows the read-only Model Router boundary: route profile, selected preview adapter, provider boundary, latency budget, cost policy, fallback chain, audit/replay/rollback references, and blocked model actions
-- `adapters model-router-boundary-check` verifies that the router boundary does not call providers, read secrets, send network requests, spend tokens, store model output, activate tools, or promote durable memory
-- `adapters model-router-policy [text]` shows the deeper read-only router policy: request-type profiles, speed/quality/cost/risk criteria, Context Mesh task-packet input candidate conditions, failure states, model-output-to-tool boundary, and replay/audit criteria
-- `adapters model-router-policy-check` verifies that route policy remains preview-only and does not invoke replay, write audit records, persist model output, execute tool/CLI/MCP actions, activate connectors, or promote durable memory
-- local preview tools can be admitted for draft/replay work
-- external send, public release, deletion, secret write, and recurring automation remain blocked until explicit authority gates exist
-
-This boundary is intentionally visible in `modelRoute`, `toolPlan`, `adapterPlan`, `modelRouterBoundary`, `modelRouterPolicy`, CLI, Gateway, and the GPAO-T dashboard adapter panel so a future live provider or tool path can be judged before it is opened.
-
-Connector / Tool Governance keeps account and execution-candidate visibility separate from account or tool execution:
-
-- local file inspection can be reviewed as preview evidence
-- OAuth connectors such as GitHub, Google Workspace, Notion, and Slack are listed but blocked until explicit setup and task approval exist
-- connected does not mean executable
-- readable does not mean writable
-- write, send, recurring automation, secret storage, and connector activation remain blocked until replay, audit, rollback, and approval gates exist
-- tool, CLI, MCP, and connector execution candidates are classified before invocation
-- authority tiers are `read_only`, `dry_run`, `write`, `external_send`, `destructive`, and `paid_action`
-- model output is proposal material only; it is not execution authority
-- OpenClaw-style gateway/adapter/tool convenience is treated as substrate while GPAO-T authority takes precedence
-
-This boundary is visible through `connectors list`, `connectors governance`, `connectors tool-governance`, `connectors tool-governance-check`, `connectors review <connector-id> [action]`, `GET /connectors`, `GET /connectors/governance`, `GET /connectors/tool-governance`, `GET /connectors/tool-governance/verify`, and `POST /connectors/review`.
-
-Install / Update / Rollback Hardening keeps operational confidence separate from real operations:
-
-- `ops hardening` previews package, CLI, verify script, update, and rollback readiness
-- `ops hardening-record` writes a local readiness review record
-- `ops hardening-history` lists local hardening records
-- `ops hardening-summary` summarizes the current hardening posture for the Control Center
-- `GET /ops/install-hardening`, `POST /ops/install-hardening/record`, `GET /ops/install-hardening/history`, and `GET /ops/install-hardening/summary` expose the same contract through the gateway
-
-This slice does not install GPAO-T, start a daemon, download updates, deploy, store secrets, or run destructive rollback. It only makes the safety gates visible before those executors exist.
-
-GPAO-T dashboard readiness is exposed as data and a local operating surface, not as a daemon or desktop app yet:
-
-- `control snapshot` returns full panel data for runtime, install/update/rollback readiness, memory, replay recovery, growth proposals/application gates, adapters, connectors, and authority
-- `control summary` returns compact panel status, counts, and next safe action
-- `control work-surface` returns the first user-facing GPAO-T work surface state as read-only JSON
-- `control work-surface-html` renders the standalone no-script work surface HTML
-- `control work-surface-check` verifies the work surface preserves draft-only input, task understanding summary, native no-script readability details, no-script confirmation UX, first local draft preview, intent-match / needs-changes / hold confirmation flow, empty/blocked/review-needed product states, preview-only context/skill/model routing, closed authority actions, no script, exactly one scoped local confirmation form, and no external URL
-- `control sessions`, `control sessions-action`, and `control sessions-check` expose Interactive Session Behavior v1: local session create/select/rename/archive/restore/delete-pending/cancel-delete-pending with permanent delete, live model, tool, connector, external send, paid/destructive action, public release, and durable memory promotion blocked
-- `control work-surface-submission-gate` and `control work-surface-submission-gate-check` define and verify the future work-surface input submission decision gate without enabling live submission, model calls, tool/CLI/MCP execution, connector activation, external send, approval writes, install/update/rollback, or durable memory promotion
-- `control work-surface-submission-validation-gate` and `control work-surface-submission-validation-gate-check` define and verify the final pre-submit validation and confirmation gate: required fields, empty input, length, risk signals, Context Mesh preview, Skill route preview, Authority preview, confirmation card, blocked/review product language, README freshness tracking, and the stop rule against further submission meta-gate splitting
-- `control work-surface-execution-flow`, `control work-surface-execution-confirmation`, `control work-surface-execution-flow-check`, and `control work-surface-execution-record` connect execution proposal, explicit confirmation, local approval/audit record write, replay, and rollback reference into one Work Surface governance flow while keeping live model/tool/connector/external actions blocked
-- `control design` returns the GPAO-T dashboard design contract adapted from BEAI Harness `design.md`
-- `control ui-contract` returns the UI schema and section contract that maps snapshot fields into visual sections
-- `control ui-snapshot` returns the renderer-ready UI snapshot
-- `control ui-validate` checks that the UI snapshot preserves required panel fields, visible status text, authority boundaries, and no external activation
-- `control html` and `control render` now produce a no-script local inspection UI: panel anchor navigation, focus navigation, mobile next-safe-action strip, and expandable panel inspectors are interactive, but they do not start daemons, call models, connect accounts, execute tools, or mutate memory/growth state
-- `control html` prints the official GPAO-T dashboard HTML to stdout
-- `control render [output.html]` writes the official GPAO-T dashboard HTML to a local file
-- `control serve-contract` returns the browser-safe loopback serving and screenshot verification contract
-- `control serve-check` starts a temporary loopback preview server, checks `/health` and `/control-center`, then stops it
-- `control serve [port]` starts an explicit `127.0.0.1` preview server for browser screenshot verification
-- `control app-shell-contract` returns the browser-local app-shell first-slice contract
-- `control app-shell-state` returns read-mostly shell state derived from `GET /health` and `GET /control-center/*`
-- `control app-shell-html` renders the browser-local shell HTML with panel navigation, evidence inspection, failure/recovery state, and screenshot QA anchors
-- `control app-shell-check` verifies the browser-local shell preserves no script, no POST form, no external URL, authority visibility, and failure/recovery markers
-- `control tauri-gate` and `control tauri-gate-check` define and verify the packaged desktop/Tauri transition boundary
-- `control packaged-desktop-review` and `control packaged-desktop-review-check` summarize the closed read-only substrate, still-blocked authority boundaries, minimum packaged desktop conditions, user-facing core return timing, and the meta-gate stop-line
-- `control tauri-install-gate` and `control tauri-install-gate-check` define and verify the packaged desktop install/update/rollback readiness gate without executing operations
-- `control tauri-prerequisite-doctor` and `control tauri-prerequisite-doctor-check` inspect prerequisite readiness without invoking Cargo, Tauri CLI, dependency installation, build, or installer actions
-- `control tauri-dry-run-contract` and `control tauri-dry-run-contract-check` define the future dry-run executor shape without implementing, invoking, mutating, downloading, building, or installing
-- `control tauri-dry-run-design` and `control tauri-dry-run-design-check` define the approval-gated pure function design for a future dry-run executor without implementing, invoking, writing files, running commands, downloading, building, or opening IPC
-- `control tauri-dry-run-plan` and `control tauri-dry-run-plan-check` return and verify pure install/update/rollback dry-run plan objects without invoking dry-run, writing files, running commands, building, installing, updating, rolling back, opening IPC, or using external network
-- `control tauri-dry-run-preview` and `control tauri-dry-run-preview-check` return and verify user-visible preview JSON for the dry-run plan while keeping future approval and real execution blocked
-- `control tauri-dry-run-invocation-approval` and `control tauri-dry-run-invocation-approval-check` define and verify the future invocation approval contract without recording approval, invoking dry-run, writing audit files, running commands, building, installing, updating, rolling back, opening IPC, or using external network
-- `control tauri-dry-run-approval-storage` and `control tauri-dry-run-approval-storage-check` define and verify future approval-record storage location, schema, lifecycle, replay/audit/rollback references, and write gate boundary without creating directories, reading records, writing records, invoking dry-run, mutating files, running commands, building, installing, updating, rolling back, opening IPC, or using external network
-- `control tauri-dry-run-approval-write-gate` and `control tauri-dry-run-approval-write-gate-check` define and verify the future approval packet write gate without implementing a write gate, writing records, invoking dry-run, mutating files, running commands, building, installing, updating, rolling back, opening IPC, or using external network
-- The GPAO-T dashboard includes an `Approval / Preview` panel that integrates dry-run plan, user preview, invocation approval, approval storage, and write-gate statuses as a preview-only user flow. The packaged desktop planning review now acts as the stop-line: do not add another meta-gate unless a concrete mutating action is explicitly approved; return to the user-facing GPAO-T core work surface next.
-- `control tauri-shell-slice`, `control tauri-shell-html`, and `control tauri-shell-check` define and verify the first read-mostly Tauri source scaffold
-- `GET /control-center`, `GET /control-center/summary`, `GET /control-center/design`, `GET /control-center/ui-contract`, `GET /control-center/ui-snapshot`, and `GET /control-center/ui-validate` expose the same contracts through the local gateway handler
-- `GET /control-center/design-reference-gate` and `GET /control-center/design-reference-gate/verify` expose the required GPAO-T design reference gate for future UI/UX slices
-- `GET /work-surface`, `GET /work-surface.html`, `GET /work-surface/state`, `GET /work-surface/verify`, `GET /work-surface/submission-gate`, `GET /work-surface/submission-gate/verify`, `GET /work-surface/submission-validation-gate`, `GET /work-surface/submission-validation-gate/verify`, `GET /work-surface/execution-flow`, `GET /work-surface/execution-flow/confirmation`, `GET /work-surface/execution-flow/verify`, `GET /sessions`, and `GET /sessions/verify` expose the standalone core work surface, submission gates, execution governance flow, confirmation control, and local session workspace state through the loopback preview server. Gateway JSON also exposes `POST /sessions/action` for explicit local-only session actions and `POST /work-surface/execution-flow/record` for explicit local approval/audit record writes. The browser Work Surface now includes one same-origin `data-local-confirmation-form="approval-audit-record"` form that posts to `/work-surface/execution-flow/record`; it writes only local approval/audit JSONL records and returns a local result page with replay/rollback reference while model/tool/connector/external execution remains blocked.
-- `GET /app-shell`, `GET /app-shell/contract`, `GET /app-shell/state`, `GET /app-shell/verify`, `GET /app-shell/tauri-gate`, `GET /app-shell/tauri-gate/verify`, `GET /app-shell/packaged-desktop-review`, `GET /app-shell/packaged-desktop-review/verify`, `GET /app-shell/tauri-install-gate`, `GET /app-shell/tauri-install-gate/verify`, `GET /app-shell/tauri-prerequisite-doctor`, `GET /app-shell/tauri-prerequisite-doctor/verify`, `GET /app-shell/tauri-dry-run-contract`, `GET /app-shell/tauri-dry-run-contract/verify`, `GET /app-shell/tauri-dry-run-design`, `GET /app-shell/tauri-dry-run-design/verify`, `GET /app-shell/tauri-dry-run-plan`, `GET /app-shell/tauri-dry-run-plan/verify`, `GET /app-shell/tauri-dry-run-preview`, `GET /app-shell/tauri-dry-run-preview/verify`, `GET /app-shell/tauri-dry-run-invocation-approval`, `GET /app-shell/tauri-dry-run-invocation-approval/verify`, `GET /app-shell/tauri-dry-run-approval-storage`, `GET /app-shell/tauri-dry-run-approval-storage/verify`, `GET /app-shell/tauri-dry-run-approval-write-gate`, `GET /app-shell/tauri-dry-run-approval-write-gate/verify`, `GET /app-shell/tauri-shell`, `GET /app-shell/tauri-shell/slice`, and `GET /app-shell/tauri-shell/verify` expose the browser-local app-shell and packaged-shell boundary through the loopback preview server
-
-This keeps the future Codex-like desktop surface light: the first visual layer reads the existing snapshot/design contracts before adding interactivity, daemon behavior, or external activation.
-
-Browser-safe serving is local preview only. It binds to `127.0.0.1`, does not configure OAuth, does not call external models or tools, does not store secrets, does not deploy, and does not become a persistent daemon. The purpose is to capture desktop/mobile screenshots and verify visible state before interactive Control Center work.
-
-Browser-local app-shell first slice is also local preview only. It reads `GET /health` and `GET /control-center/*`, supports panel navigation and evidence inspection, exposes failure/recovery states, and keeps screenshot QA visible. It now includes read-only state lanes for workflow, recovery, authority, and next action, plus per-panel state drilldowns. It blocks `POST` routes, connector/model/tool activation, install/update/rollback execution, durable memory promotion, self-growth application, deployment, messenger surfaces, and recurring automation.
-
-Submission validation and confirmation is the final pre-submit meta-gate. The current work surface now includes the first user-facing confirmation UX, first local draft preview structure, and preview confirmation flow for `의도와 맞음`, `수정 필요`, and `보류`. This closes the core work surface substrate for the current read-only preview phase. The product direction has moved to the Model Router boundary axis: provider routing, latency/cost/fallback, privacy, and authority are visible as read-only contracts before any live model call. README freshness warnings are tracked as documentation alignment evidence only; they do not open live submission, model calls, tools, connectors, approval writes, install/update/rollback, durable memory promotion, or external send.
-
-Workspace note duplicate files `workspace-notes/NEXT-REVIEW 2.md`, `workspace-notes/WHAT-IS-NOT-DONE 2.md`, and `workspace-notes/WHAT-WE-ARE-BUILDING 2.md` are cleanup candidates only. They should not be deleted inside feature work without an explicit cleanup/closeout step.
-
-First Tauri shell slice is source-only and read-mostly. It adds `src-tauri/tauri.conf.json`, `src-tauri/Cargo.toml`, `src-tauri/build.rs`, `src-tauri/src/main.rs`, `src-tauri/capabilities/default.json`, and `tauri-shell/index.html` as a scaffold that mirrors app-shell state. It now has packaged-shell desktop/mobile visual QA baseline evidence under `docs/03-verification/evidence/tauri-shell-visual-qa-baseline-2026-07-09.json`. It does not install dependencies, run Tauri build, bundle, sign, create an installer, activate local IPC commands, mutate runtime state, or connect external services.
-
-Packaged desktop install/update/rollback readiness is also review-only. It checks package hardening, Tauri gate status, Tauri shell status, visual QA evidence, source files, and rollback substrate. It does not install dependencies, run Tauri build, bundle, sign, create an installer, execute install/update/rollback, activate IPC, download externally, mutate state, or activate connectors/models/tools.
-
-Prerequisite doctor, dry-run executor contract, dry-run implementation design, dry-run plan/verify/preview, and dry-run invocation approval contract are still no-execution gates. The prerequisite doctor inspects source, docs, package scripts, readiness status, and rollback checkpoint without invoking Cargo, Tauri CLI, dependency installation, build, or installer actions. The dry-run executor contract defines future install/update/rollback operation plans and required dry-run artifacts without implementing or invoking a dry-run executor. The implementation design records the approval boundary for pure plan/verify/preview functions and any later executor. The current plan/verify/preview functions return JSON objects only: planned commands are `not_executed`, planned writes are `not_written`, network and IPC are `blocked`, and install/update/rollback execution remains blocked. The invocation approval contract defines future approval packet requirements while keeping approval state `not_requested`, invocation `not_invoked`, and audit writes disabled.
-
-The app-shell-specific visual baseline is stored separately from the older Control Center screenshots:
-
-- `03-verification/evidence/app-shell-baseline-2026-07-09-desktop-viewport-1440x960.jpg`
-- `03-verification/evidence/app-shell-baseline-2026-07-09-mobile-viewport-390x844.jpg`
-- `03-verification/evidence/app-shell-screenshot-qa-baseline-2026-07-09.json`
-- `03-verification/evidence/APP-SHELL-SCREENSHOT-QA-BASELINE-2026-07-09.md`
-
-Skill Ecosystem readiness is exposed as data before live execution:
-
-- `skill ecosystem` returns the product plan, base pack registry, and future runtime hook contract
-- `skill manifest` returns the required manifest fields and automation policy
-- `skill packs [category]` lists base packs or one category
-- `skill inspect <skill-pack-id>` returns one pack's full operating contract
-- `skill route <text>` selects advisory skill packs for the current request
-- `skill execute-plan <text>` expands selected packs into execution steps, output artifacts, quality gates, authority boundaries, and replay signals
-- `skill execute <text>` creates a local preview run with artifact drafts, quality gate results, replay evidence, and growth signal candidates
-- `skill execute-record <text>` records that local preview evidence under `.gpao-t/skill-execution/history.jsonl`
-- `skill execution-history` and `skill execution-summary` expose recorded skill execution evidence
-- `skill production-status [phase]` verifies that phase skill candidates have become registered, routeable, executable, quality-gated, replay-backed, growth-aware, authority-bounded production packs
-- `skill readiness` verifies every base pack has target problem, T-cell principle, research protocol, quality gates, replay cases, authority boundary, and growth signals
-
-This keeps GPAO-T skills practical: a skill is accepted only when it maps research into an operating principle, execution procedure, quality gate, replay case, and growth signal. A selected skill is not treated as a vague recommendation; it must become a local execution contract that states what artifact will be produced, which quality gates block completion, which authority boundaries remain approval-gated, and which replay cases can improve the skill later.
-
-Skill execution remains local-first. It drafts inspectable artifacts and checks quality gates, but does not mutate live skills, promote durable memory, send externally, deploy, call external models, start daemons, or activate connectors.
-
-The visual GPAO-T dashboard must follow `docs/GPAO-T-DASHBOARD-DESIGN-RECIPE.md`:
-
-- first viewport shows actual GPAO-T state, not a marketing hero
-- layout maps to Work / Context / Evidence / Growth / Authority
-- status chips separate ready, review, blocked, approval-required, and not-applicable layers
-- authority boundaries appear before dangerous or external actions
-- the first UI reads the existing `control snapshot` contract without starting a daemon or activating external systems
-- screenshot or render evidence must exist before claiming visual quality
-- the next visual/UX gate must explicitly check mobile sticky topbar or decision strip visibility
+No document may call a user-facing capability complete from source tests alone.
+For chat/runtime work, completion requires live health, dashboard load, a fresh
+real model answer, relevant log inspection, and evidence from the actual user
+path. Unverified boundaries must be stated explicitly.

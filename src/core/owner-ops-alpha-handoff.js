@@ -1,15 +1,18 @@
 import { buildOwnerOpsMcpServerDescriptor } from "./owner-ops-mcp-server.js";
-import { buildOwnerOpsTeamAlphaGuide, verifyOwnerOpsTeamAlphaReadiness } from "./owner-ops-alpha.js";
+import {
+  buildOwnerOpsInternalAcceptanceGuide,
+  verifyOwnerOpsInternalAcceptanceReadiness,
+} from "./owner-ops-alpha.js";
 
 export function buildOwnerOpsHostRegistrationGuide() {
   const descriptor = buildOwnerOpsMcpServerDescriptor();
-  const alpha = buildOwnerOpsTeamAlphaGuide();
+  const acceptance = buildOwnerOpsInternalAcceptanceGuide();
 
   return {
     schema: "gpao_t.owner_ops_host_registration_guide.v0_1",
     status: "ready",
     title: "Owner Ops 로컬 호스트 등록 가이드",
-    packageId: alpha.packageId,
+    packageId: acceptance.packageId,
     mcpServer: {
       name: descriptor.serverInfo.name,
       command: "node",
@@ -80,7 +83,7 @@ export function buildOwnerOpsHostRegistrationGuide() {
       "public_market_publish",
     ],
     nextSafeAction:
-      "팀원 alpha에서 최소 2개 호스트 등록 smoke를 확인한 뒤, 피드백 폼 결과를 owner-facing UX copy와 첫 시나리오 fixture에 반영한다.",
+      "내부 수용 검토에서 최소 2개 호스트 등록 smoke를 확인한 뒤, 피드백 폼 결과를 owner-facing UX copy와 첫 시나리오 fixture에 반영한다.",
   };
 }
 
@@ -137,7 +140,7 @@ export function buildOwnerOpsHostIntegrationMatrix() {
       "node bin/gpao-t.js owner-ops host-integration-matrix-check",
     ],
     nextSafeAction:
-      "Use this matrix as the host-by-host setup contract for team alpha; do not activate external accounts or publish a market package yet.",
+      "Use this matrix as the host-by-host setup contract for internal acceptance; do not activate external accounts or publish a market package yet.",
   };
 }
 
@@ -181,16 +184,16 @@ export function verifyOwnerOpsHostIntegrationMatrix() {
     ],
     externalActionsRemainBlocked: true,
     nextSafeAction: findings.length
-      ? "Fix host integration matrix findings before team alpha host setup."
+      ? "Fix host integration matrix findings before internal acceptance host setup."
       : "Use this matrix as the cross-host registration contract; do not activate external accounts or publish yet.",
   };
 }
 
-export function buildOwnerOpsAlphaFeedbackForm() {
+export function buildOwnerOpsInternalAcceptanceFeedbackForm() {
   return {
-    schema: "gpao_t.owner_ops_alpha_feedback_form.v0_1",
+    schema: "gpao_t.owner_ops_internal_acceptance_feedback_form.v0_1",
     status: "ready",
-    title: "Owner Ops 팀원 Alpha 피드백 폼",
+    title: "Owner Ops 내부 수용 피드백 폼",
     submissionMode: "local_or_manual_copy",
     sections: [
       {
@@ -215,7 +218,7 @@ export function buildOwnerOpsAlphaFeedbackForm() {
         id: "host_fit",
         title: "호스트 연결",
         questions: [
-          "Codex/OpenClaw/Claude Code 중 어느 호스트에서 테스트했는가?",
+          "Codex/OpenClaw/Claude Code 중 어느 호스트에서 검토했는가?",
           "MCP 도구 목록과 미리보기 호출이 같은 제품처럼 느껴졌는가?",
           "설정 과정에서 막힌 지점이 있었는가?",
         ],
@@ -253,21 +256,21 @@ export function buildOwnerOpsAlphaFeedbackForm() {
       criticalBlockers: 0,
     },
     nextSafeAction:
-      "피드백이 기준을 넘기면 first owner beta guide로 넘어가고, 기준 미달이면 copy/scenario/host registration을 먼저 수정한다.",
+      "피드백이 기준을 넘기면 owner acceptance guide로 넘어가고, 기준 미달이면 copy/scenario/host registration을 먼저 수정한다.",
   };
 }
 
-export function verifyOwnerOpsHostAlphaHandoff({ root } = {}) {
-  const teamAlpha = verifyOwnerOpsTeamAlphaReadiness({ root });
+export function verifyOwnerOpsHostInternalAcceptanceHandoff({ root } = {}) {
+  const internalAcceptance = verifyOwnerOpsInternalAcceptanceReadiness({ root });
   const guide = buildOwnerOpsHostRegistrationGuide();
-  const feedback = buildOwnerOpsAlphaFeedbackForm();
+  const feedback = buildOwnerOpsInternalAcceptanceFeedbackForm();
   const matrix = buildOwnerOpsHostIntegrationMatrix();
   const matrixCheck = verifyOwnerOpsHostIntegrationMatrix();
   const findings = [];
 
-  if (teamAlpha.status !== "ready") findings.push("team_alpha_not_ready");
+  if (internalAcceptance.status !== "ready") findings.push("internal_acceptance_not_ready");
   if (guide.status !== "ready") findings.push("host_registration_guide_not_ready");
-  if (feedback.status !== "ready") findings.push("alpha_feedback_form_not_ready");
+  if (feedback.status !== "ready") findings.push("internal_acceptance_feedback_form_not_ready");
   if (matrix.status !== "ready") findings.push("host_integration_matrix_not_ready");
   if (matrixCheck.status !== "ready") findings.push("host_integration_matrix_check_not_ready");
   if (guide.supportedHosts.length < 3) findings.push("missing_supported_hosts");
@@ -282,22 +285,26 @@ export function verifyOwnerOpsHostAlphaHandoff({ root } = {}) {
   if (guide.mcpServer.network !== "not_used") findings.push("mcp_network_boundary_not_locked");
 
   return {
-    schema: "gpao_t.owner_ops_host_alpha_handoff_check.v0_1",
+    schema: "gpao_t.owner_ops_host_internal_acceptance_handoff_check.v0_1",
     status: findings.length ? "blocked" : "ready",
     findings,
     checkedSurfaces: [
-      "team alpha readiness",
+      "internal acceptance readiness",
       "host registration guide",
       "host integration matrix",
-      "alpha feedback form",
+      "internal acceptance feedback form",
       "stdio MCP network boundary",
       "public publish block",
     ],
-    alphaStage: "internal_team_alpha",
+    acceptanceStage: "internal_acceptance",
     publicRelease: "not_published",
     externalActionsRemainBlocked: true,
     nextSafeAction: findings.length
-      ? "Fix host alpha handoff findings before team distribution."
-      : "Distribute to team alpha testers with sample data only; collect feedback before first owner beta.",
+      ? "Fix host internal acceptance findings before team distribution."
+      : "Distribute to internal acceptance reviewers with sample data only; collect feedback before owner acceptance.",
   };
 }
+
+// One-cycle API compatibility aliases. Canonical output remains internal-production terminology.
+export const buildOwnerOpsAlphaFeedbackForm = buildOwnerOpsInternalAcceptanceFeedbackForm;
+export const verifyOwnerOpsHostAlphaHandoff = verifyOwnerOpsHostInternalAcceptanceHandoff;

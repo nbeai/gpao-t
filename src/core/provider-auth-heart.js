@@ -12,9 +12,10 @@ export function buildProviderAuthHeartContract({
 } = {}) {
   const agentStoreDir = join(stateDir, "agents", agentId, "agent");
   const legacyAgentStoreDir = join(legacyStateDir, "agents", agentId, "agent");
-  const canonicalStore = join(agentStoreDir, "gpao-t-agent.sqlite");
+  const activeRuntimeStore = join(agentStoreDir, "openclaw-agent.sqlite");
+  const productNamedMirror = join(agentStoreDir, "gpao-t-agent.sqlite");
   const compatibilityStores = [
-    join(agentStoreDir, "openclaw-agent.sqlite"),
+    productNamedMirror,
     join(legacyAgentStoreDir, "openclaw-agent.sqlite"),
   ];
 
@@ -24,7 +25,10 @@ export function buildProviderAuthHeartContract({
     agentId,
     stateDir,
     legacyStateDir,
-    canonicalStore,
+    canonicalStateRoot: stateDir,
+    activeRuntimeStore,
+    canonicalStore: activeRuntimeStore,
+    productNamedMirror,
     compatibilityStores,
     productBoundary: {
       userFacingName: "GPAO-T",
@@ -33,14 +37,16 @@ export function buildProviderAuthHeartContract({
       openClawAllowedOnlyAsInternalCompatibilityReference: true,
     },
     invariants: {
-      canonicalStoreName: "gpao-t-agent.sqlite",
+      canonicalStateRootIsGpaoT: true,
+      activeCompatibilityFilenameIsInternalOnly: true,
+      productNamedMirrorIsNotRuntimeAuthority: true,
       compatibilityStoreNamesAreNotProductIdentity: true,
       repairMustNotPrintSecrets: true,
       freshChatRequiredAfterRepair: true,
       health200IsNotCompletion: true,
     },
     nextSafeAction:
-      "Inspect the canonical GPAO-T auth store and compatibility stores without reading secret values.",
+      "Inspect the active store under the GPAO-T state root and migration sources without reading secret values.",
   };
 }
 
@@ -51,24 +57,24 @@ export function inspectProviderAuthStores({
   now = new Date().toISOString(),
 } = {}) {
   const contract = buildProviderAuthHeartContract({ stateDir, legacyStateDir, agentId });
-  const canonical = statStore(contract.canonicalStore, "canonical");
+  const canonical = statStore(contract.activeRuntimeStore, "active_runtime");
+  const productMirror = statStore(contract.productNamedMirror, "product_named_mirror");
   const compatibility = contract.compatibilityStores.map((store) => statStore(store, "compatibility"));
   const usableCompatibility = compatibility.filter((store) => store.exists && store.size > 0);
   const findings = [];
 
-  if (!canonical.exists) findings.push("canonical_auth_store_missing");
-  if (canonical.exists && canonical.size === 0) findings.push("canonical_auth_store_empty");
+  if (!canonical.exists) findings.push("active_auth_store_missing");
+  if (canonical.exists && canonical.size === 0) findings.push("active_auth_store_empty");
   if (!usableCompatibility.length) findings.push("compatibility_auth_store_missing_or_empty");
   if (!canonical.exists && usableCompatibility.length) findings.push("repairable_from_compatibility_store");
-  if (canonical.exists && canonical.size > 0 && usableCompatibility.some((store) => store.size !== canonical.size)) {
-    findings.push("auth_store_size_drift");
+  if (canonical.exists && canonical.size > 0 && productMirror.exists && productMirror.size !== canonical.size) {
+    findings.push("product_named_mirror_stale_after_runtime_activity");
   }
 
   const repairRequired = findings.some((finding) => [
-    "canonical_auth_store_missing",
-    "canonical_auth_store_empty",
+    "active_auth_store_missing",
+    "active_auth_store_empty",
     "repairable_from_compatibility_store",
-    "auth_store_size_drift",
   ].includes(finding));
 
   return {
@@ -78,6 +84,8 @@ export function inspectProviderAuthStores({
     contract,
     stores: {
       canonical,
+      activeRuntime: canonical,
+      productMirror,
       compatibility,
     },
     secretSafety: {
@@ -102,32 +110,24 @@ export function buildProviderAuthRepairPlan({
   const compatibility = inventory.stores?.compatibility || [];
   const source = compatibility.find((store) => store.exists && store.size > 0) || null;
 
-  if (inventory.findings?.includes("canonical_auth_store_missing") && source) {
+  if (inventory.findings?.includes("active_auth_store_missing") && source) {
     actions.push({
-      id: "copy_compatibility_store_to_canonical",
+      id: "copy_compatibility_store_to_active_runtime",
       status: "requires_apply_gate",
       from: source.path,
       to: canonical.path,
       secretHandling: "copy_file_without_printing_values",
     });
   }
-  if (inventory.findings?.includes("canonical_auth_store_empty") && source) {
+  if (inventory.findings?.includes("active_auth_store_empty") && source) {
     actions.push({
-      id: "replace_empty_canonical_store_from_compatibility",
+      id: "replace_empty_active_runtime_store_from_compatibility",
       status: "requires_apply_gate",
       from: source.path,
       to: canonical.path,
       secretHandling: "copy_file_without_printing_values",
     });
   }
-  if (inventory.findings?.includes("auth_store_size_drift")) {
-    actions.push({
-      id: "compare_store_metadata_before_sync",
-      status: "review_required",
-      reason: "Stores exist but metadata differs; do not overwrite without a backup and explicit repair receipt.",
-    });
-  }
-
   const verification = [
     "runtime_health",
     "dashboard_opens_without_manual_token",
@@ -225,13 +225,6 @@ function buildProviderAuthUserState({ findings, canonical, usableCompatibility }
       status: "needs_setup",
       label: "모델 연결 설정 필요",
       message: "GPAO-T가 아직 사용할 수 있는 모델 연결 정보를 찾지 못했습니다.",
-    };
-  }
-  if (findings.includes("auth_store_size_drift")) {
-    return {
-      status: "review",
-      label: "모델 연결 상태 검토 필요",
-      message: "GPAO-T의 모델 연결 저장소가 서로 달라 보입니다. 안전한 백업 후 복구 검토가 필요합니다.",
     };
   }
   return {

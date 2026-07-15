@@ -33,11 +33,11 @@ async function fixture({ insecureConfig = false, externalSymlink = false } = {})
   const openclawHome = join(root, "openclaw");
   const stateHome = join(root, "gpao-t-state");
   const launchAgentsDir = join(root, "LaunchAgents");
-  await fs.mkdir(join(release, "compatibility", "openclaw"), { recursive: true });
+  await fs.mkdir(join(release, "compatibility", "gpao-t"), { recursive: true });
   await fs.writeFile(join(release, "gpao-t.mjs"), "#!/usr/bin/env node\n", { mode: 0o755 });
-  await fs.writeFile(join(release, "package.json"), '{"name":"gpao-t","version":"0.1.0-test-team.1"}\n');
-  await fs.writeFile(join(release, "compatibility", "openclaw", "runtime.js"), "export {};\n");
-  if (externalSymlink) await fs.symlink("/tmp", join(release, "compatibility", "openclaw", "escape"));
+  await fs.writeFile(join(release, "package.json"), '{"name":"gpao-t","version":"0.1.0"}\n');
+  await fs.writeFile(join(release, "compatibility", "gpao-t", "runtime.js"), "export {};\n");
+  if (externalSymlink) await fs.symlink("/tmp", join(release, "compatibility", "gpao-t", "escape"));
   await makeFixtureManifest(release);
   await fs.mkdir(join(openclawHome, "credentials"), { recursive: true, mode: 0o700 });
   await fs.mkdir(join(openclawHome, "workspace"), { recursive: true, mode: 0o700 });
@@ -90,8 +90,8 @@ test("dry-run plan selects state, excludes logs, and does not create destination
     const plan = await createInstallPlan(options);
     const after = await fs.readdir(data.root);
     assert.equal(plan.mode, "dry-run");
-    assert.equal(plan.openclaw.backup, "full-tree-before-migration");
-    assert.deepEqual(plan.openclaw.selected, ["credentials", "workspace"]);
+    assert.equal(plan.openclaw.backup, "skipped");
+    assert.deepEqual(plan.openclaw.selected, []);
     assert.ok(plan.openclaw.excludedTopLevel.includes("logs"));
     assert.equal(plan.openclaw.secretValuesExposed, false);
     assert.equal(plan.applyTokenRequired, applyTokenFor(plan.version));
@@ -105,7 +105,7 @@ test("dry-run plan selects state, excludes logs, and does not create destination
 test("insecure secret-bearing source mode blocks preflight", async () => {
   const data = await fixture({ insecureConfig: true });
   try {
-    const plan = await createInstallPlan(optionsFor(data));
+    const plan = await createInstallPlan(optionsFor(data, { migrationProfile: "standard" }));
     assert.ok(plan.blockers.some((item) => item.includes("too permissive") || item.includes("not owner-only")));
   } finally {
     await data.cleanup();
@@ -199,7 +199,7 @@ test("CLI fixture dry-run reports no writes", async () => {
       installerPath,
       "install",
       "--release", data.release,
-      "--openclaw-home", data.openclawHome,
+      "--compat-home", data.openclawHome,
       "--state-home", data.stateHome,
       "--launch-agents-dir", data.launchAgentsDir,
       "--port", "29778",

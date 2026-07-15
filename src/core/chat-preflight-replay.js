@@ -48,6 +48,7 @@ export function buildChatPreflightPacket({
         root,
         input: { text },
         priorFlow,
+        packet,
         now,
       })
     : null;
@@ -150,9 +151,12 @@ export function buildAnswerReplayEvaluation({
     userExpectation,
   ].filter(Boolean).join(" ");
   const targetScore = scoreSignals(text, replayTokens(targetText));
+  const explicitMarkers = replayExplicitMarkers(targetText);
+  const explicitMarkerScore = scoreSignals(text, explicitMarkers);
+  const targetSignalPresent = targetScore > 0 || explicitMarkerScore > 0;
   const findings = [];
   if (!text) findings.push("answer_text_missing");
-  if (text && targetText && targetScore <= 0) findings.push("active_target_signal_missing");
+  if (text && targetText && !targetSignalPresent) findings.push("active_target_signal_missing");
   const status = findings.includes("answer_text_missing") ? "needs_answer_text" : "review_only";
 
   return {
@@ -167,13 +171,15 @@ export function buildAnswerReplayEvaluation({
     answerPreview: text.slice(0, 800),
     replayChecks: {
       answerTextCaptured: text ? "ready" : "blocked",
-      answerKeepsActiveTarget: targetText ? (targetScore > 0 ? "review_signal_present" : "review_signal_missing") : "pending_review",
+      answerKeepsActiveTarget: targetText ? (targetSignalPresent ? "review_signal_present" : "review_signal_missing") : "pending_review",
       answerUsesAnchorOnlyWhenAdmitted: "pending_review",
       memoryCandidateMayBeDrafted: text ? "review_only_allowed" : "blocked",
       memoryPromotionSkipped: "blocked",
     },
     measurements: {
       activeTargetSignalScore: targetScore,
+      explicitMarkerSignalScore: explicitMarkerScore,
+      explicitMarkers,
       answerChars: text.length,
     },
     authorityBoundary: buildChatAuthorityBoundary(),
@@ -402,6 +408,13 @@ function replayTokens(value) {
     .map((token) => token.trim())
     .filter((token) => token.length >= 2)
     .slice(0, 24);
+}
+
+function replayExplicitMarkers(value) {
+  return [...new Set(
+    String(value || "")
+      .match(/[a-z][a-z0-9]*(?:-[a-z0-9]+)+/gi) || [],
+  )].map((marker) => marker.toLowerCase()).slice(0, 12);
 }
 
 function scoreSignals(text, tokens) {

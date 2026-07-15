@@ -436,8 +436,8 @@ function usage() {
     "  gpao-t owner-ops product-axis-readiness-check",
     "  gpao-t owner-ops production-completion-audit",
     "  gpao-t owner-ops production-completion-audit-check",
-    "  gpao-t owner-ops supervised-testing-readiness",
-    "  gpao-t owner-ops supervised-testing-readiness-check",
+    "  gpao-t owner-ops internal-production-readiness",
+    "  gpao-t owner-ops internal-production-readiness-check",
     "  gpao-t owner-ops mcp-plan",
     "  gpao-t owner-ops connector-catalog",
     "  gpao-t owner-ops mcp-tools",
@@ -456,9 +456,7 @@ function usage() {
     "  gpao-t owner-ops plugin-package",
     "  gpao-t owner-ops market-listing",
     "  gpao-t owner-ops plugin-package-check",
-    "  gpao-t owner-ops team-alpha-guide",
     "  gpao-t owner-ops owner-ux-copy",
-    "  gpao-t owner-ops team-alpha-check",
     "  gpao-t owner-ops host-registration-guide",
     "  gpao-t owner-ops host-integration-matrix",
     "  gpao-t owner-ops host-integration-matrix-check",
@@ -536,13 +534,10 @@ function usage() {
     "  gpao-t owner-ops dry-run-result-handoff [install|update|rollback]",
     "  gpao-t owner-ops dry-run-result-handoff-write [install|update|rollback]",
     "  gpao-t owner-ops dry-run-result-handoff-check [install|update|rollback]",
-    "  gpao-t owner-ops local-package-candidate [confirmation-token]",
-    "  gpao-t owner-ops local-package-candidate-check",
-    "  gpao-t owner-ops local-package-candidate-readback [archive-name]",
-    "  gpao-t owner-ops local-package-candidate-readback-check [archive-name]",
-    "  gpao-t owner-ops team-alpha-handoff-bundle [archive-name]",
-    "  gpao-t owner-ops team-alpha-handoff-write [archive-name]",
-    "  gpao-t owner-ops team-alpha-handoff-check [archive-name]",
+    "  gpao-t owner-ops internal-production-package [confirmation-token]",
+    "  gpao-t owner-ops internal-production-package-check",
+    "  gpao-t owner-ops internal-production-package-readback [archive-name]",
+    "  gpao-t owner-ops internal-production-package-readback-check [archive-name]",
     "  gpao-t owner-ops first-owner-beta-handoff-bundle [archive-name]",
     "  gpao-t owner-ops first-owner-beta-handoff-write [archive-name]",
     "  gpao-t owner-ops first-owner-beta-handoff-check [archive-name]",
@@ -578,15 +573,15 @@ function usage() {
     "  gpao-t owner-ops next-owner-testing-loop",
     "  gpao-t owner-ops next-owner-testing-loop-write",
     "  gpao-t owner-ops next-owner-testing-loop-check",
-    "  gpao-t owner-ops final-local-release-candidate",
-    "  gpao-t owner-ops final-local-release-candidate-write",
-    "  gpao-t owner-ops final-local-release-candidate-check",
-    "  gpao-t owner-ops final-candidate-owner-decision-lane [continue_supervised_testing|request_revision|approve_local_candidate_review|consider_public_release_later]",
-    "  gpao-t owner-ops final-candidate-owner-decision-append [decision] [approval-token]",
-    "  gpao-t owner-ops final-candidate-owner-decision-records",
-    "  gpao-t owner-ops final-candidate-owner-decision-check",
-    "  gpao-t owner-ops final-candidate-next-action [continue_supervised_testing|request_revision|approve_local_candidate_review|consider_public_release_later]",
-    "  gpao-t owner-ops final-candidate-next-action-check",
+    "  gpao-t owner-ops production-ready",
+    "  gpao-t owner-ops production-ready-write",
+    "  gpao-t owner-ops production-ready-check",
+    "  gpao-t owner-ops internal-production-owner-decision [continue_supervised_testing|request_revision|approve_internal_production_review|consider_public_release_later]",
+    "  gpao-t owner-ops internal-production-owner-decision-append [decision] [approval-token]",
+    "  gpao-t owner-ops internal-production-owner-decision-records",
+    "  gpao-t owner-ops internal-production-owner-decision-check",
+    "  gpao-t owner-ops internal-production-next-action [continue_supervised_testing|request_revision|approve_internal_production_review|consider_public_release_later]",
+    "  gpao-t owner-ops internal-production-next-action-check",
     "  gpao-t owner-ops beta-feedback-action-queue",
     "  gpao-t owner-ops beta-feedback-action-write",
     "  gpao-t owner-ops beta-feedback-action-check",
@@ -629,10 +624,10 @@ function usage() {
     "  gpao-t workspace welcome-check [workspace-root]",
     "  gpao-t workspace welcome-draft <answers-json> [workspace-root]",
     "  gpao-t workspace welcome-apply <answers-json> <approval-token> [workspace-root]",
-    "  gpao-t production stages-5-8",
-    "  gpao-t production stages-5-8-check",
-    "  gpao-t production alpha-package",
-    "  gpao-t production alpha-package-check",
+    "  gpao-t production completion",
+    "  gpao-t production completion-check",
+    "  gpao-t production internal-production-package",
+    "  gpao-t production internal-production-package-check",
     "  gpao-t first-completion",
     "  gpao-t first-completion-check",
     "  gpao-t first-completion-write",
@@ -1047,9 +1042,9 @@ try {
       printJson(buildOwnerOpsProductionCompletionAudit({ root: process.cwd() }));
     } else if (subcommand === "production-completion-audit-check") {
       printJson(verifyOwnerOpsProductionCompletionAudit({ root: process.cwd() }));
-    } else if (subcommand === "supervised-testing-readiness") {
+    } else if (["internal-production-readiness", "supervised-testing-readiness"].includes(subcommand)) {
       printJson(buildOwnerOpsSupervisedTestingReadinessPacket({ root: process.cwd() }));
-    } else if (subcommand === "supervised-testing-readiness-check") {
+    } else if (["internal-production-readiness-check", "supervised-testing-readiness-check"].includes(subcommand)) {
       printJson(verifyOwnerOpsSupervisedTestingReadinessPacket({ root: process.cwd() }));
     } else if (subcommand === "mcp-plan") {
       printJson(buildOwnerOpsMcpPlan());
@@ -1338,19 +1333,19 @@ try {
         root: process.cwd(),
         requestedLane: firstArg || "install",
       }));
-    } else if (subcommand === "local-package-candidate") {
+    } else if (["internal-production-package", "local-package-candidate"].includes(subcommand)) {
       printJson(writeOwnerOpsLocalPackageCandidate({
         root: process.cwd(),
         confirmationToken: firstArg,
       }));
-    } else if (subcommand === "local-package-candidate-check") {
+    } else if (["internal-production-package-check", "local-package-candidate-check"].includes(subcommand)) {
       printJson(verifyOwnerOpsLocalPackageCandidateWriter({ root: process.cwd() }));
-    } else if (subcommand === "local-package-candidate-readback") {
+    } else if (["internal-production-package-readback", "local-package-candidate-readback"].includes(subcommand)) {
       printJson(readOwnerOpsLocalPackageCandidate({
         root: process.cwd(),
         archiveName: firstArg,
       }));
-    } else if (subcommand === "local-package-candidate-readback-check") {
+    } else if (["internal-production-package-readback-check", "local-package-candidate-readback-check"].includes(subcommand)) {
       printJson(verifyOwnerOpsLocalPackageCandidateReadback({
         root: process.cwd(),
         archiveName: firstArg,
@@ -1521,43 +1516,43 @@ try {
       printJson(verifyOwnerOpsNextOwnerTestingLoop({
         root: process.cwd(),
       }));
-    } else if (subcommand === "final-local-release-candidate") {
+    } else if (["production-ready", "final-local-release-candidate"].includes(subcommand)) {
       printJson(buildOwnerOpsFinalLocalReleaseCandidateDecisionPacket({
         root: process.cwd(),
       }));
-    } else if (subcommand === "final-local-release-candidate-write") {
+    } else if (["production-ready-write", "final-local-release-candidate-write"].includes(subcommand)) {
       printJson(writeOwnerOpsFinalLocalReleaseCandidateDecisionPacket({
         root: process.cwd(),
       }));
-    } else if (subcommand === "final-local-release-candidate-check") {
+    } else if (["production-ready-check", "final-local-release-candidate-check"].includes(subcommand)) {
       printJson(verifyOwnerOpsFinalLocalReleaseCandidateDecisionPacket({
         root: process.cwd(),
       }));
-    } else if (subcommand === "final-candidate-owner-decision-lane") {
+    } else if (["internal-production-owner-decision", "final-candidate-owner-decision-lane"].includes(subcommand)) {
       printJson(buildOwnerOpsFinalCandidateOwnerDecisionLane({
         root: process.cwd(),
         decision: firstArg || "continue_supervised_testing",
       }));
-    } else if (subcommand === "final-candidate-owner-decision-append") {
+    } else if (["internal-production-owner-decision-append", "final-candidate-owner-decision-append"].includes(subcommand)) {
       printJson(appendOwnerOpsFinalCandidateOwnerDecisionRecord({
         root: process.cwd(),
         decision: firstArg || "continue_supervised_testing",
         approvalToken: restArgs[0],
       }));
-    } else if (subcommand === "final-candidate-owner-decision-records") {
+    } else if (["internal-production-owner-decision-records", "final-candidate-owner-decision-records"].includes(subcommand)) {
       printJson(readOwnerOpsFinalCandidateOwnerDecisionRecords({
         root: process.cwd(),
       }));
-    } else if (subcommand === "final-candidate-owner-decision-check") {
+    } else if (["internal-production-owner-decision-check", "final-candidate-owner-decision-check"].includes(subcommand)) {
       printJson(verifyOwnerOpsFinalCandidateOwnerDecisionLane({
         root: process.cwd(),
       }));
-    } else if (subcommand === "final-candidate-next-action") {
+    } else if (["internal-production-next-action", "final-candidate-next-action"].includes(subcommand)) {
       printJson(buildOwnerOpsFinalCandidateNextActionPacket({
         root: process.cwd(),
         decision: firstArg || "continue_supervised_testing",
       }));
-    } else if (subcommand === "final-candidate-next-action-check") {
+    } else if (["internal-production-next-action-check", "final-candidate-next-action-check"].includes(subcommand)) {
       printJson(verifyOwnerOpsFinalCandidateNextActionPacket({
         root: process.cwd(),
       }));
@@ -1586,7 +1581,7 @@ try {
         root: process.cwd(),
       }));
     } else {
-      throw new Error("owner-ops command requires skill-pack, field-casebook, authority-matrix, scenarios, candidates, workflow, record, records, replay, check, product-axis-readiness, product-axis-readiness-check, production-completion-audit, production-completion-audit-check, supervised-testing-readiness, supervised-testing-readiness-check, mcp-plan, connector-catalog, mcp-tools, mcp-check, mcp-server, mcp-server-check, intake-plan, intake-paste, intake-table, intake-file, intake-folder, intake-check, first-owner-scenario, run-first-owner-scenario, first-owner-scenario-check, plugin-package, market-listing, plugin-package-check, team-alpha-guide, owner-ux-copy, team-alpha-check, host-registration-guide, alpha-feedback-form, host-alpha-check, sample-data-kit, first-owner-beta-guide, first-owner-beta-check, beta-feedback-synthesis, industry-template-catalog, market-readiness-gate, market-readiness-check, template-replay-fixtures, privacy-copy-pack, pre-public-package-review, pre-public-package-check, pre-public-evidence-bridge, pre-public-evidence-bridge-check, pre-public-repair-backlog, pre-public-repair-write, pre-public-repair-check, pre-public-repair-completion, pre-public-repair-completion-write, pre-public-repair-completion-check, distribution-evidence, distribution-readme, distribution-evidence-check, archive-checksum-dry-run, archive-checksum-dry-run-check, release-readiness-evidence, release-readiness-write, release-readiness-check, human-review-approval-packet, human-review-approval-write, human-review-approval-check, human-review-decision-lane, human-review-decision-append, human-review-decision-records, human-review-decision-check, public-release-gate, public-release-gate-check, public-release-readback, public-release-readback-check, approved-signing-lane, approved-signing-lane-check, marketplace-upload-approval-gate, marketplace-upload-approval-gate-check, marketplace-upload-decision-lane, marketplace-upload-decision-append, marketplace-upload-decision-records, marketplace-upload-decision-check, signed-package-evidence, signed-package-evidence-write, signed-package-evidence-check, install-update-rollback-proof, install-update-rollback-proof-write, install-update-rollback-proof-check, deployment-dry-run-plan, deployment-dry-run-write, deployment-dry-run-check, local-package-candidate, local-package-candidate-check, local-package-candidate-readback, local-package-candidate-readback-check, team-alpha-handoff-bundle, team-alpha-handoff-write, team-alpha-handoff-check, first-owner-beta-handoff-bundle, first-owner-beta-handoff-write, first-owner-beta-handoff-check, first-owner-beta-operational-package, first-owner-beta-operational-write, first-owner-beta-operational-check, first-owner-beta-result-review, first-owner-beta-result-write, first-owner-beta-result-check, field-test-ledger, field-test-record-append, field-test-records, field-test-ledger-check, field-test-action-queue, field-test-action-write, field-test-action-check, field-test-repair-completion, field-test-repair-completion-write, field-test-repair-completion-check, beta-feedback-action-queue, beta-feedback-action-write, beta-feedback-action-check, market-evidence-bundle, market-evidence-write, or market-evidence-check");
+      throw new Error("unknown owner-ops command; run gpao-t --help for canonical commands");
     }
   } else if (command === "connectors") {
     const [subcommand, connectorId, action] = args;
@@ -1712,16 +1707,16 @@ try {
     }
   } else if (command === "production") {
     const [subcommand] = args;
-    if (subcommand === "stages-5-8") {
+    if (["completion", "stages-5-8"].includes(subcommand)) {
       printJson(await buildStages5To8Completion({ root: process.cwd() }));
-    } else if (subcommand === "stages-5-8-check") {
+    } else if (["completion-check", "stages-5-8-check"].includes(subcommand)) {
       printJson(await verifyStages5To8Completion({ root: process.cwd() }));
-    } else if (subcommand === "alpha-package") {
+    } else if (["internal-production-package", "alpha-package"].includes(subcommand)) {
       printJson(writeTeamAlphaPackage({ root: process.cwd() }));
-    } else if (subcommand === "alpha-package-check") {
+    } else if (["internal-production-package-check", "alpha-package-check"].includes(subcommand)) {
       printJson(verifyTeamAlphaPackage({ root: process.cwd() }));
     } else {
-      throw new Error("production command requires stages-5-8, stages-5-8-check, alpha-package, or alpha-package-check");
+      throw new Error("production command requires completion, completion-check, internal-production-package, or internal-production-package-check");
     }
   } else if (command === "first-completion") {
     printJson(buildGpaoTFirstCompletionAudit({ root: process.cwd() }));

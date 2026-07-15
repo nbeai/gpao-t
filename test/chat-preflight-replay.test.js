@@ -147,6 +147,21 @@ describe("GPAO-T chat preflight and post-answer replay", () => {
     assert.ok(candidate.findings.includes("source_truth_missing"));
   });
 
+  it("recognizes an explicit replay marker even when Korean particles follow it", () => {
+    const evaluation = buildAnswerReplayEvaluation({
+      preflightRecord: {
+        messagePreview: "제품명과 ID-QA-932를 포함해 한 문장으로 답해.",
+      },
+      answerText: "저는 nBeAI. GPAO-T의 에이전트입니다. ID-QA-932",
+      now: "2026-07-14T02:41:10.237Z",
+    });
+
+    assert.equal(evaluation.replayChecks.answerKeepsActiveTarget, "review_signal_present");
+    assert.deepEqual(evaluation.measurements.explicitMarkers, ["id-qa-932"]);
+    assert.equal(evaluation.measurements.explicitMarkerSignalScore, 1);
+    assert.equal(evaluation.findings.includes("active_target_signal_missing"), false);
+  });
+
   it("exposes gateway routes for preflight and replay records", () => {
     const root = tempRoot();
     seedOpenClawAbsorptionCandidate(root);

@@ -1,19 +1,30 @@
 #!/usr/bin/env node
 import { readFile, writeFile, mkdir } from "node:fs/promises";
 import { dirname, join } from "node:path";
+import { homedir } from "node:os";
 import { fileURLToPath } from "node:url";
 
-const DEFAULT_LIVE_CONTROL_UI =
+const REPO_ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
+
+export const DEFAULT_LIVE_CONTROL_UI =
   process.env.GPAO_T_LIVE_CONTROL_UI ||
-  "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui";
-const DEFAULT_DOM_READBACK_EVIDENCE =
+  join(homedir(), ".gpao-t", "current", "compatibility", "gpao-t", "dist", "control-ui");
+export const DEFAULT_DOM_READBACK_EVIDENCE =
   process.env.GPAO_T_ROUTE_DOM_READBACK_EVIDENCE ||
-  "/Users/jyp/Developer/gpao-t/docs/03-verification/evidence/GPAO-T-SAFARI-ROUTE-DOM-READBACK-2026-07-12.md";
+  join(
+    REPO_ROOT,
+    "docs",
+    "03-verification",
+    "evidence",
+    "phase-5-final-human-qa-loop-2-2026-07-14",
+    "ROUTE-DOM-READBACK.md",
+  );
 
 const REQUIRED_ROUTES = [
   { id: "dashboard", path: "/", requiredLabels: ["nBeAI. GPAO-T"] },
   { id: "chat", path: "/chat", requiredLabels: ["nBeAI. GPAO-T"] },
   { id: "settings_general", path: "/settings/general", requiredLabels: ["설정"] },
+  { id: "settings_model_connection", path: "/settings/model-connection", requiredLabels: ["모델 연결 설정"] },
   { id: "settings_profile", path: "/settings/profile", requiredLabels: ["프로필"] },
   { id: "settings_ai_agents", path: "/settings/ai-agents", requiredLabels: ["GPAO-T"] },
   { id: "agents", path: "/agents", requiredLabels: ["에이전트"] },

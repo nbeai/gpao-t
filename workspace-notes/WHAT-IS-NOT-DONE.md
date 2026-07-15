@@ -14,6 +14,10 @@
 ## Blockers
 
 - product-quality: Product quality gate is review.
-- scenario-verification: Scenario verification is blocked.
 - product-quality: Product quality gate is review.
-- scenario-verification: Scenario verification is blocked.
+- completion-gate: 1 completion gate blocker(s) detected.
+- product-quality: Product quality gate is review.
+- completion-gate: 1 completion gate blocker(s) detected.
+- product-quality: Product quality gate is review.
+- completion-gate: 1 completion gate blocker(s) detected.
+- product-quality: Product quality gate is review.

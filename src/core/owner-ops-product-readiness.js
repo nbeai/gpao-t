@@ -28,12 +28,12 @@ import {
   verifyOwnerOpsBroaderOwnerTestingResultLedger,
   verifyOwnerOpsBroaderOwnerTestingRepairCompletionEvidence,
   verifyOwnerOpsBroaderOwnerTestingRepairQueue,
-  verifyOwnerOpsFinalLocalReleaseCandidateDecisionPacket,
-  verifyOwnerOpsFinalCandidateOwnerDecisionLane,
-  verifyOwnerOpsFinalCandidateNextActionPacket,
+  verifyOwnerOpsProductionReadyDecisionPacket,
+  verifyOwnerOpsInternalProductionOwnerDecision,
+  verifyOwnerOpsInternalProductionNextAction,
   verifyOwnerOpsNextOwnerTestingLoop,
   verifyOwnerOpsPublicReleaseReadbackSnapshot,
-  readOwnerOpsFinalCandidateOwnerDecisionRecords,
+  readOwnerOpsInternalProductionOwnerDecisionRecords,
 } from "./owner-ops-distribution.js";
 
 function statusOf(check) {
@@ -92,9 +92,9 @@ export function buildOwnerOpsProductAxisReadinessMatrix({ root = process.cwd() }
   const prePublicRepairBacklog = verifyOwnerOpsPrePublicRepairBacklog({ root });
   const prePublicRepairCompletion = verifyOwnerOpsPrePublicRepairCompletionEvidence({ root });
   const releaseReadback = verifyOwnerOpsPublicReleaseReadbackSnapshot({ root });
-  const finalLocalReleaseCandidate = verifyOwnerOpsFinalLocalReleaseCandidateDecisionPacket({ root });
-  const finalCandidateOwnerDecisionLane = verifyOwnerOpsFinalCandidateOwnerDecisionLane({ root });
-  const finalCandidateNextAction = verifyOwnerOpsFinalCandidateNextActionPacket({ root });
+  const productionReadyDecision = verifyOwnerOpsProductionReadyDecisionPacket({ root });
+  const internalProductionOwnerDecision = verifyOwnerOpsInternalProductionOwnerDecision({ root });
+  const internalProductionNextAction = verifyOwnerOpsInternalProductionNextAction({ root });
 
   const phases = [
     phase(
@@ -117,7 +117,7 @@ export function buildOwnerOpsProductAxisReadinessMatrix({ root = process.cwd() }
     ),
     phase(
       "field_validation",
-      "Team Alpha / First Owner Beta",
+      "Supervised Human Verification",
       [
         teamAlphaHandoff,
         firstOwnerBetaHandoff,
@@ -144,8 +144,8 @@ export function buildOwnerOpsProductAxisReadinessMatrix({ root = process.cwd() }
     phase(
       "release_authority_readback",
       "Release Authority Readback",
-      [releaseReadback, finalLocalReleaseCandidate, finalCandidateOwnerDecisionLane, finalCandidateNextAction],
-      ["fast release prerequisite snapshot", "final local release candidate decision packet", "final candidate owner decision lane", "final candidate next action packet", "human decision lane", "marketplace/upload decision lane"],
+      [releaseReadback, productionReadyDecision, internalProductionOwnerDecision, internalProductionNextAction],
+      ["fast release prerequisite snapshot", "production-ready decision packet", "internal production owner decision", "internal production next action", "human decision lane", "marketplace/upload decision lane"],
     ),
   ];
 
@@ -155,10 +155,10 @@ export function buildOwnerOpsProductAxisReadinessMatrix({ root = process.cwd() }
     ["mcp_server", mcpServer],
     ["read_only_intake", intake],
     ["plugin_package", pluginPackage],
-    ["team_alpha_handoff", teamAlphaHandoff],
-    ["first_owner_beta_handoff", firstOwnerBetaHandoff],
-    ["first_owner_beta_operational", firstOwnerBetaOperational],
-    ["first_owner_beta_result", firstOwnerBetaResult],
+    ["internal_acceptance_handoff", teamAlphaHandoff],
+    ["owner_acceptance_handoff", firstOwnerBetaHandoff],
+    ["owner_acceptance_operational", firstOwnerBetaOperational],
+    ["owner_acceptance_result", firstOwnerBetaResult],
     ["field_test_ledger", fieldTestLedger],
     ["field_test_action_queue", fieldTestActionQueue],
     ["field_test_repair_completion", fieldTestRepairCompletion],
@@ -175,9 +175,9 @@ export function buildOwnerOpsProductAxisReadinessMatrix({ root = process.cwd() }
     ["pre_public_repair_backlog", prePublicRepairBacklog],
     ["pre_public_repair_completion", prePublicRepairCompletion],
     ["release_readback", releaseReadback],
-    ["final_local_release_candidate", finalLocalReleaseCandidate],
-    ["final_candidate_owner_decision_lane", finalCandidateOwnerDecisionLane],
-    ["final_candidate_next_action", finalCandidateNextAction],
+    ["production_ready_decision", productionReadyDecision],
+    ["internal_production_owner_decision", internalProductionOwnerDecision],
+    ["internal_production_next_action", internalProductionNextAction],
   ]);
   const readyPhases = phases.filter((item) => item.status === "ready").length;
   const releaseBoundary = {
@@ -197,7 +197,7 @@ export function buildOwnerOpsProductAxisReadinessMatrix({ root = process.cwd() }
     status: blockingFindings.length ? "review" : "ready",
     productAxisState: blockingFindings.length
       ? "product_axis_needs_review"
-      : "local_product_axis_ready_public_release_closed",
+      : "production_ready_for_internal_distribution_public_release_closed",
     goalSequence: ["skill_pack", "mcp_connectors", "plugin_market_package"],
     phaseCount: phases.length,
     readyPhaseCount: readyPhases,
@@ -254,7 +254,7 @@ export function verifyOwnerOpsProductAxisReadinessMatrix({ root = process.cwd() 
 
 export function buildOwnerOpsProductionCompletionAudit({ root = process.cwd() } = {}) {
   const matrix = buildOwnerOpsProductAxisReadinessMatrix({ root });
-  const finalDecisionRecords = readOwnerOpsFinalCandidateOwnerDecisionRecords({ root });
+  const finalDecisionRecords = readOwnerOpsInternalProductionOwnerDecisionRecords({ root });
   const phaseById = Object.fromEntries(matrix.phases.map((item) => [item.id, item]));
   const requirementRows = [
     {
@@ -294,10 +294,10 @@ export function buildOwnerOpsProductionCompletionAudit({ root = process.cwd() } 
       evidence: ["owner-ops product-axis-readiness phase: release_authority_readback"],
     },
     {
-      id: "owner_final_candidate_decision",
-      label: "Owner final-candidate decision record",
+      id: "internal_production_owner_decision",
+      label: "Internal production owner decision record",
       status: finalDecisionRecords.recordCount > 0 ? "satisfied" : "pending_owner_decision",
-      evidence: [".gpao-t/owner-ops/final-candidate/owner-decision-records.jsonl"],
+      evidence: [".gpao-t/owner-ops/internal-production-owner-decision/owner-decision-records.jsonl"],
     },
     {
       id: "external_public_release",
@@ -313,16 +313,18 @@ export function buildOwnerOpsProductionCompletionAudit({ root = process.cwd() } 
     schema: "gpao_t.owner_ops_production_completion_audit.v0_1",
     status: reviewRows.length ? "review" : "ready",
     completionState: localProductAxisReady
-      ? "local_product_axis_ready_external_completion_pending"
-      : "local_product_axis_needs_review",
+      ? "production_ready_for_internal_distribution_external_release_pending"
+      : "production_readiness_needs_review",
+    productionReady: localProductAxisReady,
+    supervisedHumanVerificationRequired: true,
     localProductAxisReady,
     finalObjectiveComplete: false,
     requirementRows,
     pendingOwnerActions: [
       {
-        id: "record_final_candidate_owner_decision",
+        id: "record_internal_production_owner_decision",
         required: finalDecisionRecords.recordCount === 0,
-        surface: "owner-ops final-candidate-owner-decision-append [decision] [approval-token]",
+        surface: "owner-ops internal-production-owner-decision-append [decision] [approval-token]",
       },
       {
         id: "run_supervised_team_or_owner_testing",
@@ -351,8 +353,8 @@ export function buildOwnerOpsProductionCompletionAudit({ root = process.cwd() } 
     },
     evidenceRefs: [
       "owner-ops product-axis-readiness-check",
-      "owner-ops final-candidate-next-action-check",
-      "owner-ops local-package-candidate-readback-check",
+      "owner-ops internal-production-next-action-check",
+      "owner-ops internal-production-package-readback-check",
       "owner-ops public-release-readback-check",
     ],
     findings: reviewRows.map((row) => `${row.id}_needs_review`),
@@ -398,13 +400,13 @@ export function verifyOwnerOpsProductionCompletionAudit({ root = process.cwd() }
   };
 }
 
-export function buildOwnerOpsSupervisedTestingReadinessPacket({ root = process.cwd() } = {}) {
+export function buildOwnerOpsInternalProductionReadiness({ root = process.cwd() } = {}) {
   const audit = buildOwnerOpsProductionCompletionAudit({ root });
-  const finalCandidate = verifyOwnerOpsFinalLocalReleaseCandidateDecisionPacket({ root });
+  const productionReadyDecision = verifyOwnerOpsProductionReadyDecisionPacket({ root });
   const nextTestingLoop = verifyOwnerOpsNextOwnerTestingLoop({ root });
-  const nextAction = verifyOwnerOpsFinalCandidateNextActionPacket({ root });
+  const nextAction = verifyOwnerOpsInternalProductionNextAction({ root });
   const releaseReadback = verifyOwnerOpsPublicReleaseReadbackSnapshot({ root });
-  const finalDecisionRecords = readOwnerOpsFinalCandidateOwnerDecisionRecords({ root });
+  const finalDecisionRecords = readOwnerOpsInternalProductionOwnerDecisionRecords({ root });
   const readinessRows = [
     {
       id: "local_product_axis",
@@ -413,10 +415,10 @@ export function buildOwnerOpsSupervisedTestingReadinessPacket({ root = process.c
       evidence: ["owner-ops production-completion-audit-check"],
     },
     {
-      id: "final_local_candidate",
-      label: "Final local candidate packet",
-      status: finalCandidate.status,
-      evidence: ["owner-ops final-local-release-candidate-check"],
+      id: "production_ready_decision",
+      label: "Production-ready decision packet",
+      status: productionReadyDecision.status,
+      evidence: ["owner-ops production-ready-check"],
     },
     {
       id: "next_owner_testing_loop",
@@ -425,10 +427,10 @@ export function buildOwnerOpsSupervisedTestingReadinessPacket({ root = process.c
       evidence: ["owner-ops next-owner-testing-loop-check"],
     },
     {
-      id: "final_candidate_next_action",
-      label: "Final candidate next action",
+      id: "internal_production_next_action",
+      label: "Internal production next action",
       status: nextAction.status,
-      evidence: ["owner-ops final-candidate-next-action-check"],
+      evidence: ["owner-ops internal-production-next-action-check"],
     },
     {
       id: "release_authority_closed",
@@ -442,16 +444,18 @@ export function buildOwnerOpsSupervisedTestingReadinessPacket({ root = process.c
     .map((row) => `${row.id}_not_ready`);
 
   return {
-    schema: "gpao_t.owner_ops_supervised_testing_readiness_packet.v0_1",
+    schema: "gpao_t.owner_ops_internal_production_readiness.v0_1",
     status: findings.length ? "review" : "ready",
     testingState: findings.length
-      ? "supervised_testing_needs_review"
-      : "supervised_testing_ready_public_release_closed",
+      ? "production_readiness_needs_review"
+      : "production_ready_supervised_human_verification_required_public_release_closed",
+    productionReady: findings.length === 0,
+    supervisedHumanVerificationRequired: true,
     ownerDecisionRecordCount: finalDecisionRecords.recordCount,
     ownerDecisionRecordedNow: false,
     readinessRows,
     testerScope: {
-      audience: ["internal_team_alpha", "supervised_first_owner_beta"],
+      audience: ["internal_acceptance_reviewer", "supervised_owner_reviewer"],
       dataPolicy: "sample_or_deidentified_only",
       allowedUse: [
         "read package guide",
@@ -471,8 +475,8 @@ export function buildOwnerOpsSupervisedTestingReadinessPacket({ root = process.c
     runbook: [
       {
         step: "prepare_test",
-        action: "Open the team alpha or first-owner beta handoff and confirm sample/de-identified data only.",
-        evidence: "OWNER-OPS-TEAM-ALPHA-HANDOFF-BUNDLE or OWNER-OPS-FIRST-OWNER-BETA-HANDOFF-BUNDLE",
+        action: "Open the internal production readiness handoff and confirm sample/de-identified data only.",
+        evidence: "OWNER-OPS-INTERNAL-PRODUCTION-READINESS",
       },
       {
         step: "exercise_core_flow",
@@ -486,8 +490,8 @@ export function buildOwnerOpsSupervisedTestingReadinessPacket({ root = process.c
       },
       {
         step: "choose_next_action",
-        action: "Use final-candidate next-action mapping to continue testing, request revision, approve local review, or prepare later public-release review.",
-        evidence: "owner-ops final-candidate-next-action",
+        action: "Use internal-production next-action mapping to continue verification, request revision, approve internal production review, or prepare later public-release review.",
+        evidence: "owner-ops internal-production-next-action",
       },
     ],
     passCriteria: [
@@ -501,7 +505,7 @@ export function buildOwnerOpsSupervisedTestingReadinessPacket({ root = process.c
       "Stop if the flow asks to send anything to a customer.",
       "Stop if payment, refund, delete, or live store mutation appears.",
       "Stop if the tester cannot understand the authority boundary.",
-      "Stop if the package hash or readback does not match the current local candidate.",
+      "Stop if the package hash or readback does not match the current internal production package.",
     ],
     authorityBoundary: {
       supervisedTestingOnly: true,
@@ -526,11 +530,13 @@ export function buildOwnerOpsSupervisedTestingReadinessPacket({ root = process.c
   };
 }
 
-export function verifyOwnerOpsSupervisedTestingReadinessPacket({ root = process.cwd() } = {}) {
-  const packet = buildOwnerOpsSupervisedTestingReadinessPacket({ root });
+export function verifyOwnerOpsInternalProductionReadiness({ root = process.cwd() } = {}) {
+  const packet = buildOwnerOpsInternalProductionReadiness({ root });
   const findings = [...packet.findings];
 
   if (packet.authorityBoundary.supervisedTestingOnly !== true) findings.push("supervised_testing_scope_missing");
+  if (packet.productionReady !== true) findings.push("production_ready_flag_not_set");
+  if (packet.supervisedHumanVerificationRequired !== true) findings.push("supervised_human_verification_requirement_missing");
   if (packet.authorityBoundary.publicReleaseAllowed !== false) findings.push("public_release_boundary_opened");
   if (packet.authorityBoundary.customerSendAllowed !== false) findings.push("customer_send_boundary_opened");
   if (packet.authorityBoundary.credentialAccessAllowed !== false) findings.push("credential_boundary_opened");
@@ -542,7 +548,7 @@ export function verifyOwnerOpsSupervisedTestingReadinessPacket({ root = process.
   }
 
   return {
-    schema: "gpao_t.owner_ops_supervised_testing_readiness_packet_check.v0_1",
+    schema: "gpao_t.owner_ops_internal_production_readiness_check.v0_1",
     status: findings.length ? "review" : "ready",
     findings,
     testingState: packet.testingState,
@@ -557,3 +563,7 @@ export function verifyOwnerOpsSupervisedTestingReadinessPacket({ root = process.
     nextSafeAction: packet.nextSafeAction,
   };
 }
+
+// Undocumented compatibility aliases for the previous testing-maturity API names.
+export const buildOwnerOpsSupervisedTestingReadinessPacket = buildOwnerOpsInternalProductionReadiness;
+export const verifyOwnerOpsSupervisedTestingReadinessPacket = verifyOwnerOpsInternalProductionReadiness;

@@ -25,9 +25,9 @@ GET /owner-ops/supervised-testing-readiness/verify
 이 packet은 다음을 한 장으로 묶는다.
 
 - local product axis readiness
-- final local candidate packet
+- internal production package review packet
 - next owner testing loop
-- final candidate next-action packet
+- internal production owner decision next-action packet
 - public release authority closed state
 
 ## Tester Scope
@@ -97,7 +97,7 @@ durableMemoryPromotionAllowed
 team alpha / first owner beta
 -> feedback
 -> repair queue or next testing loop
--> final-candidate owner decision
+-> internal-production owner decision
 ```
 
 이 packet만으로 final objective가 완료되지는 않는다.

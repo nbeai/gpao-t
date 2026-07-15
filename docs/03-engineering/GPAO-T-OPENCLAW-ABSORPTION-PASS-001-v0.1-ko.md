@@ -1,8 +1,12 @@
 # GPAO-T OpenClaw Absorption Pass 001
 
-Status: completed planning / live mutation not applied
+Status: completed historical planning record / superseded as current direction
 Date: 2026-07-10
 Owner: 윤
+
+This pass records the 2026-07-10 compatibility-source study. It does not define
+the current product architecture. Since 2026-07-13, GPAO-T is an independent
+product and OpenClaw is a separate comparison/compatibility reference.
 
 ## 0. Purpose
 

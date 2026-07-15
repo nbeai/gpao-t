@@ -10,6 +10,8 @@
     <string>@@ENTRYPOINT@@</string>
     <string>gateway</string>
     <string>run</string>
+    <string>--bind</string>
+    <string>loopback</string>
     <string>--port</string>
     <string>@@PORT@@</string>
   </array>
@@ -19,6 +21,12 @@
     <string>@@STATE_HOME@@</string>
     <key>GPAO_T_CONFIG_PATH</key>
     <string>@@CONFIG_PATH@@</string>
+    <key>GPAO_T_RUNTIME</key>
+    <string>1</string>
+    <key>GPAO_T_ENABLE_LEGACY_COMPATIBILITY_NETWORK</key>
+    <string>0</string>
+    <key>OPENCLAW_NO_AUTO_UPDATE</key>
+    <string>1</string>
     <key>OPENCLAW_DISABLE_PERSISTED_PLUGIN_REGISTRY</key>
     <string>1</string>
     <key>OPENCLAW_DISABLE_PLUGIN_REGISTRY_MIGRATION</key>

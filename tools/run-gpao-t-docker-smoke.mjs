@@ -14,6 +14,15 @@ function commandExists(command) {
   return result.status === 0;
 }
 
+function commandSucceeds(command, args) {
+  const result = spawnSync(command, args, {
+    cwd: root,
+    encoding: "utf8",
+    stdio: ["ignore", "pipe", "pipe"],
+  });
+  return result.status === 0;
+}
+
 function run(command, args) {
   const startedAt = Date.now();
   try {
@@ -49,9 +58,11 @@ const contractChecks = [
 ];
 
 const dockerAvailable = commandExists("docker");
+const dockerDaemonAvailable =
+  dockerAvailable && commandSucceeds("docker", ["info", "--format", "{{.ServerVersion}}"]) ;
 const steps = [];
 
-if (dockerAvailable) {
+if (dockerDaemonAvailable) {
   steps.push(run("docker", ["compose", "config", "--quiet"]));
   steps.push(run("docker", ["build", "-t", "nbeai/gpao-t:local", "."]));
   steps.push(run("docker", ["compose", "up", "--detach", "--build", "gpao-t"]));
@@ -66,6 +77,8 @@ const status = failedContract.length
   ? "blocked_contract"
   : !dockerAvailable
     ? "blocked_environment"
+    : !dockerDaemonAvailable
+      ? "blocked_daemon"
     : failedSteps.length
       ? "blocked_smoke"
       : "ready";
@@ -75,7 +88,12 @@ const result = {
   status,
   environment: {
     dockerAvailable,
-    blocker: dockerAvailable ? null : "docker_cli_missing",
+    dockerDaemonAvailable,
+    blocker: !dockerAvailable
+      ? "docker_cli_missing"
+      : !dockerDaemonAvailable
+        ? "docker_daemon_unreachable"
+        : null,
   },
   contractChecks,
   steps,
@@ -83,6 +101,7 @@ const result = {
     ...failedContract.map((check) => `${check.id}_missing`),
     ...failedSteps.map((step) => `${step.command}:failed`),
     ...(!dockerAvailable ? ["docker_cli_missing"] : []),
+    ...(dockerAvailable && !dockerDaemonAvailable ? ["docker_daemon_unreachable"] : []),
   ],
 };
 

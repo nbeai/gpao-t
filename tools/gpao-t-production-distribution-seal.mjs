@@ -14,10 +14,14 @@ import {
 import { createServer } from "node:net";
 import { dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
 import { tmpdir } from "node:os";
+import {
+  GPAO_T_RELEASE_CONTRACT,
+  assertGpaoTReleaseIdentity,
+} from "../src/core/release-contract.js";
 
 export const MANIFEST_NAME = "GPAO-T-DISTRIBUTION-MANIFEST.json";
 export const TREE_HASH_ALGORITHM = "sha256-path-kind-size-content-v1";
-const RUNTIME_SOURCE_TOP_LEVEL = [
+export const RUNTIME_SOURCE_TOP_LEVEL = [
   "CHANGELOG.md",
   "GPAO-T-RUNTIME.json",
   "LICENSE",
@@ -259,24 +263,38 @@ async function readBuildStamp(sourceBuild, name) {
   return { name, sha256: await hashFile(path), value };
 }
 
+async function readAvailableBuildStamps(sourceBuild) {
+  const markers = [];
+  for (const name of [".buildstamp", ".runtime-postbuildstamp"]) {
+    try {
+      markers.push(await readBuildStamp(sourceBuild, name));
+    } catch (error) {
+      if (error?.code !== "ENOENT") throw error;
+    }
+  }
+  return markers;
+}
+
 export async function verifyFreshRuntimeStage({ sourceBuild, runtimeStage }) {
   const [sourceRoot, stageRoot] = await Promise.all([realpath(sourceBuild), realpath(runtimeStage)]);
-  const stageRecords = await collectTree(stageRoot, { ignoreTopLevel: ["node_modules"] });
-  const [buildStamp, runtimePostbuildStamp] = await Promise.all([
-    readBuildStamp(sourceRoot, ".buildstamp"),
-    readBuildStamp(sourceRoot, ".runtime-postbuildstamp"),
+  const [sourceRecords, stageRecords, sourceBuildMarkers] = await Promise.all([
+    sourceRuntimeRecords(sourceRoot),
+    collectTree(stageRoot, { ignoreTopLevel: ["node_modules"] }),
+    readAvailableBuildStamps(sourceRoot),
   ]);
+  assertMatchingTrees(sourceRecords, stageRecords, "runtime stage");
+  const sourceBuildTreeSha256 = treeDigest(sourceRecords);
   const runtimeStageTreeSha256 = treeDigest(stageRecords);
   return {
     schema: "gpao_t.runtime_stage_provenance.v1",
     hashAlgorithm: TREE_HASH_ALGORITHM,
-    sourceBuildTreeSha256: runtimeStageTreeSha256,
+    sourceBuildTreeSha256,
     runtimeStageTreeSha256,
     runtimeFileCount: stageRecords.length,
     runtimeBytes: stageRecords.reduce((sum, record) => sum + (record.size ?? 0), 0),
     ignoredStageTopLevel: ["node_modules"],
     sourceTopLevel: RUNTIME_SOURCE_TOP_LEVEL,
-    sourceBuildMarkers: [buildStamp, runtimePostbuildStamp],
+    sourceBuildMarkers,
   };
 }
 
@@ -344,10 +362,14 @@ function assertManifestRecord(record) {
   }
 }
 
-export async function verifyDistributionManifest(distributionRoot) {
+export async function verifyDistributionManifest(distributionRoot, { allowLegacy = false } = {}) {
   const manifestPath = join(distributionRoot, MANIFEST_NAME);
   const manifest = JSON.parse(await readFile(manifestPath, "utf8"));
-  if (manifest.schema !== "gpao_t.distribution_manifest.v1") throw new Error("unsupported distribution manifest schema");
+  const legacy = manifest.schema === "gpao_t.distribution_manifest.v1";
+  if (manifest.schema !== "gpao_t.distribution_manifest.v2" && !(allowLegacy && legacy)) {
+    throw new Error("unsupported distribution manifest schema");
+  }
+  if (!legacy) assertGpaoTReleaseIdentity(manifest, "distribution manifest");
   if (!Array.isArray(manifest.files)) throw new Error("distribution manifest files must be an array");
   for (const record of manifest.files) assertManifestRecord(record);
   if (new Set(manifest.files.map((record) => record.path)).size !== manifest.files.length) {
@@ -363,6 +385,23 @@ export async function verifyDistributionManifest(distributionRoot) {
   const packageJson = JSON.parse(await readFile(join(distributionRoot, "package.json"), "utf8"));
   if (packageJson.name !== "gpao-t" || packageJson.bin?.["gpao-t"] !== entrypoint) {
     throw new Error("distribution package identity or entrypoint is invalid");
+  }
+  if (!legacy && packageJson.version !== GPAO_T_RELEASE_CONTRACT.version) {
+    throw new Error("distribution package version differs from the release contract");
+  }
+  if (!legacy && packageJson.version !== manifest.version) {
+    throw new Error("distribution package version differs from the manifest");
+  }
+  if (!legacy) {
+    const runtimeIdentity = JSON.parse(
+      await readFile(join(distributionRoot, "compatibility", "gpao-t", "GPAO-T-RUNTIME.json"), "utf8"),
+    );
+    if (
+      runtimeIdentity.product !== "nBeAI. GPAO-T" ||
+      runtimeIdentity.productVersion !== GPAO_T_RELEASE_CONTRACT.version
+    ) {
+      throw new Error("runtime identity differs from the production release contract");
+    }
   }
 
   const provenance = manifest.runtimeProvenance;
@@ -406,13 +445,16 @@ export async function verifyDistributionManifest(distributionRoot) {
 
 export async function verifyCurrentSourceBuild({ sourceBuild, runtimeRecords, provenance }) {
   const sourceRoot = await realpath(sourceBuild);
-  const [buildStamp, runtimePostbuildStamp] = await Promise.all([
-    readBuildStamp(sourceRoot, ".buildstamp"),
-    readBuildStamp(sourceRoot, ".runtime-postbuildstamp"),
+  const [currentMarkers, sourceRecords] = await Promise.all([
+    readAvailableBuildStamps(sourceRoot),
+    sourceRuntimeRecords(sourceRoot),
   ]);
-  const currentMarkers = [buildStamp, runtimePostbuildStamp];
   if (JSON.stringify(currentMarkers) !== JSON.stringify(provenance.sourceBuildMarkers)) {
     throw new Error("archive source build markers differ from the current source build");
+  }
+  const sourceDigest = treeDigest(sourceRecords);
+  if (sourceDigest !== provenance.sourceBuildTreeSha256) {
+    throw new Error("archive source tree hash differs from the current source build");
   }
   const digest = treeDigest(runtimeRecords);
   const expectedRuntimeTreeSha256 =
@@ -420,7 +462,7 @@ export async function verifyCurrentSourceBuild({ sourceBuild, runtimeRecords, pr
   if (digest !== expectedRuntimeTreeSha256) {
     throw new Error("archive runtime tree hash differs from sealed distribution provenance");
   }
-  return provenance.sourceBuildTreeSha256;
+  return sourceDigest;
 }
 
 export async function validateContainedSymlinks(root) {

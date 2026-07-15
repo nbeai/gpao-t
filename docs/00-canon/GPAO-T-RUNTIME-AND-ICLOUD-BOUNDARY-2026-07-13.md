@@ -1,15 +1,17 @@
 # GPAO-T Runtime And iCloud Boundary - 2026-07-13
 
+OpenClaw reference class: third-party comparison and compatibility only.
+
 ## Canon Decision
 
-GPAO-T is a local-first personal AI operating system. Its core runtime, source of truth, install path, and test-team distribution must not depend on iCloud availability, iCloud file materialization, or Apple file-provider timing.
+GPAO-T is an independent, local-first Growth Personal AI Operating System. Its core runtime, source of truth, install path, and production distribution must not depend on iCloud availability, iCloud file materialization, or Apple file-provider timing.
 
 ## Fixed Rules
 
 1. Development repositories must live outside iCloud-synchronized paths.
 2. GPAO-T default runtime is fixed at `~/.gpao-t`.
 3. iCloud documents are optional backup/sync inputs only.
-4. Test-team distributions must work without iCloud.
+4. Production distributions must work without iCloud.
 5. iCloud integration is excluded from Phase 2 core completion criteria.
 
 ## Plain-Language Meaning
@@ -30,7 +32,7 @@ Core GPAO-T lanes must assume:
 - release package: self-contained and iCloud-independent
 - memory/search index: local runtime-owned index
 - iCloud content: explicit optional connector/input lane
-- test-team smoke: no iCloud requirement
+- production distribution smoke: no iCloud requirement
 
 ## Phase 2 Boundary
 
@@ -40,7 +42,7 @@ iCloud document sync is not a Phase 2 completion blocker. It may become a later 
 - Docker/distribution reproducibility,
 - memory/T-cell kernel,
 - UI/UX OS feel,
-- OpenClaw comparison/optimization
+- third-party OpenClaw compatibility comparison
 
 are solid.
 

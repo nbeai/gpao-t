@@ -1,5 +1,8 @@
 # Screen Map
 
+GPAO-T is an independent, local-first Growth Personal AI Operating System.
+OpenClaw reference class: third-party comparison and compatibility only.
+
 List screens or command surfaces and what each one must make obvious.
 
 Design reference bridge:
@@ -35,7 +38,7 @@ Design reference bridge:
 ## Connector / Tool Governance
 
 - Purpose: show how model output can become a tool, CLI, MCP, or connector execution proposal before any invocation exists.
-- Must show: execution candidate classes, selected candidate class, read-only / dry-run / write / external-send / destructive / paid authority tiers, proposal conditions, approval boundary, audit/replay/rollback references, OpenClaw-inspired substrate, GPAO-T authority precedence, blocked actions, and safety invariants.
+- Must show: execution candidate classes, selected candidate class, read-only / dry-run / write / external-send / destructive / paid authority tiers, proposal conditions, approval boundary, audit/replay/rollback references, third-party OpenClaw comparison-derived runtime patterns, GPAO-T authority precedence, blocked actions, and safety invariants.
 - Must not show as available: actual tool execution, CLI command execution, MCP invocation, connector activation, external network/send, credential read/write, paid action, destructive action, approval record write, or durable memory promotion.
 
 ## Execution Approval

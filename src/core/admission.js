@@ -1,3 +1,5 @@
+import { classifyCellAuthorityUse } from "./context-admission-policy.js";
+
 const DEFAULT_WEIGHTS = {
   relevance: 0.5,
   confidence: 0.5,
@@ -10,10 +12,11 @@ export function buildAdmissionPacket({ inputSignal, sessionOverlay, contextRunti
   const cells = contextRuntime.retrievedCells.map((cell) => {
     const scoring = scoreAdmission({ cell, inputSignal, sessionOverlay });
     const role = classifyCellRole({ cell, inputSignal, sessionOverlay, scoring });
+    const admitted = role === "anchor" || role === "support";
     return {
       id: cell.id,
       role,
-      admitted: role !== "rejected",
+      admitted,
       admissionScore: scoring.total,
       scoreBreakdown: scoring.breakdown,
       reason: buildAdmissionReason({ cell, role, inputSignal, sessionOverlay }),
@@ -30,6 +33,8 @@ export function buildAdmissionPacket({ inputSignal, sessionOverlay, contextRunti
     inputSignal,
     flowKey: sessionOverlay.flowKey,
     activeTargetId: sessionOverlay.activeTargetId,
+    requestType: sessionOverlay.requestType,
+    targetSource: sessionOverlay.targetSource,
     admittedCells,
     rejectedCells,
     scoringSummary: {
@@ -104,13 +109,20 @@ function classifyCellRole({ cell, inputSignal, sessionOverlay, scoring }) {
   if (cell.relations?.contradicts?.includes(sessionOverlay.activeTargetId)) {
     return "conflict";
   }
+  const authorityUse = classifyCellAuthorityUse(cell);
+  if (cell.admissionRole === "blocked" || !authorityUse.candidateEvidenceAllowed) {
+    return "rejected";
+  }
   if ((cell.weights || DEFAULT_WEIGHTS).risk > 0.8 || scoring.total < 5) {
     return "rejected";
+  }
+  if (cell.admissionRole === "candidate_evidence" || !authorityUse.supportingContextAllowed) {
+    return "candidate";
   }
   if (cell.admissionRole === "stale_supporting") {
     return "support";
   }
-  if (cell.answerAnchorEligible === false) {
+  if (cell.answerAnchorEligible === false || !authorityUse.answerAnchorAllowed) {
     return "support";
   }
   if (sessionOverlay.activeReferent?.entity && cell.anchor === `referent:${sessionOverlay.activeReferent.entity}`) {
@@ -132,7 +144,13 @@ function buildAdmissionReason({ cell, role, inputSignal, sessionOverlay }) {
   if (role === "conflict") {
     return `cell ${cell.id} may conflict with active target ${sessionOverlay.activeTargetId}`;
   }
+  if (role === "candidate") {
+    return `cell ${cell.id} remains candidate evidence outside the admitted TaskPacket`;
+  }
   if (role === "rejected") {
+    if (cell.admissionRole === "blocked") {
+      return `cell ${cell.id} is blocked by its current authority boundary`;
+    }
     return `cell ${cell.id} exceeded the current risk boundary`;
   }
   return `cell ${cell.id} supports ${inputSignal.kind}`;
@@ -150,6 +168,9 @@ function buildRecoveryHint({ cell, role, inputSignal, sessionOverlay, scoring })
   }
   if (role === "conflict") {
     return "Do not answer from this cell until the conflict is resolved or the user clarifies the target.";
+  }
+  if (role === "candidate") {
+    return "Keep as candidate evidence for review; do not inject it into the TaskPacket.";
   }
   return "Keep out of the TaskPacket; ask a clarifying question or gather stronger evidence if needed.";
 }

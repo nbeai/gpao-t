@@ -10,7 +10,7 @@ The first useful workflow is not shaped yet.
 
 ## User Mode
 
-- Mode: unknown
+- Mode: beginner
 - Task type: unknown
 
 ## First Workflow
@@ -42,4 +42,4 @@ AI does the work. User keeps authority.
 
 ## Latest Summary
 
-Detected 2 checks without running them.
+Executed 2 checks: 2 passed, 0 failed.

@@ -2,24 +2,29 @@
 
 Status: operating guidance for product development
 
-GPAO-T is not a rejection of OpenClaw or Codex. It should absorb proven foundations and recombine them around the GPAO-T semantic and growth kernel.
+GPAO-T is an independent product. It may study and redesign proven foundations
+from OpenClaw, Codex, and other runtimes, but GPAO-T owns its identity, state,
+policy, user surface, and completion evidence.
 
-## Source And Absorption Constitution
+## Source And Compatibility Constitution
 
-The controlling OpenClaw absorption directive is `docs/00-canon/GPAO-T-OPENCLAW-ABSORPTION-CONSTITUTION-v0.1-ko.md`.
+The controlling directive is
+`docs/00-canon/GPAO-T-PRODUCT-CHARTER-v0.1-ko.md`. The earlier OpenClaw
+absorption constitution is a superseded historical architecture record.
 
 Use the nbeai GitHub account as the primary source library for prior GPAO, BEAI Package, OpenClaw-facing package, Codex-facing package, Knowledge Loop, and T-cell-related material. Hidden previous-work result storage is deprecated and must not be treated as active truth unless 윤 explicitly reopens it.
 
 `gpao-t-hardware-engine` is out of scope for the current GPAO-T/OpenClaw absorption project. Do not treat it as a required source, dependency, blocker, or completion gate for this repository unless 윤 explicitly reopens that lane.
 
-The engineering direction is internal absorption, not external attachment:
+The engineering direction is independent ownership with bounded compatibility:
 
-- avoid final architectures where GPAO-T is merely a plugin, sidecar, or external service attached to OpenClaw
-- prefer replacing, modifying, strengthening, or deleting OpenClaw internals when the source anatomy and verification justify it
-- use wrappers only as migration scaffolding, not the final product identity
-- keep asking whether the change moves OpenClaw closer to becoming GPAO-T from the inside
+- avoid final architectures where GPAO-T is merely a plugin or sidecar attached to another product
+- replace or isolate compatibility internals when source anatomy and verification justify it
+- use wrappers only as migration scaffolding, not as product identity
+- keep asking whether the change improves GPAO-T's independent runtime and user experience
 
-The Ferrari rule applies: because we are rebuilding OpenClaw into a different supercar, we must understand both OpenClaw engineering and the wider AI operating-system / local agent-runtime field deeply.
+Comparison products must still be understood deeply before their patterns are
+redesigned, but no comparison product owns GPAO-T's architecture.
 
 ## Product Standard
 

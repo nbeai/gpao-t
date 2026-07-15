@@ -122,7 +122,7 @@ export function buildMultiChatStageSixCompletion({
       totalStageCount: 6,
       percent: Math.round((readyStageCount / 6) * 100),
       remainingFixedStages: findings.length ? stages.filter((stage) => stage.status !== "ready").map((stage) => stage.label) : [
-        "Test-team dispatch/update packet refresh",
+        "Internal production distribution/update packet refresh",
       ],
     },
     stages,
@@ -138,7 +138,7 @@ export function buildMultiChatStageSixCompletion({
     findings,
     nextSafeAction: findings.length
       ? "Repair the listed stage findings before calling stages 1-6 complete."
-      : "Refresh the test-team dispatch/update packet as fixed stage 7.",
+      : "Refresh the internal production distribution/update packet as fixed stage 7.",
   };
 }
 

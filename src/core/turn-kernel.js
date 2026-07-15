@@ -1,6 +1,7 @@
 import { buildAdapterPlan } from "./adapter-boundary.js";
 import { buildAdmissionPacket } from "./admission.js";
 import { buildAuthorityDecision } from "./authority.js";
+import { hasFollowUpSignal } from "./context-admission-policy.js";
 import { buildContextRuntime } from "./context-runtime.js";
 import { routeModel } from "./model-router.js";
 import { buildSessionOverlay } from "./session-overlay.js";
@@ -54,7 +55,7 @@ export function runTurn({ input, priorFlow, root } = {}) {
 }
 
 export function classifyInputSignal(text) {
-  if (/그럼|그건|그거|거기|그곳|저기|그 집|그 가게|아까|방금|이어서|계속|후기|예약|then|that|it/i.test(text)) {
+  if (hasFollowUpSignal(text)) {
     return { kind: "follow_up", confidence: 0.78 };
   }
   if (/파일|문서|package|release|배포/.test(text)) {
@@ -89,11 +90,13 @@ function buildTaskPacket({
     continuityHandoff: sessionOverlay.continuityHandoff,
     stalePriorTarget: sessionOverlay.stalePriorTarget,
     staleReason: sessionOverlay.staleReason,
-    admittedTCells: admissionPacket.admittedCells.map((item) => ({
-      id: item.id,
-      role: item.role,
-      reason: item.reason,
-    })),
+    admittedTCells: admissionPacket.admittedCells
+      .filter((item) => item.admitted && (item.role === "anchor" || item.role === "support"))
+      .map((item) => ({
+        id: item.id,
+        role: item.role,
+        reason: item.reason,
+      })),
     authority: {
       status: authorityDecision.status,
       requiredApprovals: authorityDecision.requiredApprovals,

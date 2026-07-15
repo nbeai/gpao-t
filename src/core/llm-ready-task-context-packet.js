@@ -34,18 +34,15 @@ export function buildLlmReadyTaskContextPacket({
   const admittedMemory = turn.admissionPacket.admittedCells.map(formatAdmittedCell);
   const excludedMemory = turn.admissionPacket.rejectedCells.map(formatExcludedCell);
   const memorySearch = buildMemorySearchAttachment({ root, text });
-  const admittedAnchors = admittedMemory.filter((cell) => cell.role === "anchor");
+  const admittedAnchors = admittedMemory.filter(isSafeAnswerAnchor);
   const support = admittedMemory.filter((cell) => cell.role === "support");
-  const blockedCandidates = [
-    ...excludedMemory,
+  const conflictBoundaries = excludedMemory.filter((cell) => cell.role === "conflict");
+  const blockedCandidates = dedupeCells([
+    ...excludedMemory.filter((cell) => cell.role !== "conflict"),
     ...turn.contextRuntime.mesh.retrievedCandidates
       .filter((candidate) => candidate.answerAnchorEligible === false)
-      .map((candidate) => ({
-        id: candidate.id,
-        anchor: candidate.anchor,
-        reason: candidate.downgradeReason || "candidate is supporting-only for this turn",
-      })),
-  ];
+      .map(formatRetrievedCandidate),
+  ]);
   const requiredResponseMode = normalizeResponseMode(responseMode);
   const authorityBoundary = buildAuthorityBoundary(turn);
 
@@ -76,6 +73,7 @@ export function buildLlmReadyTaskContextPacket({
       requiredMode: requiredResponseMode,
       forbiddenModes: [
         "answer_from_unadmitted_memory",
+        "answer_from_conflicted_memory",
         "treat_candidate_as_durable_truth",
         "write_openclaw_memory",
         "promote_durable_memory",
@@ -88,6 +86,7 @@ export function buildLlmReadyTaskContextPacket({
     memorySearch,
     admittedTCellAnchors: admittedAnchors,
     admittedSupport: support,
+    conflictBoundaries,
     blockedCandidates,
     authorityBoundary,
     traceRefs: [
@@ -125,13 +124,15 @@ export function buildLlmReadyTaskContextPacket({
 function buildMemorySearchAttachment({ root, text }) {
   try {
     const stateDir = runtimePaths({ root }).runtimeRoot;
-    const search = searchMemory({ stateDir, query: text, limit: 5 });
+    const search = searchMemory({ stateDir, query: text, limit: 5, allowBuild: false });
     return {
       schema: "gpao_t.llm_ready.memory_search_attachment.v0_1",
-      status: "ready",
+      status: search.status === "ready" ? "ready" : "needs_index",
       rule: "Search results are source-linked context candidates; they are not durable truth and do not bypass T-cell admission.",
       engine: search.engine,
       index: search.index,
+      findings: search.findings || [],
+      nextSafeAction: search.nextSafeAction || null,
       results: search.results.map((result) => ({
         id: result.id,
         source: result.source,
@@ -160,9 +161,10 @@ export function buildLlmReadyPacketSurfaceState({
   input,
   priorFlow,
   responseMode,
+  packet: existingPacket,
   now = new Date().toISOString(),
 } = {}) {
-  const packet = buildLlmReadyTaskContextPacket({
+  const packet = existingPacket || buildLlmReadyTaskContextPacket({
     root,
     input,
     priorFlow,
@@ -234,6 +236,17 @@ export function verifyLlmReadyTaskContextPacket({ root } = {}) {
   if (!packet.responseContract?.forbiddenModes?.includes("answer_from_unadmitted_memory")) {
     findings.push("unadmitted_memory_not_forbidden");
   }
+  if (packet.admittedTCellAnchors.some((cell) => !isSafeAnswerAnchor(cell))) {
+    findings.push("unsafe_answer_anchor_admitted");
+  }
+  if (packet.conflictBoundaries.some((conflict) =>
+    packet.admittedTCellAnchors.some((anchor) => anchor.id === conflict.id))) {
+    findings.push("conflict_used_as_answer_anchor");
+  }
+  if ([...packet.admittedMemory, ...packet.excludedMemory].some((cell) =>
+    !Array.isArray(cell.authority?.allowedUse) || !Array.isArray(cell.authority?.blockedUse))) {
+    findings.push("cell_authority_roles_not_preserved");
+  }
   if (packet.authorityBoundary?.compatibilityMemoryWrite !== "blocked") findings.push("openclaw_memory_write_open");
   if (packet.authorityBoundary?.durableMemoryPromotion !== "blocked") findings.push("durable_memory_promotion_open");
   if (packet.authorityBoundary?.automaticAdmission !== "blocked") findings.push("automatic_admission_open");
@@ -256,6 +269,8 @@ function formatAdmittedCell(cell) {
   return {
     id: cell.id,
     role: cell.role,
+    admissionRole: cell.cell?.admissionRole || cell.role,
+    admitted: cell.admitted === true,
     anchor: cell.cell?.anchor || null,
     admissionScore: cell.admissionScore,
     reason: cell.reason,
@@ -263,7 +278,14 @@ function formatAdmittedCell(cell) {
     sourceRefs: cell.cell?.source?.refs || [],
     lifecycle: cell.cell?.lifecycle || null,
     authority: {
+      allowedUse: cell.cell?.authority?.allowedUse || [],
       blockedUse: cell.cell?.authority?.blockedUse || [],
+    },
+    admission: {
+      role: cell.role,
+      sourceRole: cell.cell?.admissionRole || null,
+      admitted: cell.admitted === true,
+      answerAnchorEligible: cell.cell?.answerAnchorEligible === true,
     },
   };
 }
@@ -272,11 +294,73 @@ function formatExcludedCell(cell) {
   return {
     id: cell.id,
     role: cell.role,
+    admissionRole: cell.cell?.admissionRole || cell.role,
+    admitted: false,
     anchor: cell.cell?.anchor || null,
     admissionScore: cell.admissionScore,
     reason: cell.reason,
     recoveryHint: cell.recoveryHint,
+    lifecycle: cell.cell?.lifecycle || null,
+    authority: {
+      allowedUse: cell.cell?.authority?.allowedUse || [],
+      blockedUse: cell.cell?.authority?.blockedUse || [],
+    },
+    admission: {
+      role: cell.role,
+      sourceRole: cell.cell?.admissionRole || null,
+      admitted: false,
+      answerAnchorEligible: false,
+    },
   };
+}
+
+function formatRetrievedCandidate(candidate) {
+  return {
+    id: candidate.id,
+    role: candidate.admissionRole || "candidate",
+    admissionRole: candidate.admissionRole || "candidate_evidence",
+    admitted: false,
+    anchor: candidate.anchor || null,
+    reason: candidate.downgradeReason || "candidate is supporting-only for this turn",
+    recoveryHint: "Do not use as an answer anchor until review, conflict, trace, and authority gates pass.",
+    lifecycle: candidate.lifecycle || null,
+    authority: {
+      allowedUse: candidate.authority?.allowedUse || [],
+      blockedUse: candidate.authority?.blockedUse || [],
+    },
+    admission: {
+      role: candidate.admissionRole || "candidate",
+      sourceRole: candidate.admissionRole || null,
+      admitted: false,
+      answerAnchorEligible: candidate.answerAnchorEligible === true,
+    },
+  };
+}
+
+function isSafeAnswerAnchor(cell) {
+  const nonAnchorLifecycle = new Set([
+    "raw_signal",
+    "candidate",
+    "applied_pending_independent_replay",
+    "stale",
+    "conflicted",
+    "rejected",
+    "archived",
+  ]);
+  const allowedUse = cell.authority?.allowedUse || [];
+  const blockedUse = cell.authority?.blockedUse || [];
+  const explicitlyAllowsAnchor = allowedUse.length === 0
+    || allowedUse.some((use) => ["answer_anchor", "admit", "admit_for_current_turn"].includes(use));
+  return cell.role === "anchor"
+    && cell.admitted === true
+    && !nonAnchorLifecycle.has(cell.lifecycle)
+    && explicitlyAllowsAnchor
+    && !blockedUse.includes("answer_anchor")
+    && !blockedUse.includes("automatic_answer_anchor");
+}
+
+function dedupeCells(cells) {
+  return [...new Map(cells.map((cell) => [cell.id, cell])).values()];
 }
 
 function buildAuthorityBoundary(turn) {

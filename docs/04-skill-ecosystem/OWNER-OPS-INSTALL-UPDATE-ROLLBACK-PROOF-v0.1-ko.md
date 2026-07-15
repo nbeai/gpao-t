@@ -2,13 +2,13 @@
 
 ## 목적
 
-`Owner Ops Install / Update / Rollback Proof`는 Owner Ops 로컬 패키지 후보를 실제 사용자에게 전달하기 전에 설치, 업데이트, 롤백에서 어떤 증거가 필요할지 고정하는 로컬 증거 게이트다.
+`Owner Ops Install / Update / Rollback Proof`는 Owner Ops 내부 프로덕션 패키지를 실제 사용자 환경에 적용하기 전에 설치, 업데이트, 롤백에서 어떤 증거가 필요할지 고정하는 로컬 증거 게이트다.
 
 이 문서는 설치를 실행했다는 뜻이 아니다. 현재 상태는 `proof_requirements_ready_not_executed`이며, 실제 설치, 업데이트, 롤백, 데몬 실행, 외부 다운로드, 공개 업로드는 모두 닫혀 있다.
 
 ## 현재 확인하는 것
 
-- local package candidate readback
+- internal production package readback
 - signed package evidence prerequisite
 - GPAO-T install hardening report
 - install/update/rollback readiness gates
@@ -68,4 +68,4 @@ packageUploadAllowed: false
 
 ## 다음 단계
 
-이 gate가 ready여도 실제 설치 가능한 상태는 아니다. 다음 단계는 owner가 승인한 범위 안에서 signed artifact 또는 local candidate 기준 dry-run installer/update/rollback plan을 만드는 것이다.
+이 gate가 ready여도 실제 설치 가능한 상태는 아니다. 다음 단계는 owner가 승인한 범위 안에서 signed artifact 또는 내부 프로덕션 패키지 기준 dry-run installer/update/rollback plan을 만드는 것이다.

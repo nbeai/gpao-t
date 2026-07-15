@@ -27,7 +27,7 @@ GET /owner-ops/release-readiness-evidence/verify
 - pre-public repair completion evidence
 - distribution evidence
 - archive/checksum dry-run
-- local package candidate readback
+- internal production package readback
 - signed package evidence boundary
 - install/update/rollback readiness
 - human review approval boundary

@@ -82,7 +82,7 @@ Owner: 윤
 9. Debug/logs/activity: user-visible diagnostics, security audit commands, raw gateway labels.
 10. Workspace runtime: `AGENTS.md`, `SOUL.md`, `TOOLS.md`, `IDENTITY.md`, `USER.md`, `HEARTBEAT.md`, `MEMORY.md`, `WELCOME.md`.
 11. Error/fallback: blank screen recovery, auth failure, origin/protocol/network failure, update banner.
-12. Package/test-team surface: install guide, first-run guide, exported evidence visible to tester.
+12. Package/internal-verification surface: install guide, first-run guide, exported evidence visible to the internal verifier.
 13. Hidden-but-accessible UI: command palette entries, tooltip text, aria labels, menu actions, confirmation dialogs, browser notification text, copied/exported filenames.
 
 ## 실행 순서

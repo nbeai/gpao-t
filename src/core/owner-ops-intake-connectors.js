@@ -1,5 +1,5 @@
-import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
-import { basename, extname, resolve } from "node:path";
+import { existsSync, readdirSync, readFileSync, realpathSync, statSync } from "node:fs";
+import { basename, extname, isAbsolute, relative, resolve } from "node:path";
 import { buildOwnerOpsWorkflowPreview } from "./owner-ops.js";
 
 const TEXT_EXTENSIONS = new Set([".csv", ".tsv", ".txt", ".md"]);
@@ -103,10 +103,17 @@ export function previewOwnerOpsLocalFileIntake({
   workflowType,
   businessType,
 } = {}) {
-  const resolved = resolve(root, filePath || "");
-  if (!filePath || !existsSync(resolved)) {
+  const boundary = resolveContainedIntakePath({ root, candidatePath: filePath });
+  if (boundary.status === "blocked") {
+    return blockedFilePreview({
+      filePath,
+      reason: boundary.reason,
+    });
+  }
+  if (!filePath || !boundary.exists) {
     return blockedFilePreview({ filePath, reason: "file_not_found" });
   }
+  const resolved = boundary.path;
   const stats = statSync(resolved);
   const extension = extname(resolved).toLowerCase();
   if (!stats.isFile()) {
@@ -158,8 +165,14 @@ export function previewOwnerOpsLocalFileIntake({
 }
 
 export function previewOwnerOpsFolderIntake({ folderPath, root = process.cwd() } = {}) {
-  const resolved = resolve(root, folderPath || "");
-  if (!folderPath || !existsSync(resolved)) {
+  const boundary = resolveContainedIntakePath({ root, candidatePath: folderPath });
+  if (boundary.status === "blocked") {
+    return blockedFolderPreview({
+      folderPath,
+      reason: boundary.reason,
+    });
+  }
+  if (!folderPath || !boundary.exists) {
     return {
       schema: "gpao_t.owner_ops_folder_intake_preview.v0_1",
       status: "blocked",
@@ -169,6 +182,7 @@ export function previewOwnerOpsFolderIntake({ folderPath, root = process.cwd() }
       blockedActions: ["background_watch", "file_move", "file_delete", "external_sync"],
     };
   }
+  const resolved = boundary.path;
   const stats = statSync(resolved);
   if (!stats.isDirectory()) {
     return {
@@ -183,9 +197,14 @@ export function previewOwnerOpsFolderIntake({ folderPath, root = process.cwd() }
   const files = readdirSync(resolved, { withFileTypes: true })
     .filter((entry) => entry.isFile())
     .slice(0, MAX_FILES)
-    .map((entry) => {
-      const fullPath = resolve(resolved, entry.name);
-      const fileStats = statSync(fullPath);
+    .flatMap((entry) => {
+      const entryBoundary = resolveContainedIntakePath({
+        root: boundary.root,
+        candidatePath: resolve(resolved, entry.name),
+      });
+      if (entryBoundary.status === "blocked" || !entryBoundary.exists) return [];
+      const fileStats = statSync(entryBoundary.path);
+      if (!fileStats.isFile()) return [];
       return {
         name: entry.name,
         extension: extname(entry.name).toLowerCase(),
@@ -249,6 +268,68 @@ function blockedFilePreview({ filePath, reason, size, extension } = {}) {
     extension,
     blockedActions: ["file_overwrite", "external_upload", "background_watch"],
   };
+}
+
+function blockedFolderPreview({ folderPath, reason } = {}) {
+  return {
+    schema: "gpao_t.owner_ops_folder_intake_preview.v0_1",
+    status: "blocked",
+    connectorId: "local_folder_preview",
+    reason,
+    folderPath,
+    blockedActions: ["background_watch", "file_move", "file_delete", "external_sync"],
+  };
+}
+
+function resolveContainedIntakePath({ root, candidatePath } = {}) {
+  const resolvedRoot = resolve(root || process.cwd());
+  if (!existsSync(resolvedRoot)) {
+    return { status: "blocked", reason: "root_not_found", exists: false };
+  }
+  const rootStats = statSync(resolvedRoot);
+  if (!rootStats.isDirectory()) {
+    return { status: "blocked", reason: "root_not_a_directory", exists: false };
+  }
+
+  const canonicalRoot = realpathSync(resolvedRoot);
+  const lexicalCandidate = resolve(canonicalRoot, candidatePath || "");
+  if (!isPathInside(canonicalRoot, lexicalCandidate)) {
+    return {
+      status: "blocked",
+      reason: "path_outside_root",
+      root: canonicalRoot,
+      exists: existsSync(lexicalCandidate),
+    };
+  }
+  if (!candidatePath || !existsSync(lexicalCandidate)) {
+    return {
+      status: "ready",
+      root: canonicalRoot,
+      path: lexicalCandidate,
+      exists: false,
+    };
+  }
+
+  const canonicalCandidate = realpathSync(lexicalCandidate);
+  if (!isPathInside(canonicalRoot, canonicalCandidate)) {
+    return {
+      status: "blocked",
+      reason: "symlink_escape",
+      root: canonicalRoot,
+      exists: true,
+    };
+  }
+  return {
+    status: "ready",
+    root: canonicalRoot,
+    path: canonicalCandidate,
+    exists: true,
+  };
+}
+
+function isPathInside(root, candidate) {
+  const pathFromRoot = relative(root, candidate);
+  return pathFromRoot === "" || (!pathFromRoot.startsWith("..") && !isAbsolute(pathFromRoot));
 }
 
 function fileSummary(filePath, stats) {

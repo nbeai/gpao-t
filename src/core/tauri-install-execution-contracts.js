@@ -44,12 +44,15 @@ export function buildTauriInstallPrerequisiteDoctor({
   }));
   const missingFiles = fileChecks.filter((file) => file.status !== "present").map((file) => file.path);
   const scripts = packageJson?.scripts || {};
+  const verifyScript = typeof scripts.verify === "string" ? scripts.verify : "";
   const findings = [
     ...missingFiles.map((path) => `missing_source:${path}`),
   ];
 
   if (readinessVerification.status !== "ready") findings.push("readiness_gate_not_ready");
-  if (scripts.verify !== "npm run check && npm test") findings.push("verify_script_unexpected");
+  if (!verifyScript.includes("npm run check") || !verifyScript.includes("npm test")) {
+    findings.push("verify_script_unexpected");
+  }
   if (!scripts.check) findings.push("check_script_missing");
   if (!scripts.test) findings.push("test_script_missing");
   if (readinessGate.rollbackGate?.currentCommit == null) findings.push("source_checkpoint_missing");

@@ -10,12 +10,14 @@ const GROUP_RULES = [
   { group: "runtime_kernel", match: (path) => path.startsWith("src/core/") || path === "src/index.js" },
   { group: "cli_tools_gateway", match: (path) => path.startsWith("bin/") || path.startsWith("tools/") || path === "package.json" },
   { group: "tests", match: (path) => path.startsWith("test/") || path.startsWith("fixtures/") },
+  { group: "installer_release", match: (path) => path.startsWith("installer/") || path.startsWith("config/") },
   { group: "runtime_workspace_seed", match: (path) => path.startsWith("runtime-workspace/") },
-  { group: "product_docs", match: (path) => path.startsWith("docs/00-canon/") || path.startsWith("docs/01-product/") || path.startsWith("docs/02-design/") || path.startsWith("docs/02-workflow/") || path.startsWith("docs/03-engineering/") || path.startsWith("docs/04-skill-ecosystem/") || path.startsWith("docs/05-release/") || path.startsWith("workspace-notes/") || path === "README.md" || path === "docs/README.md" || path === "docs/DEVELOPMENT-PRINCIPLES.md" || /^docs\/[^/]+\.md$/.test(path) || path === "GPAO-T-WORKSPACE-CONTRACT-v0.1-ko.md" },
+  { group: "product_docs", match: (path) => path.startsWith("docs/00-canon/") || path.startsWith("docs/01-product/") || path.startsWith("docs/02-design/") || path.startsWith("docs/02-workflow/") || path.startsWith("docs/03-engineering/") || path.startsWith("docs/03-product-plan/") || path.startsWith("docs/04-skill-ecosystem/") || path.startsWith("docs/05-release/") || path.startsWith("workspace-notes/") || path === "README.md" || path === "docs/README.md" || path === "docs/DEVELOPMENT-PRINCIPLES.md" || /^docs\/[^/]+\.md$/.test(path) || path === "GPAO-T-WORKSPACE-CONTRACT-v0.1-ko.md" },
   { group: "curated_evidence", match: (path) => path.startsWith("docs/03-verification/evidence/") && /\.(md|json|png|jpg|jpeg)$/.test(path) && !path.includes("/live-backups/") },
   { group: "generated_evidence", match: (path) => path.startsWith("docs/03-verification/evidence/live-backups/") || path.startsWith("docs/03-verification/evidence/live-") || path.includes("/backups/") || path.endsWith(".before") },
   { group: "verification_docs", match: (path) => path.startsWith("docs/03-verification/") },
   { group: "out_of_scope", match: (path) => path.startsWith("docs/99-out-of-scope/") },
+  { group: "historical_archive", match: (path) => path.startsWith("docs/99-history/") },
   { group: "repo_hygiene", match: (path) => path === ".gitignore" },
 ];
 
@@ -71,13 +73,14 @@ export function buildSourceEvidenceGroupAudit({ porcelain, repoRoot = REPO_ROOT 
       "repo_hygiene",
       "runtime_kernel",
       "cli_tools_gateway",
+      "installer_release",
       "tests",
       "runtime_workspace_seed",
       "product_docs",
       "verification_docs",
       "curated_evidence",
     ],
-    excludeFromNormalCommit: ["generated_evidence", "out_of_scope"],
+    excludeFromNormalCommit: ["generated_evidence", "out_of_scope", "historical_archive"],
     completionRule:
       "ready means every current git status entry is assigned to a review lane. It does not stage or commit files.",
   };

@@ -49,5 +49,24 @@ docs/03-verification/evidence/git-hygiene-backups/**
 docs/03-verification/evidence/**/*.backup
 docs/03-verification/evidence/**/*.sqlite.before-*
 
+docs/03-verification/evidence/live-surface-seal-patch/2026-07-13*/**
+
+# Public-source hygiene: raw QA/runtime evidence directories remain local.
+# Curated evidence summaries may be committed intentionally, but generated
+# run folders and live bundle snapshots must not leak into public source review.
+docs/03-verification/evidence/gpao-t-production-final-qc-*/**
+docs/03-verification/evidence/live-basic-tools-repair/**
+docs/03-verification/evidence/live-distribution-reseal/**
+docs/03-verification/evidence/live-doctor-warning-repair/**
+docs/03-verification/evidence/live-human-qa-loop-*/**
+docs/03-verification/evidence/live-memory-context-tool-qa/**
+docs/03-verification/evidence/live-outbound-boundary/**
+docs/03-verification/evidence/live-sidebar-layout-and-menu-localization-*/**
+docs/03-verification/evidence/live-update-boundary/**
+docs/03-verification/evidence/macos-installer-*/**
+docs/03-verification/evidence/model-connection-settings-live-*/**
+docs/03-verification/evidence/phase-*-2026-*/**
+docs/03-verification/evidence/tool-parity-audit/**
+
 # Accidental scratch files from terminal experiments.
 console.log(yaml ok))

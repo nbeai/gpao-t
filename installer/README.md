@@ -1,7 +1,13 @@
 # GPAO-T macOS Local Installer
 
-This installer targets the standalone `gpao-t-0.1.0-test-team.1` distribution.
+This installer targets the standalone `gpao-t-0.1.0` production distribution.
 It does not modify the source package, UI, or core runtime.
+
+For ordinary users, use the packaged `GPAO-T-Install.command` entrypoint. It
+includes a compatible Node executable, runs the dry-run and apply steps without
+exposing the operation token, starts the GPAO-T LaunchAgent, verifies health,
+and opens the dashboard. The command-line interface below remains the repair,
+health, and rollback surface for operators.
 
 ## Safety contract
 
@@ -9,13 +15,16 @@ It does not modify the source package, UI, or core runtime.
 - Install requires the exact token printed by dry-run:
   `APPLY:GPAO-T:<version>:LOCAL-MACOS`.
 - Rollback requires `ROLLBACK:GPAO-T:<snapshot-id>`.
-- Apply refuses while a previous compatibility gateway service is loaded, so
-  SQLite/WAL files and secret-bearing state can be backed up consistently.
+- The default `none` migration profile does not read, copy, stop, or alter an
+  existing compatibility runtime, so both products can coexist.
+- When `standard` migration is explicitly selected, apply refuses while the
+  source service is loaded so SQLite/WAL and secret-bearing state can be
+  backed up consistently.
 - Apply also refuses while `ai.nbeai.gpao-t` is loaded, so an existing GPAO-T
   destination can be snapshotted without concurrent runtime writes.
-- Existing compatibility state is read-only. Apply creates a full,
-  mode-preserving backup before copying only the selected migration profile
-  into `~/.gpao-t`.
+- Existing compatibility state is read-only. An explicit `standard` migration
+  creates a full, mode-preserving backup before copying only the selected
+  migration profile into `~/.gpao-t`.
 - Secret values are never printed. Secret-bearing source modes must already be
   owner-only, and copied files retain their source modes.
 - The dedicated service label is `ai.nbeai.gpao-t`; it does not reuse or
@@ -32,7 +41,13 @@ and excluded compatibility-state paths, managed destinations, the exact apply
 token, and the rollback root. Dry-run performs no filesystem writes and no
 service action.
 
-The standard migration profile selects:
+The default is a clean GPAO-T state:
+
+```text
+--migration-profile none
+```
+
+The optional `standard` migration profile selects:
 
 ```text
 previous gateway config -> gpao-t.json (state paths rewritten, gateway port isolated)
@@ -50,13 +65,14 @@ It excludes logs, caches, temporary files, completion scripts, reports, old
 config backups, previous service wrappers, agent sessions/Codex homes, and
 installer-specific state. The complete pre-migration backup still preserves
 the excluded agent tree for manual recovery without activating it in GPAO-T.
-Use `--migration-profile none` for a clean GPAO-T state.
+Inherited channels, webhooks, hooks, Telegram, and browser mutation authority
+remain disabled until the user enables them through a separate product approval flow.
 
 ## Apply and rollback
 
 Apply is intentionally documented as a separate authority step. First inspect
-the dry-run output, stop the existing compatibility gateway LaunchAgent if one
-is running, then provide the exact printed token with
+the dry-run output. For an explicit `standard` migration, stop the existing
+compatibility gateway LaunchAgent if one is running. Then provide the exact printed token with
 `--apply --apply-token <token>`.
 
 Each apply creates:

@@ -1,4 +1,13 @@
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import {
+  closeSync,
+  existsSync,
+  mkdirSync,
+  openSync,
+  readSync,
+  readFileSync,
+  statSync,
+  writeFileSync,
+} from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -70,9 +79,14 @@ export function readAuditEvents({ root = PACKAGE_ROOT, limit = 50 } = {}) {
   return readJsonlTail(paths.eventFile, { limit });
 }
 
-export function readJsonlTail(filePath, { limit = 50, dedupeKey, tolerateInvalid = false } = {}) {
+export function readJsonlTail(filePath, {
+  limit = 50,
+  dedupeKey,
+  tolerateInvalid = false,
+  maxBytes = 512 * 1024,
+} = {}) {
   if (!existsSync(filePath)) return [];
-  const records = readFileSync(filePath, "utf8")
+  const records = readTextTail(filePath, { maxBytes })
     .split("\n")
     .filter(Boolean)
     .slice(-Math.max(limit * 4, limit))
@@ -97,6 +111,26 @@ export function readJsonlTail(filePath, { limit = 50, dedupeKey, tolerateInvalid
     if (deduped.length >= limit) break;
   }
   return deduped.reverse();
+}
+
+function readTextTail(filePath, { maxBytes }) {
+  const stat = statSync(filePath);
+  if (!stat.size) return "";
+  const length = Math.min(stat.size, maxBytes);
+  const start = Math.max(0, stat.size - length);
+  const fd = openSync(filePath, "r");
+  try {
+    const buffer = Buffer.alloc(length);
+    const bytesRead = readSync(fd, buffer, 0, length, start);
+    let text = buffer.subarray(0, bytesRead).toString("utf8");
+    if (start > 0) {
+      const firstNewline = text.indexOf("\n");
+      text = firstNewline >= 0 ? text.slice(firstNewline + 1) : "";
+    }
+    return text;
+  } finally {
+    closeSync(fd);
+  }
 }
 
 function defaultRuntimeState({ root = PACKAGE_ROOT, now = new Date().toISOString() } = {}) {

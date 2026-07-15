@@ -9,7 +9,7 @@
 ## 포함 표면
 
 ```text
-local package candidate readback
+internal production package readback
 -> team alpha guide
 -> host integration matrix
 -> host registration guide
@@ -46,7 +46,7 @@ GET /owner-ops/team-alpha-handoff-bundle/verify
 
 ## 팀원에게 보여줄 순서
 
-1. 로컬 패키지 후보 무결성 확인
+1. 내부 프로덕션 패키지 무결성 확인
 2. 팀원 alpha 안내 확인
 3. Codex / OpenClaw / Claude Code 호스트별 등록 매트릭스 확인
 4. 호스트 등록 smoke 안내 확인

@@ -53,6 +53,30 @@ function candidate() {
   };
 }
 
+function independentReplayCase(id, stage = "pre_apply") {
+  return {
+    mode: "independent_observation",
+    stage,
+    requestRef: `user-turn:${id}`,
+    observationRef: `model-output:${id}`,
+    evaluatorRef: `replay-evaluator:${id}`,
+    candidatePrincipleInjectedByHarness: false,
+  };
+}
+
+function approvalFor(applyRequest, id) {
+  return {
+    decision: "approved",
+    candidateId: applyRequest.candidateId,
+    target: {
+      id: applyRequest.target.id,
+      scope: applyRequest.target.scope,
+    },
+    userTurnRef: `user-turn:${id}`,
+    approvalReference: `approval-receipt:${id}`,
+  };
+}
+
 describe("GPAO-T memory candidate review queue", () => {
   it("builds review-only candidates without opening durable memory or OpenClaw writes", () => {
     const item = buildMemoryReviewCandidate({
@@ -106,13 +130,15 @@ describe("GPAO-T memory candidate review queue", () => {
       now: "2026-07-11T00:01:00.000Z",
       beforeOutput: preview.before.output,
       afterOutput: preview.after.output,
+      replayCase: independentReplayCase("queue-replay"),
     });
     const summary = buildMemoryReviewQueueSummary({ root });
 
-    assert.equal(preview.schema, "gpao_t.memory_replay_evidence.v0_1");
-    assert.equal(preview.status, "improved");
-    assert.equal(preview.authority.mutationAllowed, false);
-    assert.equal(replay.status, "improved");
+    assert.equal(preview.schema, "gpao_t.memory_replay_evidence.v0_2");
+    assert.equal(preview.status, "review");
+    assert.equal(preview.findings.includes("independent_replay_mode_required"), true);
+    assert.equal(replay.status, "passed");
+    assert.equal(replay.proof.independent, true);
     assert.equal(summary.counts.candidates, 1);
     assert.equal(summary.counts.replayEvidence, 1);
     assert.equal(summary.counts.applyReady, 1);
@@ -133,6 +159,7 @@ describe("GPAO-T memory candidate review queue", () => {
       now: "2026-07-11T00:01:00.000Z",
       beforeOutput: "OpenClaw만 개선합니다.",
       afterOutput: "OpenClaw를 GPAO-T material body로 흡수하며 개선합니다.",
+      replayCase: independentReplayCase("apply-request"),
     });
     const preview = buildMemoryApplyRequest({
       candidateRecord: item,
@@ -151,16 +178,18 @@ describe("GPAO-T memory candidate review queue", () => {
     });
     const summary = buildMemoryReviewQueueSummary({ root });
 
-    assert.equal(preview.schema, "gpao_t.memory_apply_request.v0_1");
+    assert.equal(preview.schema, "gpao_t.memory_apply_request.v0_2");
     assert.equal(preview.status, "awaiting_approval");
     assert.equal(preview.target.id, "context_mesh_candidate");
     assert.equal(preview.auditGate.status, "record_required_before_apply");
     assert.equal(preview.rollbackReceipt.status, "planned");
     assert.equal(preview.authority.mutationAllowedNow, false);
-    assert.equal(approved.status, "approved_but_not_applied");
+    assert.equal(approved.status, "awaiting_approval");
+    assert.equal(approved.approvalGate.callerDeclaredStateGrantsAuthority, false);
     assert.equal(approved.applyEngine.canApplyNow, false);
     assert.equal(summary.counts.applyRequests, 1);
-    assert.equal(summary.counts.approvedButNotApplied, 1);
+    assert.equal(summary.counts.awaitingApproval, 1);
+    assert.equal(summary.counts.approvedButNotApplied, 0);
   });
 
   it("bridges memory apply requests into local approval and audit records only", () => {
@@ -177,6 +206,7 @@ describe("GPAO-T memory candidate review queue", () => {
       now: "2026-07-11T00:01:00.000Z",
       beforeOutput: "OpenClaw만 개선합니다.",
       afterOutput: "OpenClaw를 GPAO-T material body로 흡수하며 개선합니다.",
+      replayCase: independentReplayCase("approval-bridge"),
     });
     const applyRequest = appendMemoryApplyRequest({
       root,
@@ -186,19 +216,26 @@ describe("GPAO-T memory candidate review queue", () => {
       approvalState: "requested",
       now: "2026-07-11T00:02:00.000Z",
     });
-    const preview = buildMemoryApplyApprovalAuditBridge({
+    const selfAsserted = buildMemoryApplyApprovalAuditBridge({
       applyRequest,
       confirmationState: "confirmed_for_local_record_only",
+      now: "2026-07-11T00:03:00.000Z",
+    });
+    const preview = buildMemoryApplyApprovalAuditBridge({
+      applyRequest,
+      approval: approvalFor(applyRequest, "approval-bridge"),
       now: "2026-07-11T00:03:00.000Z",
     });
     const bridge = appendMemoryApplyApprovalAuditBridge({
       root,
       applyRequest,
-      confirmationState: "confirmed_for_local_record_only",
+      approval: approvalFor(applyRequest, "approval-bridge"),
       now: "2026-07-11T00:03:00.000Z",
     });
     const summary = buildMemoryReviewQueueSummary({ root });
 
+    assert.equal(selfAsserted.status, "blocked");
+    assert.equal(selfAsserted.findings.includes("explicit_user_approval_missing"), true);
     assert.equal(preview.status, "record_ready");
     assert.equal(preview.proposal.toolKind, "memory");
     assert.equal(preview.proposal.authorityLevel, "write");
@@ -207,6 +244,7 @@ describe("GPAO-T memory candidate review queue", () => {
     assert.equal(bridge.approvalAudit.writeResultStatus, "written_local_only");
     assert.equal(bridge.approvalAudit.approvalRecordId.startsWith("approval."), true);
     assert.equal(bridge.approvalAudit.auditRecordId.startsWith("audit."), true);
+    assert.equal(bridge.approvalReceipt.userTurnRef, "user-turn:approval-bridge");
     assert.equal(bridge.authority.contextMeshAdmission, "blocked");
     assert.equal(summary.counts.approvalAuditBridges, 1);
     assert.equal(summary.counts.approvalAuditRecorded, 1);
@@ -226,6 +264,7 @@ describe("GPAO-T memory candidate review queue", () => {
       now: "2026-07-11T00:01:00.000Z",
       beforeOutput: "OpenClaw만 개선합니다.",
       afterOutput: "OpenClaw를 GPAO-T material body로 흡수하며 개선합니다.",
+      replayCase: independentReplayCase("reversible-apply"),
     });
     const applyRequest = appendMemoryApplyRequest({
       root,
@@ -238,10 +277,11 @@ describe("GPAO-T memory candidate review queue", () => {
     const bridge = appendMemoryApplyApprovalAuditBridge({
       root,
       applyRequest,
-      confirmationState: "confirmed_for_local_record_only",
+      approval: approvalFor(applyRequest, "reversible-apply"),
       now: "2026-07-11T00:03:00.000Z",
     });
     const preview = buildMemoryReversibleApply({
+      root,
       applyRequest,
       approvalAuditBridge: bridge,
       now: "2026-07-11T00:04:00.000Z",
@@ -252,7 +292,17 @@ describe("GPAO-T memory candidate review queue", () => {
       approvalAuditBridge: bridge,
       now: "2026-07-11T00:04:00.000Z",
     });
-    const candidates = readTCellCandidates({ root });
+    const pendingCandidates = readTCellCandidates({ root });
+    const postApplyReplay = appendMemoryReplayEvidence({
+      root,
+      candidateRecord: item,
+      applyRecord: applied,
+      now: "2026-07-11T00:05:00.000Z",
+      beforeOutput: "OpenClaw만 개선합니다.",
+      afterOutput: "OpenClaw를 GPAO-T material body로 흡수하며 개선합니다.",
+      replayCase: independentReplayCase("reversible-apply-post", "post_apply"),
+    });
+    const reviewedCandidates = readTCellCandidates({ root });
     const summary = buildMemoryReviewQueueSummary({ root });
 
     assert.equal(preview.status, "ready_to_apply_context_mesh_candidate");
@@ -261,9 +311,12 @@ describe("GPAO-T memory candidate review queue", () => {
     assert.equal(applied.applyResult.beforeLineCount, 0);
     assert.equal(applied.applyResult.afterLineCount, 1);
     assert.equal(applied.rollbackReceipt.status, "recorded");
-    assert.equal(candidates.length, 1);
-    assert.equal(candidates[0].lifecycle, "reviewed");
-    assert.equal(candidates[0].authority.blockedUse.includes("automatic_answer_anchor"), true);
+    assert.equal(pendingCandidates[0].lifecycle, "applied_pending_independent_replay");
+    assert.equal(pendingCandidates[0].authority.blockedUse.includes("answer_anchor"), true);
+    assert.equal(postApplyReplay.lifecycleReview.status, "reviewed_after_independent_replay");
+    assert.equal(reviewedCandidates[0].lifecycle, "reviewed");
+    assert.equal(reviewedCandidates[0].authority.blockedUse.includes("answer_anchor"), false);
+    assert.equal(reviewedCandidates[0].authority.blockedUse.includes("automatic_answer_anchor"), true);
     assert.equal(summary.counts.reversibleApplies, 1);
     assert.equal(summary.counts.contextMeshApplied, 1);
   });
@@ -282,6 +335,7 @@ describe("GPAO-T memory candidate review queue", () => {
       now: "2026-07-11T00:01:00.000Z",
       beforeOutput: "OpenClaw만 개선합니다.",
       afterOutput: "OpenClaw를 GPAO-T material body로 흡수하며 개선합니다.",
+      replayCase: independentReplayCase("blocked-openclaw"),
     });
     const applyRequest = appendMemoryApplyRequest({
       root,
@@ -294,7 +348,7 @@ describe("GPAO-T memory candidate review queue", () => {
     const bridge = appendMemoryApplyApprovalAuditBridge({
       root,
       applyRequest,
-      confirmationState: "confirmed_for_local_record_only",
+      approval: approvalFor(applyRequest, "blocked-openclaw"),
       now: "2026-07-11T00:03:00.000Z",
     });
     const applied = appendMemoryReversibleApply({
@@ -323,6 +377,7 @@ describe("GPAO-T memory candidate review queue", () => {
       now: "2026-07-11T00:01:00.000Z",
       beforeOutput: "OpenClaw만 개선합니다.",
       afterOutput: "OpenClaw를 GPAO-T material body로 흡수하며 개선합니다.",
+      replayCase: independentReplayCase("rollback"),
     });
     const applyRequest = appendMemoryApplyRequest({
       root,
@@ -335,7 +390,7 @@ describe("GPAO-T memory candidate review queue", () => {
     const bridge = appendMemoryApplyApprovalAuditBridge({
       root,
       applyRequest,
-      confirmationState: "confirmed_for_local_record_only",
+      approval: approvalFor(applyRequest, "rollback"),
       now: "2026-07-11T00:03:00.000Z",
     });
     const applied = appendMemoryReversibleApply({
@@ -373,6 +428,7 @@ describe("GPAO-T memory candidate review queue", () => {
       now: "2026-07-11T00:01:00.000Z",
       beforeOutput: "OpenClaw만 개선합니다.",
       afterOutput: "OpenClaw를 GPAO-T material body로 흡수하며 개선합니다.",
+      replayCase: independentReplayCase("invocation"),
     });
     const applyRequest = appendMemoryApplyRequest({
       root,
@@ -385,7 +441,7 @@ describe("GPAO-T memory candidate review queue", () => {
     const bridge = appendMemoryApplyApprovalAuditBridge({
       root,
       applyRequest,
-      confirmationState: "confirmed_for_local_record_only",
+      approval: approvalFor(applyRequest, "invocation"),
       now: "2026-07-11T00:03:00.000Z",
     });
     const before = buildMemoryLocalApplyInvocationContract({
@@ -410,7 +466,7 @@ describe("GPAO-T memory candidate review queue", () => {
       root,
       postApplyReplayRequest: "이어서 OpenClaw 흡수 방향을 기준으로 지파오티 작업 원칙을 확인해줘.",
       priorFlow: { activeTargetId: "openclaw-absorption" },
-      expectedRole: "anchor",
+      expectedRole: "support",
       now: "2026-07-11T00:07:00.000Z",
     });
     const blockedRollback = invokeMemoryLocalContextMeshRollback({
@@ -491,6 +547,7 @@ describe("GPAO-T memory candidate review queue", () => {
         candidateRecord: create.body,
         beforeOutput: "OpenClaw만 개선합니다.",
         afterOutput: "OpenClaw를 GPAO-T material body로 흡수하며 개선합니다.",
+        replayCase: independentReplayCase("gateway"),
       },
     });
     const apply = handleGatewayRequest({
@@ -512,7 +569,7 @@ describe("GPAO-T memory candidate review queue", () => {
       body: {
         now: "2026-07-11T00:03:00.000Z",
         applyRequest: apply.body,
-        confirmationState: "confirmed_for_local_record_only",
+        approval: approvalFor(apply.body, "gateway"),
       },
     });
     const applyEngine = handleGatewayRequest({
@@ -521,11 +578,7 @@ describe("GPAO-T memory candidate review queue", () => {
       path: "/memory/apply-engine/apply",
       body: {
         now: "2026-07-11T00:04:00.000Z",
-        applyRequest: {
-          ...apply.body,
-          status: "approved_but_not_applied",
-          approvalGate: { ...apply.body.approvalGate, state: "approved_for_apply", passed: true },
-        },
+        applyRequest: apply.body,
         approvalAuditBridge: approval.body,
       },
     });
@@ -577,7 +630,7 @@ describe("GPAO-T memory candidate review queue", () => {
     assert.equal(applyEngine.body.findings.includes("target_not_context_mesh_candidate"), true);
     assert.equal(queue.body.length, 10);
     assert.equal(summary.body.counts.applyRequests, 2);
-    assert.equal(summary.body.counts.awaitingApproval, 1);
+    assert.equal(summary.body.counts.awaitingApproval, 2);
     assert.equal(summary.body.counts.approvalAuditRecorded, 2);
   });
 

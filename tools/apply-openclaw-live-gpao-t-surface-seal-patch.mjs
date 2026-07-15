@@ -5,14 +5,53 @@ import { basename, dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const LIVE_ROOT =
+  process.env.GPAO_T_LIVE_DIST ||
   process.env.OPENCLAW_LIVE_DIST ||
-  "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist";
+  "/Users/jyp/.gpao-t/current/compatibility/gpao-t/dist";
 const CONTROL_UI_ROOT = join(LIVE_ROOT, "control-ui");
 const ASSETS_DIR = join(CONTROL_UI_ROOT, "assets");
 const BACKUP_ROOT =
   process.env.GPAO_T_SURFACE_SEAL_BACKUP_ROOT ||
   "/Users/jyp/Developer/gpao-t/docs/03-verification/evidence/live-surface-seal-patch";
 const APPLY_TOKEN = "apply-gpao-t-surface-seal-live";
+
+const LOCALE_BUNDLE_REPLACEMENTS = [
+  ["Control UI", "GPAO-T Dashboard"],
+  ["ClawHub", "GPAO-T Extension Hub"],
+  ["OpenClaw", "GPAO-T"],
+  ["https://docs.openclaw.ai", "#gpao-t-help"],
+  ["openclaw doctor", "gpao-t doctor"],
+  ["openclaw models auth", "gpao-t models auth"],
+  ["openclaw dashboard", "gpao-t dashboard"],
+  ["openclaw status", "gpao-t status"],
+  ["openclaw gateway run", "gpao-t runtime run"],
+  ["openclaw security audit --deep", "gpao-t security audit --deep"],
+  ["openclaw.json", "GPAO-T runtime config"],
+  ["Lobsterdex", "GPAO-T activity"],
+  ["Lobster", "GPAO-T companion"],
+  ["lobster", "GPAO-T companion"],
+  ["reef", "workspace"],
+  ["claws", "tools"],
+  ["바닷가재", "GPAO-T 동반자"],
+  ["산호초", "GPAO-T 작업공간"],
+  ["집게", "도구"],
+];
+
+const SKILLS_BUNDLE_REPLACEMENTS = [
+  ["No skills found on ClawHub.", "No skills found in GPAO-T Extension Hub."],
+  ["ClawHub link invalid", "GPAO-T Extension Hub link invalid"],
+];
+
+const GENERAL_JS_VISIBLE_REPLACEMENTS = [
+  ["Control UI", "GPAO-T Dashboard"],
+  ["Internal OpenClaw voice control result.", "Internal GPAO-T voice control result."],
+  ["Speak this exact OpenClaw status", "Speak this exact GPAO-T status"],
+  ["Cancelled the active OpenClaw run.", "Cancelled the active GPAO-T run."],
+  ["Show or set OpenClaw MCP servers.", "Show or set GPAO-T MCP servers."],
+  ["Restart OpenClaw.", "Restart GPAO-T."],
+  ["No skills found on ClawHub.", "No skills found in GPAO-T Extension Hub."],
+  ["ClawHub link invalid", "GPAO-T Extension Hub link invalid"],
+];
 
 const TEXT_REPLACEMENTS = [
   ["https://docs.openclaw.ai/web/control-ui#blank-control-ui-page", "#gpao-t-recovery"],
@@ -164,6 +203,29 @@ function applyTextReplacements(source) {
   return { source: next, replacements };
 }
 
+function applyReplacementList(source, replacements) {
+  let next = source;
+  const applied = [];
+  for (const [from, to] of replacements) {
+    if (!next.includes(from)) continue;
+    const count = next.split(from).length - 1;
+    next = next.split(from).join(to);
+    applied.push({ from, to, count });
+  }
+  return { source: next, replacements: applied };
+}
+
+export function patchLocaleBundleSource(source) {
+  const replacements = [];
+  const next = source.replace(/`(?:\\.|[^`\\])*`/gs, (literal) => {
+    if (literal.includes("${")) return literal;
+    const patched = applyReplacementList(literal, LOCALE_BUNDLE_REPLACEMENTS);
+    replacements.push(...patched.replacements);
+    return patched.source;
+  });
+  return { source: next, replacements };
+}
+
 export function patchSurfaceFile({ path, source }) {
   if (basename(path) === "favicon.svg") {
     return source.includes("nBeAI. GPAO-T") && !source.includes("openclaw.ai hero mascot")
@@ -171,7 +233,18 @@ export function patchSurfaceFile({ path, source }) {
       : { source: SVG_LOGO, replacements: [{ from: "legacy favicon.svg", to: "GPAO-T svg logo", count: 1 }] };
   }
   if (path.endsWith(".js")) {
-    return { source, replacements: [] };
+    const name = basename(path);
+    let patched = { source, replacements: [] };
+    if (/^(?:i18n|[a-z]{2}(?:-[A-Z]{2})?)-.*\.js$/.test(name)) {
+      patched = patchLocaleBundleSource(source);
+    } else if (/^skills-page-.*\.js$/.test(name)) {
+      patched = applyReplacementList(source, SKILLS_BUNDLE_REPLACEMENTS);
+    }
+    const general = applyReplacementList(patched.source, GENERAL_JS_VISIBLE_REPLACEMENTS);
+    return {
+      source: general.source,
+      replacements: [...patched.replacements, ...general.replacements],
+    };
   }
   return applyTextReplacements(source);
 }

@@ -5,26 +5,26 @@ import {
 } from "./owner-ops-package.js";
 import { buildOwnerOpsFirstOwnerScenarioFixture } from "./owner-ops-scenarios.js";
 
-export function buildOwnerOpsTeamAlphaGuide() {
+export function buildOwnerOpsInternalAcceptanceGuide() {
   const manifest = buildOwnerOpsPluginPackageManifest();
   const scenario = buildOwnerOpsFirstOwnerScenarioFixture();
 
   return {
-    schema: "gpao_t.owner_ops_team_alpha_guide.v0_1",
+    schema: "gpao_t.owner_ops_internal_acceptance_guide.v0_1",
     status: "ready",
-    title: "Owner Ops 팀원 Alpha 테스트 안내서",
+    title: "Owner Ops 내부 수용 검토 안내서",
     packageId: manifest.packageId,
     audience: [
-      "OpenClaw/Codex/Claude Code를 이미 쓰는 내부 팀원",
-      "한국 자영업자 업무를 대신 관찰해 줄 수 있는 테스트 협력자",
+      "OpenClaw/Codex/Claude Code를 이미 쓰는 내부 수용 검토자",
+      "한국 자영업자 업무를 대신 관찰해 줄 수 있는 검토 협력자",
     ],
-    alphaGoal:
+    acceptanceGoal:
       "사장님 자동화 도우미가 실제 자영업자 언어, CSV/붙여넣기 자료, 안전한 초안, 로컬 기록, replay를 자연스럽게 이어 주는지 확인한다.",
     beforeStart: [
       "실제 고객 개인정보, 전화번호, 계좌, 민감한 주문 정보는 넣지 않는다.",
       "실제 고객에게 전송하지 않는다.",
       "OAuth/API 계정 연결을 시도하지 않는다.",
-      "테스트 자료는 샘플 CSV나 비식별화된 붙여넣기 문장으로 시작한다.",
+      "검토 자료는 샘플 CSV나 비식별화된 붙여넣기 문장으로 시작한다.",
     ],
     happyPath: [
       {
@@ -68,14 +68,14 @@ export function buildOwnerOpsTeamAlphaGuide() {
     ],
     acceptanceSignals: [
       "비개발자도 첫 시나리오의 목적을 1분 안에 설명할 수 있다.",
-      "팀원이 고객 발송/환불/주문 취소가 잠겨 있음을 명확히 확인한다.",
+      "내부 검토자가 고객 발송/환불/주문 취소가 잠겨 있음을 명확히 확인한다.",
       "샘플 자료로 초안과 replay가 재현된다.",
       "OpenClaw/Codex/Claude Code 중 최소 한 호스트에서 stdio MCP 등록 전 smoke를 이해한다.",
     ],
     blockedActions: manifest.authorityBoundary.blockedNow,
     firstScenario: scenario.scenario,
     nextSafeAction:
-      "Alpha 피드백을 owner-facing UX copy와 first scenario fixture에 반영한 뒤, install/update/rollback packaging과 실제 host registration guide로 넘어간다.",
+      "내부 수용 피드백을 owner-facing UX copy와 first scenario fixture에 반영한 뒤, install/update/rollback packaging과 실제 host registration guide로 넘어간다.",
   };
 }
 
@@ -131,8 +131,8 @@ export function buildOwnerOpsOwnerFacingUxCopy() {
   };
 }
 
-export function verifyOwnerOpsTeamAlphaReadiness({ root } = {}) {
-  const guide = buildOwnerOpsTeamAlphaGuide();
+export function verifyOwnerOpsInternalAcceptanceReadiness({ root } = {}) {
+  const guide = buildOwnerOpsInternalAcceptanceGuide();
   const copy = buildOwnerOpsOwnerFacingUxCopy();
   const packageCheck = verifyOwnerOpsPluginPackage({ root });
   const findings = [];
@@ -140,7 +140,7 @@ export function verifyOwnerOpsTeamAlphaReadiness({ root } = {}) {
   if (guide.status !== "ready") findings.push("guide_not_ready");
   if (copy.status !== "ready") findings.push("copy_not_ready");
   if (packageCheck.status !== "ready") findings.push("package_not_ready");
-  if (guide.happyPath.length < 5) findings.push("alpha_happy_path_too_short");
+  if (guide.happyPath.length < 5) findings.push("internal_acceptance_happy_path_too_short");
   if (!copy.safetyLabels.includes("자동 전송 안 함")) findings.push("missing_customer_send_safety_label");
   if (!copy.lockedActionCopy.customer_message_send) findings.push("missing_customer_send_locked_copy");
   if (!guide.blockedActions.includes("customer_message_send")) findings.push("customer_send_not_blocked");
@@ -149,14 +149,18 @@ export function verifyOwnerOpsTeamAlphaReadiness({ root } = {}) {
   }
 
   return {
-    schema: "gpao_t.owner_ops_team_alpha_readiness_check.v0_1",
+    schema: "gpao_t.owner_ops_internal_acceptance_readiness_check.v0_1",
     status: findings.length ? "blocked" : "ready",
     findings,
-    checkedSurfaces: ["team alpha guide", "owner-facing UX copy", "plugin package", "first scenario"],
+    checkedSurfaces: ["internal acceptance guide", "owner-facing UX copy", "plugin package", "first scenario"],
     publicRelease: "not_published",
     externalActionsRemainBlocked: true,
     nextSafeAction: findings.length
-      ? "Fix alpha readiness findings before team handoff."
-      : "Prepare local host registration guide and alpha feedback form; do not publish or connect live accounts yet.",
+      ? "Fix internal acceptance readiness findings before team handoff."
+      : "Prepare the local host registration guide and internal acceptance feedback form; do not publish or connect live accounts yet.",
   };
 }
+
+// One-cycle API compatibility aliases. Canonical output remains internal-production terminology.
+export const buildOwnerOpsTeamAlphaGuide = buildOwnerOpsInternalAcceptanceGuide;
+export const verifyOwnerOpsTeamAlphaReadiness = verifyOwnerOpsInternalAcceptanceReadiness;

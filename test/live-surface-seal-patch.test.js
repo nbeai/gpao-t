@@ -17,26 +17,49 @@ test("patchSurfaceFile seals fallback OpenClaw Control UI copy", () => {
   assert.doesNotMatch(patched, /Control UI did not start/);
 });
 
-test("patchSurfaceFile does not mutate JavaScript bundles", () => {
+test("patchSurfaceFile seals locale copy without mutating compatibility keys", () => {
   const source = [
-    "`OpenClaw mobile`",
-    "`Official OpenClaw mobile apps`",
-    "`OpenClaw 모바일`",
-    "`공식 OpenClaw 모바일 앱`",
-    "`Search plugins and ClawHub`",
-    "`ClawHub에서 찾기`",
-    "`ClawHub`",
-    "`clawhub`",
-    "`Keep Last Assistants`",
-    "`Last Assistants`",
-    "`Clawdette`",
-    "`Optional OpenClaw capability.`",
-    "`선택적 OpenClaw 기능입니다.`",
+    "const copy={browseClawHub:`ClawHub 둘러보기`,artifact:`Control UI`,profile:`바닷가재 방문`};",
+    "const source=`clawhub`;",
+    "const key=`openclaw.control.assistant.v1`;",
   ].join("\n");
 
-  const patched = patchSurfaceFile({ path: "assets/i18n.js", source }).source;
+  const patched = patchSurfaceFile({ path: "assets/ko-example.js", source }).source;
 
-  assert.equal(patched, source);
+  assert.match(patched, /browseClawHub:`GPAO-T Extension Hub 둘러보기`/);
+  assert.match(patched, /artifact:`GPAO-T Dashboard`/);
+  assert.match(patched, /profile:`GPAO-T 동반자 방문`/);
+  assert.match(patched, /const source=`clawhub`/);
+  assert.match(patched, /const key=`openclaw\.control\.assistant\.v1`/);
+  assert.doesNotMatch(patched, /`ClawHub 둘러보기`|`Control UI`|`바닷가재 방문`/);
+});
+
+test("patchSurfaceFile seals visible skill-hub copy without renaming handlers", () => {
+  const source = [
+    "function onClawHubInstall() {}",
+    "const empty = `No skills found on ClawHub.`;",
+    "const warning = `ClawHub link invalid`;",
+  ].join("\n");
+
+  const patched = patchSurfaceFile({ path: "assets/skills-page-example.js", source }).source;
+
+  assert.match(patched, /function onClawHubInstall/);
+  assert.match(patched, /No skills found in GPAO-T Extension Hub/);
+  assert.match(patched, /GPAO-T Extension Hub link invalid/);
+});
+
+test("patchSurfaceFile seals general JavaScript user copy but keeps runtime context aliases", () => {
+  const source = [
+    "const hidden = `OpenClaw runtime event.`;",
+    "const command = `Restart OpenClaw.`;",
+    "const error = `Control UI is not connected`;",
+  ].join("\n");
+
+  const patched = patchSurfaceFile({ path: "assets/chat-page-example.js", source }).source;
+
+  assert.match(patched, /OpenClaw runtime event/);
+  assert.match(patched, /Restart GPAO-T/);
+  assert.match(patched, /GPAO-T Dashboard is not connected/);
 });
 
 test("patchSurfaceFile seals connection and pairing screen copy", () => {

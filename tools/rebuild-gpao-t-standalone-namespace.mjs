@@ -132,7 +132,19 @@ function encodedLegacyCompatScript({ legacyCustomElements = [] } = {}) {
 }
 
 function replaceNamespaceText(source) {
-  return source
+  const identifierSafe = source.replace(
+    /[A-Za-z_$][A-Za-z0-9_$]*/g,
+    (token) => {
+      if (token === "OpenClaw" || token === "openclaw" || token === "OPENCLAW") {
+        return token;
+      }
+      return token
+        .replace(/OpenClaw/g, "GpaoT")
+        .replace(/openclaw/g, "gpaoT")
+        .replace(/OPENCLAW/g, "GPAO_T");
+    },
+  );
+  return identifierSafe
     .replace(/OpenClaw/g, "GPAO-T")
     .replace(/openclaw/g, "gpao-t")
     .replace(/OPENCLAW/g, "GPAO_T")

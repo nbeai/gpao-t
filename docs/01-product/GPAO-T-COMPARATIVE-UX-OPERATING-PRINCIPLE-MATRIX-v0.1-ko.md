@@ -3,7 +3,10 @@
 Status: first research-first matrix  
 Date: 2026-07-10  
 Audience: 윤, Codex, future GPAO-T research/architecture/implementation agents  
-Decision supported: GPAO-T first real OS flow before further live OpenClaw narrowing
+Decision supported: GPAO-T first real OS flow before further third-party OpenClaw compatibility/migration narrowing
+OpenClaw reference class: third-party comparison, compatibility, and migration only.
+
+GPAO-T is an independent, local-first Growth Personal AI Operating System.
 
 ## 1. 연구 질문
 
@@ -20,7 +23,7 @@ Decision supported: GPAO-T first real OS flow before further live OpenClaw narro
 근거는 세 등급으로 나눈다.
 
 - `official`: 공식 문서, 공식 README, 공식 repo
-- `local-evidence`: 윤의 로컬 PC / GPAO-T / OpenClaw 작업 증거
+- `local-evidence`: 윤의 로컬 PC / GPAO-T / third-party OpenClaw compatibility/migration 작업 증거
 - `inference`: 위 근거에서 도출한 GPAO-T 설계 판단
 
 이 문서는 현재 시점의 연구 매트릭스다. 실제 사용자 체감, 성능, 보안, 안정성은 이후 replay / live smoke / screenshot / human scenario evidence로 다시 검증해야 한다.
@@ -39,9 +42,9 @@ Decision supported: GPAO-T first real OS flow before further live OpenClaw narro
 | CrewAI README | official | Crews/Flows, role-based collaboration and event-driven workflow control, observability/governance in enterprise suite | framework/developer surface; non-developer OS UX는 직접 제공하지 않음 |
 | LangGraph README | official | durable execution, human-in-the-loop, memory, debugging/observability for long-running stateful agents | low-level orchestration framework; product UX는 사용자가 만들어야 함 |
 | AutoGPT README | official | build/deploy/run continuous agents, frontend builder, workflow management, deployment controls, monitoring | self-hosting is technical; platform/automation focus가 강함 |
-| GPAO-T Research-First OS Strategy | local-evidence | GPAO-T is not MVP or weak OpenClaw patch; research-first OS strategy is active | 내부 기준 문서. 외부 검증은 아님 |
-| OpenClaw Stage 1 Live Inventory | local-evidence | OpenClaw Gateway running, Codex app-server attached, DuckDuckGo search configured, continuity disabled pending live broker verification | live behavior consumption not yet verified |
-| GPAO-T Source Seal / Test-Team Candidate Evidence | local-evidence | current GPAO-T candidate is sealed around live OpenClaw absorption, package readback, and test-team guide | not a public release or signed installer |
+| GPAO-T Research-First OS Strategy | local-evidence | GPAO-T is independent and is not an MVP or weak third-party OpenClaw compatibility patch | 내부 기준 문서. 외부 검증은 아님 |
+| Third-party OpenClaw Stage 1 Compatibility Inventory | local-evidence | compatibility Gateway state, Codex app-server attachment, search configuration, and continuity verification boundary | live behavior consumption requires separate evidence |
+| GPAO-T Production Distribution Evidence | local-evidence | current GPAO-T production package, readback, and verification surfaces | local production evidence does not imply public deployment |
 
 ## 4. Product Family Matrix
 
@@ -49,7 +52,7 @@ Decision supported: GPAO-T first real OS flow before further live OpenClaw narro
 | --- | --- | --- | --- | --- | --- |
 | Codex | Work rhythm around repo, files, plan, edits, tests, approvals, terminal, skills/plugins | “AI가 실제 개발자로 같이 일한다”는 감각 | 개발 표면이 강해서 일반 사용자는 내부 절차를 어렵게 느낄 수 있음 | thread/task rhythm, workspace awareness, verification-first closeout, skill/plugin extensibility | 개발자 UX를 그대로 일반 OS UX로 복사 |
 | Claude Code | codebase-aware agentic coding across terminal/IDE/desktop/browser, settings/hooks/permissions | 대화-작업-도구 사용 흐름이 자연스럽고 빠름 | 설정, hooks, permissions가 강력한 만큼 복잡함 | lifecycle hooks, permission/event model, multi-surface continuity | hook 자동화를 사용자 몰래 live mutation으로 사용 |
-| OpenClaw | local PC gateway, plugin/tool/channel substrate, live runtime candidate | 내 PC 위에서 돌아가는 local operating substrate 감각 | 현재 GPAO-T 의도/맥락/사용자 체감 이해가 부족하면 방향이 꼬임 | gateway/service/runtime skeleton, local state, tool bus, channel integration | OpenClaw 개선 자체를 GPAO-T로 착각 |
+| OpenClaw | third-party local PC gateway and plugin/tool/channel runtime | 내 PC에서 작동하는 로컬 실행 인프라 감각 | 현재 GPAO-T 의도/맥락/사용자 체감 이해가 부족하면 방향이 꼬임 | comparison-derived gateway/service patterns, local state, tool bus, channel integration | third-party OpenClaw 개선 자체를 GPAO-T로 착각 |
 | OpenHands | self-hosted developer control center for agents and automations | 여러 coding agent/backends를 한 컨트롤센터에서 다루는 느낌 | 개발자/팀 운영 중심, sandbox/infra 이해 필요 | agent backend switching, local/remote/cloud separation, automation scheduling boundary | always-on automation을 개인 OS 성장과 혼동 |
 | Open Interpreter | terminal-first local agent, model/harness/provider switching, computer use QA | 로컬 PC를 AI가 직접 조작/검사할 수 있다는 체감 | 강력한 실행 능력이 곧 보안/권한 불안을 만든다 | local computer-use layer, model harness switching, local session/config | command execution을 기본값으로 열어두기 |
 | Khoj | self-hostable AI second brain over docs/web/local/online LLMs | 내 문서와 웹을 아는 개인 지식 비서 | 지식 검색이 OS 판단/승인/성장까지 자동으로 이어지지는 않음 | Memory Wiki / personal knowledge surface / local-first knowledge access | 검색 결과를 현재 의도보다 우선 |
@@ -71,9 +74,9 @@ Every request becomes a visible work state:
 understood intent -> context route -> safe next action -> execution/preview -> verification -> growth candidate.
 ```
 
-### Lesson 2. 로컬 실행 능력은 OS의 몸체지만, 사용자 의도 복원이 없으면 위험하다
+### Lesson 2. 로컬 실행 능력은 중요하지만, 사용자 의도 복원이 없으면 위험하다
 
-OpenClaw, Open Interpreter, OpenHands는 local tool/runtime/substrate 관점에서 강하다. 하지만 사용자가 원하는 것은 “도구가 실행됨”이 아니라 “내 의도대로 안전하게 진행됨”이다.
+제3자 비교 제품인 OpenClaw, Open Interpreter, OpenHands는 local tool/runtime 관점에서 강하다. 하지만 사용자가 원하는 것은 “도구가 실행됨”이 아니라 “내 의도대로 안전하게 진행됨”이다.
 
 GPAO-T 원리:
 
@@ -192,19 +195,19 @@ GPAO-T화:
 - replay로 효과 확인
 - approval gate 후에만 live behavior로 승격
 
-### Pillar 6. Runtime / Substrate
+### Pillar 6. Owned Runtime / Execution Infrastructure
 
 GPAO-T는 실제 로컬 PC에서 작동해야 한다.
 
 흡수:
-- OpenClaw gateway/service/plugin/channel substrate
+- third-party OpenClaw gateway/service/plugin/channel patterns as comparison and compatibility references
 - OpenHands local/remote/cloud backend separation
 - Open Interpreter local session/config/computer-use layer
 
 GPAO-T화:
-- live OpenClaw plus pure OpenClaw lab source are the active Runtime / Substrate Lab
-- live OpenClaw는 최종 제품이 아니라 흡수 대상
-- live replacement 전에는 prompt-path packet, controlled smoke, rollback evidence 필요
+- GPAO-T owns the active local runtime and execution infrastructure
+- third-party OpenClaw compatibility runtime is a migration-only reference, not the product
+- compatibility replacement 전에는 prompt-path packet, controlled smoke, rollback evidence 필요
 
 ## 7. First Real GPAO-T OS Flow Draft
 
@@ -253,7 +256,7 @@ GPAO-T live/system/workspace prompt footprint narrowing must reduce runtime nois
 - 거대한 도구/스킬 카탈로그
 - 오래된 프로젝트 맥락 raw dump
 - developer-only configuration noise
-- OpenClaw product identity leakage
+- third-party OpenClaw product identity leakage
 - 실행과 승인 경계가 섞인 문구
 
 남겨야 할 것:
@@ -287,7 +290,7 @@ Tool / product
 
 우선순위:
 
-1. Codex / Claude Code / OpenClaw three-way UX anatomy
+1. Codex / Claude Code / third-party OpenClaw comparison UX anatomy
 2. OpenHands / Open Interpreter / AutoGPT local-runtime anatomy
 3. Khoj / Letta / MemoryOS memory-context anatomy
 4. LangGraph / CrewAI / AutoGen orchestration anatomy
@@ -298,10 +301,10 @@ Tool / product
 GPAO-T의 첫 제품 방향은 다음으로 수렴한다.
 
 ```text
-GPAO-T is a local-first personal AI operating system that combines:
+GPAO-T is an independent, local-first Growth Personal AI Operating System that owns its runtime, state, policy, and user surface while learning from:
 - Codex-like work rhythm
 - Claude-Code-like agentic task continuity
-- OpenClaw/OpenHands/OpenInterpreter-like local runtime substrate
+- third-party comparison-derived local runtime patterns from OpenClaw/OpenHands/OpenInterpreter
 - Khoj/Letta-like personal memory and statefulness
 - LangGraph/CrewAI-like controlled orchestration
 - GPAO/T-cell-owned context admission, authority, replay, and self-growth.

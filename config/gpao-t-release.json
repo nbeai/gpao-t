@@ -1,0 +1,10 @@
+{
+  "schema": "gpao_t.release_contract.v1",
+  "productId": "gpao-t",
+  "productName": "nBeAI. GPAO-T",
+  "version": "0.1.0",
+  "distributionChannel": "internal-production",
+  "intendedAudience": "internal",
+  "publicRelease": false,
+  "externalDistributionExecuted": false
+}

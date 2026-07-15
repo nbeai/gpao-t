@@ -55,6 +55,22 @@ const FAMILIES = [
     rollback: "backup_folder_restore",
   },
   {
+    id: "runtime_identity_prompt",
+    label: "GPAO-T runtime identity prompt",
+    tools: ["tools/apply-live-gpao-t-runtime-identity-prompt-patch.mjs"],
+    evidenceDirs: ["docs/03-verification/evidence/live-runtime-identity-prompt-patch"],
+    readback: ["fresh live chat trajectory prompt identity", "npm run seal:identity"],
+    rollback: "backup_folder_restore",
+  },
+  {
+    id: "replay_evaluator",
+    label: "GPAO-T replay evaluator",
+    tools: ["tools/apply-live-gpao-t-replay-evaluator-patch.mjs"],
+    evidenceDirs: ["docs/03-verification/evidence/live-replay-evaluator-patch"],
+    readback: ["fresh live replay evaluation explicit marker signal", "npm test"],
+    rollback: "backup_folder_restore",
+  },
+  {
     id: "runtime_repair",
     label: "GPAO-T live runtime repair",
     tools: [
@@ -104,6 +120,15 @@ const FAMILIES = [
     rollback: "backup_manifest_restore",
   },
 ];
+
+const OUTBOUND_BOUNDARY = {
+  id: "outbound_boundary",
+  label: "GPAO-T inherited outbound boundary",
+  tools: ["tools/apply-live-gpao-t-outbound-boundary-patch.mjs"],
+  evidenceDirs: ["docs/03-verification/evidence/live-outbound-boundary"],
+  readback: ["npm run check:outbound-boundary"],
+  rollback: "content_addressed_backup_restore",
+};
 
 function readArg(name, fallback = "") {
   const index = process.argv.indexOf(name);
@@ -214,6 +239,18 @@ export async function auditLivePatchReproducibility({ repoRoot = REPO_ROOT } = {
   }, {});
   const blocked = families.filter((family) => family.status === "blocked");
   const review = families.filter((family) => family.status === "review");
+  const outboundTools = [];
+  for (const tool of OUTBOUND_BOUNDARY.tools) outboundTools.push(await inspectTool(repoRoot, tool));
+  const outboundEvidence = [];
+  for (const dir of OUTBOUND_BOUNDARY.evidenceDirs) outboundEvidence.push(await inspectEvidence(repoRoot, dir));
+  const outboundStatus = familyStatus({ tools: outboundTools, evidence: outboundEvidence });
+  const outboundBoundary = {
+    ...OUTBOUND_BOUNDARY,
+    status: outboundStatus,
+    tools: outboundTools,
+    evidence: outboundEvidence,
+    findings: familyFindings({ status: outboundStatus, tools: outboundTools, evidence: outboundEvidence }),
+  };
   return {
     schema: "gpao_t.live_patch_reproducibility_audit.v0_1",
     generatedAt: new Date().toISOString(),
@@ -221,6 +258,7 @@ export async function auditLivePatchReproducibility({ repoRoot = REPO_ROOT } = {
     status: blocked.length ? "blocked" : review.length ? "review" : "ready",
     counts,
     families,
+    outboundBoundary,
     completionRule:
       "ready requires every live mutation family to have a source tool, token/dry-run gate, backup or rollback evidence, structured manifest or receipt, and readback command.",
   };

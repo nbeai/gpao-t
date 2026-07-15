@@ -25,7 +25,7 @@ field-test ledger
 
 Broader owner testing handoff는 다음 증거를 요구한다.
 
-- local package candidate readback
+- internal production package readback
 - public release readback snapshot
 - field-test repair completion evidence
 - sample/de-identified tester instruction
@@ -109,4 +109,3 @@ GET  /owner-ops/broader-owner-testing-handoff/verify
 실제 메시지를 보내도 된다.
 설치/업데이트/롤백을 실행해도 된다.
 ```
-

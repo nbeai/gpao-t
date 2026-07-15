@@ -4,6 +4,7 @@ import { dirname, join, resolve } from "node:path";
 
 const DEFAULT_WORKSPACE = process.env.GPAO_T_RUNTIME_WORKSPACE || join(homedir(), ".gpao-t", "workspace");
 const APPLY_TOKEN = "apply-gpao-t-welcome-settings";
+const PRODUCT_IDENTITY = "nBeAI. GPAO-T is an independent, local-first Growth Personal AI Operating System.";
 
 export function buildRuntimeWorkspaceWelcome({
   workspaceRoot = DEFAULT_WORKSPACE,
@@ -16,11 +17,12 @@ export function buildRuntimeWorkspaceWelcome({
     status: missingFiles.length ? "blocked" : "ready",
     generatedAt: now,
     product: "nBeAI. GPAO-T",
+    productIdentity: PRODUCT_IDENTITY,
     workspaceRoot,
     requiredFiles: files,
     missingFiles,
     welcomeMessage:
-      "안녕하세요. 저는 nBeAI. GPAO-T입니다. 지금은 당신과 함께 사용할 개인 AI 운영체제의 첫 설정을 하는 중입니다. 먼저 이름, 말투, 기억 방식, 자동화 경계를 정해볼게요.",
+      "안녕하세요. 저는 독립적인 로컬 우선 Growth Personal AI Operating System, nBeAI. GPAO-T입니다. 지금은 당신과 함께 사용할 개인 AI 운영체제의 첫 설정을 하는 중입니다. 먼저 이름, 말투, 기억 방식, 자동화 경계를 정해볼게요.",
     requiredQuestions: [
       { id: "userName", prompt: "What should I call you?", targetFile: "USER.md" },
       { id: "userAddress", prompt: "How should GPAO-T address you?", targetFile: "USER.md" },
@@ -92,6 +94,7 @@ export function buildRuntimeWorkspaceWelcomeDraft({
     preview: {
       identity: {
         product: "nBeAI. GPAO-T",
+        productIdentity: PRODUCT_IDENTITY,
         companionName: normalized.companionName || null,
         userAddress: normalized.userAddress || null,
       },
@@ -168,6 +171,9 @@ export function verifyRuntimeWorkspaceWelcome({
   const welcomeMd = readOptional(join(workspaceRoot, "WELCOME.md"));
 
   if (!identity.includes("nBeAI. GPAO-T")) findings.push("identity_product_missing");
+  if (!/independent, local-first Growth Personal AI Operating System/i.test(identity)) {
+    findings.push("identity_independent_product_contract_missing");
+  }
   if (!(user.includes("User Name") || (user.includes("**Name:**") && user.includes("**Preferred Address:**")))) {
     findings.push("user_contract_missing");
   }
@@ -249,9 +255,9 @@ function renderIdentity(answers) {
 - **Product Name:**
   nBeAI. GPAO-T
 - **Runtime Role:**
-  Local-first personal AI operating system companion
-- **Runtime Substrate:**
-  GPAO-T local runtime with absorbed gateway, channel, session, tool, and workspace capabilities
+  Independent, local-first Growth Personal AI Operating System
+- **Runtime Infrastructure:**
+  GPAO-T-owned local gateway, channel, session, tool, and workspace capabilities
 - **Companion Persona Name:**
   ${answers.companionName || "Unset until first-install personalization"}
 - **Default User Address:**
@@ -265,9 +271,9 @@ function renderIdentity(answers) {
 
 ## Identity Rule
 
-When there is a conflict between an inherited runtime default and GPAO-T identity, use GPAO-T identity for user-facing language.
+When there is a conflict between a third-party compatibility default and GPAO-T identity, use GPAO-T identity for user-facing language.
 
-Use inherited runtime source names only inside technical provenance or engineering audit contexts.
+Use third-party source names only inside explicit comparison, compatibility, migration, legal attribution, technical provenance, or engineering audit contexts.
 `;
 }
 
@@ -300,7 +306,7 @@ Use this tone:
 
 ${answers.tone}
 
-Your role is not to act like a generic chatbot. You help the user operate a local-first personal AI operating system with clarity, pacing, evidence, memory discipline, and approval boundaries.
+Your role is not to act like a generic chatbot. You help the user operate an independent, local-first Growth Personal AI Operating System with clarity, pacing, evidence, memory discipline, and approval boundaries.
 
 Never hide uncertainty, memory mutation, automation, or external action behind a friendly tone.
 `;
@@ -310,6 +316,8 @@ function renderMemory(answers) {
   return `# MEMORY.md - GPAO-T Curated Memory
 
 This file contains durable memory explicitly approved during welcome setup.
+
+${PRODUCT_IDENTITY}
 
 ## User-Approved Initial Memory
 
@@ -345,6 +353,7 @@ function renderWelcomeState(answers, now) {
     schema: "gpao_t.welcome_state.v0_1",
     completedAt: now,
     product: "nBeAI. GPAO-T",
+    productIdentity: PRODUCT_IDENTITY,
     companionName: answers.companionName,
     userName: answers.userName,
     userAddress: answers.userAddress,

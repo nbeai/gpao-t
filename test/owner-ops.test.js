@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
-import { existsSync, mkdtempSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdtempSync, mkdirSync, readFileSync, symlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { describe, it } from "node:test";
@@ -157,6 +157,9 @@ import {
   writeOwnerOpsTeamAlphaHandoffBundle,
   writeOwnerOpsLocalRecord,
 } from "../src/index.js";
+import {
+  createOwnerOpsLocalWriteApprovalReceipt,
+} from "../src/core/owner-ops-mcp-server.js";
 
 const CLI = fileURLToPath(new URL("../bin/gpao-t.js", import.meta.url));
 const MCP_CLI = fileURLToPath(new URL("../bin/gpao-t-owner-ops-mcp.js", import.meta.url));
@@ -564,6 +567,84 @@ describe("GPAO-T Owner Ops Pack", () => {
     assert.equal(gateway.body.status, "ready");
   });
 
+  it("requires a verifiable user-bound receipt and consumes it once for MCP local writes", () => {
+    const root = tempRoot();
+    const approvalSecret = "owner-ops-test-approval-secret-32-bytes-minimum";
+    const authenticatedUserId = "owner:test-user";
+    const now = "2026-07-14T00:00:00.000Z";
+    const writeArguments = {
+      workflowType: "review_reply",
+      inputText: "친절했어요.",
+      userDecision: "preview_accepted_for_local_record",
+    };
+    const booleanOnly = handleOwnerOpsMcpMessage({
+      jsonrpc: "2.0",
+      id: 10,
+      method: "tools/call",
+      params: {
+        name: "owner_ops.local_record_write",
+        arguments: { ...writeArguments, confirmLocalRecord: true },
+      },
+    }, { root, approvalSecret, authenticatedUserId, now });
+    const wrongUserReceipt = createOwnerOpsLocalWriteApprovalReceipt({
+      root,
+      userId: "owner:someone-else",
+      approvalSecret,
+      request: writeArguments,
+      issuedAt: now,
+      expiresAt: "2026-07-14T00:05:00.000Z",
+    });
+    const wrongUser = handleOwnerOpsMcpMessage({
+      jsonrpc: "2.0",
+      id: 11,
+      method: "tools/call",
+      params: {
+        name: "owner_ops.local_record_write",
+        arguments: { ...writeArguments, approvalReceipt: wrongUserReceipt },
+      },
+    }, { root, approvalSecret, authenticatedUserId, now });
+    const receipt = createOwnerOpsLocalWriteApprovalReceipt({
+      root,
+      userId: authenticatedUserId,
+      approvalSecret,
+      request: writeArguments,
+      issuedAt: now,
+      expiresAt: "2026-07-14T00:05:00.000Z",
+    });
+    const written = handleOwnerOpsMcpMessage({
+      jsonrpc: "2.0",
+      id: 12,
+      method: "tools/call",
+      params: {
+        name: "owner_ops.local_record_write",
+        arguments: { ...writeArguments, approvalReceipt: receipt },
+      },
+    }, { root, approvalSecret, authenticatedUserId, now });
+    const replayed = handleOwnerOpsMcpMessage({
+      jsonrpc: "2.0",
+      id: 13,
+      method: "tools/call",
+      params: {
+        name: "owner_ops.local_record_write",
+        arguments: { ...writeArguments, approvalReceipt: receipt },
+      },
+    }, { root, approvalSecret, authenticatedUserId, now });
+    const writtenPayload = JSON.parse(written.result.content[0].text);
+    const replayedPayload = JSON.parse(replayed.result.content[0].text);
+
+    assert.equal(booleanOnly.result.isError, true);
+    assert.match(booleanOnly.result.content[0].text, /approval_receipt_missing/);
+    assert.equal(wrongUser.result.isError, true);
+    assert.match(wrongUser.result.content[0].text, /approval_user_mismatch/);
+    assert.equal(written.result.isError, false);
+    assert.equal(writtenPayload.status, "written_local_only");
+    assert.equal(writtenPayload.approvalReceipt.userId, authenticatedUserId);
+    assert.equal(writtenPayload.approvalReceipt.verified, true);
+    assert.equal(replayed.result.isError, true);
+    assert.equal(replayedPayload.reason, "approval_receipt_already_consumed");
+    assert.equal(readOwnerOpsRecords({ root }).length, 1);
+  });
+
   it("exposes MCP server descriptor through the main CLI", () => {
     const cliServer = JSON.parse(execFileSync(process.execPath, [CLI, "owner-ops", "mcp-server"], {
       cwd: ROOT,
@@ -662,6 +743,26 @@ describe("GPAO-T Owner Ops Pack", () => {
     assert.equal(preview.status, "metadata_only");
     assert.equal(preview.reason, "xlsx_xls_binary_parser_not_enabled_in_v0_1");
     assert.equal(preview.blockedActions.includes("binary_parse_without_parser"), true);
+  });
+
+  it("rejects Owner Ops intake root escapes and symlink escapes", () => {
+    const root = tempRoot();
+    const outsideRoot = tempRoot();
+    const outsideFile = join(outsideRoot, "outside.txt");
+    writeFileSync(outsideFile, "outside data\n", "utf8");
+    symlinkSync(outsideFile, join(root, "linked-file.txt"));
+    symlinkSync(outsideRoot, join(root, "linked-folder"));
+
+    const outside = previewOwnerOpsLocalFileIntake({ root, filePath: outsideFile });
+    const linkedFile = previewOwnerOpsLocalFileIntake({ root, filePath: "linked-file.txt" });
+    const linkedFolder = previewOwnerOpsFolderIntake({ root, folderPath: "linked-folder" });
+
+    assert.equal(outside.status, "blocked");
+    assert.equal(outside.reason, "path_outside_root");
+    assert.equal(linkedFile.status, "blocked");
+    assert.equal(linkedFile.reason, "symlink_escape");
+    assert.equal(linkedFolder.status, "blocked");
+    assert.equal(linkedFolder.reason, "symlink_escape");
   });
 
   it("exposes read-only intake surfaces through CLI, Gateway, and MCP", () => {
@@ -857,7 +958,7 @@ describe("GPAO-T Owner Ops Pack", () => {
       root: tempRoot(),
     });
 
-    assert.equal(cliGuide.schema, "gpao_t.owner_ops_team_alpha_guide.v0_1");
+    assert.equal(cliGuide.schema, "gpao_t.owner_ops_internal_acceptance_guide.v0_1");
     assert.equal(cliCopy.schema, "gpao_t.owner_ops_owner_facing_ux_copy.v0_1");
     assert.equal(cliCheck.status, "ready");
     assert.equal(gatewayGuide.status, 200);
@@ -946,7 +1047,7 @@ describe("GPAO-T Owner Ops Pack", () => {
     assert.equal(cliMatrix.schema, "gpao_t.owner_ops_host_integration_matrix.v0_1");
     assert.equal(cliMatrix.hosts.length, 3);
     assert.equal(cliMatrixCheck.status, "ready");
-    assert.equal(cliForm.schema, "gpao_t.owner_ops_alpha_feedback_form.v0_1");
+    assert.equal(cliForm.schema, "gpao_t.owner_ops_internal_acceptance_feedback_form.v0_1");
     assert.equal(cliCheck.status, "ready");
     assert.equal(gatewayGuide.status, 200);
     assert.equal(gatewayMatrix.status, 200);
@@ -1006,7 +1107,7 @@ describe("GPAO-T Owner Ops Pack", () => {
     });
 
     assert.equal(cliKit.schema, "gpao_t.owner_ops_sample_data_kit.v0_1");
-    assert.equal(cliGuide.schema, "gpao_t.owner_ops_first_owner_beta_guide.v0_1");
+    assert.equal(cliGuide.schema, "gpao_t.owner_ops_owner_acceptance_guide.v0_1");
     assert.equal(cliCheck.status, "ready");
     assert.equal(gatewayKit.status, 200);
     assert.equal(gatewayGuide.status, 200);
@@ -1665,7 +1766,7 @@ describe("GPAO-T Owner Ops Pack", () => {
     const check = verifyOwnerOpsLocalPackageCandidateReadback({ root });
 
     assert.equal(missing.status, "missing");
-    assert.equal(missing.findings.includes("local_package_candidate_files_missing"), true);
+    assert.equal(missing.findings.includes("internal_production_package_files_missing"), true);
     assert.equal(written.status, "written_local_only");
     assert.equal(readback.status, "ready");
     assert.equal(readback.bundleSha256, written.bundleSha256);
@@ -1717,7 +1818,7 @@ describe("GPAO-T Owner Ops Pack", () => {
     });
 
     assert.equal(cliWritten.status, "written_local_only");
-    assert.equal(cliReadback.schema, "gpao_t.owner_ops_local_package_candidate_readback.v0_1");
+    assert.equal(cliReadback.schema, "gpao_t.owner_ops_internal_production_package_readback.v0_1");
     assert.equal(cliReadback.status, "ready");
     assert.equal(cliCheck.status, "ready");
     assert.equal(gatewayReadback.status, 200);
@@ -1745,7 +1846,7 @@ describe("GPAO-T Owner Ops Pack", () => {
     assert.equal(evidence.prePublicRepairBacklog.lanes.includes("package_review"), true);
     assert.equal(evidence.prePublicRepairCompletionEvidence.status, "ready");
     assert.equal(evidence.prePublicRepairCompletionEvidence.allItemsLocallyVerified, true);
-    assert.equal(evidence.localPackageCandidate.status, "ready");
+    assert.equal(evidence.internalProductionPackage.status, "ready");
     assert.equal(evidence.authorityBoundary.publicReleaseAllowed, false);
     assert.equal(evidence.authorityBoundary.signingExecuted, false);
     assert.equal(evidence.installUpdateRollbackReadiness.canInstallNow, false);
@@ -2089,7 +2190,7 @@ describe("GPAO-T Owner Ops Pack", () => {
 
     assert.equal(evidence.schema, "gpao_t.owner_ops_signed_package_evidence.v0_1");
     assert.equal(evidence.status, "ready");
-    assert.equal(evidence.signedPackageState, "unsigned_local_candidate");
+    assert.equal(evidence.signedPackageState, "unsigned_internal_production_package");
     assert.equal(evidence.authorityBoundary.signingExecuted, false);
     assert.equal(evidence.authorityBoundary.signedArtifactWritten, false);
     assert.equal(evidence.authorityBoundary.publicReleaseAllowed, false);
@@ -2161,7 +2262,7 @@ describe("GPAO-T Owner Ops Pack", () => {
     });
 
     assert.equal(cliEvidence.status, "ready");
-    assert.equal(cliEvidence.signedPackageState, "unsigned_local_candidate");
+    assert.equal(cliEvidence.signedPackageState, "unsigned_internal_production_package");
     assert.equal(cliWrite.status, "written_local_only");
     assert.equal(cliCheck.status, "ready");
     assert.equal(gatewayEvidence.status, 200);
@@ -3140,7 +3241,7 @@ describe("GPAO-T Owner Ops Pack", () => {
     assert.equal(gatewayCheck.body.status, "ready");
   });
 
-  it("builds a team alpha handoff bundle from the verified local package candidate", () => {
+  it("builds an internal acceptance handoff from the verified internal production package", () => {
     const root = tempRoot();
     populateDistributionRoot(root);
     writeOwnerOpsLocalPackageCandidate({
@@ -3152,9 +3253,9 @@ describe("GPAO-T Owner Ops Pack", () => {
     const write = writeOwnerOpsTeamAlphaHandoffBundle({ root });
     const check = verifyOwnerOpsTeamAlphaHandoffBundle({ root });
 
-    assert.equal(bundle.schema, "gpao_t.owner_ops_team_alpha_handoff_bundle.v0_1");
+    assert.equal(bundle.schema, "gpao_t.owner_ops_internal_acceptance_handoff_bundle.v0_1");
     assert.equal(bundle.status, "ready");
-    assert.equal(bundle.packageCandidate.status, "ready");
+    assert.equal(bundle.internalProductionPackage.status, "ready");
     assert.equal(bundle.handoffOrder.length >= 6, true);
     assert.equal(bundle.handoffOrder.some((item) => item.id === "host_integration_matrix"), true);
     assert.equal(bundle.hostIntegration.checkedStatus, "ready");
@@ -3163,7 +3264,7 @@ describe("GPAO-T Owner Ops Pack", () => {
     assert.equal(bundle.blockedActions.includes("customer_message_send"), true);
     assert.equal(bundle.authorityBoundary.publicUploadExecuted, false);
     assert.equal(write.status, "written_local_only");
-    assert.equal(existsSync(join(root, ".gpao-t/packages/OWNER-OPS-TEAM-ALPHA-HANDOFF-BUNDLE.md")), true);
+    assert.equal(existsSync(join(root, ".gpao-t/packages/OWNER-OPS-INTERNAL-ACCEPTANCE-HANDOFF-BUNDLE.md")), true);
     assert.equal(check.status, "ready");
     assert.equal(check.checkedSurfaces.includes("host integration matrix"), true);
     assert.equal(check.localBundleFilesPresent.markdown, true);
@@ -3247,21 +3348,21 @@ describe("GPAO-T Owner Ops Pack", () => {
     const write = writeOwnerOpsFirstOwnerBetaHandoffBundle({ root });
     const check = verifyOwnerOpsFirstOwnerBetaHandoffBundle({ root });
 
-    assert.equal(bundle.schema, "gpao_t.owner_ops_first_owner_beta_handoff_bundle.v0_1");
+    assert.equal(bundle.schema, "gpao_t.owner_ops_owner_acceptance_handoff_bundle.v0_1");
     assert.equal(bundle.status, "ready");
-    assert.equal(bundle.alphaPrerequisite.status, "ready");
+    assert.equal(bundle.internalAcceptancePrerequisite.status, "ready");
     assert.equal(bundle.hostPrerequisite.status, "ready");
     assert.deepEqual(bundle.hostPrerequisite.hosts.map((host) => host.id), ["codex", "openclaw", "claude_code"]);
     assert.equal(bundle.hostPrerequisite.hosts.every((host) => host.externalNetwork === false), true);
     assert.equal(bundle.hostPrerequisite.hosts.every((host) => host.credentialRequired === false), true);
     assert.equal(bundle.hostPrerequisite.hosts.every((host) => host.customerSendAllowed === false), true);
-    assert.equal(bundle.betaFlow.some((step) => step.id === "choose_test_host"), true);
+    assert.equal(bundle.acceptanceFlow.some((step) => step.id === "choose_test_host"), true);
     assert.equal(bundle.authorityBoundary.sampleOrDeidentifiedDataOnly, true);
     assert.equal(bundle.authorityBoundary.liveHostRegistrationExecuted, false);
     assert.equal(bundle.authorityBoundary.customerSendExecuted, false);
     assert.equal(bundle.stopConditions.some((condition) => condition.includes("개인정보")), true);
     assert.equal(write.status, "written_local_only");
-    assert.equal(existsSync(join(root, ".gpao-t/packages/OWNER-OPS-FIRST-OWNER-BETA-HANDOFF-BUNDLE.md")), true);
+    assert.equal(existsSync(join(root, ".gpao-t/packages/OWNER-OPS-OWNER-ACCEPTANCE-HANDOFF-BUNDLE.md")), true);
     assert.equal(check.status, "ready");
     assert.equal(check.checkedSurfaces.includes("host setup prerequisite"), true);
     assert.equal(check.hostCount, 3);
@@ -3353,7 +3454,7 @@ describe("GPAO-T Owner Ops Pack", () => {
     const write = writeOwnerOpsFirstOwnerBetaOperationalTestPackage({ root });
     const check = verifyOwnerOpsFirstOwnerBetaOperationalTestPackage({ root });
 
-    assert.equal(bundle.schema, "gpao_t.owner_ops_first_owner_beta_operational_test_package.v0_1");
+    assert.equal(bundle.schema, "gpao_t.owner_ops_owner_acceptance_operational_package.v0_1");
     assert.equal(bundle.status, "ready");
     assert.equal(bundle.hostSetup.status, "ready");
     assert.equal(bundle.hostSetup.allowedHosts.length, 3);
@@ -3364,9 +3465,9 @@ describe("GPAO-T Owner Ops Pack", () => {
     assert.equal(bundle.authorityBoundary.customerSendExecuted, false);
     assert.equal(bundle.authorityBoundary.externalNetworkExecuted, false);
     assert.equal(write.status, "written_local_only");
-    assert.equal(existsSync(join(root, ".gpao-t/packages/OWNER-OPS-FIRST-OWNER-BETA-OPERATIONAL-TEST-PACKAGE.md")), true);
+    assert.equal(existsSync(join(root, ".gpao-t/packages/OWNER-OPS-OWNER-ACCEPTANCE-OPERATIONAL-PACKAGE.md")), true);
     assert.equal(check.status, "ready");
-    assert.equal(check.checkedSurfaces.includes("test session packet"), true);
+    assert.equal(check.checkedSurfaces.includes("acceptance session packet"), true);
   });
 
   it("exposes first-owner beta operational test package through CLI and Gateway", () => {

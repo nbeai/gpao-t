@@ -3,9 +3,9 @@ import { readdir, readFile, stat, writeFile, mkdir } from "node:fs/promises";
 import { join, relative, extname, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
-const DEFAULT_LIVE_CONTROL_UI =
+export const DEFAULT_LIVE_CONTROL_UI =
   process.env.GPAO_T_LIVE_CONTROL_UI ||
-  "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui";
+  "/Users/jyp/.gpao-t/current/compatibility/gpao-t/dist/control-ui";
 
 const TEXT_EXTENSIONS = new Set([
   ".js",
@@ -121,13 +121,25 @@ async function collectFiles(root, base = root) {
   return files;
 }
 
-function classifyHit({ relPath, line, patternId, target }) {
+function classifyHit({ relPath, line, context, patternId, target, matchedText }) {
   if (target === "live-control-ui") {
-    if (relPath.includes("/assets/") && /OpenClaw mobile|Official OpenClaw|ClawHub|docs\.openclaw|openclaw doctor|openclaw models auth|openclaw dashboard/.test(line)) {
-      return "user_visible";
+    const isAsset = relPath.startsWith("assets/") || relPath.includes("/assets/");
+    if (isAsset && patternId === "openclaw_name" && matchedText === "openclaw") return "compat_internal";
+    if (isAsset && patternId === "clawhub_name" && matchedText === "clawhub") return "compat_internal";
+    if (
+      isAsset &&
+      patternId === "openclaw_name" &&
+      /OPENCLAW_INTERNAL_CONTEXT|OpenClaw runtime context|OpenClaw runtime event/.test(context)
+    ) {
+      return "compat_internal";
     }
+    if (isAsset) return "user_visible";
     if (COMPAT_INTERNAL_MARKERS.some((marker) => relPath.includes(marker))) return "compat_internal";
     return "review";
+  }
+
+  if (relPath === "docs/05-release/GPAO-T-NEXT-CHAT-WORK-ORDER-2026-07-14.md") {
+    return "technical_provenance";
   }
 
   if (USER_SURFACE_PATH_MARKERS.some((marker) => relPath.includes(marker))) {
@@ -152,15 +164,28 @@ async function scanFile({ file, repoRoot, target }) {
   lines.forEach((line, index) => {
     for (const item of FORBIDDEN_PATTERNS) {
       item.pattern.lastIndex = 0;
-      if (!item.pattern.test(line)) continue;
-      hits.push({
-        target,
-        path: relPath,
-        line: index + 1,
-        pattern: item.id,
-        classification: classifyHit({ relPath, line, patternId: item.id, target }),
-        text: line.trim().slice(0, 240),
-      });
+      for (const match of line.matchAll(item.pattern)) {
+        const column = (match.index ?? 0) + 1;
+        const contextStart = Math.max(0, column - 81);
+        const contextEnd = Math.min(line.length, column - 1 + match[0].length + 160);
+        const context = line.slice(contextStart, contextEnd).trim();
+        hits.push({
+          target,
+          path: relPath,
+          line: index + 1,
+          column,
+          pattern: item.id,
+          classification: classifyHit({
+            relPath,
+            line,
+            context,
+            patternId: item.id,
+            target,
+            matchedText: match[0],
+          }),
+          text: context,
+        });
+      }
     }
   });
   return hits;
@@ -184,7 +209,7 @@ async function scanLiveControlUi({ liveRoot }) {
   for (const file of files) {
     hits.push(...await scanFile({ file, repoRoot: liveRoot, target: "live-control-ui" }));
   }
-  return hits;
+  return { files, hits };
 }
 
 export async function auditGpaoTCompleteSeal({
@@ -193,19 +218,28 @@ export async function auditGpaoTCompleteSeal({
   includeLive = true,
 } = {}) {
   const repoHits = await scanRepo({ repoRoot });
-  const liveHits = includeLive ? await scanLiveControlUi({ liveRoot }) : [];
+  const liveScan = includeLive
+    ? await scanLiveControlUi({ liveRoot })
+    : { files: [], hits: [] };
+  const liveHits = liveScan.hits;
   const hits = [...repoHits, ...liveHits];
   const counts = hits.reduce((acc, hit) => {
     acc[hit.classification] = (acc[hit.classification] || 0) + 1;
     return acc;
   }, {});
   const userVisibleHits = hits.filter((hit) => hit.classification === "user_visible");
+  const liveRootReadable = !includeLive || liveScan.files.length > 0;
   return {
     schema: "gpao_t.complete_seal_audit.v1",
     generatedAt: new Date().toISOString(),
     repoRoot,
     liveRoot: includeLive ? liveRoot : null,
-    status: userVisibleHits.length ? "blocked" : "ready",
+    status: !liveRootReadable || userVisibleHits.length ? "blocked" : "ready",
+    liveRootReadable,
+    scannedLiveFileCount: liveScan.files.length,
+    auditErrors: liveRootReadable
+      ? []
+      : [{ id: "live_control_ui_missing", path: liveRoot }],
     counts,
     userVisibleHitCount: userVisibleHits.length,
     hitCount: hits.length,

@@ -48,3 +48,18 @@ test("standalone namespace patch preserves encoded legacy aliases in index html"
   assert.match(patched, /"workboard-page"/);
   assert.equal(/openclaw/i.test(patched), false);
 });
+
+test("standalone namespace patch keeps JavaScript identifiers syntax-safe", () => {
+  const source = `
+    const tools = [{ includeInOpenClawGroup: true }];
+    const selected = tools.filter((tool) => tool.includeInOpenClawGroup);
+    globalThis.openclawRuntimeState = selected;
+  `;
+
+  const patched = patchStandaloneNamespaceSource(source, { path: "assets/display.js" });
+
+  assert.match(patched, /includeInGpaoTGroup/);
+  assert.match(patched, /gpaoTRuntimeState/);
+  assert.doesNotMatch(patched, /includeInGPAO-TGroup/);
+  assert.doesNotThrow(() => new Function(patched));
+});

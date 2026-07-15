@@ -56,11 +56,15 @@ Status meanings:
 | --- | --- |
 | `ready` | Docker contract and runtime smoke passed |
 | `blocked_environment` | Docker CLI is missing on the current machine |
+| `blocked_daemon` | Docker CLI exists, but Docker Desktop/daemon is not running or reachable |
 | `blocked_contract` | required Docker files are missing |
 | `blocked_smoke` | Docker exists, but build/up/health smoke failed |
 
-On 2026-07-13, this Mac reports `blocked_environment` because Docker CLI is not
-installed. That is an environment blocker, not a completed Docker runtime pass.
+On 2026-07-14, this Mac has Docker CLI `29.6.1`, but the Docker daemon is not
+running or reachable. Therefore the current host state is `blocked_daemon`, not
+a completed Docker runtime pass. Start Docker Desktop/daemon before running the
+smoke runner; do not describe the Docker lane as verified until build, compose,
+health, persistence, restart, and cleanup evidence exists.
 
 ## Boundary
 

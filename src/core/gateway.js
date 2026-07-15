@@ -257,9 +257,9 @@ import {
   buildOwnerOpsHumanReviewApprovalPacket,
   buildOwnerOpsInstallUpdateRollbackProof,
   buildOwnerOpsNextOwnerTestingLoop,
-  buildOwnerOpsFinalLocalReleaseCandidateDecisionPacket,
-  buildOwnerOpsFinalCandidateOwnerDecisionLane,
-  buildOwnerOpsFinalCandidateNextActionPacket,
+  buildOwnerOpsProductionReadyDecisionPacket,
+  buildOwnerOpsInternalProductionOwnerDecision,
+  buildOwnerOpsInternalProductionNextAction,
   buildOwnerOpsPublicReleaseAuthorityGate,
   buildOwnerOpsPublicReleaseReadbackSnapshot,
   buildOwnerOpsApprovedSigningLane,
@@ -269,17 +269,17 @@ import {
   buildOwnerOpsSignedPackageEvidence,
   appendOwnerOpsDryRunApprovalRecord,
   appendOwnerOpsBroaderOwnerTestingResult,
-  appendOwnerOpsFinalCandidateOwnerDecisionRecord,
+  appendOwnerOpsInternalProductionOwnerDecisionRecord,
   appendOwnerOpsHumanReviewDecisionRecord,
   appendOwnerOpsMarketplaceUploadDecisionRecord,
   invokeOwnerOpsControlledDryRun,
   readOwnerOpsControlledDryRunInvocations,
   readOwnerOpsBroaderOwnerTestingResults,
   readOwnerOpsDryRunApprovalRecords,
-  readOwnerOpsFinalCandidateOwnerDecisionRecords,
+  readOwnerOpsInternalProductionOwnerDecisionRecords,
   readOwnerOpsHumanReviewDecisionRecords,
   readOwnerOpsMarketplaceUploadDecisionRecords,
-  readOwnerOpsLocalPackageCandidate,
+  readOwnerOpsInternalProductionPackage,
   writeOwnerOpsHumanReviewApprovalPacket,
   writeOwnerOpsBroaderOwnerTestingHandoff,
   writeOwnerOpsBroaderOwnerTestingRepairCompletionEvidence,
@@ -289,9 +289,9 @@ import {
   writeOwnerOpsDryRunApprovalRecordDesign,
   writeOwnerOpsDryRunResultReviewHandoff,
   writeOwnerOpsDryRunExecutorProof,
-  writeOwnerOpsLocalPackageCandidate,
+  writeOwnerOpsInternalProductionPackage,
   writeOwnerOpsNextOwnerTestingLoop,
-  writeOwnerOpsFinalLocalReleaseCandidateDecisionPacket,
+  writeOwnerOpsProductionReadyDecisionPacket,
   writeOwnerOpsReleaseReadinessEvidence,
   writeOwnerOpsSignedPackageEvidence,
   verifyOwnerOpsArchiveChecksumDryRun,
@@ -314,28 +314,28 @@ import {
   verifyOwnerOpsApprovedSigningLane,
   verifyOwnerOpsMarketplaceUploadApprovalGate,
   verifyOwnerOpsMarketplaceUploadDecisionLane,
-  verifyOwnerOpsLocalPackageCandidateReadback,
-  verifyOwnerOpsLocalPackageCandidateWriter,
+  verifyOwnerOpsInternalProductionPackageReadback,
+  verifyOwnerOpsInternalProductionPackageWriter,
   verifyOwnerOpsNextOwnerTestingLoop,
-  verifyOwnerOpsFinalLocalReleaseCandidateDecisionPacket,
-  verifyOwnerOpsFinalCandidateOwnerDecisionLane,
-  verifyOwnerOpsFinalCandidateNextActionPacket,
+  verifyOwnerOpsProductionReadyDecisionPacket,
+  verifyOwnerOpsInternalProductionOwnerDecision,
+  verifyOwnerOpsInternalProductionNextAction,
   verifyOwnerOpsReleaseReadinessEvidence,
   verifyOwnerOpsSignedPackageEvidence,
 } from "./owner-ops-distribution.js";
 import {
   buildOwnerOpsProductionCompletionAudit,
   buildOwnerOpsProductAxisReadinessMatrix,
-  buildOwnerOpsSupervisedTestingReadinessPacket,
+  buildOwnerOpsInternalProductionReadiness,
   verifyOwnerOpsProductionCompletionAudit,
   verifyOwnerOpsProductAxisReadinessMatrix,
-  verifyOwnerOpsSupervisedTestingReadinessPacket,
+  verifyOwnerOpsInternalProductionReadiness,
 } from "./owner-ops-product-readiness.js";
 import {
-  buildStages5To8Completion,
-  verifyStages5To8Completion,
-  verifyTeamAlphaPackage,
-  writeTeamAlphaPackage,
+  buildProductionCompletion,
+  verifyProductionCompletion,
+  verifyInternalProductionPackage,
+  writeInternalProductionPackage,
 } from "./production-completion.js";
 import { captureMemoryEntry, readMemoryWiki, readTCellCandidates, resolveContextMesh } from "./memory-wiki.js";
 import {
@@ -403,6 +403,11 @@ import {
   inspectProviderAuthStores,
   verifyProviderAuthHeart,
 } from "./provider-auth-heart.js";
+import {
+  buildModelConnectionSettingsState,
+  renderModelConnectionSettingsHtml,
+  verifyModelConnectionSettingsState,
+} from "./model-connection-settings.js";
 import {
   buildMemoryContextHeart,
   verifyMemoryContextHeart,
@@ -659,19 +664,19 @@ export function handleGatewayRequest({ method = "GET", path = "/", body = {}, ro
     };
   }
 
-  if (normalizedMethod === "GET" && path === "/owner-ops/supervised-testing-readiness") {
+  if (normalizedMethod === "GET" && ["/owner-ops/internal-production-readiness", "/owner-ops/supervised-testing-readiness"].includes(path)) {
     return {
       schema: "gpao_t.gateway_response.v0_1",
       status: 200,
-      body: buildOwnerOpsSupervisedTestingReadinessPacket({ root }),
+      body: buildOwnerOpsInternalProductionReadiness({ root }),
     };
   }
 
-  if (normalizedMethod === "GET" && path === "/owner-ops/supervised-testing-readiness/verify") {
+  if (normalizedMethod === "GET" && ["/owner-ops/internal-production-readiness/verify", "/owner-ops/supervised-testing-readiness/verify"].includes(path)) {
     return {
       schema: "gpao_t.gateway_response.v0_1",
       status: 200,
-      body: verifyOwnerOpsSupervisedTestingReadinessPacket({ root }),
+      body: verifyOwnerOpsInternalProductionReadiness({ root }),
     };
   }
 
@@ -1538,41 +1543,41 @@ export function handleGatewayRequest({ method = "GET", path = "/", body = {}, ro
     };
   }
 
-  if (normalizedMethod === "POST" && path === "/owner-ops/local-package-candidate") {
+  if (normalizedMethod === "POST" && ["/owner-ops/internal-production-package", "/owner-ops/local-package-candidate"].includes(path)) {
     return {
       schema: "gpao_t.gateway_response.v0_1",
       status: 200,
-      body: writeOwnerOpsLocalPackageCandidate({
+      body: writeOwnerOpsInternalProductionPackage({
         root,
         confirmationToken: body.confirmationToken,
       }),
     };
   }
 
-  if (normalizedMethod === "GET" && path === "/owner-ops/local-package-candidate/verify") {
+  if (normalizedMethod === "GET" && ["/owner-ops/internal-production-package/verify", "/owner-ops/local-package-candidate/verify"].includes(path)) {
     return {
       schema: "gpao_t.gateway_response.v0_1",
       status: 200,
-      body: verifyOwnerOpsLocalPackageCandidateWriter({ root }),
+      body: verifyOwnerOpsInternalProductionPackageWriter({ root }),
     };
   }
 
-  if (normalizedMethod === "GET" && path === "/owner-ops/local-package-candidate/readback") {
+  if (normalizedMethod === "GET" && ["/owner-ops/internal-production-package/readback", "/owner-ops/local-package-candidate/readback"].includes(path)) {
     return {
       schema: "gpao_t.gateway_response.v0_1",
       status: 200,
-      body: readOwnerOpsLocalPackageCandidate({
+      body: readOwnerOpsInternalProductionPackage({
         root,
         archiveName: body.archiveName,
       }),
     };
   }
 
-  if (normalizedMethod === "GET" && path === "/owner-ops/local-package-candidate/readback/verify") {
+  if (normalizedMethod === "GET" && ["/owner-ops/internal-production-package/readback/verify", "/owner-ops/local-package-candidate/readback/verify"].includes(path)) {
     return {
       schema: "gpao_t.gateway_response.v0_1",
       status: 200,
-      body: verifyOwnerOpsLocalPackageCandidateReadback({
+      body: verifyOwnerOpsInternalProductionPackageReadback({
         root,
         archiveName: body.archiveName,
       }),
@@ -1918,46 +1923,46 @@ export function handleGatewayRequest({ method = "GET", path = "/", body = {}, ro
     };
   }
 
-  if (normalizedMethod === "GET" && path === "/owner-ops/final-local-release-candidate") {
+  if (normalizedMethod === "GET" && ["/owner-ops/production-ready", "/owner-ops/final-local-release-candidate"].includes(path)) {
     return {
       schema: "gpao_t.gateway_response.v0_1",
       status: 200,
-      body: buildOwnerOpsFinalLocalReleaseCandidateDecisionPacket({ root }),
+      body: buildOwnerOpsProductionReadyDecisionPacket({ root }),
     };
   }
 
-  if (normalizedMethod === "POST" && path === "/owner-ops/final-local-release-candidate") {
+  if (normalizedMethod === "POST" && ["/owner-ops/production-ready", "/owner-ops/final-local-release-candidate"].includes(path)) {
     return {
       schema: "gpao_t.gateway_response.v0_1",
       status: 200,
-      body: writeOwnerOpsFinalLocalReleaseCandidateDecisionPacket({ root }),
+      body: writeOwnerOpsProductionReadyDecisionPacket({ root }),
     };
   }
 
-  if (normalizedMethod === "GET" && path === "/owner-ops/final-local-release-candidate/verify") {
+  if (normalizedMethod === "GET" && ["/owner-ops/production-ready/verify", "/owner-ops/final-local-release-candidate/verify"].includes(path)) {
     return {
       schema: "gpao_t.gateway_response.v0_1",
       status: 200,
-      body: verifyOwnerOpsFinalLocalReleaseCandidateDecisionPacket({ root }),
+      body: verifyOwnerOpsProductionReadyDecisionPacket({ root }),
     };
   }
 
-  if (normalizedMethod === "GET" && path === "/owner-ops/final-candidate-owner-decision-lane") {
+  if (normalizedMethod === "GET" && ["/owner-ops/internal-production-owner-decision", "/owner-ops/final-candidate-owner-decision-lane"].includes(path)) {
     return {
       schema: "gpao_t.gateway_response.v0_1",
       status: 200,
-      body: buildOwnerOpsFinalCandidateOwnerDecisionLane({
+      body: buildOwnerOpsInternalProductionOwnerDecision({
         root,
         decision: body.decision || "continue_supervised_testing",
       }),
     };
   }
 
-  if (normalizedMethod === "POST" && path === "/owner-ops/final-candidate-owner-decision-records") {
+  if (normalizedMethod === "POST" && ["/owner-ops/internal-production-owner-decision/records", "/owner-ops/final-candidate-owner-decision-records"].includes(path)) {
     return {
       schema: "gpao_t.gateway_response.v0_1",
       status: 200,
-      body: appendOwnerOpsFinalCandidateOwnerDecisionRecord({
+      body: appendOwnerOpsInternalProductionOwnerDecisionRecord({
         root,
         decision: body.decision || "continue_supervised_testing",
         approvalToken: body.approvalToken,
@@ -1965,38 +1970,38 @@ export function handleGatewayRequest({ method = "GET", path = "/", body = {}, ro
     };
   }
 
-  if (normalizedMethod === "GET" && path === "/owner-ops/final-candidate-owner-decision-records") {
+  if (normalizedMethod === "GET" && ["/owner-ops/internal-production-owner-decision/records", "/owner-ops/final-candidate-owner-decision-records"].includes(path)) {
     return {
       schema: "gpao_t.gateway_response.v0_1",
       status: 200,
-      body: readOwnerOpsFinalCandidateOwnerDecisionRecords({ root }),
+      body: readOwnerOpsInternalProductionOwnerDecisionRecords({ root }),
     };
   }
 
-  if (normalizedMethod === "GET" && path === "/owner-ops/final-candidate-owner-decision-lane/verify") {
+  if (normalizedMethod === "GET" && ["/owner-ops/internal-production-owner-decision/verify", "/owner-ops/final-candidate-owner-decision-lane/verify"].includes(path)) {
     return {
       schema: "gpao_t.gateway_response.v0_1",
       status: 200,
-      body: verifyOwnerOpsFinalCandidateOwnerDecisionLane({ root }),
+      body: verifyOwnerOpsInternalProductionOwnerDecision({ root }),
     };
   }
 
-  if (normalizedMethod === "GET" && path === "/owner-ops/final-candidate-next-action") {
+  if (normalizedMethod === "GET" && ["/owner-ops/internal-production-next-action", "/owner-ops/final-candidate-next-action"].includes(path)) {
     return {
       schema: "gpao_t.gateway_response.v0_1",
       status: 200,
-      body: buildOwnerOpsFinalCandidateNextActionPacket({
+      body: buildOwnerOpsInternalProductionNextAction({
         root,
         decision: body.decision || "continue_supervised_testing",
       }),
     };
   }
 
-  if (normalizedMethod === "GET" && path === "/owner-ops/final-candidate-next-action/verify") {
+  if (normalizedMethod === "GET" && ["/owner-ops/internal-production-next-action/verify", "/owner-ops/final-candidate-next-action/verify"].includes(path)) {
     return {
       schema: "gpao_t.gateway_response.v0_1",
       status: 200,
-      body: verifyOwnerOpsFinalCandidateNextActionPacket({ root }),
+      body: verifyOwnerOpsInternalProductionNextAction({ root }),
     };
   }
 
@@ -2630,35 +2635,35 @@ export function handleGatewayRequest({ method = "GET", path = "/", body = {}, ro
     };
   }
 
-  if (normalizedMethod === "GET" && path === "/production/stages-5-8") {
+  if (normalizedMethod === "GET" && ["/production/completion", "/production/stages-5-8"].includes(path)) {
     return {
       schema: "gpao_t.gateway_response.v0_1",
       status: 200,
-      body: buildStages5To8Completion({ root }),
+      body: buildProductionCompletion({ root }),
     };
   }
 
-  if (normalizedMethod === "GET" && path === "/production/stages-5-8/verify") {
+  if (normalizedMethod === "GET" && ["/production/completion/verify", "/production/stages-5-8/verify"].includes(path)) {
     return {
       schema: "gpao_t.gateway_response.v0_1",
       status: 200,
-      body: verifyStages5To8Completion({ root }),
+      body: verifyProductionCompletion({ root }),
     };
   }
 
-  if (normalizedMethod === "POST" && path === "/production/team-alpha-package") {
+  if (normalizedMethod === "POST" && ["/production/internal-production-package", "/production/team-alpha-package"].includes(path)) {
     return {
       schema: "gpao_t.gateway_response.v0_1",
       status: 200,
-      body: writeTeamAlphaPackage({ root }),
+      body: writeInternalProductionPackage({ root }),
     };
   }
 
-  if (normalizedMethod === "GET" && path === "/production/team-alpha-package/verify") {
+  if (normalizedMethod === "GET" && ["/production/internal-production-package/verify", "/production/team-alpha-package/verify"].includes(path)) {
     return {
       schema: "gpao_t.gateway_response.v0_1",
       status: 200,
-      body: verifyTeamAlphaPackage({ root }),
+      body: verifyInternalProductionPackage({ root }),
     };
   }
 
@@ -2954,6 +2959,32 @@ export function handleGatewayRequest({ method = "GET", path = "/", body = {}, ro
       schema: "gpao_t.gateway_response.v0_1",
       status: 200,
       body: verifyProviderAuthHeart({ inventory, repairPlan }),
+    };
+  }
+
+  if (normalizedMethod === "GET" && (path === "/settings/model-connection" || path === "/model-connection")) {
+    const state = buildModelConnectionSettingsState();
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      headers: { "content-type": "text/html; charset=utf-8" },
+      body: renderModelConnectionSettingsHtml(state),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/settings/model-connection/state") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: buildModelConnectionSettingsState(),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/settings/model-connection/verify") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: verifyModelConnectionSettingsState(),
     };
   }
 

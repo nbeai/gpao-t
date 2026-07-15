@@ -242,6 +242,7 @@ export function runLiveTurnAbsorptionBridge({
       root,
       now,
       text: buildGrowthText({ message: text, answer }),
+      growthSignalText: text,
       request: `Live turn absorption post-answer growth: ${text}`,
       source: {
         kind: `live_turn_${sourceClassification.kind}`,
@@ -254,16 +255,6 @@ export function runLiveTurnAbsorptionBridge({
         ],
         label: "GPAO-T live turn replay evidence",
         rawExcerpt: answer.slice(0, 1000),
-      },
-      candidate: {
-        title: `Live turn learning for ${sessionKey}`,
-        operatingPrinciple:
-          "A live GPAO-T or Telegram turn may feed growth only through preflight trace, post-answer replay, and local review/apply gates.",
-        reason:
-          "This keeps live chat behavior unchanged while making the answer path visible to GPAO-T memory and self-growth controls.",
-        expectedBenefit:
-          "GPAO-T can improve from real turns without hidden durable memory writes, external sends, or compatibility-layer mutation.",
-        anchor: preflightRecord.packet?.activeTarget?.id || "live-turn-absorption",
       },
     });
     progressEvents.push(appendConversationProgressEvent({

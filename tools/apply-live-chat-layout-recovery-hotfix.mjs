@@ -1,25 +1,20 @@
 #!/usr/bin/env node
-import fs from "node:fs";
-import path from "node:path";
+import { createHash } from "node:crypto";
+import { chmod, copyFile, mkdir, readFile, writeFile } from "node:fs/promises";
+import { homedir } from "node:os";
+import { basename, dirname, join, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 
-const liveRoot =
-  "/Users/jyp/.local/node-v24.14.0-darwin-arm64/lib/node_modules/openclaw/dist/control-ui";
-const indexPath = path.join(liveRoot, "index.html");
-const marker = "gpao_t_chat_layout_recovery_v0_1";
-const evidenceDir = path.join(
-  process.cwd(),
-  "docs/03-verification/evidence/live-chat-layout-recovery-hotfix",
-);
+const REPO_ROOT = fileURLToPath(new URL("..", import.meta.url));
+const DEFAULT_RUNTIME_ROOT = process.env.GPAO_T_RUNTIME_ROOT
+  || join(homedir(), ".gpao-t", "current", "compatibility", "gpao-t");
+const DEFAULT_EVIDENCE_ROOT = process.env.GPAO_T_HOTFIX_EVIDENCE_ROOT
+  || join(REPO_ROOT, "docs", "03-verification", "evidence", "live-chat-layout-recovery-hotfix");
+const APPLY_TOKEN = "apply-gpao-t-chat-layout-recovery-hotfix";
+const MARKER = "gpao_t_chat_layout_recovery_v0_1";
 
-const css = `
-    <style data-gpao-t="${marker}">
-      /*
-       * GPAO-T live visual recovery.
-       * The chat route can collapse to the intrinsic composer height when the
-       * custom-element chain is treated as inline/block content. Keep the user
-       * chat surface stretched to the app viewport so the composer stays at the
-       * bottom and messages are not clipped at the top.
-       */
+const RECOVERY_CSS = `
+    <style data-gpao-t="${MARKER}">
       html,
       body,
       openclaw-app,
@@ -77,65 +72,138 @@ const css = `
       }
     </style>`;
 
-function writeEvidence(payload) {
-  fs.mkdirSync(evidenceDir, { recursive: true });
-  const stamp = new Date().toISOString().replaceAll(":", "-");
-  const evidencePath = path.join(evidenceDir, `${stamp}.json`);
-  fs.writeFileSync(evidencePath, `${JSON.stringify(payload, null, 2)}\n`);
-  return evidencePath;
+export function patchChatLayoutRecoveryHtml(source) {
+  const html = String(source || "");
+  const existingPattern = new RegExp(`\\s*<style data-gpao-t="${MARKER}">[\\s\\S]*?<\\/style>`);
+  if (html.includes(`data-gpao-t="${MARKER}"`)) {
+    const matches = html.match(new RegExp(existingPattern.source, "g")) || [];
+    if (matches.length !== 1) {
+      throw new Error(`chat layout recovery expected one existing marker, found ${matches.length}`);
+    }
+    return html.replace(existingPattern, RECOVERY_CSS);
+  }
+  const headClosings = html.match(/<\/head>/gi) || [];
+  if (headClosings.length !== 1) {
+    throw new Error(`chat layout recovery expected one </head>, found ${headClosings.length}`);
+  }
+  return html.replace(/<\/head>/i, `${RECOVERY_CSS}\n  </head>`);
 }
 
-const html = fs.readFileSync(indexPath, "utf8");
-fs.mkdirSync(evidenceDir, { recursive: true });
-const backupPath = path.join(evidenceDir, `index.before.${Date.now()}.html`);
-fs.writeFileSync(backupPath, html);
+export async function runChatLayoutRecoveryHotfix({
+  runtimeRoot = DEFAULT_RUNTIME_ROOT,
+  evidenceRoot = DEFAULT_EVIDENCE_ROOT,
+  apply = false,
+  approvalToken = "",
+  now = new Date(),
+} = {}) {
+  if (apply && approvalToken !== APPLY_TOKEN) {
+    throw new Error(`apply requires --approval-token ${APPLY_TOKEN}`);
+  }
+  const ownedRuntimeRoot = assertGpaoTRuntimeRoot(runtimeRoot);
+  const indexPath = join(ownedRuntimeRoot, "dist", "control-ui", "index.html");
+  const before = await readFile(indexPath, "utf8");
+  const after = patchChatLayoutRecoveryHtml(before);
+  const changed = before !== after;
+  const baseReport = {
+    schema: "gpao_t.live_chat_layout_recovery_hotfix.v2",
+    generatedAt: now.toISOString(),
+    mode: apply ? "apply" : "dry-run",
+    status: apply ? "pending_apply" : "review",
+    sourceRoot: REPO_ROOT,
+    runtimeRoot: ownedRuntimeRoot,
+    indexPath,
+    marker: MARKER,
+    changed,
+    beforeSha256: sha256(before),
+    afterSha256: sha256(after),
+    approvalGate: apply ? "verified" : "not_requested",
+    writesPerformed: false,
+  };
+  if (!apply) return baseReport;
 
-let next = html;
-if (next.includes(`data-gpao-t="${marker}"`)) {
-  next = next.replace(
-    new RegExp(`\\n?\\s*<style data-gpao-t="${marker}">[\\s\\S]*?<\\/style>`),
-    css,
-  );
-} else if (next.includes("</head>")) {
-  next = next.replace("</head>", `${css}\n  </head>`);
-} else {
-  throw new Error("Could not locate </head> in live GPAO-T index.html");
-}
+  const evidenceDir = join(resolve(evidenceRoot), stamp(now));
+  const backupPath = changed ? join(evidenceDir, "index.html.before") : null;
+  const receiptPath = join(evidenceDir, "receipt.json");
+  await mkdir(evidenceDir, { recursive: true });
+  if (changed) {
+    await copyFile(indexPath, backupPath);
+    await chmod(backupPath, 0o600);
+  }
 
-if (next === html) {
-  throw new Error("GPAO-T chat layout recovery hotfix produced no change");
-}
-
-fs.writeFileSync(indexPath, next);
-
-const evidencePath = writeEvidence({
-  schema: "gpao_t.live_chat_layout_recovery_hotfix.v1",
-  generatedAt: new Date().toISOString(),
-  status: "applied",
-  liveRoot,
-  indexPath,
-  backupPath,
-  marker,
-  scope: ["live control-ui index.html style injection"],
-  reason:
-    "Safari visual recovery showed the chat route collapsed to 152px inside an 833px viewport, floating the composer near the top and clipping the main chat surface.",
-  expectedVisualContract: {
-    routeHeight: "openclaw-router-outlet/openclaw-chat-page/openclaw-chat-pane fill the chat content height",
-    composerPosition: "message composer remains in the lower portion of the viewport",
-    clipping: "top messages and route header are not hidden by collapsed parent height",
-  },
-});
-
-console.log(
-  JSON.stringify(
-    {
-      status: "applied",
-      indexPath,
+  try {
+    if (changed) await writeFile(indexPath, after);
+    const readback = await readFile(indexPath, "utf8");
+    if (sha256(readback) !== baseReport.afterSha256) {
+      throw new Error("chat layout recovery readback hash mismatch");
+    }
+    const receipt = {
+      ...baseReport,
+      status: changed ? "applied" : "already_applied",
+      writesPerformed: changed,
       backupPath,
-      evidencePath,
-      marker,
-    },
-    null,
-    2,
-  ),
-);
+      backupSha256: backupPath ? sha256(await readFile(backupPath, "utf8")) : null,
+      readbackSha256: sha256(readback),
+      receiptPath,
+      rollback: backupPath ? `restore ${backupPath} to ${indexPath}` : "not_required_no_change",
+      expectedVisualContract: {
+        routeHeight: "chat route custom elements fill the content height",
+        composerPosition: "message composer remains in the lower viewport",
+        clipping: "route header and top messages remain visible",
+      },
+    };
+    await writeFile(receiptPath, `${JSON.stringify(receipt, null, 2)}\n`, { mode: 0o600 });
+    return receipt;
+  } catch (error) {
+    if (changed && backupPath) await copyFile(backupPath, indexPath);
+    throw error;
+  }
+}
+
+function assertGpaoTRuntimeRoot(runtimeRoot) {
+  const resolvedRoot = resolve(runtimeRoot || DEFAULT_RUNTIME_ROOT);
+  if (basename(resolvedRoot) !== "gpao-t" || basename(dirname(resolvedRoot)) !== "compatibility") {
+    throw new Error("runtime root must use the GPAO-T compatibility/gpao-t layout");
+  }
+  if (resolvedRoot.includes(`${join("node_modules", "openclaw")}`)) {
+    throw new Error("globally installed OpenClaw runtime targets are forbidden");
+  }
+  return resolvedRoot;
+}
+
+function parseArgs(argv) {
+  const args = {
+    runtimeRoot: DEFAULT_RUNTIME_ROOT,
+    evidenceRoot: DEFAULT_EVIDENCE_ROOT,
+    apply: false,
+    approvalToken: "",
+  };
+  for (let index = 0; index < argv.length; index += 1) {
+    const arg = argv[index];
+    if (arg === "--runtime-root") args.runtimeRoot = argv[++index] || "";
+    else if (arg === "--evidence-root") args.evidenceRoot = argv[++index] || "";
+    else if (arg === "--apply") args.apply = true;
+    else if (arg === "--approval-token") args.approvalToken = argv[++index] || "";
+    else throw new Error(`unknown argument: ${arg}`);
+  }
+  return args;
+}
+
+function sha256(value) {
+  return createHash("sha256").update(value).digest("hex");
+}
+
+function stamp(date) {
+  return date.toISOString().replace(/[:.]/g, "-");
+}
+
+async function main() {
+  const report = await runChatLayoutRecoveryHotfix(parseArgs(process.argv.slice(2)));
+  console.log(JSON.stringify(report, null, 2));
+}
+
+if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  main().catch((error) => {
+    console.error(error instanceof Error ? error.message : String(error));
+    process.exitCode = 1;
+  });
+}

@@ -1,8 +1,9 @@
 {
   "schema": "gpao_t.runtime_workspace_manifest.v0_1",
   "product": "nBeAI. GPAO-T",
-  "packVersion": "0.1.0",
-  "createdAt": "2026-07-12T00:00:00.000Z",
+  "productIdentity": "nBeAI. GPAO-T is an independent, local-first Growth Personal AI Operating System.",
+  "packVersion": "0.2.0",
+  "createdAt": "2026-07-14T00:00:00.000Z",
   "targetWorkspace": "configured_at_install_time",
   "sourcePack": "runtime-workspace/gpao-t",
   "files": [
@@ -19,11 +20,11 @@
   "authority": {
     "externalSend": "blocked",
     "durableMemoryPromotion": "review_required",
-    "inheritedRuntimeMemoryWrite": "blocked",
+    "compatibilityMemoryWrite": "blocked",
     "sessionMetaWrite": "blocked",
     "liveOsRuleMutation": "blocked",
     "heartbeatActivation": "explicit_user_enable_required"
   },
-  "runtimeSubstrateRelation": "inherited_runtime_substrate",
+  "runtimeRelation": "independent_gpao_t_runtime_with_bounded_third_party_compatibility",
   "gpaoTRole": "user_facing_runtime_identity_and_operating_contract"
 }

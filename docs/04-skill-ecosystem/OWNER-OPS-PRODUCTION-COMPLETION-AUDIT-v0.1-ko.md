@@ -36,7 +36,7 @@ GET /owner-ops/production-completion-audit/verify
 - local field-validation evidence axis
 - pre-public distribution evidence axis
 - release authority readback axis
-- owner final-candidate decision record
+- owner internal-production decision record
 - external public release / marketplace publication
 
 ## Meaning
@@ -45,7 +45,7 @@ GET /owner-ops/production-completion-audit/verify
 
 `finalObjectiveComplete: false`는 아직 다음이 완료되지 않았다는 뜻이다.
 
-- owner final-candidate decision
+- owner internal-production decision
 - supervised team/owner testing
 - public release approval
 - marketplace publication
@@ -81,7 +81,7 @@ externalDistributionAllowed
 
 owner가 다음 결정을 내릴 때는 이 audit을 보고 다음 중 하나로 간다.
 
-- final-candidate owner decision 기록
+- internal-production owner decision 기록
 - supervised testing 계속
 - revision 요청
 - 별도 public-release review 준비

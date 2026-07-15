@@ -38,6 +38,13 @@ export const LAUNCH_AGENT_LABEL = "ai.nbeai.gpao-t";
 export const DEFAULT_PORT = 18799;
 const LAUNCH_AGENT_UNLOAD_TIMEOUT_MS = 45_000;
 const LAUNCH_AGENT_LOAD_TIMEOUT_MS = 30_000;
+const INSTALL_INFRASTRUCTURE_CHECK_IDS = [
+  "current-link",
+  "distribution",
+  "launch-agent-plist",
+  "launch-agent-loaded",
+  "health",
+];
 
 const MANIFEST_NAME = "GPAO-T-DISTRIBUTION-MANIFEST.json";
 const SECRET_SEGMENTS = new Set([
@@ -261,9 +268,17 @@ export async function verifyDistribution(releaseRoot, { full = true } = {}) {
   if (!releaseStat.isDirectory() || releaseStat.isSymbolicLink()) throw new Error(`Distribution root must be a real directory: ${releaseRoot}`);
   const manifestPath = join(releaseRoot, MANIFEST_NAME);
   const manifest = JSON.parse(await fs.readFile(manifestPath, "utf8"));
-  if (manifest.schema !== "gpao_t.distribution_manifest.v1") throw new Error(`Unsupported distribution manifest schema: ${manifest.schema}`);
+  if (manifest.schema !== "gpao_t.distribution_manifest.v2") throw new Error(`Unsupported distribution manifest schema: ${manifest.schema}`);
   if (!Array.isArray(manifest.files) || manifest.fileCount !== manifest.files.length) throw new Error("Distribution manifest fileCount does not match files[]");
-  if (!manifest.version || !/^[0-9A-Za-z][0-9A-Za-z._-]*$/.test(manifest.version) || manifest.entrypoint !== "gpao-t.mjs") {
+  if (
+    manifest.productId !== "gpao-t" ||
+    manifest.version !== "0.1.0" ||
+    manifest.distributionChannel !== "internal-production" ||
+    manifest.intendedAudience !== "internal" ||
+    manifest.publicRelease !== false ||
+    manifest.externalDistributionExecuted !== false ||
+    manifest.entrypoint !== "gpao-t.mjs"
+  ) {
     throw new Error("Distribution manifest has an unsafe version or is missing the GPAO-T entrypoint");
   }
 
@@ -341,6 +356,22 @@ async function commandStatus(command, args, options = {}) {
   }
 }
 
+function redactDiagnosticText(text) {
+  return String(text ?? "")
+    .replace(/(authorization\s*:\s*bearer\s+)[^\s]+/giu, "$1[redacted]")
+    .replace(/((?:token|password|secret|api[_-]?key)\s*[:=]\s*["']?)[^\s,"'}\]]+/giu, "$1[redacted]")
+    .trim();
+}
+
+async function readDiagnosticTail(pathname, maxLines = 16) {
+  try {
+    const raw = await fs.readFile(pathname, "utf8");
+    return redactDiagnosticText(raw.split(/\r?\n/u).filter(Boolean).slice(-maxLines).join("\n")).slice(-4000);
+  } catch {
+    return "";
+  }
+}
+
 export function sanitizePostMigrationRepairOutput(text) {
   if (!text) return "";
   return text
@@ -385,6 +416,28 @@ async function runPostMigrationRepair(plan, options) {
     cwd: plan.paths.currentLink,
     timeout: 310_000,
     maxBuffer: 10 * 1024 * 1024,
+  });
+  return {
+    ...result,
+    stdout: sanitizePostMigrationRepairOutput(result.stdout),
+    stderr: sanitizePostMigrationRepairOutput(result.stderr),
+  };
+}
+
+async function runInstalledPluginDoctor(plan) {
+  const entrypoint = join(plan.paths.currentLink, "gpao-t.mjs");
+  const result = await commandStatus(process.execPath, [entrypoint, "plugins", "doctor"], {
+    env: {
+      ...process.env,
+      GPAO_T_STATE_DIR: plan.paths.stateHome,
+      GPAO_T_CONFIG_PATH: plan.paths.configPath,
+      OPENCLAW_HIDE_BANNER: "1",
+      OPENCLAW_DISABLE_PERSISTED_PLUGIN_REGISTRY: "1",
+      OPENCLAW_DISABLE_PLUGIN_REGISTRY_MIGRATION: "1",
+    },
+    cwd: plan.paths.currentLink,
+    timeout: 60_000,
+    maxBuffer: 5 * 1024 * 1024,
   });
   return {
     ...result,
@@ -481,6 +534,7 @@ function pathsFor(options, version) {
   const releaseName = `gpao-t-${version}`;
   return {
     stateHome,
+    runtimeNodePath: join(stateHome, "runtime", "node"),
     releasesRoot: join(stateHome, "releases"),
     releaseDest: join(stateHome, "releases", releaseName),
     currentLink: join(stateHome, "current"),
@@ -522,6 +576,9 @@ async function readConfigSafely(configPath) {
 
 export async function createInstallPlan(options) {
   const release = await verifyDistribution(resolve(options.release), { full: options.fullVerify !== false });
+  const nodePath = resolve(options.nodePath ?? process.execPath);
+  const nodeProbe = await commandStatus(nodePath, ["--version"]);
+  const nodeVersion = nodeProbe.ok ? nodeProbe.stdout : null;
   const profile = options.migrationProfile ?? "standard";
   const selected = migrationItems(profile);
   const paths = pathsFor(options, release.version);
@@ -553,11 +610,12 @@ export async function createInstallPlan(options) {
   const blockers = [];
   const warnings = [];
   if (process.platform !== "darwin") blockers.push("macOS is required");
-  if (!nodeVersionSupported(process.version)) blockers.push(`Node ${process.version} does not satisfy the distribution engine requirement`);
+  if (!nodeProbe.ok || !nodeVersion) blockers.push(`Node executable is not runnable: ${nodePath}`);
+  else if (!nodeVersionSupported(nodeVersion)) blockers.push(`Node ${nodeVersion} does not satisfy the distribution engine requirement`);
   try {
-    await fs.access(process.execPath, constants.X_OK);
+    await fs.access(nodePath, constants.X_OK);
   } catch {
-    blockers.push(`Node executable is not runnable: ${process.execPath}`);
+    blockers.push(`Node executable is not runnable: ${nodePath}`);
   }
   const stateOpenclawOverlap = pathInside(options.openclawHome, paths.stateHome, true) || pathInside(paths.stateHome, options.openclawHome, true);
   const stateReleaseOverlap = pathInside(paths.stateHome, options.release, true) || pathInside(options.release, paths.stateHome, true);
@@ -566,7 +624,7 @@ export async function createInstallPlan(options) {
   if (stateReleaseOverlap) blockers.push("GPAO-T state home and distribution source must not overlap");
   try {
     await renderLaunchAgent(options.plistTemplate, {
-      nodePath: process.execPath,
+      nodePath: paths.runtimeNodePath,
       currentPath: paths.currentLink,
       stateHome: paths.stateHome,
       configPath: paths.configPath,
@@ -576,17 +634,18 @@ export async function createInstallPlan(options) {
   } catch (error) {
     blockers.push(`LaunchAgent template is not usable: ${error.message}`);
   }
-  if (sourceConfig.exists && !sourceConfig.valid) blockers.push(`OpenClaw config cannot be migrated: ${sourceConfig.reason}`);
-  if (sourceConfig.exists && sourceConfig.valid && !sourceConfig.secure) blockers.push(`OpenClaw config mode ${sourceConfig.mode} is too permissive; secret permissions would not be safe`);
-  if (selectedUnsafeSymlinks.length > 0) blockers.push(`Selected OpenClaw state has symlinks escaping its root: ${selectedUnsafeSymlinks.slice(0, 5).join(", ")}`);
-  if (insecureSecretModes.length > 0) blockers.push(`Secret-bearing OpenClaw paths are not owner-only: ${insecureSecretModes.slice(0, 5).map((item) => `${item.path} (${item.mode})`).join(", ")}`);
+  if (profile !== "none" && sourceConfig.exists && !sourceConfig.valid) blockers.push(`Compatibility source config cannot be migrated: ${sourceConfig.reason}`);
+  if (profile !== "none" && sourceConfig.exists && sourceConfig.valid && !sourceConfig.secure) blockers.push(`Compatibility source config mode ${sourceConfig.mode} is too permissive; secret permissions would not be safe`);
+  if (profile !== "none" && selectedUnsafeSymlinks.length > 0) blockers.push(`Selected compatibility state has symlinks escaping its root: ${selectedUnsafeSymlinks.slice(0, 5).join(", ")}`);
+  if (profile !== "none" && insecureSecretModes.length > 0) blockers.push(`Secret-bearing compatibility paths are not owner-only: ${insecureSecretModes.slice(0, 5).map((item) => `${item.path} (${item.mode})`).join(", ")}`);
   if (portBusy && !gpaoServiceLoaded) blockers.push(`Port ${options.port} is already listening`);
   if (freeBytes !== null && freeBytes < estimatedBytes) blockers.push(`Insufficient free space: need approximately ${estimatedBytes} bytes, have ${freeBytes}`);
-  if (oldServiceLoaded && openclawExists) warnings.push("ai.openclaw.gateway is loaded; apply will refuse until the source service is stopped for a consistent backup");
+  if (profile !== "none" && oldServiceLoaded && openclawExists) warnings.push("The compatibility source service is loaded; apply will refuse until it is stopped for a consistent backup");
   if (!openclawExists) warnings.push("No ~/.openclaw source exists; backup and migration will be skipped");
   if (gpaoServiceLoaded) warnings.push(`${LAUNCH_AGENT_LABEL} is already loaded; apply will refuse until it is stopped for a consistent destination snapshot`);
 
   const managedTargets = [
+    paths.runtimeNodePath,
     paths.releaseDest,
     paths.currentLink,
     paths.configPath,
@@ -608,11 +667,12 @@ export async function createInstallPlan(options) {
       integrity: release.integrity,
     },
     stateHome: paths.stateHome,
-    launchAgent: { label: LAUNCH_AGENT_LABEL, path: paths.launchAgentPath, node: process.execPath, port: options.port },
+    launchAgent: { label: LAUNCH_AGENT_LABEL, path: paths.launchAgentPath, node: paths.runtimeNodePath, sourceNode: nodePath, port: options.port },
+    runtime: { nodeSource: nodePath, nodeVersion, nodeDestination: paths.runtimeNodePath },
     openclaw: {
       source: resolve(options.openclawHome),
       exists: openclawExists,
-      backup: openclawExists ? "full-tree-before-migration" : "skipped",
+      backup: openclawExists && profile !== "none" ? "full-tree-before-migration" : "skipped",
       profile,
       selected: selectedExisting,
       excludedTopLevel: openclawExists
@@ -637,7 +697,7 @@ export async function createInstallPlan(options) {
     capacity: { estimatedBytes, freeBytes },
     blockers,
     applyOnlyBlockers: [
-      ...(oldServiceLoaded && openclawExists ? ["Stop ai.openclaw.gateway before apply so SQLite/WAL and secret backup are consistent"] : []),
+      ...(profile !== "none" && oldServiceLoaded && openclawExists ? ["Stop the compatibility source service before apply so SQLite/WAL and secret backup are consistent"] : []),
       ...(gpaoServiceLoaded ? [`Stop ${LAUNCH_AGENT_LABEL} before apply so the destination snapshot is consistent`] : []),
     ],
     warnings,
@@ -688,31 +748,131 @@ export function migrateConfigObject(value, oldRoot, newRoot, oldPort, newPort) {
   return value;
 }
 
-function normalizeGpaoTPluginConfig(config) {
+export function normalizeGpaoTPluginConfig(config) {
   const next = config && typeof config === "object" ? config : {};
   next.plugins = next.plugins && typeof next.plugins === "object" ? next.plugins : {};
   next.plugins.entries = next.plugins.entries && typeof next.plugins.entries === "object"
     ? next.plugins.entries
     : {};
-  next.plugins.entries.codex = { enabled: false };
+  next.plugins.entries.codex = {
+    ...(next.plugins.entries.codex && typeof next.plugins.entries.codex === "object"
+      ? next.plugins.entries.codex
+      : {}),
+    enabled: true,
+  };
   const allow = Array.isArray(next.plugins.allow) ? next.plugins.allow : [];
-  next.plugins.allow = [...new Set([...allow.filter((pluginId) => pluginId !== "codex"), "telegram", "openai", "memory-core"])];
+  next.plugins.allow = [...new Set([...allow.filter((id) => id !== "telegram"), "codex", "openai", "memory-core"])];
+  if (next.plugins.entries.telegram && typeof next.plugins.entries.telegram === "object") {
+    next.plugins.entries.telegram = { ...next.plugins.entries.telegram, enabled: false };
+  }
   return next;
+}
+
+export function normalizeGpaoTRuntimeConfig(config) {
+  const next = normalizeGpaoTPluginConfig(config);
+  next.agents = next.agents && typeof next.agents === "object" ? next.agents : {};
+  next.agents.defaults = next.agents.defaults && typeof next.agents.defaults === "object"
+    ? next.agents.defaults
+    : {};
+  const memorySearch = next.agents.defaults.memorySearch && typeof next.agents.defaults.memorySearch === "object"
+    ? next.agents.defaults.memorySearch
+    : {};
+  next.agents.defaults.memorySearch = memorySearch;
+  memorySearch.experimental = memorySearch.experimental && typeof memorySearch.experimental === "object"
+    ? memorySearch.experimental
+    : {};
+  memorySearch.experimental.sessionMemory = true;
+  const sources = Array.isArray(memorySearch.sources) ? memorySearch.sources : [];
+  memorySearch.sources = [...new Set([...sources, "memory", "sessions"])];
+
+  next.tools = next.tools && typeof next.tools === "object" ? next.tools : {};
+  const alsoAllow = Array.isArray(next.tools.alsoAllow) ? next.tools.alsoAllow : [];
+  next.tools.alsoAllow = [...new Set(alsoAllow.filter((id) => id !== "browser"))];
+  next.tools.sessions = next.tools.sessions && typeof next.tools.sessions === "object"
+    ? next.tools.sessions
+    : {};
+  next.tools.sessions.visibility = "agent";
+  return next;
+}
+
+export function disableInheritedExternalConnections(config) {
+  const next = config && typeof config === "object" ? config : {};
+  if (next.channels && typeof next.channels === "object") {
+    next.channels = Object.fromEntries(
+      Object.entries(next.channels).map(([id, value]) => [
+        id,
+        value && typeof value === "object" ? { ...value, enabled: false } : { enabled: false },
+      ]),
+    );
+  }
+  if (next.webhooks && typeof next.webhooks === "object") {
+    next.webhooks = { ...next.webhooks, enabled: false };
+  }
+  if (next.hooks && typeof next.hooks === "object") {
+    next.hooks = { ...next.hooks, enabled: false };
+  }
+  return normalizeGpaoTRuntimeConfig(next);
+}
+
+export function buildFreshRuntimeConfig({ stateHome, port }) {
+  const config = normalizeGpaoTRuntimeConfig({
+    agents: {
+      defaults: {
+        workspace: join(stateHome, "workspace"),
+      },
+    },
+    gateway: {
+      mode: "local",
+      bind: "loopback",
+      port,
+      auth: { mode: "token", token: randomBytes(32).toString("hex") },
+      controlUi: {
+        enabled: true,
+        allowedOrigins: [
+          `http://127.0.0.1:${port}`,
+          `http://localhost:${port}`,
+        ],
+      },
+      tailscale: { mode: "off", resetOnExit: false },
+    },
+    tools: {
+      profile: "coding",
+    },
+    plugins: {
+      entries: {
+        codex: { enabled: true },
+        openai: { enabled: true },
+        "memory-core": { enabled: true },
+      },
+      allow: ["codex", "openai", "memory-core"],
+    },
+  });
+  // The portable package does not bundle the optional Codex plugin. Keep the
+  // first boot self-contained; a detected plugin can be enabled later.
+  config.plugins.entries.codex = { enabled: false };
+  config.plugins.allow = config.plugins.allow.filter((id) => id !== "codex");
+  return config;
 }
 
 async function stageMigratedState(plan, stagingState, options) {
   await fs.mkdir(stagingState, { recursive: true, mode: 0o700 });
   const sourceConfig = join(options.openclawHome, "openclaw.json");
-  if (await pathExists(sourceConfig)) {
+  if (plan.openclaw.profile !== "none" && await pathExists(sourceConfig)) {
     const sourceStat = await fs.stat(sourceConfig);
     const config = JSON.parse(await fs.readFile(sourceConfig, "utf8"));
     const oldPort = Number(config?.gateway?.port) || 18789;
     const migrated = migrateConfigObject(config, resolve(options.openclawHome), plan.paths.stateHome, oldPort, options.port);
     migrated.gateway = migrated.gateway && typeof migrated.gateway === "object" ? migrated.gateway : {};
     migrated.gateway.port = options.port;
-    normalizeGpaoTPluginConfig(migrated);
+    disableInheritedExternalConnections(migrated);
     const configDestination = join(stagingState, "gpao-t.json");
     await writeJsonAtomic(configDestination, migrated, sourceStat.mode & 0o7777);
+  } else if (!(await pathExists(plan.paths.configPath))) {
+    await writeJsonAtomic(
+      join(stagingState, "gpao-t.json"),
+      buildFreshRuntimeConfig({ stateHome: plan.paths.stateHome, port: options.port }),
+      0o600,
+    );
   }
   for (const item of plan.openclaw.selected) {
     const source = join(options.openclawHome, item);
@@ -724,7 +884,7 @@ async function stageMigratedState(plan, stagingState, options) {
 }
 
 async function createOpenclawBackup(plan, options, operationId) {
-  if (!plan.openclaw.exists) return null;
+  if (!plan.openclaw.exists || plan.openclaw.profile === "none") return null;
   const finalDir = join(plan.paths.openclawBackupsRoot, operationId);
   const stagingDir = `${finalDir}.staging`;
   if (await pathExists(finalDir)) throw new Error(`OpenClaw backup already exists: ${finalDir}`);
@@ -861,7 +1021,7 @@ async function waitForLaunchAgentState(expectedLoaded, timeoutMs = 10000) {
   throw new Error(`launchctl did not ${state} ${LAUNCH_AGENT_LABEL} within ${timeoutMs}ms`);
 }
 
-async function waitForHealth(port, timeoutMs = 30000) {
+async function waitForHealth(port, timeoutMs = 30000, { logsDir = null, label = LAUNCH_AGENT_LABEL } = {}) {
   const deadline = Date.now() + timeoutMs;
   let lastError = "not attempted";
   while (Date.now() < deadline) {
@@ -874,7 +1034,20 @@ async function waitForHealth(port, timeoutMs = 30000) {
     }
     await new Promise((resolveWait) => setTimeout(resolveWait, 500));
   }
-  throw new Error(`GPAO-T health check timed out: ${lastError}`);
+  const diagnostics = [];
+  if (logsDir) {
+    for (const filename of ["gateway.error.log", "gateway.log"]) {
+      const tail = await readDiagnosticTail(join(logsDir, filename));
+      if (tail) diagnostics.push(`${filename}:\n${tail}`);
+    }
+  }
+  const uid = process.getuid?.();
+  if (uid !== undefined) {
+    const service = await commandStatus("launchctl", ["print", `gui/${uid}/${label}`]);
+    if (service.ok) diagnostics.push("LaunchAgent 상태: 로드됨");
+    else diagnostics.push(`LaunchAgent 상태: ${redactDiagnosticText(service.stderr || service.stdout || "확인할 수 없음")}`);
+  }
+  throw new Error(`GPAO-T health check timed out: ${lastError}${diagnostics.length > 0 ? `\n${diagnostics.join("\n")}` : ""}`);
 }
 
 export async function applyInstall(plan, options) {
@@ -902,11 +1075,17 @@ export async function applyInstall(plan, options) {
     await verifyDistribution(stagedRelease, { full: true });
     const stagedState = join(stagingDir, "state");
     await stageMigratedState(plan, stagedState, options);
+    const stagedRuntimeNode = join(stagingDir, "runtime", "node");
+    await fs.mkdir(dirname(stagedRuntimeNode), { recursive: true, mode: 0o700 });
+    const nodeSource = resolve(options.nodePath ?? process.execPath);
+    await fs.copyFile(nodeSource, stagedRuntimeNode);
+    await fs.chmod(stagedRuntimeNode, 0o700);
     await fs.mkdir(plan.paths.releasesRoot, { recursive: true, mode: 0o700 });
     await fs.mkdir(plan.paths.logsDir, { recursive: true, mode: 0o700 });
     await fs.mkdir(plan.paths.receiptsRoot, { recursive: true, mode: 0o700 });
     await fs.mkdir(dirname(plan.paths.launchAgentPath), { recursive: true, mode: 0o755 });
     await replaceWithStaged(stagedRelease, plan.paths.releaseDest);
+    await replaceWithStaged(stagedRuntimeNode, plan.paths.runtimeNodePath);
     if (await pathExists(join(stagedState, "gpao-t.json"))) await replaceWithStaged(join(stagedState, "gpao-t.json"), plan.paths.configPath);
     for (const item of plan.openclaw.selected) {
       const staged = join(stagedState, item);
@@ -914,9 +1093,16 @@ export async function applyInstall(plan, options) {
     }
     await pointCurrentAtomically(plan.paths.currentLink, plan.paths.releaseDest);
     const postMigrationRepair = await runPostMigrationRepair(plan, options);
+    if (!postMigrationRepair.ok) {
+      throw new Error(`Post-migration runtime repair failed: ${postMigrationRepair.stderr || postMigrationRepair.stdout}`);
+    }
+    const pluginDoctor = await runInstalledPluginDoctor(plan);
+    if (!pluginDoctor.ok) {
+      throw new Error(`Post-migration plugin verification failed: ${pluginDoctor.stderr || pluginDoctor.stdout}`);
+    }
     let repairedPeerLinks = await repairGpaoPeerLinks(plan);
     const plist = await renderLaunchAgent(options.plistTemplate, {
-      nodePath: process.execPath,
+      nodePath: plan.paths.runtimeNodePath,
       currentPath: plan.paths.currentLink,
       stateHome: plan.paths.stateHome,
       configPath: plan.paths.configPath,
@@ -939,9 +1125,12 @@ export async function applyInstall(plan, options) {
       const postRestartPeerLinks = await waitForGpaoPeerLinkRepairs(plan, 5_000);
       repairedPeerLinks = [...new Set([...repairedPeerLinks, ...postRestartPeerLinks])];
     }
-    await waitForHealth(options.port);
+    await waitForHealth(options.port, 30_000, { logsDir: plan.paths.logsDir, label: LAUNCH_AGENT_LABEL });
     const health = await healthCheck({ ...options, fullVerify: true });
-    if (health.status !== "healthy") throw new Error(`Post-install health verification failed: ${JSON.stringify(health.checks)}`);
+    const installationReadiness = assessInstallReadiness(health);
+    if (!installationReadiness.ok) {
+      throw new Error(`Post-install infrastructure verification failed: ${JSON.stringify(installationReadiness)}`);
+    }
     const receipt = {
       schema: RECEIPT_SCHEMA,
       id: operationId,
@@ -955,13 +1144,24 @@ export async function applyInstall(plan, options) {
         stderr: postMigrationRepair.stderr,
         repairedPeerLinks,
       },
+      pluginDoctor: {
+        stdout: pluginDoctor.stdout,
+        stderr: pluginDoctor.stderr,
+      },
       release: plan.paths.releaseDest,
       launchAgent: LAUNCH_AGENT_LABEL,
       health,
+      installationReadiness,
     };
     const receiptPath = join(plan.paths.receiptsRoot, `${operationId}.json`);
     await writeJsonAtomic(receiptPath, receipt, 0o600);
-    return { status: "installed", receiptPath, receipt };
+    return {
+      status: "installed",
+      setupRequired: installationReadiness.status === "needs_provider_setup",
+      installationReadiness,
+      receiptPath,
+      receipt,
+    };
   } catch (error) {
     if (serviceStarted) await bootoutService().catch(() => {});
     if (snapshot) await restoreSnapshot(snapshot.path, snapshot.manifest).catch(() => {});
@@ -977,6 +1177,7 @@ function validateSnapshotManifest(manifest, snapshotPath, options) {
   const stateHome = resolve(options.stateHome);
   const launchAgentPath = join(resolve(options.launchAgentsDir), `${LAUNCH_AGENT_LABEL}.plist`);
   const exactStateTargets = new Set([
+    "runtime/node",
     "current",
     "gpao-t.json",
     ...MIGRATION_PROFILES.standard,
@@ -1149,15 +1350,63 @@ export async function healthCheck(options) {
   return { schema: `${INSTALL_SCHEMA}.health`, checkedAt: new Date().toISOString(), status: checks.every((check) => check.ok) ? "healthy" : "unhealthy", checks };
 }
 
+export function assessInstallReadiness(health) {
+  const checks = Array.isArray(health?.checks) ? health.checks : [];
+  const byId = new Map(checks.map((check) => [check.id, check]));
+  const missingInfrastructure = INSTALL_INFRASTRUCTURE_CHECK_IDS.filter((id) => !byId.has(id));
+  const failedInfrastructure = INSTALL_INFRASTRUCTURE_CHECK_IDS
+    .map((id) => byId.get(id))
+    .filter((check) => check && !check.ok);
+  const providerAuth = byId.get("provider-auth-heart") ?? null;
+  const doctorRecovery = byId.get("doctor-recovery-heart") ?? null;
+
+  if (missingInfrastructure.length > 0 || failedInfrastructure.length > 0) {
+    return {
+      status: "blocked",
+      ok: false,
+      providerSetupRequired: Boolean(providerAuth && !providerAuth.ok),
+      missingInfrastructure,
+      failedInfrastructure,
+      providerAuth,
+      doctorRecovery,
+      userVisibleState: providerAuth?.userVisibleState ?? doctorRecovery?.userVisibleStatus ?? null,
+    };
+  }
+
+  if (providerAuth && !providerAuth.ok) {
+    return {
+      status: "needs_provider_setup",
+      ok: true,
+      providerSetupRequired: true,
+      missingInfrastructure: [],
+      failedInfrastructure: [],
+      providerAuth,
+      doctorRecovery,
+      userVisibleState: providerAuth.userVisibleState ?? doctorRecovery?.userVisibleStatus ?? null,
+    };
+  }
+
+  return {
+    status: "ready",
+    ok: true,
+    providerSetupRequired: false,
+    missingInfrastructure: [],
+    failedInfrastructure: [],
+    providerAuth,
+    doctorRecovery,
+    userVisibleState: null,
+  };
+}
+
 export function defaultOptions({ scriptDir, workspaceRoot } = {}) {
   const root = workspaceRoot ?? resolve(scriptDir ?? process.cwd(), "..");
   return {
-    release: join(root, ".gpao-t", "releases", "gpao-t-0.1.0-test-team.1"),
+    release: join(root, ".gpao-t", "releases", "gpao-t-0.1.0"),
     stateHome: join(homedir(), ".gpao-t"),
     openclawHome: join(homedir(), ".openclaw"),
     launchAgentsDir: join(homedir(), "Library", "LaunchAgents"),
     plistTemplate: join(root, "installer", `${LAUNCH_AGENT_LABEL}.plist.template`),
-    migrationProfile: "standard",
+    migrationProfile: "none",
     port: DEFAULT_PORT,
     fullVerify: true,
     apply: false,
@@ -1187,7 +1436,7 @@ export async function verifySecretModes(root) {
   return findings;
 }
 
-export async function makeFixtureManifest(releaseRoot, version = "0.1.0-test-team.1") {
+export async function makeFixtureManifest(releaseRoot, version = "0.1.0") {
   const entries = await inventoryTree(releaseRoot, { hashFiles: true });
   const files = entries
     .filter((entry) => entry.path !== "." && entry.path !== MANIFEST_NAME && entry.kind !== "directory")
@@ -1196,9 +1445,14 @@ export async function makeFixtureManifest(releaseRoot, version = "0.1.0-test-tea
       : { path: entry.path, kind: "symlink", target: entry.target, sha256: entry.sha256 });
   const totalBytes = files.filter((entry) => entry.kind === "file").reduce((sum, entry) => sum + entry.size, 0);
   const manifest = {
-    schema: "gpao_t.distribution_manifest.v1",
+    schema: "gpao_t.distribution_manifest.v2",
+    productId: "gpao-t",
     product: "nBeAI. GPAO-T",
     version,
+    distributionChannel: "internal-production",
+    intendedAudience: "internal",
+    publicRelease: false,
+    externalDistributionExecuted: false,
     generatedAt: new Date().toISOString(),
     stateHome: "~/.gpao-t",
     entrypoint: "gpao-t.mjs",

@@ -19,21 +19,23 @@ It is not a raw transcript and not an unrestricted truth store. Every durable it
 
 - **Source:** GPAO-T product doctrine.
 - **Confidence:** high.
-- **Memory:** `nBeAI. GPAO-T` is a local-first self-growing personal AI operating system for ordinary users. It should absorb stable local runtime capabilities rather than remain a sidecar plugin.
+- **Memory:** `nBeAI. GPAO-T` is an independent, local-first Growth Personal AI Operating System for ordinary users. Its self-growth remains evidence-backed and approval-bounded, and GPAO-T owns its runtime identity, state, policy, and user surface.
 - **Invalid if:** a future approved product decision changes the product direction.
 
-### Runtime Substrate Relationship
+### Comparison Product Relationship
+
+OpenClaw reference class: third-party comparison and compatibility only.
 
 - **Source:** repeated user correction and project planning.
 - **Confidence:** high.
-- **Memory:** The inherited local runtime is material substrate to study, absorb, replace, and improve. The goal is not upstream-runtime improvement for its own sake.
-- **Invalid if:** the task is explicitly scoped as an upstream-only contribution.
+- **Memory:** OpenClaw is a separate comparison product and compatibility reference. Technical compatibility code may remain while it is needed, but it is not GPAO-T's identity, live state root, or current product owner.
+- **Invalid if:** a future approved architecture decision changes the compatibility boundary.
 
 ### Memory And Growth Boundary
 
 - **Source:** GPAO-T memory/replay/apply gate implementation and user direction.
 - **Confidence:** high.
-- **Memory:** GPAO-T may automatically create local source-linked memory and self-growth candidates, but durable memory promotion, inherited runtime memory writes, session metadata writes, external sends, and live OS rule mutation require separate gates.
+- **Memory:** GPAO-T may automatically create local source-linked memory and self-growth candidates, but durable memory promotion, compatibility runtime memory writes, session metadata writes, external sends, and live OS rule mutation require separate gates.
 - **Invalid if:** a future approved product decision changes the authority model with tests and rollback.
 
 ### Preferred Collaboration Template

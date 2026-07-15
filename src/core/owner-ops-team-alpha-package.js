@@ -1,42 +1,45 @@
 import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { buildOwnerOpsFirstOwnerBetaGuide, buildOwnerOpsSampleDataKit } from "./owner-ops-beta.js";
+import { buildOwnerOpsOwnerAcceptanceGuide, buildOwnerOpsSampleDataKit } from "./owner-ops-beta.js";
 import {
-  buildOwnerOpsAlphaFeedbackForm,
+  buildOwnerOpsInternalAcceptanceFeedbackForm,
   buildOwnerOpsHostIntegrationMatrix,
   buildOwnerOpsHostRegistrationGuide,
   verifyOwnerOpsHostIntegrationMatrix,
 } from "./owner-ops-alpha-handoff.js";
-import { buildOwnerOpsOwnerFacingUxCopy, buildOwnerOpsTeamAlphaGuide } from "./owner-ops-alpha.js";
-import { readOwnerOpsLocalPackageCandidate, verifyOwnerOpsLocalPackageCandidateReadback } from "./owner-ops-distribution.js";
+import { buildOwnerOpsInternalAcceptanceGuide, buildOwnerOpsOwnerFacingUxCopy } from "./owner-ops-alpha.js";
+import {
+  readOwnerOpsInternalProductionPackage,
+  verifyOwnerOpsInternalProductionPackageReadback,
+} from "./owner-ops-distribution.js";
 
-const TEAM_ALPHA_BUNDLE_NAME = "OWNER-OPS-TEAM-ALPHA-HANDOFF-BUNDLE";
-const FIRST_OWNER_BETA_BUNDLE_NAME = "OWNER-OPS-FIRST-OWNER-BETA-HANDOFF-BUNDLE";
-const FIRST_OWNER_BETA_OPERATIONAL_PACKAGE_NAME = "OWNER-OPS-FIRST-OWNER-BETA-OPERATIONAL-TEST-PACKAGE";
+const INTERNAL_ACCEPTANCE_BUNDLE_NAME = "OWNER-OPS-INTERNAL-ACCEPTANCE-HANDOFF-BUNDLE";
+const OWNER_ACCEPTANCE_BUNDLE_NAME = "OWNER-OPS-OWNER-ACCEPTANCE-HANDOFF-BUNDLE";
+const OWNER_ACCEPTANCE_OPERATIONAL_PACKAGE_NAME = "OWNER-OPS-OWNER-ACCEPTANCE-OPERATIONAL-PACKAGE";
 
-export function buildOwnerOpsTeamAlphaHandoffBundle({
+export function buildOwnerOpsInternalAcceptanceHandoffBundle({
   root = process.cwd(),
   archiveName,
   now = new Date().toISOString(),
 } = {}) {
-  const packageReadback = readOwnerOpsLocalPackageCandidate({ root, archiveName });
-  const packageCheck = verifyOwnerOpsLocalPackageCandidateReadback({ root, archiveName });
-  const teamGuide = buildOwnerOpsTeamAlphaGuide();
+  const packageReadback = readOwnerOpsInternalProductionPackage({ root, archiveName });
+  const packageCheck = verifyOwnerOpsInternalProductionPackageReadback({ root, archiveName });
+  const teamGuide = buildOwnerOpsInternalAcceptanceGuide();
   const hostGuide = buildOwnerOpsHostRegistrationGuide();
   const hostMatrix = buildOwnerOpsHostIntegrationMatrix();
   const hostMatrixCheck = verifyOwnerOpsHostIntegrationMatrix();
-  const feedbackForm = buildOwnerOpsAlphaFeedbackForm();
+  const feedbackForm = buildOwnerOpsInternalAcceptanceFeedbackForm();
   const sampleKit = buildOwnerOpsSampleDataKit();
   const ownerCopy = buildOwnerOpsOwnerFacingUxCopy();
-  const betaGuide = buildOwnerOpsFirstOwnerBetaGuide();
+  const ownerAcceptanceGuide = buildOwnerOpsOwnerAcceptanceGuide();
   const findings = [];
 
-  if (packageCheck.status !== "ready") findings.push("local_package_candidate_readback_not_ready");
-  if (teamGuide.status !== "ready") findings.push("team_alpha_guide_not_ready");
+  if (packageCheck.status !== "ready") findings.push("internal_production_package_readback_not_ready");
+  if (teamGuide.status !== "ready") findings.push("internal_acceptance_guide_not_ready");
   if (hostGuide.status !== "ready") findings.push("host_registration_guide_not_ready");
   if (hostMatrix.status !== "ready") findings.push("host_integration_matrix_not_ready");
   if (hostMatrixCheck.status !== "ready") findings.push("host_integration_matrix_check_not_ready");
-  if (feedbackForm.status !== "ready") findings.push("alpha_feedback_form_not_ready");
+  if (feedbackForm.status !== "ready") findings.push("internal_acceptance_feedback_form_not_ready");
   if (sampleKit.status !== "ready") findings.push("sample_data_kit_not_ready");
   if (ownerCopy.status !== "ready") findings.push("owner_facing_copy_not_ready");
   if (!teamGuide.blockedActions.includes("customer_message_send")) findings.push("customer_send_block_missing");
@@ -45,12 +48,12 @@ export function buildOwnerOpsTeamAlphaHandoffBundle({
   if (!hostMatrix.hosts.every((host) => host.customerSendAllowed === false)) findings.push("host_matrix_customer_send_not_blocked");
 
   return {
-    schema: "gpao_t.owner_ops_team_alpha_handoff_bundle.v0_1",
+    schema: "gpao_t.owner_ops_internal_acceptance_handoff_bundle.v0_1",
     status: findings.length ? "review" : "ready",
     generatedAt: now,
     packageId: "gpao-t-owner-ops",
     packageVersion: packageReadback.packageVersion || "0.1.0",
-    packageCandidate: {
+    internalProductionPackage: {
       status: packageReadback.status,
       archiveName: packageReadback.archiveName,
       packageId: packageReadback.packageId || "gpao-t-owner-ops",
@@ -63,15 +66,15 @@ export function buildOwnerOpsTeamAlphaHandoffBundle({
       {
         step: 1,
         id: "package_integrity",
-        label: "로컬 패키지 후보 무결성 확인",
-        command: "node bin/gpao-t.js owner-ops local-package-candidate-readback-check",
+        label: "내부 프로덕션 패키지 무결성 확인",
+        command: "node bin/gpao-t.js owner-ops internal-production-package-readback-check",
         expected: "status: ready, findings: []",
       },
       {
         step: 2,
-        id: "team_alpha_guide",
-        label: "팀원 alpha 안내 확인",
-        command: "node bin/gpao-t.js owner-ops team-alpha-guide",
+        id: "internal_acceptance_guide",
+        label: "내부 수용 안내 확인",
+        command: "node bin/gpao-t.js owner-ops internal-acceptance-guide",
         expected: "샘플/비식별 자료, 자동 전송 금지, happy path 확인",
       },
       {
@@ -99,7 +102,7 @@ export function buildOwnerOpsTeamAlphaHandoffBundle({
         step: 6,
         id: "feedback",
         label: "피드백 폼 작성",
-        command: "node bin/gpao-t.js owner-ops alpha-feedback-form",
+        command: "node bin/gpao-t.js owner-ops internal-acceptance-feedback-form",
         expected: "이해 쉬움, 실무 쓸모, 안심감, 설정 어려움 점수 수집",
       },
     ],
@@ -127,7 +130,7 @@ export function buildOwnerOpsTeamAlphaHandoffBundle({
       feedbackForm.schema,
       sampleKit.schema,
       ownerCopy.schema,
-      betaGuide.schema,
+      ownerAcceptanceGuide.schema,
       packageReadback.schema,
     ],
     testerRules: [
@@ -139,9 +142,9 @@ export function buildOwnerOpsTeamAlphaHandoffBundle({
     ],
     acceptanceSignals: [
       ...teamGuide.acceptanceSignals,
-      "local package candidate readback이 ready이며 findings가 없다.",
+      "internal production package readback이 ready이며 findings가 없다.",
       "Codex/OpenClaw/Claude Code host integration matrix가 ready다.",
-      "팀원이 호스트 등록 smoke의 목적을 이해한다.",
+      "내부 수용 검토자가 호스트 등록 smoke의 목적을 이해한다.",
       "피드백 폼에 critical blocker가 0개로 기록된다.",
     ],
     blockedActions: [
@@ -166,54 +169,54 @@ export function buildOwnerOpsTeamAlphaHandoffBundle({
     },
     findings,
     nextSafeAction: findings.length
-      ? "Fix team alpha handoff findings before sharing with internal testers."
-      : "Share this local-only handoff bundle with internal team alpha testers using sample/de-identified data only.",
+      ? "Fix internal acceptance handoff findings before sharing with internal reviewers."
+      : "Share this local-only handoff bundle with internal acceptance reviewers using sample/de-identified data only.",
   };
 }
 
-export function writeOwnerOpsTeamAlphaHandoffBundle({
+export function writeOwnerOpsInternalAcceptanceHandoffBundle({
   root = process.cwd(),
   archiveName,
   now = new Date().toISOString(),
 } = {}) {
-  const bundle = buildOwnerOpsTeamAlphaHandoffBundle({ root, archiveName, now });
+  const bundle = buildOwnerOpsInternalAcceptanceHandoffBundle({ root, archiveName, now });
   const outputDir = join(root, ".gpao-t", "packages");
   mkdirSync(outputDir, { recursive: true });
-  const jsonPath = join(outputDir, `${TEAM_ALPHA_BUNDLE_NAME}.json`);
-  const mdPath = join(outputDir, `${TEAM_ALPHA_BUNDLE_NAME}.md`);
+  const jsonPath = join(outputDir, `${INTERNAL_ACCEPTANCE_BUNDLE_NAME}.json`);
+  const mdPath = join(outputDir, `${INTERNAL_ACCEPTANCE_BUNDLE_NAME}.md`);
 
   writeFileSync(jsonPath, `${JSON.stringify(bundle, null, 2)}\n`);
-  writeFileSync(mdPath, renderTeamAlphaHandoffMarkdown(bundle));
+  writeFileSync(mdPath, renderInternalAcceptanceHandoffMarkdown(bundle));
 
   return {
-    schema: "gpao_t.owner_ops_team_alpha_handoff_bundle_write.v0_1",
+    schema: "gpao_t.owner_ops_internal_acceptance_handoff_bundle_write.v0_1",
     status: bundle.status === "ready" ? "written_local_only" : "review",
     generatedAt: now,
     filesWritten: [
-      ".gpao-t/packages/OWNER-OPS-TEAM-ALPHA-HANDOFF-BUNDLE.json",
-      ".gpao-t/packages/OWNER-OPS-TEAM-ALPHA-HANDOFF-BUNDLE.md",
+      ".gpao-t/packages/OWNER-OPS-INTERNAL-ACCEPTANCE-HANDOFF-BUNDLE.json",
+      ".gpao-t/packages/OWNER-OPS-INTERNAL-ACCEPTANCE-HANDOFF-BUNDLE.md",
     ],
     bundleStatus: bundle.status,
     findings: bundle.findings,
     authorityBoundary: bundle.authorityBoundary,
     nextSafeAction: bundle.findings.length
       ? "Review the local handoff bundle findings before sharing."
-      : "Use the markdown handoff as the internal team alpha instruction surface.",
+      : "Use the markdown handoff as the internal acceptance instruction surface.",
   };
 }
 
-export function verifyOwnerOpsTeamAlphaHandoffBundle({
+export function verifyOwnerOpsInternalAcceptanceHandoffBundle({
   root = process.cwd(),
   archiveName,
 } = {}) {
-  const bundle = buildOwnerOpsTeamAlphaHandoffBundle({ root, archiveName });
+  const bundle = buildOwnerOpsInternalAcceptanceHandoffBundle({ root, archiveName });
   const outputDir = join(root, ".gpao-t", "packages");
-  const jsonPath = join(outputDir, `${TEAM_ALPHA_BUNDLE_NAME}.json`);
-  const mdPath = join(outputDir, `${TEAM_ALPHA_BUNDLE_NAME}.md`);
+  const jsonPath = join(outputDir, `${INTERNAL_ACCEPTANCE_BUNDLE_NAME}.json`);
+  const mdPath = join(outputDir, `${INTERNAL_ACCEPTANCE_BUNDLE_NAME}.md`);
   const findings = [...bundle.findings];
 
   if (bundle.status !== "ready") findings.push("handoff_bundle_not_ready");
-  if (!bundle.packageCandidate.bundleSha256) findings.push("package_candidate_checksum_missing");
+  if (!bundle.internalProductionPackage.bundleSha256) findings.push("internal_production_package_checksum_missing");
   if (bundle.handoffOrder.length < 5) findings.push("handoff_order_incomplete");
   if (bundle.hostIntegration?.checkedStatus !== "ready") findings.push("host_integration_matrix_not_ready");
   if ((bundle.hostIntegration?.hosts || []).length < 3) findings.push("host_integration_hosts_incomplete");
@@ -222,48 +225,48 @@ export function verifyOwnerOpsTeamAlphaHandoffBundle({
   if (bundle.authorityBoundary.liveAccountConnectionExecuted !== false) findings.push("live_account_boundary_open");
 
   return {
-    schema: "gpao_t.owner_ops_team_alpha_handoff_bundle_check.v0_1",
+    schema: "gpao_t.owner_ops_internal_acceptance_handoff_bundle_check.v0_1",
     status: findings.length ? "blocked" : "ready",
     findings,
-    packageCandidateStatus: bundle.packageCandidate.status,
-    packageCandidateSha256: bundle.packageCandidate.bundleSha256,
+    internalProductionPackageStatus: bundle.internalProductionPackage.status,
+    internalProductionPackageSha256: bundle.internalProductionPackage.bundleSha256,
     handoffOrderCount: bundle.handoffOrder.length,
     localBundleFilesPresent: {
       json: existsSync(jsonPath),
       markdown: existsSync(mdPath),
     },
     checkedSurfaces: [
-      "local package candidate readback",
-      "team alpha guide",
+      "internal production package readback",
+      "internal acceptance guide",
       "host integration matrix",
       "host registration guide",
       "sample data kit",
       "owner-facing UX copy",
-      "alpha feedback form",
+      "internal acceptance feedback form",
       "authority boundary",
     ],
     nextSafeAction: findings.length
-      ? "Fix team alpha handoff bundle findings."
-      : "Write or share the local-only team alpha handoff bundle; do not publish publicly.",
+      ? "Fix internal acceptance handoff bundle findings."
+      : "Write or share the local-only internal acceptance handoff bundle; do not publish publicly.",
   };
 }
 
-export function buildOwnerOpsFirstOwnerBetaHandoffBundle({
+export function buildOwnerOpsOwnerAcceptanceHandoffBundle({
   root = process.cwd(),
   archiveName,
   now = new Date().toISOString(),
 } = {}) {
-  const alphaBundle = buildOwnerOpsTeamAlphaHandoffBundle({ root, archiveName, now });
-  const betaGuide = buildOwnerOpsFirstOwnerBetaGuide();
+  const internalAcceptanceBundle = buildOwnerOpsInternalAcceptanceHandoffBundle({ root, archiveName, now });
+  const ownerAcceptanceGuide = buildOwnerOpsOwnerAcceptanceGuide();
   const sampleKit = buildOwnerOpsSampleDataKit();
-  const feedbackForm = buildOwnerOpsAlphaFeedbackForm();
+  const feedbackForm = buildOwnerOpsInternalAcceptanceFeedbackForm();
   const ownerCopy = buildOwnerOpsOwnerFacingUxCopy();
   const hostPrerequisite = {
-    status: alphaBundle.hostIntegration?.checkedStatus || "missing",
-    selectedHost: "not_selected_until_supervised_beta",
+    status: internalAcceptanceBundle.hostIntegration?.checkedStatus || "missing",
+    selectedHost: "not_selected_until_supervised_owner_acceptance",
     recommendedFirstHost: "codex",
     selectionRule: "Use the host the tester can operate with least friction; do not connect external accounts.",
-    hosts: (alphaBundle.hostIntegration?.hosts || []).map((host) => ({
+    hosts: (internalAcceptanceBundle.hostIntegration?.hosts || []).map((host) => ({
       id: host.id,
       label: host.label,
       registrationMode: host.registrationMode,
@@ -275,15 +278,15 @@ export function buildOwnerOpsFirstOwnerBetaHandoffBundle({
       publicPublishAllowed: host.publicPublishAllowed,
     })),
     requiredBeforeOwnerTest: [
-      "choose one host for the supervised first-owner beta",
+      "choose one host for supervised owner acceptance",
       "confirm local stdio MCP smoke on the chosen host",
       "confirm no external network, no customer send, no credential access, and no public publish",
     ],
-    invariants: alphaBundle.hostIntegration?.invariants || [],
+    invariants: internalAcceptanceBundle.hostIntegration?.invariants || [],
   };
-  const findings = [...alphaBundle.findings];
+  const findings = [...internalAcceptanceBundle.findings];
 
-  if (alphaBundle.status !== "ready") findings.push("team_alpha_handoff_not_ready");
+  if (internalAcceptanceBundle.status !== "ready") findings.push("internal_acceptance_handoff_not_ready");
   if (hostPrerequisite.status !== "ready") findings.push("host_setup_prerequisite_not_ready");
   if (hostPrerequisite.hosts.length < 3) findings.push("host_setup_hosts_incomplete");
   if (!hostPrerequisite.hosts.every((host) => host.externalNetwork === false)) {
@@ -295,31 +298,31 @@ export function buildOwnerOpsFirstOwnerBetaHandoffBundle({
   if (!hostPrerequisite.hosts.every((host) => host.credentialRequired === false)) {
     findings.push("host_setup_credential_boundary_not_blocked");
   }
-  if (betaGuide.status !== "ready") findings.push("first_owner_beta_guide_not_ready");
+  if (ownerAcceptanceGuide.status !== "ready") findings.push("owner_acceptance_guide_not_ready");
   if (sampleKit.status !== "ready") findings.push("sample_data_kit_not_ready");
   if (!sampleKit.redactionRules.some((rule) => rule.includes("전화번호"))) findings.push("pii_redaction_rule_missing");
-  if (!betaGuide.stopConditions.some((condition) => condition.includes("개인정보"))) findings.push("owner_pii_stop_condition_missing");
-  if (!betaGuide.stillBlocked.includes("고객 자동 발송")) findings.push("customer_send_block_missing");
+  if (!ownerAcceptanceGuide.stopConditions.some((condition) => condition.includes("개인정보"))) findings.push("owner_pii_stop_condition_missing");
+  if (!ownerAcceptanceGuide.stillBlocked.includes("고객 자동 발송")) findings.push("customer_send_block_missing");
 
   return {
-    schema: "gpao_t.owner_ops_first_owner_beta_handoff_bundle.v0_1",
+    schema: "gpao_t.owner_ops_owner_acceptance_handoff_bundle.v0_1",
     status: findings.length ? "review" : "ready",
     generatedAt: now,
-    packageId: alphaBundle.packageId,
-    packageVersion: alphaBundle.packageVersion,
-    alphaPrerequisite: {
-      status: alphaBundle.status,
-      packageCandidateStatus: alphaBundle.packageCandidate.status,
-      bundleSha256: alphaBundle.packageCandidate.bundleSha256,
+    packageId: internalAcceptanceBundle.packageId,
+    packageVersion: internalAcceptanceBundle.packageVersion,
+    internalAcceptancePrerequisite: {
+      status: internalAcceptanceBundle.status,
+      internalProductionPackageStatus: internalAcceptanceBundle.internalProductionPackage.status,
+      bundleSha256: internalAcceptanceBundle.internalProductionPackage.bundleSha256,
     },
     hostPrerequisite,
-    ownerAudience: betaGuide.audience,
-    ownerScript: betaGuide.ownerScript,
-    betaFlow: [
+    ownerAudience: ownerAcceptanceGuide.audience,
+    ownerScript: ownerAcceptanceGuide.ownerScript,
+    acceptanceFlow: [
       {
         step: 1,
         id: "choose_test_host",
-        label: "테스트 호스트 선택과 local stdio MCP smoke",
+        label: "검토 호스트 선택과 local stdio MCP smoke",
         expected: "Codex/OpenClaw/Claude Code 중 하나를 고르고, node bin/gpao-t-owner-ops-mcp.js 로컬 stdio smoke만 확인",
       },
       {
@@ -359,18 +362,18 @@ export function buildOwnerOpsFirstOwnerBetaHandoffBundle({
       safetyLabels: ownerCopy.safetyLabels,
     },
     feedbackQuestions: feedbackForm.sections.flatMap((section) => section.questions),
-    stopConditions: betaGuide.stopConditions,
-    successSignals: betaGuide.successSignals,
+    stopConditions: ownerAcceptanceGuide.stopConditions,
+    successSignals: ownerAcceptanceGuide.successSignals,
     blockedActions: [
       ...new Set([
-        ...alphaBundle.blockedActions,
-        ...betaGuide.stillBlocked,
+        ...internalAcceptanceBundle.blockedActions,
+        ...ownerAcceptanceGuide.stillBlocked,
         "real_customer_pii_without_redaction",
-        "unsupervised_owner_beta",
+        "unsupervised_owner_acceptance",
       ]),
     ],
     authorityBoundary: {
-      supervisedBetaOnly: true,
+      supervisedOwnerAcceptanceOnly: true,
       sampleOrDeidentifiedDataOnly: true,
       liveHostRegistrationExecuted: false,
       publicUploadExecuted: false,
@@ -381,32 +384,32 @@ export function buildOwnerOpsFirstOwnerBetaHandoffBundle({
     },
     findings,
     nextSafeAction: findings.length
-      ? "Fix first owner beta handoff findings before inviting a real owner."
-      : "Run one supervised first-owner beta with sample or de-identified data only; do not connect live accounts or send messages.",
+      ? "Fix owner acceptance handoff findings before inviting a real owner."
+      : "Run one supervised owner acceptance with sample or de-identified data only; do not connect live accounts or send messages.",
   };
 }
 
-export function writeOwnerOpsFirstOwnerBetaHandoffBundle({
+export function writeOwnerOpsOwnerAcceptanceHandoffBundle({
   root = process.cwd(),
   archiveName,
   now = new Date().toISOString(),
 } = {}) {
-  const bundle = buildOwnerOpsFirstOwnerBetaHandoffBundle({ root, archiveName, now });
+  const bundle = buildOwnerOpsOwnerAcceptanceHandoffBundle({ root, archiveName, now });
   const outputDir = join(root, ".gpao-t", "packages");
   mkdirSync(outputDir, { recursive: true });
-  const jsonPath = join(outputDir, `${FIRST_OWNER_BETA_BUNDLE_NAME}.json`);
-  const mdPath = join(outputDir, `${FIRST_OWNER_BETA_BUNDLE_NAME}.md`);
+  const jsonPath = join(outputDir, `${OWNER_ACCEPTANCE_BUNDLE_NAME}.json`);
+  const mdPath = join(outputDir, `${OWNER_ACCEPTANCE_BUNDLE_NAME}.md`);
 
   writeFileSync(jsonPath, `${JSON.stringify(bundle, null, 2)}\n`);
-  writeFileSync(mdPath, renderFirstOwnerBetaHandoffMarkdown(bundle));
+  writeFileSync(mdPath, renderOwnerAcceptanceHandoffMarkdown(bundle));
 
   return {
-    schema: "gpao_t.owner_ops_first_owner_beta_handoff_bundle_write.v0_1",
+    schema: "gpao_t.owner_ops_owner_acceptance_handoff_bundle_write.v0_1",
     status: bundle.status === "ready" ? "written_local_only" : "review",
     generatedAt: now,
     filesWritten: [
-      ".gpao-t/packages/OWNER-OPS-FIRST-OWNER-BETA-HANDOFF-BUNDLE.json",
-      ".gpao-t/packages/OWNER-OPS-FIRST-OWNER-BETA-HANDOFF-BUNDLE.md",
+      ".gpao-t/packages/OWNER-OPS-OWNER-ACCEPTANCE-HANDOFF-BUNDLE.json",
+      ".gpao-t/packages/OWNER-OPS-OWNER-ACCEPTANCE-HANDOFF-BUNDLE.md",
     ],
     bundleStatus: bundle.status,
     findings: bundle.findings,
@@ -415,23 +418,23 @@ export function writeOwnerOpsFirstOwnerBetaHandoffBundle({
   };
 }
 
-export function verifyOwnerOpsFirstOwnerBetaHandoffBundle({
+export function verifyOwnerOpsOwnerAcceptanceHandoffBundle({
   root = process.cwd(),
   archiveName,
 } = {}) {
-  const bundle = buildOwnerOpsFirstOwnerBetaHandoffBundle({ root, archiveName });
+  const bundle = buildOwnerOpsOwnerAcceptanceHandoffBundle({ root, archiveName });
   const outputDir = join(root, ".gpao-t", "packages");
-  const jsonPath = join(outputDir, `${FIRST_OWNER_BETA_BUNDLE_NAME}.json`);
-  const mdPath = join(outputDir, `${FIRST_OWNER_BETA_BUNDLE_NAME}.md`);
+  const jsonPath = join(outputDir, `${OWNER_ACCEPTANCE_BUNDLE_NAME}.json`);
+  const mdPath = join(outputDir, `${OWNER_ACCEPTANCE_BUNDLE_NAME}.md`);
   const findings = [...bundle.findings];
 
-  if (bundle.status !== "ready") findings.push("first_owner_beta_handoff_not_ready");
-  if (bundle.alphaPrerequisite.status !== "ready") findings.push("alpha_prerequisite_not_ready");
+  if (bundle.status !== "ready") findings.push("owner_acceptance_handoff_not_ready");
+  if (bundle.internalAcceptancePrerequisite.status !== "ready") findings.push("internal_acceptance_prerequisite_not_ready");
   if (bundle.hostPrerequisite.status !== "ready") findings.push("host_setup_prerequisite_not_ready");
   if (bundle.hostPrerequisite.hosts.length < 3) findings.push("host_setup_hosts_incomplete");
-  if (!bundle.alphaPrerequisite.bundleSha256) findings.push("local_package_checksum_missing");
-  if (bundle.betaFlow.length < 5) findings.push("beta_flow_incomplete");
-  if (!bundle.betaFlow.some((step) => step.id === "choose_test_host")) {
+  if (!bundle.internalAcceptancePrerequisite.bundleSha256) findings.push("internal_production_package_checksum_missing");
+  if (bundle.acceptanceFlow.length < 5) findings.push("owner_acceptance_flow_incomplete");
+  if (!bundle.acceptanceFlow.some((step) => step.id === "choose_test_host")) {
     findings.push("host_selection_step_missing");
   }
   if (!bundle.authorityBoundary.sampleOrDeidentifiedDataOnly) findings.push("sample_data_boundary_missing");
@@ -439,22 +442,22 @@ export function verifyOwnerOpsFirstOwnerBetaHandoffBundle({
   if (bundle.authorityBoundary.customerSendExecuted !== false) findings.push("customer_send_boundary_open");
 
   return {
-    schema: "gpao_t.owner_ops_first_owner_beta_handoff_bundle_check.v0_1",
+    schema: "gpao_t.owner_ops_owner_acceptance_handoff_bundle_check.v0_1",
     status: findings.length ? "blocked" : "ready",
     findings,
-    alphaPrerequisiteStatus: bundle.alphaPrerequisite.status,
+    internalAcceptancePrerequisiteStatus: bundle.internalAcceptancePrerequisite.status,
     hostPrerequisiteStatus: bundle.hostPrerequisite.status,
     hostCount: bundle.hostPrerequisite.hosts.length,
-    packageCandidateSha256: bundle.alphaPrerequisite.bundleSha256,
-    betaFlowCount: bundle.betaFlow.length,
+    internalProductionPackageSha256: bundle.internalAcceptancePrerequisite.bundleSha256,
+    acceptanceFlowCount: bundle.acceptanceFlow.length,
     localBundleFilesPresent: {
       json: existsSync(jsonPath),
       markdown: existsSync(mdPath),
     },
     checkedSurfaces: [
-      "team alpha handoff prerequisite",
+      "internal acceptance handoff prerequisite",
       "host setup prerequisite",
-      "first owner beta guide",
+      "owner acceptance guide",
       "sample data kit",
       "owner-facing copy",
       "feedback questions",
@@ -462,34 +465,34 @@ export function verifyOwnerOpsFirstOwnerBetaHandoffBundle({
       "authority boundary",
     ],
     nextSafeAction: findings.length
-      ? "Fix first owner beta handoff findings."
-      : "Use this local-only beta handoff for one supervised owner test with sample/de-identified data.",
+      ? "Fix owner acceptance handoff findings."
+      : "Use this local-only owner acceptance handoff for one supervised owner review with sample/de-identified data.",
   };
 }
 
-export function buildOwnerOpsFirstOwnerBetaOperationalTestPackage({
+export function buildOwnerOpsOwnerAcceptanceOperationalPackage({
   root = process.cwd(),
   archiveName,
   now = new Date().toISOString(),
 } = {}) {
-  const handoff = buildOwnerOpsFirstOwnerBetaHandoffBundle({ root, archiveName, now });
-  const handoffCheck = verifyOwnerOpsFirstOwnerBetaHandoffBundle({ root, archiveName });
+  const handoff = buildOwnerOpsOwnerAcceptanceHandoffBundle({ root, archiveName, now });
+  const handoffCheck = verifyOwnerOpsOwnerAcceptanceHandoffBundle({ root, archiveName });
   const findings = [...handoff.findings];
 
-  if (handoffCheck.status !== "ready") findings.push("first_owner_beta_handoff_check_not_ready");
+  if (handoffCheck.status !== "ready") findings.push("owner_acceptance_handoff_check_not_ready");
   if (handoff.hostPrerequisite.status !== "ready") findings.push("host_setup_prerequisite_not_ready");
-  if (!handoff.betaFlow.some((step) => step.id === "choose_test_host")) findings.push("host_selection_step_missing");
+  if (!handoff.acceptanceFlow.some((step) => step.id === "choose_test_host")) findings.push("host_selection_step_missing");
   if (handoff.authorityBoundary.liveHostRegistrationExecuted !== false) findings.push("live_host_registration_boundary_open");
   if (handoff.authorityBoundary.customerSendExecuted !== false) findings.push("customer_send_boundary_open");
   if (handoff.authorityBoundary.liveAccountConnectionExecuted !== false) findings.push("live_account_boundary_open");
 
   return {
-    schema: "gpao_t.owner_ops_first_owner_beta_operational_test_package.v0_1",
+    schema: "gpao_t.owner_ops_owner_acceptance_operational_package.v0_1",
     status: findings.length ? "review" : "ready",
     generatedAt: now,
     packageId: handoff.packageId,
     packageVersion: handoff.packageVersion,
-    alphaPrerequisite: handoff.alphaPrerequisite,
+    internalAcceptancePrerequisite: handoff.internalAcceptancePrerequisite,
     handoffStatus: handoff.status,
     handoffCheckStatus: handoffCheck.status,
     hostSetup: {
@@ -508,8 +511,8 @@ export function buildOwnerOpsFirstOwnerBetaOperationalTestPackage({
       })),
       requiredSmoke: handoff.hostPrerequisite.requiredBeforeOwnerTest,
     },
-    testSessionPacket: {
-      ownerProfile: "first_owner_beta_supervised",
+    acceptanceSessionPacket: {
+      ownerProfile: "owner_acceptance_supervised",
       dataMode: "sample_or_deidentified",
       allowedData: [
         "sample review text",
@@ -524,14 +527,14 @@ export function buildOwnerOpsFirstOwnerBetaOperationalTestPackage({
         "payment/refund/delete account actions",
         "OAuth/API credentials",
       ],
-      startCommand: "node bin/gpao-t.js owner-ops first-owner-beta-operational-package",
-      recordResultCommand: "node bin/gpao-t.js owner-ops first-owner-beta-result-write",
+      startCommand: "node bin/gpao-t.js owner-ops owner-acceptance-operational-package",
+      recordResultCommand: "node bin/gpao-t.js owner-ops owner-acceptance-result-write",
     },
     operatorRunbook: [
       {
         step: 1,
         id: "host_smoke",
-        label: "테스트 호스트와 local stdio MCP smoke 확인",
+        label: "검토 호스트와 local stdio MCP smoke 확인",
         expected: "선택한 호스트에서 로컬 MCP 명령을 확인하되 live host registration은 실행하지 않는다.",
       },
       {
@@ -543,7 +546,7 @@ export function buildOwnerOpsFirstOwnerBetaOperationalTestPackage({
       {
         step: 3,
         id: "sample_run",
-        label: "샘플 또는 비식별 자료 1-3개로 테스트",
+        label: "샘플 또는 비식별 자료 1-3개로 검토",
         expected: "분류, 초안, 보류/수정 필요 판단을 확인한다.",
       },
       {
@@ -555,7 +558,7 @@ export function buildOwnerOpsFirstOwnerBetaOperationalTestPackage({
       {
         step: 5,
         id: "result_review",
-        label: "first-owner beta result review로 넘김",
+        label: "owner acceptance result review로 넘김",
         expected: "시장 readiness에 쓰기 전에 안전 경계와 평가 기준을 다시 검증한다.",
       },
     ],
@@ -614,32 +617,32 @@ export function buildOwnerOpsFirstOwnerBetaOperationalTestPackage({
     },
     findings,
     nextSafeAction: findings.length
-      ? "Fix first-owner beta operational package findings before inviting a real owner."
-      : "Run one supervised first-owner beta using this local-only operational package, then write the beta result review.",
+      ? "Fix owner acceptance operational package findings before inviting a real owner."
+      : "Run one supervised owner acceptance using this local-only operational package, then write the owner acceptance result review.",
   };
 }
 
-export function writeOwnerOpsFirstOwnerBetaOperationalTestPackage({
+export function writeOwnerOpsOwnerAcceptanceOperationalPackage({
   root = process.cwd(),
   archiveName,
   now = new Date().toISOString(),
 } = {}) {
-  const bundle = buildOwnerOpsFirstOwnerBetaOperationalTestPackage({ root, archiveName, now });
+  const bundle = buildOwnerOpsOwnerAcceptanceOperationalPackage({ root, archiveName, now });
   const outputDir = join(root, ".gpao-t", "packages");
   mkdirSync(outputDir, { recursive: true });
-  const jsonPath = join(outputDir, `${FIRST_OWNER_BETA_OPERATIONAL_PACKAGE_NAME}.json`);
-  const mdPath = join(outputDir, `${FIRST_OWNER_BETA_OPERATIONAL_PACKAGE_NAME}.md`);
+  const jsonPath = join(outputDir, `${OWNER_ACCEPTANCE_OPERATIONAL_PACKAGE_NAME}.json`);
+  const mdPath = join(outputDir, `${OWNER_ACCEPTANCE_OPERATIONAL_PACKAGE_NAME}.md`);
 
   writeFileSync(jsonPath, `${JSON.stringify(bundle, null, 2)}\n`);
-  writeFileSync(mdPath, renderFirstOwnerBetaOperationalTestPackageMarkdown(bundle));
+  writeFileSync(mdPath, renderOwnerAcceptanceOperationalPackageMarkdown(bundle));
 
   return {
-    schema: "gpao_t.owner_ops_first_owner_beta_operational_test_package_write.v0_1",
+    schema: "gpao_t.owner_ops_owner_acceptance_operational_package_write.v0_1",
     status: bundle.status === "ready" ? "written_local_only" : "review",
     generatedAt: now,
     filesWritten: [
-      ".gpao-t/packages/OWNER-OPS-FIRST-OWNER-BETA-OPERATIONAL-TEST-PACKAGE.json",
-      ".gpao-t/packages/OWNER-OPS-FIRST-OWNER-BETA-OPERATIONAL-TEST-PACKAGE.md",
+      ".gpao-t/packages/OWNER-OPS-OWNER-ACCEPTANCE-OPERATIONAL-PACKAGE.json",
+      ".gpao-t/packages/OWNER-OPS-OWNER-ACCEPTANCE-OPERATIONAL-PACKAGE.md",
     ],
     packageStatus: bundle.status,
     findings: bundle.findings,
@@ -648,17 +651,17 @@ export function writeOwnerOpsFirstOwnerBetaOperationalTestPackage({
   };
 }
 
-export function verifyOwnerOpsFirstOwnerBetaOperationalTestPackage({
+export function verifyOwnerOpsOwnerAcceptanceOperationalPackage({
   root = process.cwd(),
   archiveName,
 } = {}) {
-  const bundle = buildOwnerOpsFirstOwnerBetaOperationalTestPackage({ root, archiveName });
+  const bundle = buildOwnerOpsOwnerAcceptanceOperationalPackage({ root, archiveName });
   const outputDir = join(root, ".gpao-t", "packages");
-  const jsonPath = join(outputDir, `${FIRST_OWNER_BETA_OPERATIONAL_PACKAGE_NAME}.json`);
-  const mdPath = join(outputDir, `${FIRST_OWNER_BETA_OPERATIONAL_PACKAGE_NAME}.md`);
+  const jsonPath = join(outputDir, `${OWNER_ACCEPTANCE_OPERATIONAL_PACKAGE_NAME}.json`);
+  const mdPath = join(outputDir, `${OWNER_ACCEPTANCE_OPERATIONAL_PACKAGE_NAME}.md`);
   const findings = [...bundle.findings];
 
-  if (bundle.status !== "ready") findings.push("first_owner_beta_operational_package_not_ready");
+  if (bundle.status !== "ready") findings.push("owner_acceptance_operational_package_not_ready");
   if (bundle.hostSetup.status !== "ready") findings.push("host_setup_not_ready");
   if (bundle.hostSetup.allowedHosts.length < 3) findings.push("allowed_hosts_incomplete");
   if (bundle.operatorRunbook.length < 5) findings.push("operator_runbook_incomplete");
@@ -671,7 +674,7 @@ export function verifyOwnerOpsFirstOwnerBetaOperationalTestPackage({
   if (bundle.authorityBoundary.credentialAccessExecuted !== false) findings.push("credential_boundary_open");
 
   return {
-    schema: "gpao_t.owner_ops_first_owner_beta_operational_test_package_check.v0_1",
+    schema: "gpao_t.owner_ops_owner_acceptance_operational_package_check.v0_1",
     status: findings.length ? "blocked" : "ready",
     findings,
     handoffStatus: bundle.handoffStatus,
@@ -683,33 +686,33 @@ export function verifyOwnerOpsFirstOwnerBetaOperationalTestPackage({
       markdown: existsSync(mdPath),
     },
     checkedSurfaces: [
-      "first owner beta handoff prerequisite",
+      "owner acceptance handoff prerequisite",
       "host setup prerequisite",
       "operator runbook",
-      "test session packet",
+      "acceptance session packet",
       "acceptance checklist",
       "result capture fields",
       "authority boundary",
     ],
     nextSafeAction: findings.length
-      ? "Fix first-owner beta operational package findings."
-      : "Use this local-only operational package for one supervised first-owner beta; then write result review.",
+      ? "Fix owner acceptance operational package findings."
+      : "Use this local-only operational package for one supervised owner acceptance; then write result review.",
   };
 }
 
-function renderTeamAlphaHandoffMarkdown(bundle) {
+function renderInternalAcceptanceHandoffMarkdown(bundle) {
   const lines = [
-    "# Owner Ops Team Alpha Handoff Bundle",
+    "# Owner Ops Internal Acceptance Handoff Bundle",
     "",
     `Generated: ${bundle.generatedAt}`,
     `Package: ${bundle.packageId} ${bundle.packageVersion}`,
     `Status: ${bundle.status}`,
     "",
-    "## Local Package Candidate",
+    "## Internal Production Package",
     "",
-    `- Archive candidate: ${bundle.packageCandidate.archiveName}`,
-    `- Bundle sha256: ${bundle.packageCandidate.bundleSha256 || "missing"}`,
-    `- File count: ${bundle.packageCandidate.fileCount}`,
+    `- Archive: ${bundle.internalProductionPackage.archiveName}`,
+    `- Bundle sha256: ${bundle.internalProductionPackage.bundleSha256 || "missing"}`,
+    `- File count: ${bundle.internalProductionPackage.fileCount}`,
     "",
     "## Handoff Order",
     "",
@@ -744,9 +747,9 @@ function renderTeamAlphaHandoffMarkdown(bundle) {
   return `${lines.join("\n")}\n`;
 }
 
-function renderFirstOwnerBetaOperationalTestPackageMarkdown(bundle) {
+function renderOwnerAcceptanceOperationalPackageMarkdown(bundle) {
   const lines = [
-    "# Owner Ops First Owner Beta Operational Test Package",
+    "# Owner Ops Owner Acceptance Operational Package",
     "",
     `Generated: ${bundle.generatedAt}`,
     `Package: ${bundle.packageId} ${bundle.packageVersion}`,
@@ -762,12 +765,12 @@ function renderFirstOwnerBetaOperationalTestPackageMarkdown(bundle) {
       `- ${host.label}: \`${host.command} ${host.args.join(" ")}\`, network ${host.externalNetwork}, credential ${host.credentialRequired}, customer send ${host.customerSendAllowed}`
     ),
     "",
-    "## Test Session Packet",
+    "## Acceptance Session Packet",
     "",
-    `- Owner profile: ${bundle.testSessionPacket.ownerProfile}`,
-    `- Data mode: ${bundle.testSessionPacket.dataMode}`,
-    `- Start command: \`${bundle.testSessionPacket.startCommand}\``,
-    `- Record result command: \`${bundle.testSessionPacket.recordResultCommand}\``,
+    `- Owner profile: ${bundle.acceptanceSessionPacket.ownerProfile}`,
+    `- Data mode: ${bundle.acceptanceSessionPacket.dataMode}`,
+    `- Start command: \`${bundle.acceptanceSessionPacket.startCommand}\``,
+    `- Record result command: \`${bundle.acceptanceSessionPacket.recordResultCommand}\``,
     "",
     "## Operator Runbook",
     "",
@@ -796,9 +799,9 @@ function renderFirstOwnerBetaOperationalTestPackageMarkdown(bundle) {
   return `${lines.join("\n")}\n`;
 }
 
-function renderFirstOwnerBetaHandoffMarkdown(bundle) {
+function renderOwnerAcceptanceHandoffMarkdown(bundle) {
   const lines = [
-    "# Owner Ops First Owner Beta Handoff Bundle",
+    "# Owner Ops Owner Acceptance Handoff Bundle",
     "",
     `Generated: ${bundle.generatedAt}`,
     `Package: ${bundle.packageId} ${bundle.packageVersion}`,
@@ -823,9 +826,9 @@ function renderFirstOwnerBetaHandoffMarkdown(bundle) {
     "",
     ...bundle.ownerScript.map((line) => `- ${line}`),
     "",
-    "## Beta Flow",
+    "## Acceptance Flow",
     "",
-    ...bundle.betaFlow.map((item) =>
+    ...bundle.acceptanceFlow.map((item) =>
       `${item.step}. ${item.label}\n   - Expected: ${item.expected}`
     ),
     "",
@@ -849,3 +852,14 @@ function renderFirstOwnerBetaHandoffMarkdown(bundle) {
 
   return `${lines.join("\n")}\n`;
 }
+
+// One-cycle API compatibility aliases. Canonical writes use the names above.
+export const buildOwnerOpsTeamAlphaHandoffBundle = buildOwnerOpsInternalAcceptanceHandoffBundle;
+export const writeOwnerOpsTeamAlphaHandoffBundle = writeOwnerOpsInternalAcceptanceHandoffBundle;
+export const verifyOwnerOpsTeamAlphaHandoffBundle = verifyOwnerOpsInternalAcceptanceHandoffBundle;
+export const buildOwnerOpsFirstOwnerBetaHandoffBundle = buildOwnerOpsOwnerAcceptanceHandoffBundle;
+export const writeOwnerOpsFirstOwnerBetaHandoffBundle = writeOwnerOpsOwnerAcceptanceHandoffBundle;
+export const verifyOwnerOpsFirstOwnerBetaHandoffBundle = verifyOwnerOpsOwnerAcceptanceHandoffBundle;
+export const buildOwnerOpsFirstOwnerBetaOperationalTestPackage = buildOwnerOpsOwnerAcceptanceOperationalPackage;
+export const writeOwnerOpsFirstOwnerBetaOperationalTestPackage = writeOwnerOpsOwnerAcceptanceOperationalPackage;
+export const verifyOwnerOpsFirstOwnerBetaOperationalTestPackage = verifyOwnerOpsOwnerAcceptanceOperationalPackage;
