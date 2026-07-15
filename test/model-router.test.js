@@ -45,6 +45,20 @@ test("router aborts a stalled adapter at its local deadline", async () => {
   await assert.rejects(() => router.invoke({ runId: "run", sessionId: "session", generation: 1, idempotencyKey: "key", input: "hello", sourceContextDigest: "trace", timeoutMs: 15 }), error => error.failureClass === "provider_timeout");
 });
 
+test("provider failure updates redacted health status for user-safe recovery", async () => {
+  const registryInstance = registry();
+  const adapters = new ProviderAdapterRegistry({ adapters: [
+    { id: "fake-fast", adapter: { invoke: async () => { throw new ProviderInvocationError("rate_limited", "limited", { cooldownMs: 1234 }); } } },
+    { id: "fake-backup", adapter: { invoke: async () => ({ result: { text: "must not run" }, receipt: {} }) } }
+  ] });
+  const router = new ModelRouter({ providerRegistry: registryInstance, adapterRegistry: adapters });
+  await assert.rejects(() => router.invoke({ runId: "run", sessionId: "session", generation: 1, idempotencyKey: "key", input: "hello", sourceContextDigest: "trace" }), error => error.failureClass === "rate_limited");
+  const provider = registryInstance.get("fast");
+  assert.equal(provider.health.state, "cooldown");
+  assert.equal(provider.health.failureClass, "rate_limited");
+  assert.ok(provider.health.cooldownUntil > Date.now());
+});
+
 test("explicit user model selection never silently falls back", async () => {
   const adapters = new ProviderAdapterRegistry({ adapters: [
     { id: "fake-fast", adapter: { invoke: async () => { const error = new Error("limited"); error.failureClass = "rate_limited"; error.retryable = true; error.externalEffect = false; throw error; } } },

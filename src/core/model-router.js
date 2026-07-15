@@ -12,6 +12,7 @@ function normalizeSelection(selection = {}) {
 }
 
 function readyCandidates(registry, { requiredCapabilities = ["text"], preferredProviderId = null, preferredModelId = null } = {}) {
+  registry.refreshHealth?.();
   const providers = registry.snapshot().providers;
   const candidates = [];
   for (const provider of providers) {
@@ -110,6 +111,7 @@ export class ModelRouter {
         return { provider, model, providerPlan: plan, providerResult: result, failures, fallbackUsed: index > 0 };
       } catch (error) {
         const failure = normalizeProviderFailure(error);
+        this.providerRegistry.recordFailure?.(provider.id, failure);
         failures.push({ providerId: provider.id, modelId: model.id, ...failure });
         const requested = Boolean(normalizedSelection.preferredProviderId || normalizedSelection.preferredModelId);
         const nextCandidate = candidates[index + 1] || null;

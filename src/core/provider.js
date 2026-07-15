@@ -145,6 +145,33 @@ export class ProviderRegistry {
   snapshot() {
     return { schema: "gpao_t.provider_registry.v1", providers: [...this.entries.values()].map(publicProvider) };
   }
+
+  recordFailure(providerId, failure, { now = Date.now(), cooldownMs = 30_000 } = {}) {
+    const entry = this.entries.get(providerId);
+    if (!entry) return null;
+    const normalized = normalizeProviderFailure(failure);
+    entry.health.failureClass = normalized.failureClass;
+    if (normalized.failureClass === "auth_required") {
+      entry.auth = { ...entry.auth, state: "auth_required" };
+      entry.health.state = "unknown";
+      entry.health.cooldownUntil = null;
+    } else if (normalized.failureClass === "rate_limited") {
+      entry.health.state = "cooldown";
+      entry.health.cooldownUntil = now + Math.max(1, Number(normalized.details?.cooldownMs || cooldownMs));
+    } else if (normalized.failureClass === "provider_unavailable" || normalized.failureClass === "provider_timeout") {
+      entry.health.state = "degraded";
+      entry.health.cooldownUntil = now + Math.max(1, Number(normalized.details?.cooldownMs || cooldownMs));
+    }
+    return publicProvider(entry);
+  }
+
+  refreshHealth(now = Date.now()) {
+    for (const entry of this.entries.values()) {
+      if (["cooldown", "degraded"].includes(entry.health.state) && entry.health.cooldownUntil && entry.health.cooldownUntil <= now) {
+        entry.health = { state: "ready", failureClass: null, cooldownUntil: null };
+      }
+    }
+  }
 }
 
 export function createInvocationPlan(input = {}) {
