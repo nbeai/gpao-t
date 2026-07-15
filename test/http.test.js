@@ -107,6 +107,14 @@ test("HTTP health is public, work is owner-authenticated, and turn state is scop
   }).then(response => response.json());
   const completed = await eventually(`${base}/v1/turns/${accepted.commandId}`, (_response, body) => body.status === "succeeded", { headers: { authorization: `Bearer ${runtime.ownerToken}` } });
   assert.equal(completed.receipt.result.echo, "http");
+  const eventResponse = await fetch(`${base}/v1/turns/${accepted.commandId}/events`, { headers: { authorization: `Bearer ${runtime.ownerToken}` } });
+  assert.equal(eventResponse.status, 200);
+  const eventReplay = await eventResponse.json();
+  assert.deepEqual(eventReplay.events.map(event => event.type), ["turn.accepted", "turn.dispatched", "turn.succeeded"]);
+  assert.equal(eventReplay.terminal.type, "turn.succeeded");
+  const invalidCursor = await fetch(`${base}/v1/turns/${accepted.commandId}/events?cursor=other:1`, { headers: { authorization: `Bearer ${runtime.ownerToken}` } });
+  assert.equal(invalidCursor.status, 400);
+  assert.equal((await invalidCursor.json()).code, "invalid_event_cursor");
 
   const progress = await fetch(`${base}/v1/progress/${accepted.commandId}`, { headers: { authorization: `Bearer ${runtime.ownerToken}` } }).then(response => response.text());
   assert.match(progress, /event: snapshot/);

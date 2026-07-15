@@ -36,6 +36,35 @@ test("boots with isolated state, owner token, and constant-time health", async (
   await runtime.stop();
 });
 
+test("runtime records an ordered, secret-free lifecycle event stream for a completed turn", async () => {
+  const runtime = await new NativeRuntime({ stateDir: tempState() }).start();
+  try {
+    const accepted = await runtime.submitTurn({ principalId: "owner:a", requestId: "event-lifecycle", payload: { input: "hello", apiKey: "sk-never-expose-123456" } }).catch(error => error);
+    assert.equal(accepted.code, "secret_in_turn_payload");
+    const safe = await runtime.submitTurn({ principalId: "owner:a", requestId: "event-lifecycle-safe", payload: { input: "hello" } });
+    await eventually(async () => (await runtime.getTurn("owner:a", safe.commandId))?.status === "succeeded");
+    const replay = await runtime.replayTurnEvents({ principalId: "owner:a", commandId: safe.commandId });
+    assert.deepEqual(replay.events.map(event => event.type), ["turn.accepted", "turn.dispatched", "turn.succeeded"]);
+    assert.equal(replay.terminal.type, "turn.succeeded");
+    assert.equal(JSON.stringify(replay).includes("sk-never-expose"), false);
+    assert.equal(await runtime.replayTurnEvents({ principalId: "owner:b", commandId: safe.commandId }), null);
+  } finally {
+    await runtime.stop();
+  }
+});
+
+test("event observation failures never change a durable turn outcome", async () => {
+  const eventRouter = { emit() { throw new Error("observer_down"); }, replay() { return { status: "ok", events: [], nextCursor: "none", hasMore: false, terminal: null }; } };
+  const runtime = await new NativeRuntime({ stateDir: tempState(), eventRouter }).start();
+  try {
+    const result = await runtime.submitTurn({ principalId: "owner:a", requestId: "observer-failure", payload: { input: "still-runs" } });
+    await eventually(async () => (await runtime.getTurn("owner:a", result.commandId))?.status === "succeeded");
+    assert.equal((await runtime.getTurn("owner:a", result.commandId)).receipt.result.echo, "still-runs");
+  } finally {
+    await runtime.stop();
+  }
+});
+
 test("idempotency is principal-scoped and conflicts are explicit", async () => {
   const runtime = await new NativeRuntime({ stateDir: tempState() }).start();
   const first = await runtime.submitTurn({ principalId: "owner:a", requestId: "same", payload: { input: 1 } });
@@ -175,6 +204,9 @@ test("cancelled before dispatch records a terminal cancellation without executio
   assert.equal(cancelled.cancellation, "cancelled_before_dispatch");
   assert.equal((await runtime.getTurn("owner:a", result.commandId)).status, "cancelled");
   assert.equal((await runtime.getProgress("owner:a", result.commandId)).at(-1).phase, "cancelled");
+  const events = await runtime.replayTurnEvents({ principalId: "owner:a", commandId: result.commandId });
+  assert.deepEqual(events.events.map(event => event.type), ["turn.accepted", "turn.cancelled"]);
+  assert.equal(events.terminal.type, "turn.cancelled");
   runtime.pump = originalPump;
   await runtime.stop();
 });

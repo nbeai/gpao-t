@@ -23,13 +23,14 @@ import { ProviderRouteHealth } from "./provider-route-health.js";
 import { createFoundationConnectorCatalog } from "./connector-catalog.js";
 import { ConnectorController } from "./connector-controller.js";
 import { createConnectionConcierge } from "./connection-concierge.js";
+import { EventRouter } from "./event-router.js";
 
 function requestDigest(payload) {
   return crypto.createHash("sha256").update(JSON.stringify(payload)).digest("hex");
 }
 
 export class NativeRuntime {
-  constructor({ stateDir, providerRegistry = null, providerAdapter = new DeterministicProviderEmulator(), providerAdapters = null, credentialResolver = null, credentialStore = null, connectionCenter = null, providerEnvironment = process.env, providerFetch = fetch, socketRegistry = createFoundationSocketRegistry(), memory = new LocalHybridMemory(), toolRegistry = createFoundationToolRegistry(), connectorCatalog = null, connectorController = null, connectionConcierge = null, routeHealth = null, workerPath = path.resolve(new URL("./worker.js", import.meta.url).pathname), writerPath = path.resolve(new URL("./state-writer.js", import.meta.url).pathname), maxInflight = 4, maxQueue = 64, workerDispatchTimeoutMs = 250, workerResultTimeoutMs = 30_000, writerRequestTimeoutMs = 5_000, writerCloseTimeoutMs = 1_000, maxWorkerRestarts = 5, workerRestartWindowMs = 10_000, workerRestartBaseDelayMs = 25, workerStableWindowMs = 1_000 } = {}) {
+  constructor({ stateDir, providerRegistry = null, providerAdapter = new DeterministicProviderEmulator(), providerAdapters = null, credentialResolver = null, credentialStore = null, connectionCenter = null, providerEnvironment = process.env, providerFetch = fetch, socketRegistry = createFoundationSocketRegistry(), memory = new LocalHybridMemory(), toolRegistry = createFoundationToolRegistry(), connectorCatalog = null, connectorController = null, connectionConcierge = null, routeHealth = null, eventRouter = new EventRouter(), workerPath = path.resolve(new URL("./worker.js", import.meta.url).pathname), writerPath = path.resolve(new URL("./state-writer.js", import.meta.url).pathname), maxInflight = 4, maxQueue = 64, workerDispatchTimeoutMs = 250, workerResultTimeoutMs = 30_000, writerRequestTimeoutMs = 5_000, writerCloseTimeoutMs = 1_000, maxWorkerRestarts = 5, workerRestartWindowMs = 10_000, workerRestartBaseDelayMs = 25, workerStableWindowMs = 1_000 } = {}) {
     this.stateDir = assertSafeStateDir(stateDir);
     this.workerPath = workerPath;
     this.writerPath = writerPath;
@@ -62,6 +63,7 @@ export class NativeRuntime {
       providerCatalog: this.providerRegistry,
       connectorCatalog: this.connectorCatalog
     });
+    this.eventRouter = eventRouter;
     this.socketRegistry = socketRegistry;
     this.router = new ExecutionRouter({ socketRegistry });
     this.controller = new ExecutionController({ runtime: this });
@@ -229,6 +231,7 @@ export class NativeRuntime {
     if (!entries.length) return;
     for (const entry of entries) {
       await this.writer.call("markUncertain", { commandId: entry.commandId, principalId: entry.principalId, generation: this.generation, reason });
+      this.emitTurnEvent(entry.commandId, "turn.uncertain", { reason });
       await this.emitProgress(entry.commandId, entry.principalId);
     }
     this.healthSnapshot.inflight = this.pending.size + this.finalizationQueue.size;
@@ -242,6 +245,7 @@ export class NativeRuntime {
     if (Buffer.byteLength(serialized) > 64 * 1024) throw new RuntimeError("payload_too_large", "Turn payload exceeds 64 KiB", 413);
     const command = { id: crypto.randomUUID(), principalId, requestId, requestDigest: requestDigest(payload), payload, createdAt: Date.now() };
     const result = await this.writer.call("acceptCommand", { command, runtimeGeneration: this.generation, maxQueue: this.maxQueue });
+    if (!result.deduplicated) this.emitTurnEvent(result.commandId, "turn.accepted", { requestId });
     await this.emitProgress(result.commandId, principalId);
     void this.pump().catch(() => {});
     return result;
@@ -261,6 +265,8 @@ export class NativeRuntime {
     }
     if (cancellation.changed) await this.emitProgress(commandId, principalId);
     const current = await this.getTurn(principalId, commandId);
+    if (cancellation.changed && current?.status === "cancelled") this.emitTurnEvent(commandId, "turn.cancelled", { cancellation: cancellation.kind });
+    if (cancellation.changed && current?.status === "uncertain") this.emitTurnEvent(commandId, "turn.uncertain", { reason: cancellation.kind });
     return { commandId, status: current?.status || "unknown", changed: cancellation.changed, cancellation: cancellation.kind };
   }
 
@@ -311,6 +317,7 @@ export class NativeRuntime {
             status: "failed",
             result: { error: { code: error.code || "route_plan_failed", message: "Execution route could not be prepared" } }
           });
+          this.emitTurnEvent(command.id, "turn.failed", { reason: error.code || "route_plan_failed" });
           await this.emitProgress(command.id, command.principalId);
           continue;
         }
@@ -321,6 +328,7 @@ export class NativeRuntime {
           throw error;
         }
         this.pending.set(command.id, { commandId: command.id, principalId: command.principalId, generation: this.generation, permit, routePlan });
+        this.emitTurnEvent(command.id, "turn.dispatched", { socketId: routePlan.destination.socketId, generation: this.generation });
         this.healthSnapshot.inflight = this.pending.size + this.finalizationQueue.size;
         await this.emitProgress(command.id, command.principalId);
         const dispatchTimer = setTimeout(() => {
@@ -351,6 +359,7 @@ export class NativeRuntime {
     this.pending.delete(commandId);
     this.clearWorkerTimers(commandId);
     await this.writer.call("markUncertain", { commandId, principalId, generation: this.generation, reason });
+    this.emitTurnEvent(commandId, "turn.uncertain", { reason });
     this.healthSnapshot.inflight = this.pending.size + this.finalizationQueue.size;
     await this.emitProgress(commandId, principalId);
     void this.pump().catch(() => {});
@@ -379,6 +388,7 @@ export class NativeRuntime {
       return false;
     }
     this.finalizationQueue.delete(message.commandId);
+    this.emitTurnEvent(message.commandId, status === "succeeded" ? "turn.succeeded" : "turn.failed", status === "succeeded" ? {} : { reason: result.error?.code || "worker_failed" });
     this.healthSnapshot.inflight = this.pending.size + this.finalizationQueue.size;
     await this.emitProgress(message.commandId, pending.principalId);
     void this.pump().catch(() => {});
@@ -410,11 +420,36 @@ export class NativeRuntime {
     if (!entries.length) return;
     for (const { pending } of entries) {
       await this.writer.call("markUncertain", { commandId: pending.commandId, principalId: pending.principalId, generation: this.generation, reason });
+      this.emitTurnEvent(pending.commandId, "turn.uncertain", { reason });
       await this.emitProgress(pending.commandId, pending.principalId);
     }
   }
 
   async getTurn(principalId, commandId) { return this.writer.call("getCommand", { commandId, principalId }); }
+
+  async replayTurnEvents({ principalId, commandId, cursor, limit } = {}) {
+    if (!await this.getTurn(principalId, commandId)) return null;
+    if (limit !== undefined && (!Number.isInteger(limit) || limit < 1)) {
+      throw new RuntimeError("invalid_event_limit", "Event replay limit must be a positive integer", 400);
+    }
+    try {
+      return this.eventRouter.replay({ runId: commandId, cursor, limit });
+    } catch (error) {
+      if (error.message === "event_router_invalid_cursor") {
+        throw new RuntimeError("invalid_event_cursor", "Event cursor does not belong to this turn", 400);
+      }
+      throw error;
+    }
+  }
+
+  emitTurnEvent(commandId, type, payload = {}) {
+    try {
+      return this.eventRouter.emit({ runId: commandId, type, payload });
+    } catch {
+      // Event observation is intentionally fail-open: it cannot interrupt a turn already persisted by StateWriter.
+      return null;
+    }
+  }
 
   async getProgress(principalId, commandId) {
     const turn = await this.getTurn(principalId, commandId);

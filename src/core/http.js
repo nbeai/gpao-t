@@ -145,6 +145,18 @@ export function createHttpServer(runtime, { host = "127.0.0.1", port = 18899 } =
         const turn = await runtime.getTurn(principalId, turnMatch[1]);
         return turn ? send(response, 200, turn) : send(response, 404, { code: "not_found" });
       }
+      const eventMatch = url.pathname.match(/^\/v1\/turns\/([^/]+)\/events$/);
+      if (request.method === "GET" && eventMatch) {
+        const rawLimit = url.searchParams.get("limit");
+        const limit = rawLimit === null ? undefined : Number(rawLimit);
+        const replay = await runtime.replayTurnEvents({
+          principalId,
+          commandId: eventMatch[1],
+          cursor: url.searchParams.get("cursor") || undefined,
+          limit
+        });
+        return replay ? send(response, 200, replay) : send(response, 404, { code: "not_found" });
+      }
       const cancelMatch = url.pathname.match(/^\/v1\/turns\/([^/]+)\/cancel$/);
       if (request.method === "POST" && cancelMatch) {
         const result = await runtime.cancelTurn({ principalId, commandId: cancelMatch[1] });
