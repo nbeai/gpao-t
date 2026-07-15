@@ -13,8 +13,7 @@ export function asPublicError(error) {
     return {
       code: error.code,
       message: error.message,
-      status: error.status,
-      ...(error.details ? { details: error.details } : {})
+      status: error.status
     };
   }
   return { code: "internal_error", message: "Native Runtime internal error", status: 500 };

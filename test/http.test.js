@@ -156,6 +156,30 @@ test("provider failure returns a user-safe repair plan without internal detail",
   }
 });
 
+test("HTTP never serializes internal RuntimeError details to a local dashboard response", async () => {
+  const runtime = await new NativeRuntime({ stateDir: tempState() }).start();
+  const { server } = createHttpServer(runtime, { port: 0 });
+  await new Promise(resolve => server.listen(0, "127.0.0.1", resolve));
+  const base = `http://127.0.0.1:${server.address().port}`;
+  try {
+    const dashboard = await fetch(`${base}/`);
+    const cookie = dashboard.headers.get("set-cookie");
+    const response = await fetch(`${base}/v1/connectors/mcp.external/enabled`, {
+      method: "PUT",
+      headers: { cookie, origin: base, "content-type": "application/json" },
+      body: JSON.stringify({ enabled: true })
+    });
+    const body = await response.json();
+    assert.equal(response.status, 409);
+    assert.equal(body.code, "connector_setup_review_required");
+    assert.equal("details" in body, false);
+    assert.doesNotMatch(JSON.stringify(body), /not_started|credential_handle|secret/i);
+  } finally {
+    await new Promise(resolve => server.close(resolve));
+    await runtime.stop();
+  }
+});
+
 test("connection center stores only a redacted connection state and persists a verified default model", async () => {
   const secret = "http-connection-secret";
   const runtime = await new NativeRuntime({

@@ -505,7 +505,7 @@ export class NativeRuntime {
     return receipt;
   }
 
-  async verifyProviderConnection({ providerId, secret }) {
+  async verifyProviderConnection({ providerId, secret, signal }) {
     const provider = this.providerRegistry.get(providerId);
     if (!provider) throw new RuntimeError("invalid_provider", "The selected GPAO-T provider is unavailable", 404);
     const adapter = this.providerAdapters.require(provider.adapter);
@@ -513,7 +513,7 @@ export class NativeRuntime {
       runId: crypto.randomUUID(), sessionId: "connection-check", generation: this.generation || 0,
       idempotencyKey: crypto.randomUUID(), providerId, modelId: provider.models[0].id,
       responseBudget: 16, timeoutMs: 15_000
-    }, { input: "Reply with exactly: GPAO-T connection verified.", credential: secret });
+    }, { input: "Reply with exactly: GPAO-T connection verified.", credential: secret, signal });
     return result?.status === "succeeded" ? { state: "ready" } : { state: "provider_unavailable" };
   }
 

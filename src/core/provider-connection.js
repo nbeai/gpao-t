@@ -3,12 +3,15 @@ import { RuntimeError } from "./errors.js";
 import { presentRuntimeStatus } from "./presentation-status.js";
 
 export class ProviderConnectionCenter {
-  constructor({ credentialStore, providerRegistry = null, verify = async () => ({ state: "ready" }) } = {}) {
+  constructor({ credentialStore, providerRegistry = null, verify = async () => ({ state: "ready" }), verifyTimeoutMs = 15_000, clock = () => Date.now() } = {}) {
     if (!credentialStore) throw new RuntimeError("connection_configuration_error", "A credential store is required", 500);
     this.credentialStore = credentialStore;
     this.verify = verify;
     this.providerRegistry = providerRegistry;
+    this.verifyTimeoutMs = verifyTimeoutMs;
+    this.clock = clock;
     this.connections = new Map();
+    this.verifications = new Map();
   }
 
   status(providerId) {
@@ -53,8 +56,9 @@ export class ProviderConnectionCenter {
   }
 
   async configure({ providerId, secret }) {
+    this.cancelVerification(providerId, "connection_reconfigured");
     const credential = await this.credentialStore.save({ providerId, secret });
-    const entry = { providerId, state: "verifying", credentialHandle: credential.handle, connectionType: "api_key", updatedAt: Date.now(), verificationId: crypto.randomUUID() };
+    const entry = { providerId, state: "verifying", credentialHandle: credential.handle, connectionType: "api_key", updatedAt: this.clock(), verificationId: crypto.randomUUID() };
     this.connections.set(providerId, entry);
     this.updateRegistry(providerId, entry.state, entry.connectionType);
     return this.status(providerId);
@@ -63,16 +67,35 @@ export class ProviderConnectionCenter {
   async verifyConnection(providerId) {
     const entry = this.connections.get(providerId);
     if (!entry || !await this.credentialStore.has(entry.credentialHandle, providerId)) return this.status(providerId);
-    try {
-      const result = await this.credentialStore.withCredential(entry.credentialHandle, providerId, secret => this.verify({ providerId, secret, credentialHandle: entry.credentialHandle }));
-      entry.state = result?.state === "ready" ? "ready" : (result?.state || "provider_unavailable");
-    } catch (error) {
-      entry.state = error.code === "auth_required" ? "auth_required" : "provider_unavailable";
-    }
-    entry.updatedAt = Date.now();
-    entry.verifiedAt = entry.state === "ready" ? entry.updatedAt : null;
-    this.updateRegistry(providerId, entry.state, entry.connectionType);
-    return this.status(providerId);
+    const current = this.verifications.get(providerId);
+    if (current?.promise) return current.promise;
+    const controller = new AbortController();
+    const verificationId = entry.verificationId;
+    const timeout = setTimeout(() => controller.abort(new RuntimeError("provider_timeout", "Provider connection verification timed out", 504)), this.verifyTimeoutMs);
+    timeout.unref?.();
+    const verification = { verificationId, controller, promise: null };
+    const complete = async () => {
+      try {
+        try {
+          const result = await this.credentialStore.withCredential(entry.credentialHandle, providerId, secret => this.verify({ providerId, secret, credentialHandle: entry.credentialHandle, signal: controller.signal }));
+          if (!this.isCurrentVerification(providerId, entry, verificationId)) return this.status(providerId);
+          entry.state = result?.state === "ready" ? "ready" : (result?.state || "provider_unavailable");
+        } catch (error) {
+          if (!this.isCurrentVerification(providerId, entry, verificationId)) return this.status(providerId);
+          entry.state = error.code === "auth_required" ? "auth_required" : "provider_unavailable";
+        }
+        entry.updatedAt = this.clock();
+        entry.verifiedAt = entry.state === "ready" ? entry.updatedAt : null;
+        this.updateRegistry(providerId, entry.state, entry.connectionType);
+        return this.status(providerId);
+      } finally {
+        clearTimeout(timeout);
+        if (this.verifications.get(providerId) === verification) this.verifications.delete(providerId);
+      }
+    };
+    verification.promise = complete();
+    this.verifications.set(providerId, verification);
+    return verification.promise;
   }
 
   async credential(providerId) {
@@ -84,6 +107,7 @@ export class ProviderConnectionCenter {
   }
 
   async disconnect(providerId) {
+    this.cancelVerification(providerId, "connection_disconnected");
     const entry = this.connections.get(providerId);
     if (entry?.credentialHandle) await this.credentialStore.remove(entry.credentialHandle, providerId);
     this.connections.delete(providerId);
@@ -92,9 +116,21 @@ export class ProviderConnectionCenter {
   }
 
   markOAuthReady(providerId) {
-    const now = Date.now();
+    const now = this.clock();
     this.connections.set(providerId, { providerId, credentialHandle: null, connectionType: "oauth", state: "ready", updatedAt: now, verifiedAt: now });
     this.updateRegistry(providerId, "ready", "oauth");
     return this.status(providerId);
+  }
+
+  cancelVerification(providerId, reason = "connection_changed") {
+    const verification = this.verifications.get(providerId);
+    if (!verification) return false;
+    this.verifications.delete(providerId);
+    verification.controller.abort(new RuntimeError("provider_verification_cancelled", "Provider connection verification was cancelled", 409, { reason }));
+    return true;
+  }
+
+  isCurrentVerification(providerId, entry, verificationId) {
+    return this.connections.get(providerId) === entry && entry.verificationId === verificationId;
   }
 }
