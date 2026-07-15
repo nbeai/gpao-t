@@ -3,41 +3,114 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>nBeAI. GPAO-T</title>
+  <title>nBeAI. GPAO-T3</title>
+  <link rel="icon" href="/assets/gpao-t3-logo.jpeg" type="image/jpeg">
   <link rel="stylesheet" href="/app.css">
 </head>
 <body>
   <div class="app-shell">
     <aside class="rail" aria-label="대화 탐색">
-      <div class="brand"><span class="mark" aria-hidden="true">∞</span><strong>nBeAI. GPAO-T</strong></div>
-      <button class="new-chat" id="new-chat" type="button">+ 새 대화</button>
+      <div class="brand"><img class="brand-logo" src="/assets/gpao-t3-logo.jpeg" alt=""><strong>nBeAI. GPAO-T3</strong></div>
+      <button class="new-chat" id="new-chat" type="button"><i data-lucide="plus" aria-hidden="true"></i><span>새 대화</span></button>
       <nav id="sessions" aria-label="대화 목록"></nav>
-      <div class="runtime-state" id="runtime-state">연결 상태 확인 중</div>
+      <div class="rail-footer"><span class="health-dot" aria-hidden="true"></span><span class="runtime-state" id="runtime-state">연결 상태 확인 중</span></div>
     </aside>
-    <main class="conversation">
-      <header class="topbar"><div><span class="eyebrow">작업 공간</span><h1 id="chat-title">새 대화</h1></div><div class="top-actions"><button id="models" type="button">AI 연결</button><button id="status" type="button" aria-label="런타임 상태">상태</button></div></header>
-      <section class="messages" id="messages" aria-live="polite">
-        <div class="welcome"><span class="mark" aria-hidden="true">∞</span><h2>무엇을 함께 해볼까요?</h2><p>대화를 시작하면 이 대화 안에서 필요한 맥락과 실행 흐름을 안전하게 정리합니다.</p></div>
-      </section>
-      <form class="composer" id="composer">
-        <label class="sr-only" for="message">GPAO-T에 메시지 입력</label>
-        <textarea id="message" rows="1" placeholder="GPAO-T에 메시지 입력" required></textarea>
-        <button type="submit" id="send">보내기</button>
-      </form>
-      <p class="quiet-status" id="turn-status"></p>
-    </main>
+    <button class="session-backdrop" id="session-backdrop" type="button" aria-label="대화 목록 닫기" tabindex="-1"></button>
+
+    <div class="workbench">
+      <main class="conversation">
+        <header class="topbar">
+          <button class="session-menu" id="session-menu" type="button" aria-label="대화 목록" aria-expanded="false" aria-controls="sessions"><i data-lucide="menu" aria-hidden="true"></i></button>
+          <div class="conversation-title"><span class="eyebrow">대화</span><h1 id="chat-title">새 대화</h1></div>
+          <div class="top-actions">
+            <button class="quiet-action" id="models" type="button">AI 연결</button>
+            <button class="panel-toggle" id="panel-toggle" type="button" aria-label="작업 보기" aria-expanded="false" aria-controls="assistant-panel">
+              <i data-lucide="panel-right" aria-hidden="true"></i><span>작업 보기</span><span class="notice-badge" id="panel-badge" hidden>0</span>
+            </button>
+          </div>
+        </header>
+
+        <section class="messages" id="messages" aria-live="polite">
+          <div class="welcome"><img class="welcome-logo" src="/assets/gpao-t3-logo.jpeg" alt=""><h2>무엇을 함께 해볼까요?</h2><p>메시지를 입력하면 바로 시작합니다.</p></div>
+        </section>
+
+        <div class="composer-wrap">
+          <form class="composer" id="composer">
+            <label class="sr-only" for="message">GPAO-T3에 메시지 입력</label>
+            <textarea id="message" rows="1" placeholder="GPAO-T3에 메시지 입력" required></textarea>
+            <button type="button" id="cancel-turn" aria-label="응답 중단" title="응답 중단" hidden><i data-lucide="square" aria-hidden="true"></i></button>
+            <button type="submit" id="send" aria-label="메시지 보내기" title="메시지 보내기"><i data-lucide="arrow-up" aria-hidden="true"></i></button>
+          </form>
+          <p class="quiet-status" id="turn-status"></p>
+        </div>
+      </main>
+
+      <button class="panel-backdrop" id="panel-backdrop" type="button" aria-label="작업 패널 닫기" tabindex="-1"></button>
+      <aside class="assistant-panel" id="assistant-panel" aria-label="작업 보조" aria-hidden="true">
+        <header class="panel-header">
+          <div><span class="eyebrow">작업 보조</span><h2 id="panel-title">진행 상황</h2></div>
+          <button class="icon-button" id="panel-close" type="button" aria-label="작업 패널 닫기" title="닫기"><i data-lucide="x" aria-hidden="true"></i></button>
+        </header>
+        <nav class="panel-tabs" aria-label="작업 보조 보기">
+          <button type="button" data-panel-view="activity" aria-current="true">진행</button>
+          <button type="button" data-panel-view="tools">도구</button>
+          <button type="button" data-panel-view="memory">기억</button>
+          <button type="button" data-panel-view="recovery">복구</button>
+        </nav>
+        <div class="panel-body">
+          <section class="panel-view" data-panel-content="activity">
+            <div class="activity-state"><span class="activity-pulse" aria-hidden="true"></span><div><strong id="panel-activity-title">대화를 시작할 준비가 됐습니다</strong><p id="panel-activity-detail">필요한 작업과 결과가 여기에 정리됩니다.</p></div></div>
+            <ol class="activity-event-list" id="activity-event-list" aria-label="현재 작업 진행 단계"></ol>
+            <div class="panel-section"><h3>현재 상태</h3>
+              <button class="status-row" id="model-card" type="button"><span><small>AI 연결</small><strong id="model-summary">확인 중</strong></span><span id="model-detail">연결 상태를 불러오고 있습니다</span></button>
+              <button class="status-row" id="tool-card" type="button"><span><small>도구</small><strong id="tool-summary">확인 중</strong></span><span id="tool-detail">도구 상태를 불러오고 있습니다</span></button>
+            </div>
+          </section>
+          <section class="panel-view" data-panel-content="tools" hidden>
+            <div class="panel-section"><h3>도구와 결과</h3><p class="panel-copy">검색 결과, 파일과 문서 미리보기, 산출물과 업데이트 진행이 작업 순서대로 표시됩니다.</p><button class="wide-action" id="open-tools" type="button">도구 연결 관리</button></div>
+          </section>
+          <section class="panel-view" data-panel-content="memory" hidden>
+            <div class="panel-section"><h3>기억</h3>
+              <button class="status-row" id="memory-card" type="button"><span><small>사용 중인 기억</small><strong id="memory-summary">확인 중</strong></span><span id="memory-detail">기억 상태를 불러오고 있습니다</span></button>
+              <button class="wide-action" id="memory" type="button">기억 확인</button>
+            </div>
+          </section>
+          <section class="panel-view" data-panel-content="recovery" hidden>
+            <div class="panel-section"><h3>문제 해결</h3>
+              <button class="status-row" id="recovery-card" type="button"><span><small>시스템</small><strong id="recovery-summary">확인 중</strong></span><span id="recovery-detail">복구 상태를 불러오고 있습니다</span></button>
+              <button class="wide-action" id="status" type="button">복구 안내 열기</button>
+            </div>
+          </section>
+        </div>
+      </aside>
+    </div>
   </div>
+
   <dialog class="connection-dialog" id="connection-dialog" aria-labelledby="connection-title">
-    <header class="dialog-header"><div><span class="eyebrow">GPAO-T 모델 연결</span><h2 id="connection-title">내 AI 연결</h2></div><button class="icon-button" id="close-connections" type="button" aria-label="닫기">×</button></header>
+    <header class="dialog-header"><div><span class="eyebrow">GPAO-T3 모델 연결</span><h2 id="connection-title">내 AI 연결</h2></div><button class="icon-button" id="close-connections" type="button" aria-label="닫기"><i data-lucide="x" aria-hidden="true"></i></button></header>
     <p class="dialog-intro">사용할 AI 계정이나 API 키를 연결하고, 이 기기에서 사용할 모델과 도구를 관리합니다. 연결 정보는 대화에 입력하지 않고 안전한 연결 절차에서만 처리합니다.</p>
     <section class="default-model" aria-labelledby="default-model-title"><label id="default-model-title" for="default-model">기본 모델</label><select id="default-model"></select><button id="save-default-model" type="button">기본으로 사용</button><p id="model-selection-status" class="form-status" aria-live="polite"></p></section>
     <section id="provider-list" class="provider-list" aria-label="AI 연결 목록"></section>
-    <section class="tool-connections" aria-labelledby="tool-connections-title">
-      <div class="section-heading"><div><span class="eyebrow">연결 관리</span><h3 id="tool-connections-title">AI 및 도구 연결</h3></div><p>이 기기에서 사용할 도구를 선택합니다.</p></div>
-      <p id="connector-status" class="form-status" aria-live="polite"></p>
-      <div id="connector-list" class="connector-list" aria-label="AI 및 도구 연결 목록"></div>
-    </section>
+    <section class="tool-connections" aria-labelledby="tool-connections-title"><div class="section-heading"><div><span class="eyebrow">연결 관리</span><h3 id="tool-connections-title">AI 및 도구 연결</h3></div><p>이 기기에서 사용할 도구를 선택합니다.</p></div><p id="connector-status" class="form-status" aria-live="polite"></p><div id="tool-list" class="connector-list" aria-label="기본 도구 목록"></div><div id="connector-list" class="connector-list" aria-label="AI 및 도구 연결 목록"></div></section>
   </dialog>
+  <dialog class="memory-dialog" id="memory-dialog" aria-labelledby="memory-title">
+    <header class="dialog-header"><div><span class="eyebrow">GPAO-T3 기억</span><h2 id="memory-title">기억과 영향</h2></div><button class="icon-button" id="close-memory" type="button" aria-label="닫기"><i data-lucide="x" aria-hidden="true"></i></button></header>
+    <p class="dialog-intro">대화에 영향을 준 맥락과 되돌릴 수 있는 항목을 확인합니다. 승인되지 않은 기억은 답변 기준으로 쓰지 않습니다.</p>
+    <div class="ledger-summary" id="ledger-summary"></div><section class="memory-candidates" aria-labelledby="memory-candidates-title"><h3 id="memory-candidates-title">기억 후보</h3><div id="memory-candidate-list" class="ledger-list"></div></section><h3 class="ledger-heading">사용 중인 기억</h3><div class="ledger-list" id="ledger-list" aria-label="기억 영향 목록"></div><p id="memory-status" class="form-status" aria-live="polite"></p>
+  </dialog>
+  <dialog class="recovery-dialog" id="recovery-dialog" aria-labelledby="recovery-title">
+    <header class="dialog-header"><div><span class="eyebrow">GPAO-T3 복구</span><h2 id="recovery-title">문제 해결</h2></div><button class="icon-button" id="close-recovery" type="button" aria-label="닫기"><i data-lucide="x" aria-hidden="true"></i></button></header>
+    <p class="dialog-intro">현재 상태를 확인하고 필요한 복구 행동을 안내합니다. 확인되지 않은 작업은 자동으로 반복하지 않습니다.</p><div class="recovery-list" id="recovery-list" aria-label="복구 상태 목록"></div><p id="recovery-status" class="form-status" aria-live="polite"></p>
+  </dialog>
+  <dialog class="session-dialog" id="session-dialog" aria-labelledby="session-dialog-title">
+    <header class="dialog-header"><div><span class="eyebrow">GPAO-T3 작업공간</span><h2 id="session-dialog-title">대화 관리</h2></div><button class="icon-button" id="close-session-dialog" type="button" aria-label="닫기"><i data-lucide="x" aria-hidden="true"></i></button></header><p class="dialog-intro" id="session-dialog-detail"></p><label class="session-title-field" id="session-title-field" for="session-title-input">대화 이름<input id="session-title-input" type="text" maxlength="120"></label><div class="session-dialog-actions"><button id="cancel-session-action" type="button">취소</button><button id="confirm-session-action" type="button">저장</button></div><p id="session-dialog-status" class="form-status" aria-live="polite"></p>
+  </dialog>
+  <dialog class="session-dialog" id="channel-send-dialog" aria-labelledby="channel-send-title">
+    <header class="dialog-header"><div><span class="eyebrow">외부 메시지 승인</span><h2 id="channel-send-title">Telegram으로 보내기</h2></div></header><p class="dialog-intro">아래 내용이 외부로 전송됩니다.</p><p class="channel-send-preview" id="channel-send-preview"></p><div class="session-dialog-actions"><button id="cancel-channel-send" type="button">취소</button><button id="confirm-channel-send" type="button">승인하고 보내기</button></div><p id="channel-send-status" class="form-status" aria-live="polite"></p>
+  </dialog>
+  <script src="/vendor/marked.js"></script>
+  <script src="/vendor/purify.js"></script>
+  <script src="/vendor/lucide.js"></script>
   <script type="module" src="/app.js"></script>
 </body>
 </html>

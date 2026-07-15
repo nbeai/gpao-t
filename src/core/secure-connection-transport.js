@@ -25,7 +25,7 @@ export class SecureConnectionTransport {
       return { schema: PROTECTED_CONNECTION_SCHEMA, operation: request.operation, requestId: request.requestId, credentialRef: connection.credentialRef, authMethod: connection.authMethod, state: connection.state, models: connection.models };
     }
     if (request.operation === "provider.invoke") {
-      const invocation = await this.agent.invoke({ requestId: request.requestId, credentialRef: request.credentialRef, providerId: request.providerId, modelId: request.modelId, input: request.input, deadline: request.deadline });
+      const invocation = await this.agent.invoke({ requestId: request.requestId, credentialRef: request.credentialRef, providerId: request.providerId, modelId: request.modelId, input: request.input, responseBudget: request.responseBudget, deadline: request.deadline }, { signal });
       return { schema: PROTECTED_CONNECTION_SCHEMA, operation: request.operation, requestId: request.requestId, operationId: request.requestId, state: "completed", result: invocation.result, receipt: invocation.receipt };
     }
     throw new RuntimeError("secure_connection_transport_invalid_operation", "Unsupported secure connection operation", 400);

@@ -35,16 +35,17 @@ test("F1 flight computer qualification: fresh OS turn survives normal restart an
       });
 
       assert.equal(osTurn.replyMode, "provider_emulator");
-      assert.equal(osTurn.providerReceipt.schema, "gpao_t.provider_receipt.v1");
+      assert.equal(osTurn.providerReceipt.schema, "gpao_t3.provider_receipt.v1");
       assert.equal(osTurn.turn.status, "succeeded");
       assert.equal(osTurn.turn.receipt.status, "succeeded");
-      assert.deepEqual(osTurn.turn.receipt.result, {
-        kind: "deterministic_worker_result",
-        echo: "GPAO-T deterministic provider response"
-      });
+      assert.equal(osTurn.turn.receipt.result.kind, "provider_projected_result");
+      assert.equal(osTurn.turn.receipt.result.text, "GPAO-T3 deterministic provider response");
+      assert.equal(osTurn.turn.receipt.result.echo, "GPAO-T3 deterministic provider response");
+      assert.equal(osTurn.turn.receipt.result.taskPacketId, osTurn.taskPacket.id);
+      assert.equal(osTurn.turn.receipt.result.providerReceipt.schema, "gpao_t3.provider_receipt.v1");
 
       const progress = await firstRuntime.getProgress("owner:f1", osTurn.submitted.commandId);
-      assert.deepEqual(progress.map(entry => entry.phase), ["accepted", "running", "succeeded"]);
+      assert.deepEqual(progress.map(entry => entry.phase), ["accepted", "dispatching", "responding", "completed"]);
       assert.ok(progress.every((entry, index) => index === 0 || entry.seq > progress[index - 1].seq));
 
       const replayBeforeRestart = await firstRuntime.replayTurnEvents({
@@ -54,6 +55,7 @@ test("F1 flight computer qualification: fresh OS turn survives normal restart an
       assert.deepEqual(replayBeforeRestart.events.map(event => event.type), [
         "turn.accepted",
         "turn.dispatched",
+        "turn.responding",
         "turn.succeeded"
       ]);
       assert.equal(replayBeforeRestart.terminal.type, "turn.succeeded");
@@ -74,6 +76,7 @@ test("F1 flight computer qualification: fresh OS turn survives normal restart an
       assert.deepEqual(replayAfterRestart.events.map(event => event.type), [
         "turn.accepted",
         "turn.dispatched",
+        "turn.responding",
         "turn.succeeded"
       ]);
       assert.equal(replayAfterRestart.terminal.type, "turn.succeeded");
@@ -101,7 +104,7 @@ test("F1 flight computer qualification: fresh OS turn survives normal restart an
         return current?.status === "uncertain" && current;
       });
       assert.equal(uncertain.receipt, null);
-      assert.equal((await runtime.getProgress("owner:f1", crashed.commandId)).at(-1).phase, "outcome_unknown");
+      assert.equal((await runtime.getProgress("owner:f1", crashed.commandId)).at(-1).phase, "uncertain");
 
       await eventually(() => runtime.worker && runtime.worker !== crashedWorker && runtime.worker.connected);
       const duplicate = await runtime.submitTurn({

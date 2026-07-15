@@ -1,7 +1,7 @@
 import crypto from "node:crypto";
 import { RuntimeError } from "./errors.js";
 
-export const NATIVE_CREDENTIAL_BRIDGE_SCHEMA = "gpao_t.native_credential_bridge.v1";
+export const NATIVE_CREDENTIAL_BRIDGE_SCHEMA = "gpao_t3.native_credential_bridge.v1";
 
 const OPERATIONS = new Set([
   "credential.status",

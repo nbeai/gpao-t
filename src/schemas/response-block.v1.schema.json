@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gpao-t3.local/schemas/response-block.v1.json",
+  "title": "GPAO-T3 Response Block v1",
+  "type": "object",
+  "required": ["schema", "id", "kind"],
+  "properties": {
+    "schema": { "const": "gpao_t3.response_block.v1" },
+    "id": { "type": "string", "minLength": 1 },
+    "kind": { "enum": ["markdown", "code", "table", "source", "artifact"] },
+    "text": { "type": "string" },
+    "code": { "type": "string" },
+    "language": { "type": "string" },
+    "columns": { "type": "array", "items": { "type": "string" } },
+    "rows": { "type": "array", "items": { "type": "array", "items": { "type": "string" } } },
+    "title": { "type": "string" },
+    "url": { "type": "string" },
+    "artifactId": { "type": "string" },
+    "mediaType": { "type": "string" }
+  }
+}

@@ -58,7 +58,11 @@ test("progress reconnect starts with durable ordered snapshot and ends terminal-
     await eventually(async () => (await runtime.getTurn("owner:a", accepted.commandId))?.status === "succeeded");
     const events = await runtime.getProgress("owner:a", accepted.commandId);
     assert.ok(writes.some(value => value.startsWith("event: snapshot")));
+    assert.ok(writes.some(value => value.startsWith("event: reconnect")));
+    const reconnect = writes.find(value => value.startsWith("event: reconnect"));
+    assert.match(reconnect, /gpao_t3\.control_frame\.v1/);
+    assert.match(reconnect, /"status":"reconnecting"/);
     assert.deepEqual(events.map(item => item.seq), [...events].map(item => item.seq).sort((a, b) => a - b));
-    assert.equal(events.at(-1).phase, "succeeded");
+    assert.equal(events.at(-1).phase, "completed");
   } finally { await runtime.stop(); }
 });

@@ -35,7 +35,7 @@ export class CodexOAuthAdapter {
     const outputPath = path.join(workDir, "answer.txt");
     // `-` tells Codex to read the prompt from stdin so user content never
     // appears in the child-process argument list.
-    const args = ["exec", "--ephemeral", "--skip-git-repo-check", "--sandbox", "workspace-write", "--color", "never", "--output-last-message", outputPath, "-C", workDir, "--model", plan.modelId, "-"];
+    const args = ["exec", "--ephemeral", "--skip-git-repo-check", "--sandbox", "read-only", "--color", "never", "--output-last-message", outputPath, "-C", workDir, "--model", plan.modelId, "-"];
     try {
       await new Promise((resolve, reject) => {
         const env = {
@@ -64,7 +64,7 @@ export class CodexOAuthAdapter {
       });
       const text = fs.readFileSync(outputPath, "utf8").trim();
       if (!text) throw new ProviderInvocationError("failed", "Codex OAuth provider returned no text output");
-      return { status: "succeeded", runId: plan.runId, providerId: plan.providerId, modelId: plan.modelId, result: { text }, receipt: { schema: "gpao_t.provider_receipt.v1", runId: plan.runId, generation: plan.generation, terminal: true, providerSession: "oauth-managed" } };
+      return { status: "succeeded", runId: plan.runId, providerId: plan.providerId, modelId: plan.modelId, result: { text }, receipt: { schema: "gpao_t3.provider_receipt.v1", runId: plan.runId, generation: plan.generation, terminal: true, providerSession: "oauth-managed" } };
     } finally {
       fs.rmSync(workDir, { recursive: true, force: true });
     }

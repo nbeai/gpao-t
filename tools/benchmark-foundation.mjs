@@ -4,6 +4,7 @@ import path from "node:path";
 import { spawn } from "node:child_process";
 import { performance } from "node:perf_hooks";
 import { NativeRuntime } from "../src/core/runtime.js";
+import { PRODUCT_IDENTITY } from "../src/core/product-identity.js";
 
 function waitForLine(child, expected) {
   return new Promise((resolve, reject) => {
@@ -21,11 +22,11 @@ function waitForLine(child, expected) {
   });
 }
 
-const stateDir = fs.mkdtempSync(path.join(os.tmpdir(), "gpao-t-native-benchmark-"));
+const stateDir = fs.mkdtempSync(path.join(os.tmpdir(), "gpao-t3-benchmark-"));
 const runtime = await new NativeRuntime({ stateDir }).start();
 const seed = await runtime.submitTurn({ principalId: "benchmark", requestId: "seed", payload: { input: "seed" } });
 while ((await runtime.getTurn("benchmark", seed.commandId))?.status !== "succeeded") await new Promise(resolve => setTimeout(resolve, 5));
-const holder = spawn(process.execPath, [path.resolve("tools/hold-sqlite-lock.mjs"), path.join(stateDir, "runtime.sqlite"), "80"], { stdio: ["ignore", "pipe", "inherit"], env: { ...process.env, NODE_NO_WARNINGS: "1" } });
+const holder = spawn(process.execPath, [path.resolve("tools/hold-sqlite-lock.mjs"), path.join(stateDir, PRODUCT_IDENTITY.databaseFile), "80"], { stdio: ["ignore", "pipe", "inherit"], env: { ...process.env, NODE_NO_WARNINGS: "1" } });
 await waitForLine(holder, "locked");
 const holderExit = new Promise(resolve => holder.once("exit", resolve));
 let maxDelayMs = null;
@@ -46,7 +47,7 @@ await runtime.stop();
 fs.rmSync(stateDir, { recursive: true, force: true });
 
 const receipt = {
-  schema: "gpao_t.native_foundation_benchmark.v1",
+  schema: "gpao_t3.native_foundation_benchmark.v1",
   stateWriter: "dedicated child process with bounded busy retry",
   lockHoldMs: 80,
   submitDurationMs,

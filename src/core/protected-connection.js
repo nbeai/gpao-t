@@ -1,6 +1,6 @@
 import { RuntimeError } from "./errors.js";
 
-export const PROTECTED_CONNECTION_SCHEMA = "gpao_t.protected_connection.v1";
+export const PROTECTED_CONNECTION_SCHEMA = "gpao_t3.protected_connection.v1";
 export const PROTECTED_CONNECTION_AUTH_METHODS = Object.freeze(["api_key", "oauth", "local"]);
 export const PROTECTED_CONNECTION_STATES = Object.freeze([
   "not_connected", "connecting", "connected", "auth_required", "expired", "unavailable", "revoked", "unknown"
@@ -70,7 +70,7 @@ function assertKnownKeys(value, allowed, label, code = "protected_connection_inv
 function validateRequest(operation, request, now) {
   assertObject(request, "protected_connection_invalid_request", "Protected connection request must be an object");
   assertNoSecret(request, "request");
-  const allowed = new Set(["requestId", "providerId", "authMethod", "credentialRef", "modelId", "input", "operationId", "deadline"]);
+  const allowed = new Set(["requestId", "providerId", "authMethod", "credentialRef", "modelId", "input", "responseBudget", "operationId", "deadline"]);
   assertKnownKeys(request, allowed, "Protected connection request");
   assertId(request.requestId, "requestId");
   assertDeadline(request.deadline, now);
@@ -78,12 +78,12 @@ function validateRequest(operation, request, now) {
   if (operation === "connection.begin") {
     assertId(request.providerId, "providerId");
     if (!AUTH_METHODS.has(request.authMethod)) throw failure("protected_connection_auth_method_invalid", "authMethod must be api_key, oauth, or local");
-    if (request.credentialRef !== undefined || request.modelId !== undefined || request.input !== undefined || request.operationId !== undefined) {
+    if (request.credentialRef !== undefined || request.modelId !== undefined || request.input !== undefined || request.responseBudget !== undefined || request.operationId !== undefined) {
       throw failure("protected_connection_invalid_request", "connection.begin accepts providerId and authMethod only");
     }
   } else if (operation === "connection.status" || operation === "connection.revoke") {
     assertId(request.credentialRef, "credentialRef");
-    if (request.providerId !== undefined || request.authMethod !== undefined || request.modelId !== undefined || request.input !== undefined || request.operationId !== undefined) {
+    if (request.providerId !== undefined || request.authMethod !== undefined || request.modelId !== undefined || request.input !== undefined || request.responseBudget !== undefined || request.operationId !== undefined) {
       throw failure("protected_connection_invalid_request", `${operation} accepts credentialRef only`);
     }
   } else if (operation === "provider.invoke") {
@@ -93,9 +93,12 @@ function validateRequest(operation, request, now) {
     if (request.input === undefined || request.authMethod !== undefined || request.operationId !== undefined) {
       throw failure("protected_connection_invalid_request", "provider.invoke requires credentialRef, providerId, modelId, and input");
     }
+    if (request.responseBudget !== undefined && (!Number.isSafeInteger(request.responseBudget) || request.responseBudget < 1 || request.responseBudget > 65_536)) {
+      throw failure("protected_connection_invalid_request", "responseBudget must be a bounded integer");
+    }
   } else {
     assertId(request.operationId, "operationId");
-    if (request.providerId !== undefined || request.authMethod !== undefined || request.credentialRef !== undefined || request.modelId !== undefined || request.input !== undefined) {
+    if (request.providerId !== undefined || request.authMethod !== undefined || request.credentialRef !== undefined || request.modelId !== undefined || request.input !== undefined || request.responseBudget !== undefined) {
       throw failure("protected_connection_invalid_request", "operation.cancel accepts operationId only");
     }
   }

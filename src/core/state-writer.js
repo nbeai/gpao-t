@@ -33,7 +33,10 @@ function execute(op, args) {
         store.setMeta("runtime_generation", String(generation));
         store.setMeta("runtime_instance_id", args.instanceId);
         store.markAllLeasedUncertain(generation, "runtime_restart");
-        return { generation };
+        const channelRecovery = store.recoverChannelRuntime();
+        const toolRecovery = store.recoverToolInvocations(generation);
+        const surfaceRecovery = store.recoverIncompleteSurfaceTurns();
+        return { generation, channelRecovery, toolRecovery, surfaceRecovery };
       });
     case "acceptCommand":
       return store.acceptCommand(args.command, args.runtimeGeneration, args.maxQueue);
@@ -45,6 +48,20 @@ function execute(op, args) {
       return store.getProgress(args.commandId, args.principalId);
     case "getTurnEvents":
       return store.getTurnEvents(args.commandId, args.principalId);
+    case "saveResponseDocument":
+      return store.transaction(() => store.saveResponseDocument(args.principalId, args.document));
+    case "getResponseDocument":
+      return store.getResponseDocument(args.responseDocumentId, args.principalId);
+    case "appendSurfaceEvent":
+      return store.transaction(() => store.appendSurfaceEvent(args.principalId, args.event));
+    case "replaySurfaceEvents":
+      return store.replaySurfaceEvents(args.principalId, args.turnId, args.afterSequence, args.limit);
+    case "getSurfaceTurnSummary":
+      return store.getSurfaceTurnSummary(args.principalId, args.turnId);
+    case "findSurfaceTurnByRequest":
+      return store.findSurfaceTurnByRequest(args.principalId, args.sessionId, args.requestId);
+    case "getTelemetry":
+      return store.getTelemetry(args.commandId, args.principalId);
     case "cancelCommand":
       return store.transaction(() => store.cancelCommand(args.commandId, args.principalId, args.generation));
     case "pendingOutbox":
@@ -56,8 +73,17 @@ function execute(op, args) {
       });
     case "recordDispatch":
       return store.transaction(() => {
-        store.appendEvent({ commandId: args.commandId, principalId: args.principalId, type: "turn.dispatched", payload: { generation: args.generation }, runtimeGeneration: args.generation });
-        store.addProgress(args.commandId, args.principalId, "running", { generation: args.generation });
+        store.appendEvent({ commandId: args.commandId, principalId: args.principalId, type: "turn.dispatched", payload: { generation: args.generation, state: "dispatching", route: args.routePlan || null }, runtimeGeneration: args.generation });
+        store.addProgress(args.commandId, args.principalId, "dispatching", { generation: args.generation, route: args.routePlan || null });
+        store.addTelemetry(args.commandId, args.principalId, "dispatching", { generation: args.generation });
+        return true;
+      });
+    case "recordResponding":
+      return store.transaction(() => {
+        if (store.getCommand(args.commandId, args.principalId)?.status !== "running") return false;
+        store.appendEvent({ commandId: args.commandId, principalId: args.principalId, type: "turn.responding", payload: { generation: args.generation, state: "responding" }, runtimeGeneration: args.generation });
+        store.addProgress(args.commandId, args.principalId, "responding", { generation: args.generation });
+        store.addTelemetry(args.commandId, args.principalId, "responding", { generation: args.generation });
         return true;
       });
     case "markUncertain":
@@ -72,6 +98,80 @@ function execute(op, args) {
       return store.getPreference(args.key);
     case "setPreference":
       return store.transaction(() => store.setPreference(args.key, args.value));
+    case "identitySnapshot":
+      return store.identitySnapshot();
+    case "stateOwnership":
+      return store.stateOwnership();
+    case "ingestChannelInbound":
+      return store.transaction(() => store.ingestChannelInbound(args.envelope));
+    case "completeChannelInbound":
+      return store.transaction(() => store.completeChannelInbound(args.inboundId, args.outcome, args.checkpoint));
+    case "claimNextChannelInbound":
+      return store.transaction(() => store.claimNextChannelInbound());
+    case "prepareChannelDelivery":
+      return store.transaction(() => store.prepareChannelDelivery(args.envelope));
+    case "markChannelDeliverySending":
+      return store.transaction(() => store.markChannelDeliverySending(args.deliveryId));
+    case "finishChannelDelivery":
+      return store.transaction(() => store.finishChannelDelivery(args.deliveryId, args.outcome, { externalMessageId: args.externalMessageId, errorCode: args.errorCode }));
+    case "getChannelDelivery":
+      return store.getChannelDelivery(args.deliveryId);
+    case "reconcileChannelDelivery":
+      return store.transaction(() => store.reconcileChannelDelivery(args.deliveryId, args.outcome, args.externalMessageId));
+    case "retryChannelDelivery":
+      return store.transaction(() => store.retryChannelDelivery(args.deliveryId));
+    case "channelRuntimeStatus":
+      return store.channelRuntimeStatus();
+    case "listMessengerSessions":
+      return store.listMessengerSessions();
+    case "getMessengerSession":
+      return store.getMessengerSession(args.sessionId);
+    case "recordToolInvocation":
+      return store.transaction(() => store.recordToolInvocation(args.record, args.generation));
+    case "getToolInvocation":
+      return store.getToolInvocation(args.invocationId, args.principalId);
+    case "createWorkspace":
+      return store.transaction(() => store.createWorkspace(args));
+    case "listWorkspaces":
+      return store.listWorkspaces(args.principalId, { includeArchived: args.includeArchived });
+    case "updateWorkspace":
+      return store.transaction(() => store.updateWorkspace(args.sessionId, args.principalId, args.changes));
+    case "deleteWorkspace":
+      return store.transaction(() => store.deleteWorkspace(args.sessionId, args.principalId));
+    case "appendWorkspaceMessage":
+      return store.transaction(() => store.appendWorkspaceMessage(args));
+    case "getWorkspace":
+      return store.getWorkspace(args.sessionId, args.principalId);
+    case "addMemoryCandidate":
+      return store.transaction(() => store.addMemoryCandidate(args.record));
+    case "listMemory":
+      return store.listMemory(args);
+    case "searchMemory":
+      return store.searchMemory(args.query, args);
+    case "saveMctAdmissionBundle":
+      return store.transaction(() => store.saveMctAdmissionBundle(args.bundle));
+    case "getMctAdmissionBundle":
+      return store.getMctAdmissionBundle(args.taskPacketId);
+    case "saveMctResponseInfluences":
+      return store.transaction(() => store.saveMctResponseInfluences(args.records));
+    case "listMctResponseInfluences":
+      return store.listMctResponseInfluences(args.responseDocumentId);
+    case "memorySearchStatus":
+      return store.memorySearchStatus();
+    case "rebuildMemorySearchIndex":
+      return store.rebuildMemorySearchIndex();
+    case "repairMemorySearchIndexBatch":
+      return store.transaction(() => store.repairMemorySearchIndexBatch(args));
+    case "deleteMemory":
+      return store.transaction(() => store.deleteMemory(args.memoryId));
+    case "reviewMemory":
+      return store.transaction(() => store.reviewMemory(args.memoryId, args.decision, args.authority));
+    case "promoteMemory":
+      return store.transaction(() => store.promoteMemory(args.memoryId, args));
+    case "listContextInfluences":
+      return store.listContextInfluences();
+    case "rollbackContextInfluence":
+      return store.transaction(() => store.rollbackContextInfluence(args.influenceId, args.reason));
     case "close":
       store.close();
       closed = true;

@@ -5,8 +5,9 @@ import path from "node:path";
 import { StateStore } from "./store.js";
 import { RuntimeError } from "./errors.js";
 import { assertSafeStateDir } from "./paths.js";
+import { PRODUCT_IDENTITY, schemaName } from "./product-identity.js";
 
-const SNAPSHOT_SCHEMA = "gpao_t.state_snapshot.v1";
+const SNAPSHOT_SCHEMA = schemaName("state_snapshot.v1");
 const SNAPSHOT_ROOT = "snapshots";
 const MAX_SNAPSHOT_BYTES = 256 * 1024 * 1024;
 
@@ -57,12 +58,14 @@ function snapshotDirectory(stateDir) {
 
 export function inspectState(stateDir) {
   const safeStateDir = assertSafeStateDir(stateDir);
-  if (!fs.existsSync(path.join(safeStateDir, "runtime.sqlite"))) {
-    return { schema: "gpao_t.state_inspection.v1", state: "empty", schemaVersion: null };
+  const hasCurrent = fs.existsSync(path.join(safeStateDir, PRODUCT_IDENTITY.databaseFile));
+  const hasLegacy = fs.existsSync(path.join(safeStateDir, "runtime.sqlite"));
+  if (!hasCurrent && !hasLegacy) {
+    return { schema: schemaName("state_inspection.v1"), state: "empty", schemaVersion: null };
   }
   const store = new StateStore(safeStateDir);
   try {
-    return { schema: "gpao_t.state_inspection.v1", state: "present", schemaVersion: Number(store.getMeta("schema_version") || 0), checkpoint: store.getCheckpoint() };
+    return { schema: schemaName("state_inspection.v1"), state: "present", identity: store.identitySnapshot(), schemaVersion: Number(store.getMeta("schema_version") || 0), checkpoint: store.getCheckpoint() };
   } finally {
     store.close();
   }
@@ -114,12 +117,12 @@ export function restoreState({ stateDir, snapshot }) {
   assertStopped(safeStateDir);
   const selected = resolveSnapshot(safeStateDir, snapshot);
   const safetySnapshot = snapshotState({ stateDir: safeStateDir, label: "pre-restore" });
-  const staging = fs.mkdtempSync(path.join(os.tmpdir(), "gpao-t-native-restore-"));
+  const staging = fs.mkdtempSync(path.join(os.tmpdir(), "gpao-t3-restore-"));
   try {
     copyEntries(selected.manifest.files.map(file => ({ relative: file.path })), selected.directory, staging);
     for (const entry of walkState(safeStateDir)) fs.rmSync(entry.absolute, { force: true });
     copyEntries(selected.manifest.files.map(file => ({ relative: file.path })), staging, safeStateDir);
-    return { schema: "gpao_t.state_restore.v1", restoredSnapshot: selected.manifest.id, safetySnapshot: safetySnapshot.id, inspection: inspectState(safeStateDir) };
+    return { schema: schemaName("state_restore.v1"), restoredSnapshot: selected.manifest.id, safetySnapshot: safetySnapshot.id, inspection: inspectState(safeStateDir) };
   } finally {
     fs.rmSync(staging, { recursive: true, force: true });
   }
@@ -132,7 +135,7 @@ export function migrateState({ stateDir }) {
   const safetySnapshot = before.state === "present" ? snapshotState({ stateDir: safeStateDir, label: "pre-migration" }) : null;
   const store = new StateStore(safeStateDir);
   try {
-    return { schema: "gpao_t.state_migration.v1", before, after: { schemaVersion: Number(store.getMeta("schema_version") || 0), checkpoint: store.getCheckpoint() }, safetySnapshot: safetySnapshot?.id || null };
+    return { schema: schemaName("state_migration.v1"), before, after: { identity: store.identitySnapshot(), schemaVersion: Number(store.getMeta("schema_version") || 0), checkpoint: store.getCheckpoint() }, safetySnapshot: safetySnapshot?.id || null };
   } finally {
     store.close();
   }

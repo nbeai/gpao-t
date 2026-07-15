@@ -43,6 +43,9 @@ test("HTTP health is public, work is owner-authenticated, and turn state is scop
   const dashboardHtml = await dashboard.text();
   assert.match(dashboardHtml, /nBeAI\. GPAO-T/);
   assert.match(dashboardHtml, /무엇을 함께 해볼까요/);
+  const favicon = await fetch(`${base}/favicon.ico`);
+  assert.equal(favicon.status, 200);
+  assert.equal(favicon.headers.get("content-type"), "image/jpeg");
   const localSession = dashboard.headers.get("set-cookie");
   assert.match(localSession, /HttpOnly/);
   assert.equal((await fetch(`${base}/v1/doctor`, { headers: { cookie: localSession } })).status, 200);
@@ -53,8 +56,22 @@ test("HTTP health is public, work is owner-authenticated, and turn state is scop
   });
   assert.equal(localOsTurn.status, 200);
   assert.equal((await localOsTurn.json()).turn.status, "succeeded");
+  const asyncTurnResponse = await fetch(`${base}/v2/os-turns`, {
+    method: "POST",
+    headers: { cookie: localSession, "content-type": "application/json" },
+    body: JSON.stringify({ requestId: "local-browser-v2", sessionId: "56a09944-c239-4a14-a2c0-70d58a3f1fa0", input: "비동기 대화" })
+  });
+  assert.equal(asyncTurnResponse.status, 202);
+  const asyncTurn = await asyncTurnResponse.json();
+  assert.match(asyncTurn.turnId, /^os_/);
+  const asyncCompleted = await eventually(`${base}/v2/os-turns/${asyncTurn.turnId}`, (_response, body) => body.terminal === true, { headers: { cookie: localSession } });
+  assert.equal(asyncCompleted.status, "completed");
+  assert.equal(asyncCompleted.responseDocument.blocks[0].kind, "markdown");
+  const asyncEvents = await fetch(`${base}/v2/os-turns/${asyncTurn.turnId}/events?cursor=${encodeURIComponent(`${asyncTurn.turnId}:1`)}`, { headers: { cookie: localSession } }).then(response => response.text());
+  assert.match(asyncEvents, /text\.complete/);
+  assert.match(asyncEvents, /turn\.completed/);
   const providers = await fetch(`${base}/v1/providers`, { headers: { authorization: `Bearer ${runtime.ownerToken}` } }).then(response => response.json());
-  assert.equal(providers.schema, "gpao_t.provider_registry.v1");
+  assert.equal(providers.schema, "gpao_t3.provider_registry.v1");
   assert.equal(providers.providers.find(provider => provider.id === "gpao-t-emulator").auth.state, "configured");
   assert.equal(providers.providers.find(provider => provider.id === "openai").auth.state, "auth_required");
   assert.equal((await fetch(`${base}/v1/providers/gpao-t-emulator`, { headers: { authorization: `Bearer ${runtime.ownerToken}` } })).status, 200);
@@ -62,9 +79,58 @@ test("HTTP health is public, work is owner-authenticated, and turn state is scop
   assert.equal(sockets.sockets[0].id, "local-deterministic-worker");
   const tools = await fetch(`${base}/v1/tools`, { headers: { authorization: `Bearer ${runtime.ownerToken}` } }).then(response => response.json());
   assert.equal(tools.tools[0].id, "local.runtime_status");
+  const readInvocation = await fetch(`${base}/v1/tool-invocations`, {
+    method: "POST", headers: { cookie: localSession, "content-type": "application/json" },
+    body: JSON.stringify({ requestId: "tool-read-1", toolId: "runtime.status", action: "status", args: {} })
+  });
+  assert.equal(readInvocation.status, 200);
+  assert.equal((await readInvocation.json()).status, "succeeded");
+  const writePreview = await fetch(`${base}/v1/tool-invocations`, {
+    method: "POST", headers: { cookie: localSession, "content-type": "application/json" },
+    body: JSON.stringify({ requestId: "tool-write-1", toolId: "files.mutate", action: "write", args: { rootId: "runtime", path: "dashboard-approved.txt", text: "approved" } })
+  });
+  assert.equal(writePreview.status, 202);
+  const pendingTool = await writePreview.json();
+  assert.equal(pendingTool.status, "awaiting_approval");
+  const approvedTool = await fetch(`${base}/v1/tool-invocations/${pendingTool.invocationId}/approve`, {
+    method: "POST", headers: { cookie: localSession, origin: base, "content-type": "application/json" }, body: JSON.stringify({ approved: true })
+  }).then(response => response.json());
+  assert.equal(approvedTool.status, "succeeded");
+  assert.ok(approvedTool.receipt.result.rollbackId);
+  const durableTool = await fetch(`${base}/v1/tool-invocations/${pendingTool.invocationId}`, { headers: { cookie: localSession } }).then(response => response.json());
+  assert.equal(durableTool.status, "succeeded");
+  const disabledTool = await fetch(`${base}/v1/tools/runtime.status/enabled`, { method: "PUT", headers: { cookie: localSession, origin: base, "content-type": "application/json" }, body: JSON.stringify({ enabled: false }) }).then(response => response.json());
+  assert.equal(disabledTool.readiness, "disabled");
+  const enabledTool = await fetch(`${base}/v1/tools/runtime.status/enabled`, { method: "PUT", headers: { cookie: localSession, origin: base, "content-type": "application/json" }, body: JSON.stringify({ enabled: true }) }).then(response => response.json());
+  assert.equal(enabledTool.readiness, "ready");
+  const capabilities = await fetch(`${base}/v1/capabilities?group=runtime`, { headers: { authorization: `Bearer ${runtime.ownerToken}` } }).then(response => response.json());
+  assert.equal(capabilities.schema, "gpao_t3.capability_search.v1");
+  assert.equal(capabilities.capabilities[0].id, "foundation.runtime");
+  assert.equal("inputSchema" in capabilities.capabilities[0], false);
+  const capability = await fetch(`${base}/v1/capabilities/foundation.runtime`, { headers: { authorization: `Bearer ${runtime.ownerToken}` } }).then(response => response.json());
+  assert.equal(capability.inputSchema.type, "object");
+  assert.equal(capability.protocol.selected.minor, 2);
+  const influenceLedger = await fetch(`${base}/v1/context-influence`, { headers: { authorization: `Bearer ${runtime.ownerToken}` } }).then(response => response.json());
+  assert.equal(influenceLedger.schema, "gpao_t3.context_influence_ledger.v1");
+  assert.equal(influenceLedger.durableMemoryPromotion, false);
   const connectors = await fetch(`${base}/v1/connectors`, { headers: { authorization: `Bearer ${runtime.ownerToken}` } }).then(response => response.json());
-  assert.equal(connectors.schema, "gpao_t.connector_center.v1");
+  assert.equal(connectors.schema, "gpao_t3.connector_center.v1");
   assert.equal(connectors.connectors.find(entry => entry.id === "web.search").enabled, false);
+  const cells = await fetch(`${base}/v1/connection-cells`, { headers: { authorization: `Bearer ${runtime.ownerToken}` } }).then(response => response.json());
+  assert.equal(cells.schema, "gpao_t3.connection_cell_registry.v1");
+  assert.ok(cells.cells.some(cell => cell.id === "mcp.external" && cell.kind === "mcp"));
+  assert.ok(cells.cells.some(cell => cell.id === "channel.telegram" && cell.execution.approvalRequired === true));
+  const messenger = await fetch(`${base}/v1/messenger`, { headers: { authorization: `Bearer ${runtime.ownerToken}` } }).then(response => response.json());
+  assert.equal(messenger.schema, "gpao_t3.messenger_runtime_status.v1");
+  assert.equal(messenger.contextBoundary, "isolated_until_admitted");
+  assert.equal(messenger.reconcileRequired, 0);
+  const readCellPlan = await fetch(`${base}/v1/connection-cells/plan`, {
+    method: "POST",
+    headers: { authorization: `Bearer ${runtime.ownerToken}`, "content-type": "application/json" },
+    body: JSON.stringify({ cellId: "tool.local.runtime_status", args: { query: "health" } })
+  }).then(response => response.json());
+  assert.equal(readCellPlan.status, "admitted");
+  assert.equal(readCellPlan.automatic, true);
   const connectionProposal = await fetch(`${base}/v1/connection-proposals`, {
     method: "POST",
     headers: { cookie: localSession, "content-type": "application/json" },
@@ -96,7 +162,7 @@ test("HTTP health is public, work is owner-authenticated, and turn state is scop
   });
   assert.equal(osTurnResponse.status, 200);
   const osTurn = await osTurnResponse.json();
-  assert.equal(osTurn.schema, "gpao_t.os_turn.v1");
+  assert.equal(osTurn.schema, "gpao_t3.os_turn.v1");
   assert.equal(osTurn.turn.status, "succeeded");
   assert.equal(osTurn.growthCandidate.applyState, "candidate_only");
 
@@ -110,7 +176,7 @@ test("HTTP health is public, work is owner-authenticated, and turn state is scop
   const eventResponse = await fetch(`${base}/v1/turns/${accepted.commandId}/events`, { headers: { authorization: `Bearer ${runtime.ownerToken}` } });
   assert.equal(eventResponse.status, 200);
   const eventReplay = await eventResponse.json();
-  assert.deepEqual(eventReplay.events.map(event => event.type), ["turn.accepted", "turn.dispatched", "turn.succeeded"]);
+  assert.deepEqual(eventReplay.events.map(event => event.type), ["turn.accepted", "turn.dispatched", "turn.responding", "turn.succeeded"]);
   assert.equal(eventReplay.terminal.type, "turn.succeeded");
   const invalidCursor = await fetch(`${base}/v1/turns/${accepted.commandId}/events?cursor=other:1`, { headers: { authorization: `Bearer ${runtime.ownerToken}` } });
   assert.equal(invalidCursor.status, 400);
@@ -228,9 +294,15 @@ test("SSE progress reconnect replays a durable snapshot after a real client disc
     const resumed = await fetch(`${base}/v1/progress/${accepted.commandId}`, { headers });
     const resumedText = await resumed.text();
     assert.match(resumedText, /event: snapshot/);
+    assert.match(resumedText, /event: reconnect/);
     assert.match(resumedText, /event: progress/);
     const final = await eventually(`${base}/v1/turns/${accepted.commandId}`, (_response, body) => body.status === "succeeded", { headers });
     assert.equal(final.status, "succeeded");
+    assert.equal(final.controlStatus, "completed");
+    const telemetry = await fetch(`${base}/v1/turns/${accepted.commandId}/telemetry`, { headers }).then(response => response.json());
+    assert.equal(telemetry.schema, "gpao_t3.turn_stage_telemetry.v1");
+    assert.deepEqual(telemetry.stages.map(stage => stage.stage), ["accepted", "dispatching", "responding", "completed"]);
+    assert.ok(telemetry.stages.every(stage => stage.elapsedFromAcceptMs >= 0));
   } finally {
     await new Promise(resolve => server.close(resolve));
     await runtime.stop();

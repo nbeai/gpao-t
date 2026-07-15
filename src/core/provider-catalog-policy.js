@@ -1,4 +1,4 @@
-const CATALOG_SCHEMA = "gpao_t.provider_catalog.v1";
+const CATALOG_SCHEMA = "gpao_t3.provider_catalog.v1";
 const CATALOG_SCHEMA_VERSION = 1;
 const CATALOG_VERSION = 1;
 const SECRET_FIELD = /(?:api[_-]?key|token|secret|password|credential|authorization)/i;
@@ -18,6 +18,8 @@ export const TRUSTED_PROVIDER_CATALOG = Object.freeze({
     Object.freeze({ id: "anthropic", adapter: "anthropic-messages", adapterVersion: "0.1", baseUrl: "https://api.anthropic.com" }),
     Object.freeze({ id: "google-gemini", adapter: "gemini-generate-content", adapterVersion: "0.1", baseUrl: "https://generativelanguage.googleapis.com/v1beta" }),
     Object.freeze({ id: "codex-oauth", adapter: "codex-oauth", adapterVersion: "0.1", baseUrl: null }),
+    Object.freeze({ id: "local-ollama", adapter: "ollama-local", adapterVersion: "0.1", baseUrl: null }),
+    Object.freeze({ id: "local-model", adapter: "native-deterministic-emulator", adapterVersion: "0.1", baseUrl: null }),
     Object.freeze({ id: "gpao-t-emulator", adapter: "native-deterministic-emulator", adapterVersion: "0.1", baseUrl: null })
   ])
 });

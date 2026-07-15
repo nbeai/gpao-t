@@ -18,13 +18,44 @@ test("model router selects by route policy and falls back only after safe failur
   const calls = [];
   const adapters = new ProviderAdapterRegistry({ adapters: [
     { id: "fake-fast", adapter: { invoke: async () => { calls.push("fast"); const error = new Error("limited"); error.failureClass = "rate_limited"; error.retryable = true; error.externalEffect = false; throw error; } } },
-    { id: "fake-backup", adapter: { invoke: async plan => { calls.push("backup"); return { result: { text: "backup answer" }, receipt: { schema: "gpao_t.provider_receipt.v1", runId: plan.runId } }; } } }
+    { id: "fake-backup", adapter: { invoke: async plan => { calls.push("backup"); return { result: { text: "backup answer" }, receipt: { schema: "gpao_t3.provider_receipt.v1", runId: plan.runId } }; } } }
   ] });
   const router = new ModelRouter({ providerRegistry: registry(), adapterRegistry: adapters });
   const result = await router.invoke({ runId: "run", sessionId: "session", generation: 1, idempotencyKey: "key", input: "hello", sourceContextDigest: "trace", selection: { allowCrossProviderFallback: true } });
   assert.deepEqual(calls, ["fast", "backup"]);
   assert.equal(result.provider.id, "backup");
   assert.equal(result.fallbackUsed, true);
+});
+
+test("model router explains latency cost and authority route policy decisions", async () => {
+  const providerRegistry = new ProviderRegistry({ entries: [
+    { id: "cheap", adapter: "fake-cheap", priority: 5, routePolicy: { latencyMs: 80, costRank: 1, authorityRank: 20 }, auth: { kind: "none" }, health: { state: "ready" }, models: [{ id: "cheap-1", capabilities: ["text"], inputModalities: ["text"], outputModalities: ["text"], routePolicy: { latencyMs: 80, costRank: 1, authorityRank: 20 } }] },
+    { id: "fast", adapter: "fake-fast", priority: 5, routePolicy: { latencyMs: 50, costRank: 40, authorityRank: 20 }, auth: { kind: "none" }, health: { state: "ready" }, models: [{ id: "fast-1", capabilities: ["text"], inputModalities: ["text"], outputModalities: ["text"], routePolicy: { latencyMs: 50, costRank: 40, authorityRank: 20 } }] },
+    { id: "bounded", adapter: "fake-bounded", priority: 5, routePolicy: { latencyMs: 120, costRank: 8, authorityRank: 2 }, auth: { kind: "none" }, health: { state: "ready" }, models: [{ id: "bounded-1", capabilities: ["text"], inputModalities: ["text"], outputModalities: ["text"], routePolicy: { latencyMs: 120, costRank: 8, authorityRank: 2 } }] }
+  ] });
+  const calls = [];
+  const adapters = new ProviderAdapterRegistry({ adapters: [
+    { id: "fake-cheap", adapter: { invoke: async plan => { calls.push(plan.providerId); return { result: { text: "cheap" }, receipt: { providerId: plan.providerId } }; } } },
+    { id: "fake-fast", adapter: { invoke: async plan => { calls.push(plan.providerId); return { result: { text: "fast" }, receipt: { providerId: plan.providerId } }; } } },
+    { id: "fake-bounded", adapter: { invoke: async plan => { calls.push(plan.providerId); return { result: { text: "bounded" }, receipt: { providerId: plan.providerId } }; } } }
+  ] });
+
+  const router = new ModelRouter({ providerRegistry, adapterRegistry: adapters });
+  const cost = await router.invoke({ runId: "run-cost", sessionId: "session", generation: 1, idempotencyKey: "cost", input: "hello", sourceContextDigest: "trace", selection: { routePolicy: { optimizeFor: "cost" } } });
+  assert.equal(cost.provider.id, "cheap");
+  assert.equal(cost.routeDecision.policy.optimizeFor, "cost");
+  assert.equal(cost.routeDecision.selected.metrics.costRank, 1);
+
+  const latency = await router.invoke({ runId: "run-latency", sessionId: "session", generation: 1, idempotencyKey: "latency", input: "hello", sourceContextDigest: "trace", selection: { routePolicy: { optimizeFor: "latency" } } });
+  assert.equal(latency.provider.id, "fast");
+  assert.equal(latency.routeDecision.policy.optimizeFor, "latency");
+  assert.equal(latency.routeDecision.selected.metrics.latencyMs, 50);
+
+  const authority = await router.invoke({ runId: "run-authority", sessionId: "session", generation: 1, idempotencyKey: "authority", input: "hello", sourceContextDigest: "trace", selection: { routePolicy: { optimizeFor: "authority", maxCostRank: 10 } } });
+  assert.equal(authority.provider.id, "bounded");
+  assert.equal(authority.routeDecision.policy.optimizeFor, "authority");
+  assert.equal(authority.routeDecision.considered.some(candidate => candidate.providerId === "fast"), false);
+  assert.deepEqual(calls, ["cheap", "fast", "bounded"]);
 });
 
 test("cross-provider fallback requires explicit authority", async () => {

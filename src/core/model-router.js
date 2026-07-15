@@ -11,8 +11,50 @@ function rank(value, fallback = 100) {
 function normalizeSelection(selection = {}) {
   return {
     preferredProviderId: selection.preferredProviderId || selection.providerId || null,
-    preferredModelId: selection.preferredModelId || selection.modelId || null
+    preferredModelId: selection.preferredModelId || selection.modelId || null,
+    routePolicy: normalizeRoutePolicy(selection.routePolicy || selection.policy || {})
   };
+}
+
+function normalizeRoutePolicy(policy = {}) {
+  const optimizeFor = ["balanced", "latency", "cost", "authority"].includes(policy.optimizeFor) ? policy.optimizeFor : "balanced";
+  return {
+    optimizeFor,
+    maxLatencyMs: Number.isFinite(policy.maxLatencyMs) ? policy.maxLatencyMs : null,
+    maxCostRank: Number.isFinite(policy.maxCostRank) ? policy.maxCostRank : null,
+    maxAuthorityRank: Number.isFinite(policy.maxAuthorityRank) ? policy.maxAuthorityRank : null
+  };
+}
+
+function policyWeights(policy) {
+  if (policy.optimizeFor === "latency") return { latency: 4, cost: 1, authority: 1, priority: 1 };
+  if (policy.optimizeFor === "cost") return { latency: 1, cost: 20, authority: 1, priority: 1 };
+  if (policy.optimizeFor === "authority") return { latency: 1, cost: 1, authority: 20, priority: 1 };
+  return { latency: 2, cost: 2, authority: 2, priority: 1 };
+}
+
+function routeMetrics(provider, model) {
+  return {
+    latencyMs: rank(model.routePolicy?.latencyMs, rank(provider.routePolicy?.latencyMs, 1000)),
+    costRank: rank(model.routePolicy?.costRank, rank(provider.routePolicy?.costRank, 100)),
+    authorityRank: rank(model.routePolicy?.authorityRank, rank(provider.routePolicy?.authorityRank, 50)),
+    priority: rank(model.priority, rank(provider.priority))
+  };
+}
+
+function routeScore(metrics, policy) {
+  const weights = policyWeights(policy);
+  return (metrics.latencyMs * weights.latency)
+    + (metrics.costRank * weights.cost)
+    + (metrics.authorityRank * weights.authority)
+    + (metrics.priority * weights.priority);
+}
+
+function candidateAllowed(metrics, policy) {
+  if (policy.maxLatencyMs !== null && metrics.latencyMs > policy.maxLatencyMs) return false;
+  if (policy.maxCostRank !== null && metrics.costRank > policy.maxCostRank) return false;
+  if (policy.maxAuthorityRank !== null && metrics.authorityRank > policy.maxAuthorityRank) return false;
+  return true;
 }
 
 function protectedConnectionMetadata(connection) {
@@ -34,8 +76,9 @@ function protectedConnectionMetadata(connection) {
   return Object.freeze({ credentialRef: connection.credentialRef, authMethod: connection.authMethod });
 }
 
-function readyCandidates(registry, { requiredCapabilities = ["text"], preferredProviderId = null, preferredModelId = null } = {}) {
+function readyCandidates(registry, { requiredCapabilities = ["text"], preferredProviderId = null, preferredModelId = null, routePolicy = {} } = {}) {
   registry.refreshHealth?.();
+  const policy = normalizeRoutePolicy(routePolicy);
   const providers = registry.snapshot().providers;
   const candidates = [];
   for (const provider of providers) {
@@ -44,17 +87,48 @@ function readyCandidates(registry, { requiredCapabilities = ["text"], preferredP
     for (const model of provider.models) {
       if (preferredModelId && model.id !== preferredModelId) continue;
       if (!requiredCapabilities.every(capability => model.capabilities.includes(capability))) continue;
-      candidates.push({ provider, model });
+      const metrics = routeMetrics(provider, model);
+      if (!candidateAllowed(metrics, policy)) continue;
+      candidates.push({ provider, model, metrics, score: routeScore(metrics, policy) });
     }
   }
   return candidates.sort((left, right) => {
     const leftPreferred = left.provider.id === preferredProviderId && left.model.id === preferredModelId ? 0 : 1;
     const rightPreferred = right.provider.id === preferredProviderId && right.model.id === preferredModelId ? 0 : 1;
     return leftPreferred - rightPreferred
-      || rank(left.model.priority, rank(left.provider.priority)) - rank(right.model.priority, rank(right.provider.priority))
+      || left.score - right.score
+      || left.metrics.priority - right.metrics.priority
       || left.provider.id.localeCompare(right.provider.id)
       || left.model.id.localeCompare(right.model.id);
   });
+}
+
+function routeDecision({ candidates, selected, selection, failures = [], fallbackUsed = false }) {
+  return {
+    schema: "gpao_t3.model_route_decision.v1",
+    policy: selection.routePolicy,
+    selected: selected ? {
+      providerId: selected.provider.id,
+      modelId: selected.model.id,
+      adapter: selected.provider.adapter,
+      score: selected.score,
+      metrics: selected.metrics
+    } : null,
+    considered: candidates.map(candidate => ({
+      providerId: candidate.provider.id,
+      modelId: candidate.model.id,
+      score: candidate.score,
+      metrics: candidate.metrics
+    })),
+    failures: failures.map(failure => ({
+      providerId: failure.providerId,
+      modelId: failure.modelId,
+      failureClass: failure.failureClass,
+      externalEffect: failure.externalEffect,
+      routeHealthReason: failure.routeHealthReason || null
+    })),
+    fallbackUsed
+  };
 }
 
 export class ProviderAdapterRegistry {
@@ -70,12 +144,22 @@ export class ProviderAdapterRegistry {
 
   require(id) {
     const adapter = this.adapters.get(String(id));
-    if (!adapter) throw new ProviderInvocationError("provider_unavailable", "No GPAO-T adapter is available for this provider");
+    if (!adapter) throw new ProviderInvocationError("provider_unavailable", "No GPAO-T3 connection adapter is available for this provider");
     return adapter;
   }
 
   async invoke({ adapterId, plan, input, credential, signal }) {
     return this.require(adapterId).invoke(plan, { input, credential, signal });
+  }
+
+  supportsStreaming(adapterId) {
+    return typeof this.require(adapterId).stream === "function";
+  }
+
+  stream({ adapterId, plan, input, credential, signal }) {
+    const adapter = this.require(adapterId);
+    if (typeof adapter.stream !== "function") throw new ProviderInvocationError("provider_unavailable", "Provider adapter does not support streaming");
+    return adapter.stream(plan, { input, credential, signal });
   }
 }
 
@@ -101,7 +185,7 @@ export class ModelRouter {
     throw new ProviderInvocationError("provider_unavailable", "No ready provider can satisfy this request");
   }
 
-  async invoke({ runId, sessionId, generation, idempotencyKey, input, sourceContextDigest, selection = {}, protectedConnection = null, timeoutMs = 30_000, responseBudget = 8_192, signal } = {}) {
+  async invoke({ runId, sessionId, generation, idempotencyKey, input, sourceContextDigest, selection = {}, protectedConnection = null, timeoutMs = 30_000, responseBudget = 8_192, signal, onDelta } = {}) {
     const normalizedSelection = normalizeSelection(selection);
     const protectedMetadata = protectedConnectionMetadata(protectedConnection);
     if (protectedMetadata && !this.protectedInvoker) {
@@ -110,7 +194,8 @@ export class ModelRouter {
     const candidates = this.select(normalizedSelection);
     const failures = [];
     for (let index = 0; index < candidates.length; index += 1) {
-      const { provider, model } = candidates[index];
+      const candidate = candidates[index];
+      const { provider, model } = candidate;
       const plan = createInvocationPlan({
         runId,
         sessionId,
@@ -147,21 +232,27 @@ export class ModelRouter {
         const deadline = setTimeout(() => controller.abort(new ProviderInvocationError("provider_timeout", "Provider response exceeded the local deadline")), timeoutMs);
         let result;
         try {
-          result = protectedMetadata
-            ? await this.#invokeProtected({ plan, input, protectedMetadata, signal: controller.signal })
-            : await this.adapterRegistry.invoke({
-              adapterId: provider.adapter,
-              plan,
-              input,
-              credential,
-              signal: controller.signal
-            });
+          const streamSupported = !protectedMetadata && model.capabilities.includes("streaming") && this.adapterRegistry.supportsStreaming(provider.adapter);
+          if (typeof onDelta === "function" && streamSupported) {
+            let terminal = null;
+            for await (const chunk of this.adapterRegistry.stream({ adapterId: provider.adapter, plan, input, credential, signal: controller.signal })) {
+              if (chunk.type === "delta" && chunk.text) await onDelta({ text: chunk.text, sequence: chunk.seq, providerId: provider.id, modelId: model.id });
+              if (chunk.terminal) terminal = chunk;
+            }
+            if (!terminal) throw new ProviderInvocationError("external_outcome_unknown", "Provider stream ended without a terminal receipt");
+            result = { status: "succeeded", runId: plan.runId, providerId: provider.id, modelId: model.id, result: { text: terminal.text }, receipt: terminal.receipt };
+          } else {
+            result = protectedMetadata
+              ? await this.#invokeProtected({ plan, input, protectedMetadata, signal: controller.signal })
+              : await this.adapterRegistry.invoke({ adapterId: provider.adapter, plan, input, credential, signal: controller.signal });
+          }
         } finally {
           clearTimeout(deadline);
           signal?.removeEventListener("abort", cancel);
         }
         routeHealthReceipt = this.#settleRouteHealth(admission?.lease, { ok: true });
-        return { provider, model, providerPlan: plan, providerResult: result, routeHealthReceipt, failures, fallbackUsed: index > 0 };
+        const fallbackUsed = index > 0;
+        return { provider, model, providerPlan: plan, providerResult: result, routeHealthReceipt, failures, fallbackUsed, routeDecision: routeDecision({ candidates, selected: candidate, selection: normalizedSelection, failures, fallbackUsed }) };
       } catch (error) {
         const failure = normalizeProviderFailure(error);
         routeHealthReceipt ||= this.#settleRouteHealth(admission?.lease, { ...failure, ok: false });

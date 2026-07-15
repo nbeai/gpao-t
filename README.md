@@ -1,13 +1,13 @@
-# GPAO-T Native Runtime Lab
+# GPAO-T3 Foundation Runtime
 
-This is the isolated production-foundation lab for the second-generation GPAO-T
-runtime. It is not the live GPAO-T product and must never share its state,
+This is the independent production foundation for GPAO-T3. It is not the live
+GPAO-T product and must never share its state,
 port, provider credentials, channels, or workspace.
 
 Fixed boundaries:
 
-- source: `/Users/jyp/Developer/gpao-t-native-runtime-lab`
-- state: `~/.gpao-t-next` by default
+- source: `/Users/jyp/Developer/gpao-t-native-runtime-research/runtime-lab`
+- state: `~/.gpao-t3` by default
 - default HTTP port: `18899`
 - comparison references: external reference copies are read-only
 
@@ -22,11 +22,11 @@ Run:
 ```sh
 npm test
 npm run check
-npm start -- --state-dir "$HOME/.gpao-t-next" --port 18899
+npm start -- --state-dir "$HOME/.gpao-t3" --port 18899
 ```
 
 The owner token is generated at first boot and written only to
-`~/.gpao-t-next/owner.token` with mode `0600`.
+`~/.gpao-t3/owner.token` with mode `0600`.
 
 Native package verification:
 
@@ -39,7 +39,7 @@ State is always isolated. Stop the runtime before snapshot, migration, or
 restore:
 
 ```sh
-node src/index.js snapshot --state-dir "$HOME/.gpao-t-next" --label before-update
-node src/index.js migrate --state-dir "$HOME/.gpao-t-next"
-node src/index.js restore --state-dir "$HOME/.gpao-t-next" --snapshot <snapshot-directory>
+node src/index.js snapshot --state-dir "$HOME/.gpao-t3" --label before-update
+node src/index.js migrate --state-dir "$HOME/.gpao-t3"
+node src/index.js restore --state-dir "$HOME/.gpao-t3" --snapshot <snapshot-directory>
 ```

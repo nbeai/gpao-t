@@ -29,5 +29,5 @@ export class LocalSessionAuthority {
   }
 
   revoke(token) { const id = String(token || "").split(".")[0]; const session = this.sessions.get(id); if (!session) return false; session.revokedAt = Date.now(); return true; }
-  snapshot() { return { schema: "gpao_t.local_session_status.v1", active: [...this.sessions.values()].filter(session => !session.revokedAt && session.expiresAt > Date.now()).map(({ id, principalId, deviceLabel, createdAt, lastActivityAt, expiresAt }) => ({ id, principalId, deviceLabel, createdAt, lastActivityAt, expiresAt })) }; }
+  snapshot() { return { schema: "gpao_t3.local_session_status.v1", active: [...this.sessions.values()].filter(session => !session.revokedAt && session.expiresAt > Date.now()).map(({ id, principalId, deviceLabel, createdAt, lastActivityAt, expiresAt }) => ({ id, principalId, deviceLabel, createdAt, lastActivityAt, expiresAt })) }; }
 }

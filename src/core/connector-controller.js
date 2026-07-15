@@ -1,6 +1,6 @@
 import { RuntimeError } from "./errors.js";
 
-const EXTERNAL_TRANSPORTS = new Set(["http", "webhook", "stdio", "local_api"]);
+const EXTERNAL_TRANSPORTS = new Set(["http", "webhook", "stdio", "local_api", "protected_adapter"]);
 const REVIEWED_SETUP_STATES = new Set(["reviewed", "connected"]);
 const SECRET_KEY = /(?:secret|token|credential|password|authorization|api[_-]?key|endpoint|url|command|environment|header)/i;
 
@@ -38,7 +38,7 @@ function publicConnector(connector) {
 
 function receipt({ action, connector, status, reason = null, at, setupState = null }) {
   return redact({
-    schema: "gpao_t.connector_controller_receipt.v1",
+    schema: "gpao_t3.connector_controller_receipt.v1",
     action,
     connectorId: connector.id,
     connectorVersion: connector.version,

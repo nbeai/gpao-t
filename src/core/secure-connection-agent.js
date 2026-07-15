@@ -1,6 +1,6 @@
 import { RuntimeError } from "./errors.js";
 
-export const SECURE_CONNECTION_AGENT_SCHEMA = "gpao_t.secure_connection_agent.v1";
+export const SECURE_CONNECTION_AGENT_SCHEMA = "gpao_t3.secure_connection_agent.v1";
 export const SECURE_CONNECTION_AUTH_METHODS = Object.freeze(["api_key", "oauth", "local"]);
 export const SECURE_CONNECTION_STATES = Object.freeze([
   "not_connected", "connecting", "connected", "auth_required", "expired", "unavailable", "revoked", "unknown"
@@ -47,13 +47,16 @@ function assertOpaqueRequest(value, operation, now) {
 
 function assertInvokeRequest(value, now) {
   assertObject(value, "secure_connection_agent_invalid_request", "Secure provider request must be an object");
-  assertOnlyKeys(value, new Set(["requestId", "credentialRef", "providerId", "modelId", "input", "deadline"]), "provider invoke request");
+  assertOnlyKeys(value, new Set(["requestId", "credentialRef", "providerId", "modelId", "input", "responseBudget", "deadline"]), "provider invoke request");
   assertIdentifier(value.requestId, "requestId");
   assertIdentifier(value.credentialRef, "credentialRef");
   assertIdentifier(value.providerId, "providerId");
   assertIdentifier(value.modelId, "modelId");
   if (!value.input || typeof value.input !== "object" || Array.isArray(value.input)) {
     throw failure("secure_connection_agent_invalid_request", "Provider input must be structured", 400);
+  }
+  if (value.responseBudget !== undefined && (!Number.isSafeInteger(value.responseBudget) || value.responseBudget < 1 || value.responseBudget > 65_536)) {
+    throw failure("secure_connection_agent_invalid_request", "responseBudget must be a bounded integer", 400);
   }
   assertDeadline(value.deadline, now);
 }
@@ -114,8 +117,8 @@ function assertPublicInvocation(response, request) {
  */
 export class SecureConnectionAgent {
   constructor({ backend = null, now = () => Date.now() } = {}) {
-    if (backend !== null && (typeof backend !== "object" || typeof backend.begin !== "function" || typeof backend.status !== "function" || typeof backend.revoke !== "function")) {
-      throw failure("secure_connection_agent_configuration_error", "A secure backend must implement begin, status, and revoke", 500);
+    if (backend !== null && (typeof backend !== "object" || typeof backend.begin !== "function" || typeof backend.status !== "function" || typeof backend.revoke !== "function" || typeof backend.invoke !== "function")) {
+      throw failure("secure_connection_agent_configuration_error", "A secure backend must implement begin, status, revoke, and invoke", 500);
     }
     if (typeof now !== "function") throw failure("secure_connection_agent_configuration_error", "A clock function is required", 500);
     this.backend = backend;
@@ -162,11 +165,11 @@ export class SecureConnectionAgent {
     return assertPublicConnection(response, request);
   }
 
-  async invoke(request) {
+  async invoke(request, { signal = null } = {}) {
     const now = this.now();
     assertInvokeRequest(request, now);
     if (!this.backend?.invoke) this.unavailable();
-    const response = await this.backend.invoke({ ...request }, { now });
+    const response = await this.backend.invoke({ ...request }, { now, signal });
     return assertPublicInvocation(response, request);
   }
 

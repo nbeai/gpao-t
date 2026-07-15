@@ -14,6 +14,9 @@ test("event router orders every run independently and emits secret-free receipts
   assert.equal(first.receipt.payload.nested.authorization, "[REDACTED]");
   assert.equal(first.receipt.payload.nested.message, "safe");
   assert.equal(JSON.stringify(first.receipt).includes("sk-never-log"), false);
+  assert.equal(first.receipt.frame.schema, "gpao_t3.control_frame.v1");
+  assert.equal(first.receipt.frame.status, "accepted");
+  assert.equal(second.receipt.frame.status, "dispatching");
 });
 
 test("reconnect replay starts after cursor and explicitly detects an expired cursor", () => {
@@ -37,6 +40,8 @@ test("a slow subscriber is bounded, marked for reconnect, and cannot block publi
   const notice = subscriber.poll();
   assert.equal(notice.type, "router.backpressure");
   assert.equal(notice.reason, "subscriber_backpressure");
+  assert.equal(notice.frame.status, "reconnecting");
+  assert.equal(notice.frame.reconnectRequired, true);
   assert.equal(subscriber.status().closed, true);
   assert.equal(router.replay({ runId: "run" }).events.length, 2);
 });

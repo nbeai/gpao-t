@@ -1,0 +1,193 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gpao-t3.local/schemas/mct-contract.v1.json",
+  "title": "GPAO-T3 MCT Canonical Contract v1",
+  "oneOf": [
+    { "$ref": "#/$defs/RawObservation" }, { "$ref": "#/$defs/MemoryRecord" },
+    { "$ref": "#/$defs/RetrievalHit" }, { "$ref": "#/$defs/TCellCandidate" }, { "$ref": "#/$defs/TCellCore" },
+    { "$ref": "#/$defs/AdmissionDecision" }, { "$ref": "#/$defs/TaskPacket" },
+    { "$ref": "#/$defs/ResponseInfluence" }, { "$ref": "#/$defs/OutcomeObservation" }, { "$ref": "#/$defs/GrowthProposal" },
+    { "$ref": "#/$defs/ReplayResult" }, { "$ref": "#/$defs/MutationLedger" }, { "$ref": "#/$defs/RollbackReceipt" }
+  ],
+  "$defs": {
+    "id": { "type": "string", "minLength": 1 },
+    "digest": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" },
+    "scope": {
+      "type": "object", "additionalProperties": false,
+      "required": ["level", "turnId", "sessionId", "projectId", "userId"],
+      "properties": {
+        "level": { "enum": ["turn", "session", "project", "user_global"] },
+        "turnId": { "type": ["string", "null"], "minLength": 1 },
+        "sessionId": { "type": ["string", "null"], "minLength": 1 },
+        "projectId": { "type": ["string", "null"], "minLength": 1 },
+        "userId": { "type": ["string", "null"], "minLength": 1 }
+      },
+      "allOf": [
+        { "if": { "properties": { "level": { "const": "turn" } } }, "then": { "properties": { "turnId": { "type": "string" } } } },
+        { "if": { "properties": { "level": { "const": "session" } } }, "then": { "properties": { "sessionId": { "type": "string" } } } },
+        { "if": { "properties": { "level": { "const": "project" } } }, "then": { "properties": { "projectId": { "type": "string" } } } },
+        { "if": { "properties": { "level": { "const": "user_global" } } }, "then": { "properties": { "userId": { "type": "string" } } } }
+      ]
+    },
+    "trace": {
+      "type": "object", "additionalProperties": false, "required": ["refs", "evidenceLevel"],
+      "properties": {
+        "refs": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "$ref": "#/$defs/id" } },
+        "evidenceLevel": { "enum": ["raw", "session_trace", "tool_verified", "user_confirmed"] }
+      }
+    },
+    "authority": {
+      "type": "object", "additionalProperties": false,
+      "required": ["allowedUse", "durablePromotion", "decisionClass", "decisionId"],
+      "properties": {
+        "allowedUse": { "enum": ["candidate_only", "supporting_context", "answer_anchor", "observation_only", "replay_only", "mutation_proposal", "mutation_apply", "rollback"] },
+        "durablePromotion": { "type": "boolean" },
+        "decisionClass": { "enum": ["A0", "A1", "A2"] },
+        "decisionId": { "type": ["string", "null"], "minLength": 1 }
+      },
+      "if": { "properties": { "durablePromotion": { "const": true } } },
+      "then": { "properties": { "decisionClass": { "const": "A2" }, "decisionId": { "type": "string" } } }
+    },
+    "base": {
+      "type": "object",
+      "required": ["schema", "version", "id", "scope", "trace", "authority", "lifecycle", "createdAt", "updatedAt", "expiresAt", "invalidConditions"],
+      "properties": {
+        "schema": { "type": "string", "pattern": "^gpao_t3\\.[a-z_]+\\.v1$" },
+        "version": { "const": 1 }, "id": { "$ref": "#/$defs/id" },
+        "scope": { "$ref": "#/$defs/scope" }, "trace": { "$ref": "#/$defs/trace" }, "authority": { "$ref": "#/$defs/authority" },
+        "lifecycle": { "enum": ["raw", "candidate", "reviewed", "promoted", "stale", "expired", "rejected", "rolled_back", "deleted"] },
+        "createdAt": { "type": "integer", "minimum": 0 }, "updatedAt": { "type": "integer", "minimum": 0 },
+        "expiresAt": { "type": ["integer", "null"], "minimum": 0 },
+        "invalidConditions": { "type": "array", "uniqueItems": true, "items": { "type": "string", "minLength": 1 } }
+      },
+      "if": { "properties": { "lifecycle": { "enum": ["expired", "rejected"] } } },
+      "then": { "properties": { "expiresAt": { "type": "integer" } } },
+      "allOf": [{
+        "if": { "properties": { "lifecycle": { "const": "promoted" } } },
+        "then": { "properties": { "authority": { "properties": { "durablePromotion": { "const": true }, "decisionClass": { "const": "A2" }, "decisionId": { "type": "string" } } } } }
+      }]
+    },
+    "anchorRef": {
+      "type": "object", "additionalProperties": false, "required": ["candidateId", "admissionDecisionId"],
+      "properties": { "candidateId": { "$ref": "#/$defs/id" }, "admissionDecisionId": { "$ref": "#/$defs/id" } }
+    },
+    "promptBudget": {
+      "type": "object", "additionalProperties": false,
+      "required": ["contextWindow", "system", "currentRequest", "recentConversation", "memory", "toolResults", "output", "reserve"],
+      "properties": {
+        "contextWindow": { "type": "integer", "minimum": 2048 }, "system": { "type": "integer", "minimum": 0 },
+        "currentRequest": { "type": "integer", "minimum": 1 }, "recentConversation": { "type": "integer", "minimum": 0 },
+        "memory": { "type": "integer", "minimum": 0 }, "toolResults": { "type": "integer", "minimum": 0 },
+        "output": { "type": "integer", "minimum": 1 }, "reserve": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "RawObservation": {
+      "allOf": [{ "$ref": "#/$defs/base" }, { "type": "object", "required": ["content", "sourceKind"], "properties": {
+        "schema": { "const": "gpao_t3.raw_observation.v1" }, "content": { "type": "string", "minLength": 1 },
+        "sourceKind": { "enum": ["user_turn", "assistant_turn", "tool_result", "runtime_event", "import"] }
+      } }], "unevaluatedProperties": false
+    },
+    "MemoryRecord": {
+      "allOf": [{ "$ref": "#/$defs/base" }, { "type": "object", "required": ["content", "recordKind"], "properties": {
+        "schema": { "const": "gpao_t3.memory_record.v1" }, "content": { "type": "string", "minLength": 1 },
+        "recordKind": { "enum": ["fact", "preference", "constraint", "observation", "correction", "principle"] }
+      } }], "unevaluatedProperties": false
+    },
+    "RetrievalHit": {
+      "allOf": [{ "$ref": "#/$defs/base" }, { "type": "object", "required": ["memoryRecordId", "queryId", "scores", "retrievedAt"], "properties": {
+        "schema": { "const": "gpao_t3.retrieval_hit.v1" }, "memoryRecordId": { "$ref": "#/$defs/id" }, "queryId": { "$ref": "#/$defs/id" },
+        "scores": { "type": "object", "additionalProperties": false, "required": ["lexical", "semantic", "combined"], "properties": {
+          "lexical": { "type": "number", "minimum": 0, "maximum": 1 }, "semantic": { "type": "number", "minimum": 0, "maximum": 1 }, "fuzzy": { "type": "number", "minimum": 0, "maximum": 1 }, "localVector": { "type": "number", "minimum": 0, "maximum": 1 }, "combined": { "type": "number", "minimum": 0, "maximum": 1 }
+        } }, "retrievedAt": { "type": "integer", "minimum": 0 }
+      } }], "unevaluatedProperties": false
+    },
+    "TCellCandidate": {
+      "allOf": [{ "$ref": "#/$defs/base" }, { "type": "object", "required": ["sourceCandidateId", "pi", "x", "radius", "replayCaseId"], "properties": {
+        "schema": { "const": "gpao_t3.tcell_candidate.v1" }, "pi": { "type": "string", "minLength": 1 },
+        "sourceCandidateId": { "$ref": "#/$defs/id" },
+        "relation": { "type": "object", "additionalProperties": false, "required": ["contradictionGroup", "supersededBy"], "properties": { "contradictionGroup": { "type": ["string", "null"] }, "supersededBy": { "type": ["string", "null"] } } },
+        "x": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/id" } },
+        "radius": { "type": "object", "additionalProperties": false, "required": ["scopeRefs", "constraints"], "properties": {
+          "scopeRefs": { "type": "array", "items": { "$ref": "#/$defs/id" } }, "constraints": { "type": "array", "items": { "type": "string", "minLength": 1 } }
+        } }, "replayCaseId": { "$ref": "#/$defs/id" }
+      } }], "unevaluatedProperties": false
+    },
+    "TCellCore": {
+      "allOf": [{ "$ref": "#/$defs/base" }, { "type": "object", "required": ["pi", "x", "radius", "depth", "stateChange", "replay", "compressionSafety"], "properties": {
+        "schema": { "const": "gpao_t3.tcell_core.v1" }, "pi": { "type": "string", "minLength": 1 },
+        "x": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/id" } },
+        "radius": { "$ref": "#/$defs/scope" },
+        "depth": { "type": "object", "additionalProperties": false, "required": ["convergenceScore", "unresolved"], "properties": { "convergenceScore": { "type": "number", "minimum": 0, "maximum": 1 }, "unresolved": { "type": "array", "items": { "type": "string" } } } },
+        "stateChange": { "type": "object", "additionalProperties": false, "required": ["beforeDigest", "afterDigest"], "properties": { "beforeDigest": { "$ref": "#/$defs/digest" }, "afterDigest": { "$ref": "#/$defs/digest" } } },
+        "replay": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/id" } },
+        "compressionSafety": { "type": "object", "additionalProperties": false, "required": ["tracePreserved", "authorityPreserved"], "properties": { "tracePreserved": { "type": "boolean" }, "authorityPreserved": { "type": "boolean" } } }
+      } }], "unevaluatedProperties": false
+    },
+    "AdmissionDecision": {
+      "allOf": [{ "$ref": "#/$defs/base" }, { "type": "object", "required": ["candidateId", "sourceCandidateId", "taskPacketId", "state", "permission", "role", "risk", "checks", "reason", "requiredEvidence", "blockedBy", "traceRefs", "replayRefs", "score"], "properties": {
+        "schema": { "const": "gpao_t3.admission_decision.v1" }, "candidateId": { "$ref": "#/$defs/id" }, "sourceCandidateId": { "$ref": "#/$defs/id" }, "taskPacketId": { "$ref": "#/$defs/id" },
+        "state": { "enum": ["not_activated", "activated_candidate", "supporting_context", "answer_anchor", "review_needed", "conflict_boundary", "blocked", "rejected"] },
+        "permission": { "enum": ["deny", "hold", "allow"] }, "role": { "enum": ["none", "candidate", "support", "anchor"] }, "risk": { "enum": ["normal", "review", "conflict", "blocked"] },
+        "checks": { "type": "object", "additionalProperties": false, "required": ["currentRequest", "scope", "trace", "authority", "conflict", "freshness"], "properties": {
+          "currentRequest": { "type": "boolean" }, "scope": { "type": "boolean" }, "trace": { "type": "boolean" }, "authority": { "type": "boolean" }, "conflict": { "type": "boolean" }, "freshness": { "type": "boolean" }
+        } }, "reason": { "type": "string", "minLength": 1 },
+        "requiredEvidence": { "type": "array", "items": { "type": "string", "minLength": 1 } }, "blockedBy": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+        "traceRefs": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/id" } }, "replayRefs": { "type": "array", "items": { "$ref": "#/$defs/id" } },
+        "score": { "type": "number", "minimum": 0, "maximum": 1 }
+      } }], "unevaluatedProperties": false
+    },
+    "TaskPacket": {
+      "allOf": [{ "$ref": "#/$defs/base" }, { "type": "object", "required": ["sessionId", "contextIdentity", "currentRequest", "activeTarget", "answerAnchors", "supportingContext", "conflictBoundaries", "blockedCells", "rejectedCells", "traceRefs", "replayRefs", "uncertaintyReport", "budget"], "properties": {
+        "schema": { "const": "gpao_t3.task_packet.v1" }, "sessionId": { "$ref": "#/$defs/id" }, "currentRequest": { "type": "string", "minLength": 1 },
+        "contextIdentity": { "type": "object", "additionalProperties": false, "required": ["userId", "projectId", "channelId"], "properties": { "userId": { "type": ["string", "null"] }, "projectId": { "type": ["string", "null"] }, "channelId": { "type": ["string", "null"] } } },
+        "activeTarget": { "type": ["string", "null"] },
+        "answerAnchors": { "type": "array", "items": { "$ref": "#/$defs/anchorRef" } },
+        "supportingContext": { "type": "array", "items": { "$ref": "#/$defs/anchorRef" } },
+        "conflictBoundaries": { "type": "array", "items": { "$ref": "#/$defs/anchorRef" } }, "blockedCells": { "type": "array", "items": { "$ref": "#/$defs/anchorRef" } }, "rejectedCells": { "type": "array", "items": { "$ref": "#/$defs/anchorRef" } },
+        "traceRefs": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "$ref": "#/$defs/id" } }, "replayRefs": { "type": "array", "uniqueItems": true, "items": { "$ref": "#/$defs/id" } },
+        "uncertaintyReport": { "type": "array", "items": { "type": "string", "minLength": 1 } }, "budget": { "$ref": "#/$defs/promptBudget" }
+      } }], "unevaluatedProperties": false
+    },
+    "ResponseInfluence": {
+      "allOf": [{ "$ref": "#/$defs/base" }, { "type": "object", "required": ["responseDocumentId", "candidateId", "admissionDecisionId", "role", "blockIds", "tokenCost", "latencyMs"], "properties": {
+        "schema": { "const": "gpao_t3.response_influence.v1" }, "responseDocumentId": { "$ref": "#/$defs/id" }, "candidateId": { "$ref": "#/$defs/id" }, "admissionDecisionId": { "$ref": "#/$defs/id" },
+        "role": { "enum": ["supporting_context", "answer_anchor"] }, "blockIds": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/id" } },
+        "tokenCost": { "type": "integer", "minimum": 0 }, "latencyMs": { "type": "number", "minimum": 0 }
+      } }], "unevaluatedProperties": false
+    },
+    "OutcomeObservation": {
+      "allOf": [{ "$ref": "#/$defs/base" }, { "type": "object", "required": ["turnId", "status", "signals"], "properties": {
+        "schema": { "const": "gpao_t3.outcome_observation.v1" }, "turnId": { "$ref": "#/$defs/id" },
+        "status": { "enum": ["succeeded", "failed", "corrected", "unknown"] }, "signals": { "type": "array", "items": { "type": "string", "minLength": 1 } }
+      } }], "unevaluatedProperties": false
+    },
+    "GrowthProposal": {
+      "allOf": [{ "$ref": "#/$defs/base" }, { "type": "object", "required": ["diagnosis", "targetScope", "status", "replayCaseIds"], "properties": {
+        "schema": { "const": "gpao_t3.growth_proposal.v1" }, "diagnosis": { "type": "string", "minLength": 1 }, "targetScope": { "$ref": "#/$defs/scope" },
+        "status": { "enum": ["candidate", "review_required", "approved", "rejected"] }, "replayCaseIds": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/id" } }
+      } }], "unevaluatedProperties": false
+    },
+    "ReplayResult": {
+      "allOf": [{ "$ref": "#/$defs/base" }, { "type": "object", "required": ["kind", "proposalId", "datasetSplit", "passed", "metrics"], "properties": {
+        "schema": { "const": "gpao_t3.replay_result.v1" }, "kind": { "enum": ["turn_outcome", "scenario", "comparative", "transfer", "longitudinal"] },
+        "proposalId": { "$ref": "#/$defs/id" }, "datasetSplit": { "enum": ["development", "evaluation", "holdout"] }, "passed": { "type": "boolean" },
+        "metrics": { "type": "object", "minProperties": 1, "additionalProperties": { "type": "number" } }
+      } }], "unevaluatedProperties": false
+    },
+    "MutationLedger": {
+      "allOf": [{ "$ref": "#/$defs/base" }, { "type": "object", "required": ["proposalId", "mutationKind", "authorityDecisionId", "rollbackReceiptId", "state"], "properties": {
+        "schema": { "const": "gpao_t3.mutation_ledger.v1" }, "proposalId": { "$ref": "#/$defs/id" },
+        "authority": { "properties": { "allowedUse": { "const": "mutation_apply" }, "durablePromotion": { "const": true }, "decisionClass": { "const": "A2" }, "decisionId": { "type": "string" } } },
+        "mutationKind": { "enum": ["projection", "scoped_influence", "durable_memory", "operating_principle", "identity_policy"] },
+        "authorityDecisionId": { "$ref": "#/$defs/id" }, "rollbackReceiptId": { "$ref": "#/$defs/id" },
+        "state": { "enum": ["proposed", "canary", "stabilized", "rolled_back", "rejected"] }
+      } }], "unevaluatedProperties": false
+    },
+    "RollbackReceipt": {
+      "allOf": [{ "$ref": "#/$defs/base" }, { "type": "object", "required": ["mutationId", "snapshotDigest", "projectionPurge", "verified"], "properties": {
+        "schema": { "const": "gpao_t3.rollback_receipt.v1" }, "mutationId": { "$ref": "#/$defs/id" }, "snapshotDigest": { "$ref": "#/$defs/digest" },
+        "projectionPurge": { "type": "boolean" }, "verified": { "type": "boolean" }
+      } }], "unevaluatedProperties": false
+    }
+  }
+}

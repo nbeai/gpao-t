@@ -65,7 +65,7 @@ test("failure receipts record latency and a failed recovery probe reopens the ci
   const opened = health.settle({ lease: first.lease, outcome: { failureClass: "provider_unavailable" } });
   assert.equal(opened.action, "circuit_opened");
   assert.equal(opened.latencyMs, 17);
-  assert.equal(opened.schema, "gpao_t.provider_route_latency_receipt.v1");
+  assert.equal(opened.schema, "gpao_t3.provider_route_latency_receipt.v1");
 
   time.advance(50);
   const probe = health.admit({ providerId: "openai" });

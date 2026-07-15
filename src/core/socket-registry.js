@@ -60,7 +60,7 @@ export class RuntimeSocketRegistry {
   }
 
   snapshot() {
-    return { schema: "gpao_t.runtime_sockets.v1", sockets: [...this.sockets.values()].map(publicSocket) };
+    return { schema: "gpao_t3.runtime_sockets.v1", sockets: [...this.sockets.values()].map(publicSocket) };
   }
 }
 

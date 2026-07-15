@@ -7,6 +7,7 @@ import { performance } from "node:perf_hooks";
 import test from "node:test";
 import { NativeRuntime } from "../src/core/runtime.js";
 import { RuntimeError } from "../src/core/errors.js";
+import { PRODUCT_IDENTITY } from "../src/core/product-identity.js";
 
 function tempState() {
   return fs.mkdtempSync(path.join(os.tmpdir(), "gpao-t-native-writer-"));
@@ -46,7 +47,7 @@ test("writer lock does not stall the runtime loop and durable submit waits safel
   try {
     const seed = await runtime.submitTurn({ principalId: "owner:a", requestId: "seed", payload: { input: "seed" } });
     await eventually(async () => (await runtime.getTurn("owner:a", seed.commandId))?.status === "succeeded");
-    holder = spawn(process.execPath, [path.resolve("tools/hold-sqlite-lock.mjs"), path.join(stateDir, "runtime.sqlite"), "80"], { stdio: ["ignore", "pipe", "inherit"], env: { ...process.env, NODE_NO_WARNINGS: "1" } });
+    holder = spawn(process.execPath, [path.resolve("tools/hold-sqlite-lock.mjs"), path.join(stateDir, PRODUCT_IDENTITY.databaseFile), "80"], { stdio: ["ignore", "pipe", "inherit"], env: { ...process.env, NODE_NO_WARNINGS: "1" } });
     await waitForLine(holder, "locked");
     const holderExit = new Promise(resolve => holder.once("exit", resolve));
     let timerDelayMs = null;
@@ -73,7 +74,7 @@ test("writer lock during worker completion preserves the final receipt", async (
   let holder;
   try {
     const accepted = await runtime.submitTurn({ principalId: "owner:a", requestId: "completion-lock", payload: { input: "completion", delayMs: 25 } });
-    holder = spawn(process.execPath, [path.resolve("tools/hold-sqlite-lock.mjs"), path.join(stateDir, "runtime.sqlite"), "80"], { stdio: ["ignore", "pipe", "inherit"], env: { ...process.env, NODE_NO_WARNINGS: "1" } });
+    holder = spawn(process.execPath, [path.resolve("tools/hold-sqlite-lock.mjs"), path.join(stateDir, PRODUCT_IDENTITY.databaseFile), "80"], { stdio: ["ignore", "pipe", "inherit"], env: { ...process.env, NODE_NO_WARNINGS: "1" } });
     await waitForLine(holder, "locked");
     const holderExit = new Promise(resolve => holder.once("exit", resolve));
     await eventually(async () => (await runtime.getTurn("owner:a", accepted.commandId))?.status === "succeeded");

@@ -76,8 +76,14 @@ test("F2 protected connection completes one real OS turn without secret material
     const result = await runtime.runOsTurn({ principalId: "owner:f2", sessionId: "f2-session", requestId: "f2-turn", input: "연결 테스트" });
     assert.equal(result.replyMode, "provider_response");
     assert.equal(result.turn.status, "succeeded");
+    assert.equal(result.turn.receipt.result.kind, "provider_projected_result");
+    assert.equal(result.turn.receipt.result.text, "보호된 GPAO-T3 응답");
     assert.equal(result.turn.receipt.result.echo, "보호된 GPAO-T3 응답");
+    assert.equal(result.turn.receipt.result.providerReceipt.providerId, "openai");
     assert.equal(result.providerReceipt.outcome, "completed");
+    const events = await runtime.replayTurnEvents({ principalId: "owner:f2", commandId: result.submitted.commandId });
+    assert.equal(events.terminal.payload.kind, "provider_projected_result");
+    assert.equal(events.terminal.payload.providerReceipt.outcome, "completed");
     assert.equal(bridge.requests.filter(request => request.operation === "provider.invoke").length, 1);
     assert.equal(JSON.stringify({ result, requests: bridge.requests }).includes("F2-SENTINEL-SECRET"), false);
     assert.equal(JSON.stringify(result).includes("credentialRef"), false);

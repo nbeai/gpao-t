@@ -44,8 +44,9 @@ test("runtime records an ordered, secret-free lifecycle event stream for a compl
     const safe = await runtime.submitTurn({ principalId: "owner:a", requestId: "event-lifecycle-safe", payload: { input: "hello" } });
     await eventually(async () => (await runtime.getTurn("owner:a", safe.commandId))?.status === "succeeded");
     const replay = await runtime.replayTurnEvents({ principalId: "owner:a", commandId: safe.commandId });
-    assert.deepEqual(replay.events.map(event => event.type), ["turn.accepted", "turn.dispatched", "turn.succeeded"]);
+    assert.deepEqual(replay.events.map(event => event.type), ["turn.accepted", "turn.dispatched", "turn.responding", "turn.succeeded"]);
     assert.equal(replay.terminal.type, "turn.succeeded");
+    assert.equal(replay.events.find(event => event.type === "turn.dispatched").payload.state, "dispatching");
     assert.equal(JSON.stringify(replay).includes("sk-never-expose"), false);
     assert.equal(await runtime.replayTurnEvents({ principalId: "owner:b", commandId: safe.commandId }), null);
   } finally {
@@ -101,7 +102,8 @@ test("worker crash after dispatch becomes unknown and is not retried", async () 
   });
   assert.equal(turn.receipt, null);
   const progress = await runtime.getProgress("owner:a", result.commandId);
-  assert.equal(progress.at(-1).phase, "outcome_unknown");
+  assert.equal(progress.at(-1).phase, "uncertain");
+  assert.deepEqual((await runtime.getTelemetry("owner:a", result.commandId)).stages.map(stage => stage.stage), ["accepted", "dispatching", "responding", "uncertain"]);
   await runtime.stop();
 });
 
@@ -139,7 +141,7 @@ test("worker result timeout prevents an unresponsive task from staying running",
       return current?.status === "uncertain" && current;
     }, 2000);
     assert.equal(turn.receipt, null);
-    assert.equal((await runtime.getProgress("owner:a", result.commandId)).at(-1).phase, "outcome_unknown");
+    assert.equal((await runtime.getProgress("owner:a", result.commandId)).at(-1).phase, "uncertain");
   } finally {
     await runtime.stop();
   }
@@ -204,6 +206,7 @@ test("cancelled before dispatch records a terminal cancellation without executio
   assert.equal(cancelled.cancellation, "cancelled_before_dispatch");
   assert.equal((await runtime.getTurn("owner:a", result.commandId)).status, "cancelled");
   assert.equal((await runtime.getProgress("owner:a", result.commandId)).at(-1).phase, "cancelled");
+  assert.deepEqual((await runtime.getTelemetry("owner:a", result.commandId)).stages.map(stage => stage.stage), ["accepted", "cancelled"]);
   const events = await runtime.replayTurnEvents({ principalId: "owner:a", commandId: result.commandId });
   assert.deepEqual(events.events.map(event => event.type), ["turn.accepted", "turn.cancelled"]);
   assert.equal(events.terminal.type, "turn.cancelled");
@@ -218,6 +221,7 @@ test("cancelled in flight records bounded uncertainty and rejects late completio
   const cancelled = await runtime.cancelTurn({ principalId: "owner:a", commandId: result.commandId });
   assert.equal(cancelled.cancellation, "cancelled_in_flight");
   assert.equal((await runtime.getTurn("owner:a", result.commandId)).status, "uncertain");
+  assert.deepEqual((await runtime.getTelemetry("owner:a", result.commandId)).stages.map(stage => stage.stage), ["accepted", "dispatching", "responding", "uncertain"]);
   await new Promise(resolve => setTimeout(resolve, 450));
   assert.equal((await runtime.getTurn("owner:a", result.commandId)).status, "uncertain");
   await runtime.stop();
@@ -241,7 +245,7 @@ test("connector controls persist safe state without granting tool authority", as
   const second = await new NativeRuntime({ stateDir }).start();
   try {
     assert.equal(second.connectorStatus().connectors.find(entry => entry.id === "local.workspace-read").enabled, false);
-    assert.equal((await second.doctor()).connectors.schema, "gpao_t.connector_center.v1");
+    assert.equal((await second.doctor()).connectors.schema, "gpao_t3.connector_center.v1");
   } finally {
     await second.stop();
   }

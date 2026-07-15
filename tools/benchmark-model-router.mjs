@@ -31,7 +31,7 @@ for (let index = 0; index < 1_000; index += 1) {
 }
 samples.sort((left, right) => left - right);
 const receipt = {
-  schema: "gpao_t.model_router_benchmark.v1",
+  schema: "gpao_t3.model_router_benchmark.v1",
   sampleCount: samples.length,
   providers: 3,
   p50Ms: percentile(samples, 0.5),

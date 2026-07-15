@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gpao-t3.local/schemas/surface-event.v1.json",
+  "title": "GPAO-T3 Surface Event v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "version", "eventId", "turnId", "sessionId", "sequence", "type", "correlationId", "causationId", "parentEventId", "attempt", "visibility", "sensitivity", "sourceEventId", "payload", "terminal", "createdAt", "digest"],
+  "properties": {
+    "schema": { "const": "gpao_t3.surface_event.v1" },
+    "version": { "const": 1 },
+    "eventId": { "type": "string", "minLength": 1 },
+    "turnId": { "type": "string", "minLength": 1 },
+    "sessionId": { "type": "string", "minLength": 1 },
+    "sequence": { "type": "integer", "minimum": 1 },
+    "type": { "type": "string", "minLength": 1 },
+    "correlationId": { "type": "string", "minLength": 1 },
+    "causationId": { "type": ["string", "null"] },
+    "parentEventId": { "type": ["string", "null"] },
+    "attempt": { "type": "integer", "minimum": 1 },
+    "visibility": { "const": "user" },
+    "sensitivity": { "enum": ["public", "private"] },
+    "sourceEventId": { "type": ["string", "null"] },
+    "payload": { "type": "object" },
+    "terminal": { "type": "boolean" },
+    "createdAt": { "type": "number" },
+    "digest": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" }
+  }
+}

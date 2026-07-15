@@ -29,7 +29,10 @@ test("F2 secure agent transport completes a protected OS turn without exposing t
     await runtime.setDefaultModelSelection({ providerId: "openai", modelId: "gpt-native" });
     const result = await runtime.runOsTurn({ principalId: "owner:agent", sessionId: "agent-session", requestId: "agent-turn", input: "안전한 연결" });
     assert.equal(result.replyMode, "provider_response");
+    assert.equal(result.turn.receipt.result.kind, "provider_projected_result");
+    assert.equal(result.turn.receipt.result.text, "native secure response");
     assert.equal(result.turn.receipt.result.echo, "native secure response");
+    assert.equal(result.turn.receipt.result.providerReceipt.providerId, "openai");
     assert.equal(JSON.stringify(result).includes("native-openai-ref"), false);
   } finally { await runtime.stop(); }
 });

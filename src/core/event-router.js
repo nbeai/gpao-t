@@ -1,4 +1,5 @@
 import crypto from "node:crypto";
+import { createControlFrame } from "./control-frame.js";
 
 const TERMINAL_TYPES = new Set([
   "turn.succeeded",
@@ -55,6 +56,7 @@ export class EventRouter {
     if (run.terminal) throw new Error("event_router_terminal_already_emitted");
 
     const sequence = run.nextSequence++;
+    const createdAt = this.now();
     const event = Object.freeze({
       eventId: crypto.randomUUID(),
       runId,
@@ -63,7 +65,8 @@ export class EventRouter {
       type,
       payload: redact(payload),
       terminal: terminalFor(type, terminal),
-      createdAt: this.now()
+      createdAt,
+      frame: createControlFrame({ runId, sequence, type, createdAt, payload, terminal: terminalFor(type, terminal) })
     });
     run.events.push(event);
     if (run.events.length > this.maxReplayEvents) run.events.shift();
@@ -88,7 +91,8 @@ export class EventRouter {
         type,
         payload: redact(source.payload || {}),
         terminal: terminalFor(type, source.terminal),
-        createdAt: source.createdAt
+        createdAt: source.createdAt,
+        frame: createControlFrame({ runId, sequence, type, createdAt: source.createdAt, payload: source.payload || {}, terminal: terminalFor(type, source.terminal) })
       });
       run.events.push(event);
       if (run.events.length > this.maxReplayEvents) run.events.shift();
@@ -125,7 +129,7 @@ export class EventRouter {
   subscribe({ runId, cursor, capacity = this.maxSubscriberQueue } = {}) {
     if (!Number.isInteger(capacity) || capacity < 1) throw new Error("event_router_invalid_queue_limit");
     const run = this.#run(runId);
-    const subscriber = { id: crypto.randomUUID(), queue: [], capacity, closed: false, overflow: null };
+    const subscriber = { id: crypto.randomUUID(), runId, queue: [], capacity, closed: false, overflow: null };
     run.subscribers.add(subscriber);
     const replay = this.replay({ runId, cursor, limit: capacity });
     if (replay.status !== "ok") {
@@ -144,7 +148,7 @@ export class EventRouter {
 
   receipt(event) {
     return Object.freeze({
-      schema: "gpao_t.event_receipt.v1",
+      schema: "gpao_t3.event_receipt.v1",
       eventId: event.eventId,
       runId: event.runId,
       cursor: event.cursor,
@@ -152,7 +156,8 @@ export class EventRouter {
       type: event.type,
       terminal: event.terminal,
       createdAt: event.createdAt,
-      payload: redact(event.payload)
+      payload: redact(event.payload),
+      frame: event.frame
     });
   }
 
@@ -174,7 +179,22 @@ export class EventRouter {
   #overflow(subscriber, reason, cursor) {
     if (subscriber.closed) return;
     subscriber.queue.length = 0;
-    subscriber.queue.push(Object.freeze({ type: "router.backpressure", reason, cursor, terminal: false }));
+    const rawSequence = Number(String(cursor || "").split(":").at(-1));
+    const sequence = Number.isInteger(rawSequence) && rawSequence >= 0 ? rawSequence : 0;
+    const createdAt = this.now();
+    subscriber.queue.push(Object.freeze({
+      type: "router.backpressure",
+      reason,
+      cursor,
+      terminal: false,
+      frame: createControlFrame({
+        runId: subscriber.runId,
+        sequence,
+        type: "router.backpressure",
+        createdAt,
+        payload: { reconnectRequired: true }
+      })
+    }));
     subscriber.overflow = reason;
     subscriber.closed = true;
   }

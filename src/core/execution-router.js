@@ -19,7 +19,7 @@ export class ExecutionRouter {
     const socket = this.socketRegistry.requireReady(command.payload?.socketId || this.defaultSocketId);
     if (socket.permitRequired && permit.commandId !== command.id) throw new RuntimeError("invalid_route_permit", "Route permit does not match command", 403);
     return {
-      schema: "gpao_t.execution_route_plan.v1",
+      schema: "gpao_t3.execution_route_plan.v1",
       runId: command.id,
       sessionId: command.principalId,
       requestId: command.requestId,

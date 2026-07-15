@@ -14,8 +14,8 @@ test("environment-backed provider configuration enters the standard OS turn with
   const runtime = await new NativeRuntime({
     stateDir: stateDir(),
     providerEnvironment: {
-      GPAO_T_OPENAI_API_KEY: credential,
-      GPAO_T_OPENAI_MODEL: "test-openai-model"
+      GPAO_T3_OPENAI_API_KEY: credential,
+      GPAO_T3_OPENAI_MODEL: "test-openai-model"
     },
     allowEnvironmentCredentialCompatibility: true,
     providerFetch: async (url, options) => {
@@ -46,6 +46,8 @@ test("unconfigured external providers remain visible as connection-required whil
     const providers = runtime.providerStatus().providers;
     assert.equal(providers.find(provider => provider.id === "openai").auth.state, "auth_required");
     assert.equal(providers.find(provider => provider.id === "anthropic").auth.state, "auth_required");
+    assert.equal(providers.find(provider => provider.id === "local-model").auth.state, "configured");
+    assert.deepEqual(providers.find(provider => provider.id === "local-model").display.authMethods, ["local"]);
     assert.equal(providers.find(provider => provider.id === "gpao-t-emulator").health.state, "ready");
   } finally {
     await runtime.stop();
@@ -56,7 +58,7 @@ test("production defaults ignore environment credentials until a protected backe
   let providerCalled = false;
   const runtime = await new NativeRuntime({
     stateDir: stateDir(),
-    providerEnvironment: { GPAO_T_OPENAI_API_KEY: "must-not-enter-default-runtime" },
+    providerEnvironment: { GPAO_T3_OPENAI_API_KEY: "must-not-enter-default-runtime" },
     providerFetch: async () => {
       providerCalled = true;
       throw new Error("production default must not call an environment-backed provider");
@@ -83,7 +85,7 @@ test("concurrent duplicate OS requests share one external provider invocation", 
   let calls = 0;
   const runtime = await new NativeRuntime({
     stateDir: stateDir(),
-    providerEnvironment: { GPAO_T_OPENAI_API_KEY: "duplicate-test-secret" },
+    providerEnvironment: { GPAO_T3_OPENAI_API_KEY: "duplicate-test-secret" },
     allowEnvironmentCredentialCompatibility: true,
     providerFetch: async () => {
       calls += 1;
@@ -107,8 +109,8 @@ test("trusted catalog uses only package-defined official HTTPS hosts and ignores
   const runtime = await new NativeRuntime({
     stateDir: stateDir(),
     providerEnvironment: {
-      GPAO_T_OPENAI_API_KEY: "catalog-host-test-secret",
-      GPAO_T_OPENAI_BASE_URL: "http://127.0.0.1:9999/redirected"
+      GPAO_T3_OPENAI_API_KEY: "catalog-host-test-secret",
+      GPAO_T3_OPENAI_BASE_URL: "http://127.0.0.1:9999/redirected"
     },
     allowEnvironmentCredentialCompatibility: true,
     providerFetch: async url => {
@@ -130,9 +132,10 @@ test("trusted catalog rejects secrets, untrusted endpoints, invalid migrations, 
     "anthropic-messages": "0.1",
     "gemini-generate-content": "0.1",
     "codex-oauth": "0.1",
+    "ollama-local": "0.1",
     "native-deterministic-emulator": "0.1"
   };
-  assert.equal(createTrustedProviderCatalog({ adapterVersions }).schema, "gpao_t.provider_catalog.v1");
+  assert.equal(createTrustedProviderCatalog({ adapterVersions }).schema, "gpao_t3.provider_catalog.v1");
   const invalidCases = [
     { ...TRUSTED_PROVIDER_CATALOG, apiKey: "must-not-be-here" },
     { ...TRUSTED_PROVIDER_CATALOG, catalogVersion: 2, migration: { fromCatalogVersions: [1, 2] } },

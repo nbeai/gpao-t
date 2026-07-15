@@ -5,7 +5,7 @@ import { performance } from "node:perf_hooks";
 import { NativeRuntime } from "../src/core/runtime.js";
 
 const total = 2000;
-const stateDir = fs.mkdtempSync(path.join(os.tmpdir(), "gpao-t-native-soak-"));
+const stateDir = fs.mkdtempSync(path.join(os.tmpdir(), "gpao-t3-soak-"));
 const runtime = await new NativeRuntime({ stateDir, maxInflight: 8, maxQueue: total + 16 }).start();
 const samples = [];
 const commandIds = [];
@@ -37,7 +37,7 @@ const stopStarted = performance.now();
 await runtime.stop();
 const stopDurationMs = performance.now() - stopStarted;
 const receipt = {
-  schema: "gpao_t.native_foundation_soak.v1",
+  schema: "gpao_t3.native_foundation_soak.v1",
   turns: total,
   acceptedDurationMs,
   p50Ms: percentile(0.5),

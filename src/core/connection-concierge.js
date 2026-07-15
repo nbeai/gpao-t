@@ -1,4 +1,4 @@
-const SCHEMA = "gpao_t.connection_concierge_proposal.v1";
+const SCHEMA = "gpao_t3.connection_concierge_proposal.v1";
 
 const DEFAULT_PROVIDERS = Object.freeze([
   "openai",
@@ -9,7 +9,9 @@ const DEFAULT_PROVIDERS = Object.freeze([
 
 const DEFAULT_CONNECTORS = Object.freeze([
   "web.search",
-  "mcp.external"
+  "mcp.external",
+  "channel.telegram",
+  "channel.document-export"
 ]);
 
 const SETUP_LANGUAGE = /(?:connect|connection|set\s*up|configure|enable|add|use|연결|설정|켜\s*(?:줘|주세요|주다)?|추가|사용(?:하고)?\s*싶)/i;
@@ -86,6 +88,8 @@ export function createConnectionConcierge({ providerCatalog, connectorCatalog } 
         proposals.push(connectorRequest("web.search"));
       }
       if (connectorIds.has("mcp.external") && /\bmcp\b/i.test(request)) proposals.push(connectorRequest("mcp.external"));
+      if (connectorIds.has("channel.telegram") && includesAny(request, [/telegram/i, /텔레그램/i])) proposals.push(connectorRequest("channel.telegram"));
+      if (connectorIds.has("channel.document-export") && includesAny(request, [/문서\s*내보내기/i, /document\s*export/i, /export\s*document/i])) proposals.push(connectorRequest("channel.document-export"));
 
       return publicResult({
         status: proposals.length ? "proposed" : "not_supported",

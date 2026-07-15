@@ -1,23 +1,299 @@
-const storageKey = "gpao-t-native.sessions.v1";
-const state = { sessions: JSON.parse(localStorage.getItem(storageKey) || "[]"), activeId: null, connections: null };
+const state = { sessions: [], messengerSessions: [], activeId: null, activeKind: "workspace", sessionAction: null, pendingChannelSend: null, activeTurn: null, surfaceEventIds:new Set(), streamText:new Map(), connections: null, channels: null, connectionCells: null, tools: null, influence: null, memoryWiki: null, doctor: null, panel: { sessionId:null, open:false, userClosed:false, view:"activity", notices:0 } };
 const $ = selector => document.querySelector(selector);
-const localConnector = connector => connector.transport === "builtin";
+function refreshIcons(root = document) { globalThis.lucide?.createIcons?.({ root, attrs:{ "stroke-width":1.8 } }); }
+const localConnector = connector => (connector.compatibility?.transport || connector.transport) === "builtin";
+const managedChannel = connector => connector.id === "channel.telegram";
+const userFacingProvider = provider => provider.adapter !== "native-deterministic-emulator";
 
-function persist() { localStorage.setItem(storageKey, JSON.stringify(state.sessions)); }
-function active() { return state.sessions.find(session => session.id === state.activeId); }
-function createSession() {
-  const session = { id: crypto.randomUUID(), title: "새 대화", messages: [] };
-  state.sessions.unshift(session); state.activeId = session.id; persist(); render();
+function active() { return (state.activeKind === "messenger" ? state.messengerSessions : state.sessions).find(session => session.sessionId === state.activeId); }
+const panelTitles = { activity:"진행 상황", tools:"도구와 결과", memory:"기억", recovery:"문제 해결" };
+function panelStorageKey(sessionId = state.activeId) { return `gpao-t3:assistant-panel:${sessionId || "new"}`; }
+function readPanelState(sessionId) {
+  try { return JSON.parse(sessionStorage.getItem(panelStorageKey(sessionId))) || {}; }
+  catch { return {}; }
+}
+function savePanelState() {
+  if (!state.activeId) return;
+  sessionStorage.setItem(panelStorageKey(), JSON.stringify({ open:state.panel.open, userClosed:state.panel.userClosed, view:state.panel.view }));
+}
+function renderPanelState() {
+  const workbench = $(".workbench");
+  workbench.classList.toggle("panel-open", state.panel.open);
+  $("#assistant-panel").setAttribute("aria-hidden", String(!state.panel.open));
+  $("#panel-toggle").setAttribute("aria-expanded", String(state.panel.open));
+  $("#panel-title").textContent = panelTitles[state.panel.view] || panelTitles.activity;
+  document.querySelectorAll("[data-panel-view]").forEach(button => button.setAttribute("aria-current", String(button.dataset.panelView === state.panel.view)));
+  document.querySelectorAll("[data-panel-content]").forEach(section => { section.hidden = section.dataset.panelContent !== state.panel.view; });
+  const badge = $("#panel-badge");
+  badge.textContent = String(state.panel.notices);
+  badge.hidden = state.panel.notices === 0;
+}
+function restorePanelForSession(sessionId) {
+  const saved = readPanelState(sessionId);
+  state.panel = { sessionId, open:saved.open === true, userClosed:saved.userClosed === true, view:panelTitles[saved.view] ? saved.view : "activity", notices:0 };
+  renderPanelState();
+}
+function setPanelOpen(open, { userClosed = false } = {}) {
+  state.panel.open = open;
+  state.panel.userClosed = !open && userClosed;
+  if (open) state.panel.notices = 0;
+  savePanelState();
+  renderPanelState();
+}
+function setPanelView(view) {
+  if (!panelTitles[view]) return;
+  state.panel.view = view;
+  savePanelState();
+  renderPanelState();
+}
+function setPanelActivity(title, detail, { notice = false, view = "activity" } = {}) {
+  $("#panel-activity-title").textContent = title;
+  $("#panel-activity-detail").textContent = detail;
+  if (panelTitles[view]) state.panel.view = view;
+  if (notice && !state.panel.open) state.panel.notices += 1;
+  savePanelState();
+  renderPanelState();
+}
+
+const SURFACE_EVENT_COPY = {
+  "turn.accepted":["요청 확인", "요청을 안전하게 접수했습니다."],
+  "tool.proposed":["도구 선택", "필요한 도구를 확인했습니다."],
+  "tool.running":["도구 실행", "도구가 작업을 진행하고 있습니다."],
+  "tool.completed":["도구 완료", "도구 결과를 답변에 반영했습니다."],
+  "tool.failed":["도구 확인 필요", "문제를 진단하고 복구 방법을 준비했습니다."],
+  "memory.referenced":["기억 확인", "승인된 기억과 맥락을 참고했습니다."],
+  "text.delta":["답변 작성", "답변을 작성하고 있습니다."],
+  "text.complete":["답변 정리", "최종 답변을 안전하게 확정했습니다."],
+  "stream.reconnecting":["연결 복구", "진행 상태를 다시 연결하고 있습니다."],
+  "recovery.started":["문제 진단", "원인과 안전한 다음 행동을 확인하고 있습니다."],
+  "recovery.completed":["복구 안내 준비", "사용자가 확인할 수 있는 해결 방법을 준비했습니다."],
+  "recovery.failed":["복구 확인 필요", "자동 복구 대신 사용자의 확인이 필요합니다."],
+  "turn.completed":["작업 완료", "답변과 작업 기록을 모두 반영했습니다."],
+  "turn.failed":["복구 필요", "문제를 확인하고 다음 행동을 준비했습니다."],
+  "turn.cancelled":["작업 중단", "요청한 작업을 중단했습니다."]
+};
+
+function showSurfaceEvent(event) {
+  if (state.surfaceEventIds.has(event.eventId)) return;
+  state.surfaceEventIds.add(event.eventId);
+  const copy = SURFACE_EVENT_COPY[event.type] || ["진행", "작업 상태가 갱신됐습니다."];
+  setPanelActivity(copy[0], copy[1], { notice:true, view:event.type.includes("failed") || event.type.startsWith("recovery.") ? "recovery" : "activity" });
+  const list = $("#activity-event-list");
+  if (!list || list.querySelector(`[data-event-id="${CSS.escape(event.eventId)}"]`)) return;
+  const item = document.createElement("li");
+  item.dataset.eventId = event.eventId;
+  item.className = event.terminal ? "terminal" : "";
+  const title = document.createElement("strong");
+  title.textContent = copy[0];
+  const detail = document.createElement("span");
+  detail.textContent = copy[1];
+  item.append(title, detail);
+  list.append(item);
+  while (list.children.length > 30) list.firstElementChild.remove();
+  if (event.type === "text.delta") renderStreamingDelta(event);
+}
+
+function renderStreamingDelta(event) {
+  if (state.activeTurn?.turnId !== event.turnId || typeof event.payload?.text !== "string") return;
+  const text = `${state.streamText.get(event.turnId) || ""}${event.payload.text}`;
+  state.streamText.set(event.turnId, text);
+  const messages = $("#messages");
+  let article = messages.querySelector(`[data-stream-turn="${CSS.escape(event.turnId)}"]`);
+  if (!article) {
+    article = document.createElement("article");
+    article.className = "message assistant streaming";
+    article.dataset.streamTurn = event.turnId;
+    const who = document.createElement("span");
+    who.className = "who";
+    who.textContent = "GPAO-T3";
+    article.append(who);
+    messages.append(article);
+  }
+  article.querySelector(".response-prose")?.remove();
+  article.append(renderMarkdown(text));
+  messages.scrollTop = messages.scrollHeight;
+}
+
+function awaitOsTurn(acceptance) {
+  return new Promise((resolve, reject) => {
+    state.surfaceEventIds.clear();
+    state.streamText.set(acceptance.turnId, "");
+    let terminal = false;
+    const source = new EventSource(`${acceptance.eventUrl}?cursor=${encodeURIComponent(`${acceptance.turnId}:0`)}`);
+    const timer = setTimeout(() => { source.close(); reject(new Error("응답 시간이 길어지고 있습니다. 진행 상태는 작업 패널에서 이어서 확인할 수 있습니다.")); }, 120_000);
+    const finish = async event => {
+      showSurfaceEvent(event);
+      if (!event.terminal || terminal) return;
+      terminal = true;
+      clearTimeout(timer);
+      source.close();
+      try { resolve(await request(`/v2/os-turns/${encodeURIComponent(acceptance.turnId)}`)); }
+      catch (error) { reject(error); }
+    };
+    source.addEventListener("snapshot", message => {
+      try { for (const event of JSON.parse(message.data).events || []) void finish(event); }
+      catch { source.close(); clearTimeout(timer); reject(new Error("진행 기록을 읽지 못했습니다.")); }
+    });
+    source.addEventListener("surface", message => {
+      try { void finish(JSON.parse(message.data)); }
+      catch { source.close(); clearTimeout(timer); reject(new Error("진행 상태를 읽지 못했습니다.")); }
+    });
+    source.onerror = () => {
+      if (terminal) return;
+      setPanelActivity("연결을 복구하고 있습니다", "저장된 진행 위치부터 다시 연결합니다.", { notice:true });
+    };
+  });
+}
+async function createSession() {
+  const sessionId = crypto.randomUUID();
+  const session = await request("/v1/workspaces", { method:"POST", body:JSON.stringify({ sessionId, title:"새 대화" }) });
+  session.messages = []; state.sessions.unshift(session); state.activeKind = "workspace"; state.activeId = sessionId; render();
+}
+async function loadWorkspace(sessionId) {
+  const workspace = await request(`/v1/workspaces/${encodeURIComponent(sessionId)}`);
+  const index = state.sessions.findIndex(item => item.sessionId === sessionId);
+  if (index >= 0) state.sessions[index] = workspace; else state.sessions.unshift(workspace);
+  state.activeKind = "workspace"; state.activeId = sessionId; closeSessionMenu(); render();
+}
+function loadMessengerSession(sessionId) { state.activeKind = "messenger"; state.activeId = sessionId; closeSessionMenu(); render(); }
+function closeSessionMenu() { $(".rail").classList.remove("sessions-open"); $("#session-menu").setAttribute("aria-expanded", "false"); }
+function closeSessionDialog() { state.sessionAction = null; $("#session-dialog").close(); $("#session-dialog-status").textContent = ""; }
+function openSessionDialog(mode, sessionId) {
+  const item = state.sessions.find(entry => entry.sessionId === sessionId);
+  if (!item) return;
+  state.sessionAction = { mode, sessionId };
+  const rename = mode === "rename";
+  $("#session-dialog-title").textContent = rename ? "대화 이름 변경" : "대화 삭제";
+  $("#session-dialog-detail").textContent = rename ? "작업공간 목록에서 알아보기 쉬운 이름을 사용합니다." : `“${item.title}” 대화와 기록을 삭제합니다.`;
+  $("#session-title-field").hidden = !rename;
+  $("#session-title-input").value = item.title;
+  $("#confirm-session-action").textContent = rename ? "저장" : "삭제";
+  $("#session-dialog-status").textContent = "";
+  $("#session-dialog").showModal();
+  if (rename) $("#session-title-input").focus();
+}
+async function refreshSessions() {
+  const [payload, messenger] = await Promise.all([request("/v1/workspaces"), request("/v1/messenger/sessions")]);
+  state.sessions = payload.workspaces.map(item => ({ ...item, messages: state.sessions.find(current => current.sessionId === item.sessionId)?.messages || [] }));
+  state.messengerSessions = messenger.sessions || [];
+  if (!state.sessions.length) return createSession();
+  if (state.activeKind === "messenger" && state.messengerSessions.some(item => item.sessionId === state.activeId)) return render();
+  const next = state.sessions.some(item => item.sessionId === state.activeId) ? state.activeId : state.sessions[0].sessionId;
+  return loadWorkspace(next);
+}
+async function updateSession(sessionId, changes) {
+  await request(`/v1/workspaces/${encodeURIComponent(sessionId)}`, { method:"PATCH", body:JSON.stringify(changes) });
+  await refreshSessions();
+}
+async function deleteSession(sessionId) {
+  await request(`/v1/workspaces/${encodeURIComponent(sessionId)}`, { method:"DELETE" });
+  if (state.activeId === sessionId) state.activeId = null;
+  await refreshSessions();
 }
 function escape(text) { const node = document.createElement("div"); node.textContent = text; return node.innerHTML; }
+const MARKDOWN_TAGS = ["p", "br", "h1", "h2", "h3", "h4", "h5", "h6", "ul", "ol", "li", "blockquote", "pre", "code", "strong", "em", "del", "a", "table", "thead", "tbody", "tr", "th", "td", "hr"];
+const MARKDOWN_ATTRIBUTES = ["href", "title", "class"];
+
+function neutralizeRawHtml(nodes = []) {
+  const childKey = "to" + "kens";
+  for (const node of nodes) {
+    if (node.type === "html") {
+      node.type = "text";
+      node.text = escape(node.raw || node.text || "");
+      delete node[childKey];
+      continue;
+    }
+    if (Array.isArray(node[childKey])) neutralizeRawHtml(node[childKey]);
+    if (Array.isArray(node.items)) for (const item of node.items) neutralizeRawHtml(item[childKey] || []);
+  }
+  return nodes;
+}
+
+function renderMarkdown(markdown) {
+  if (!globalThis.marked?.lexer || !globalThis.DOMPurify) {
+    const fallback = document.createElement("div");
+    fallback.className = "response-prose";
+    fallback.textContent = markdown;
+    return fallback;
+  }
+  const nodes = neutralizeRawHtml(globalThis.marked.lexer(String(markdown || ""), { gfm:true }));
+  const parsed = globalThis.marked.parser(nodes, { gfm:true });
+  const clean = globalThis.DOMPurify.sanitize(parsed, {
+    ALLOWED_TAGS: MARKDOWN_TAGS,
+    ALLOWED_ATTR: MARKDOWN_ATTRIBUTES,
+    ALLOW_DATA_ATTR: false,
+    ALLOWED_URI_REGEXP: /^(?:(?:https?|mailto):|[#/])/i
+  });
+  const content = document.createElement("div");
+  content.className = "response-prose";
+  content.innerHTML = clean;
+  content.querySelectorAll("a[href]").forEach(link => {
+    const href = link.getAttribute("href") || "";
+    if (/^https?:/i.test(href)) {
+      link.target = "_blank";
+      link.rel = "noopener noreferrer nofollow";
+    }
+  });
+  return content;
+}
+
+function renderMessages(messages, session, messenger) {
+  messages.replaceChildren();
+  if (!session.messages?.length) {
+    const welcome = document.createElement("div");
+    welcome.className = "welcome";
+    welcome.innerHTML = `<img class="welcome-logo" src="/assets/gpao-t3-logo.jpeg" alt=""><h2>${messenger ? "메신저 대화" : "무엇을 함께 해볼까요?"}</h2><p>${messenger ? "연결된 메신저 대화를 여기서 이어갑니다." : "메시지를 입력하면 바로 시작합니다."}</p>`;
+    messages.append(welcome);
+    return;
+  }
+  for (const item of session.messages) {
+    const article = document.createElement("article");
+    article.className = `message ${item.role === "user" ? "user" : "assistant"}`;
+    const who = document.createElement("span");
+    who.className = "who";
+    who.textContent = item.role === "user" ? (messenger ? "상대방" : "나") : "GPAO-T3";
+    article.append(who);
+    if (item.role === "assistant") article.append(renderMarkdown(item.text));
+    else {
+      const body = document.createElement("div");
+      body.className = "message-plain";
+      body.textContent = item.text;
+      article.append(body);
+    }
+    if (messenger && item.status) {
+      const status = document.createElement("small");
+      status.className = "message-state";
+      status.textContent = item.status;
+      article.append(status);
+    }
+    messages.append(article);
+  }
+}
+function setCard(id, { tone = "", summary, detail }) {
+  const card = $(`#${id}-card`);
+  card.classList.remove("ok", "warn", "hold");
+  if (tone) card.classList.add(tone);
+  $(`#${id}-summary`).textContent = summary;
+  $(`#${id}-detail`).textContent = detail;
+}
 function render() {
-  if (!state.activeId) createSession();
   const session = active();
-  $("#chat-title").textContent = session.title;
-  $("#sessions").innerHTML = state.sessions.map(item => `<button class="session" type="button" data-id="${item.id}" aria-current="${item.id === state.activeId}">${escape(item.title)}</button>`).join("");
-  $("#sessions").querySelectorAll("button").forEach(button => button.addEventListener("click", () => { state.activeId = button.dataset.id; render(); }));
+  if (!session) return;
+  if (state.panel.sessionId !== state.activeId) restorePanelForSession(state.activeId);
+  const messenger = state.activeKind === "messenger";
+  $("#chat-title").textContent = messenger ? `${session.channelId === "telegram" ? "Telegram" : session.channelId} · ${session.peer.id}` : session.title;
+  const workRows = state.sessions.map(item => `<div class="session-row" aria-current="${state.activeKind === "workspace" && item.sessionId === state.activeId}"><button class="session" type="button" data-session-open="${item.sessionId}" title="대화 열기">${escape(item.title)}</button><div class="session-actions"><button type="button" data-session-pin="${item.sessionId}" title="${item.pinned ? "고정 해제" : "대화 고정"}" aria-label="${item.pinned ? "고정 해제" : "대화 고정"}"><i data-lucide="${item.pinned ? "pin-off" : "pin"}" aria-hidden="true"></i></button><button type="button" data-session-rename="${item.sessionId}" title="이름 변경" aria-label="이름 변경"><i data-lucide="pencil" aria-hidden="true"></i></button><button type="button" data-session-archive="${item.sessionId}" title="보관" aria-label="보관"><i data-lucide="archive" aria-hidden="true"></i></button><button type="button" data-session-delete="${item.sessionId}" title="삭제" aria-label="삭제"><i data-lucide="trash-2" aria-hidden="true"></i></button></div></div>`).join("");
+  const messengerRows = state.messengerSessions.map(item => `<div class="session-row" aria-current="${state.activeKind === "messenger" && item.sessionId === state.activeId}"><button class="session" type="button" data-messenger-open="${item.sessionId}" title="메신저 대화 열기">${escape(`${item.channelId === "telegram" ? "Telegram" : item.channelId} · ${item.peer.id}`)}</button></div>`).join("");
+  $("#sessions").innerHTML = `<h2 class="session-group-title">작업 대화</h2>${workRows}<h2 class="session-group-title">메신저 대화</h2>${messengerRows || `<p class="session-group-empty">연결된 대화 없음</p>`}`;
+  $("#sessions").querySelectorAll("[data-session-open]").forEach(button => button.addEventListener("click", () => loadWorkspace(button.dataset.sessionOpen)));
+  $("#sessions").querySelectorAll("[data-messenger-open]").forEach(button => button.addEventListener("click", () => loadMessengerSession(button.dataset.messengerOpen)));
+  $("#sessions").querySelectorAll("[data-session-pin]").forEach(button => button.addEventListener("click", () => { const item = state.sessions.find(entry => entry.sessionId === button.dataset.sessionPin); updateSession(item.sessionId, { pinned:!item.pinned }); }));
+  $("#sessions").querySelectorAll("[data-session-rename]").forEach(button => button.addEventListener("click", () => openSessionDialog("rename", button.dataset.sessionRename)));
+  $("#sessions").querySelectorAll("[data-session-archive]").forEach(button => button.addEventListener("click", () => updateSession(button.dataset.sessionArchive, { archived:true })));
+  $("#sessions").querySelectorAll("[data-session-delete]").forEach(button => button.addEventListener("click", () => openSessionDialog("delete", button.dataset.sessionDelete)));
   const messages = $("#messages");
-  messages.innerHTML = session.messages.length ? session.messages.map(item => `<article class="message ${item.role}"><span class="who">${item.role === "user" ? "나" : "GPAO-T"}</span>${escape(item.text)}</article>`).join("") : `<div class="welcome"><span class="mark" aria-hidden="true">∞</span><h2>무엇을 함께 해볼까요?</h2><p>대화를 시작하면 이 대화 안에서 필요한 맥락과 실행 흐름을 안전하게 정리합니다.</p></div>`;
+  renderMessages(messages, session, messenger);
+  refreshIcons();
   messages.scrollTop = messages.scrollHeight;
 }
 async function request(path, init = {}) {
@@ -39,6 +315,67 @@ async function refreshHealth() {
   try { const health = await request("/health"); $("#runtime-state").textContent = health.status === "ready" ? "런타임 준비됨" : "런타임 확인 필요"; }
   catch { $("#runtime-state").textContent = "연결을 확인하고 있습니다"; }
 }
+function connectionOverview(connections) {
+  const ready = readyModels(connections);
+  const externalReady = ready.filter(item => userFacingProvider(item.provider) && item.provider.id !== "local-ollama");
+  const localReady = ready.some(item => item.provider.id === "local-ollama");
+  const emulatorReady = ready.some(item => !userFacingProvider(item.provider));
+  const selected = connections.defaultSelection;
+  if (selected?.preferredProviderId) return { tone:"ok", summary:"기본 모델 선택됨", detail:`${selected.preferredProviderId} / ${selected.preferredModelId}` };
+  if (externalReady.length) return { tone:"ok", summary:"외부 모델 연결됨", detail:`${externalReady[0].provider.display.name} 사용 가능` };
+  if (localReady) return { tone:"hold", summary:"로컬 모델 사용 가능", detail:"외부 연결 없이 대화할 수 있습니다" };
+  if (emulatorReady) return { tone:"hold", summary:"기본 응답 준비됨", detail:"실제 AI 답변을 받으려면 AI를 연결하세요" };
+  return { tone:"warn", summary:"연결 필요", detail:"AI 연결에서 계정이나 키를 연결하세요" };
+}
+function toolOverview(cells) {
+  const list = cells?.cells || [];
+  const usable = list.filter(cell => cell.seamlessState === "usable_read").length;
+  const approval = list.filter(cell => cell.seamlessState === "approval_required").length;
+  const setup = list.filter(cell => cell.seamlessState === "needs_setup_review").length;
+  if (usable) return { tone:"ok", summary:`읽기 도구 ${usable}개`, detail:approval ? `승인 필요한 실행 ${approval}개` : "바로 쓸 수 있는 읽기 흐름" };
+  if (approval || setup) return { tone:"hold", summary:"승인 후 사용", detail:`검토 필요한 연결 ${approval + setup}개` };
+  return { tone:"warn", summary:"도구 확인 필요", detail:"도구 연결 상태를 불러오지 못했습니다" };
+}
+function memoryOverview(influence) {
+  if (!influence) return { tone:"hold", summary:"확인 중", detail:"기억 상태를 불러오고 있습니다" };
+  if (influence.activeCount > 0) return { tone:"ok", summary:`영향 ${influence.activeCount}개`, detail:`되돌림 ${influence.rolledBackCount || 0}개 · 자동 승격 없음` };
+  return { tone:"hold", summary:"승인된 영향 없음", detail:"기억은 검토 전까지 답변 기준이 아닙니다" };
+}
+function recoveryOverview(doctor) {
+  const recovery = doctor?.recovery || doctor;
+  if (!recovery) return { tone:"hold", summary:"확인 중", detail:"복구 상태를 불러오고 있습니다" };
+  if (recovery.status === "ready") return { tone:"ok", summary:"정상", detail:"알 수 없는 결과는 자동으로 반복하지 않습니다" };
+  if (recovery.status === "review") return { tone:"hold", summary:"검토 필요", detail:`확인할 항목 ${recovery.summary?.review || recovery.nextActions?.length || 0}개` };
+  return { tone:"warn", summary:"복구 필요", detail:"새 실행보다 복구 확인이 먼저입니다" };
+}
+async function refreshOperations() {
+  try {
+    const [connections, cells, tools, influence, memoryWiki, doctor] = await Promise.all([
+      request("/v1/connection-center"),
+      request("/v1/connection-cells"),
+      request("/v1/tools"),
+      request("/v1/context-influence"),
+      request("/v1/memory-wiki"),
+      request("/v1/doctor")
+    ]);
+    state.connections = connections;
+    state.connectionCells = cells;
+    state.tools = tools;
+    state.influence = influence;
+    state.memoryWiki = memoryWiki;
+    state.doctor = doctor;
+    setCard("model", connectionOverview(connections));
+    setCard("tool", toolOverview(cells));
+    setCard("memory", memoryOverview(influence));
+    setCard("recovery", recoveryOverview(doctor));
+    $("#runtime-state").textContent = doctor.status === "ready" ? "런타임 준비됨" : "런타임 확인 필요";
+  } catch {
+    setCard("model", { tone:"warn", summary:"확인 필요", detail:"연결 상태를 불러오지 못했습니다" });
+    setCard("tool", { tone:"warn", summary:"확인 필요", detail:"도구 상태를 불러오지 못했습니다" });
+    setCard("memory", { tone:"warn", summary:"확인 필요", detail:"기억 상태를 불러오지 못했습니다" });
+    setCard("recovery", { tone:"warn", summary:"확인 필요", detail:"복구 상태를 불러오지 못했습니다" });
+  }
+}
 function providerState(provider) {
   if (provider.auth.state === "configured" && provider.health.state === "ready") return "연결됨";
   if (["verifying", "connecting"].includes(provider.connection?.state)) return "연결 확인 중";
@@ -48,7 +385,7 @@ function providerState(provider) {
 }
 function providerName(provider) { return provider.display.name.replace(/\s*API$/i, ""); }
 function providerDescription(provider) {
-  return provider.display.description || "이 AI 서비스를 GPAO-T에 안전하게 연결합니다.";
+  return provider.display.description || "이 AI 서비스를 GPAO-T3에 안전하게 연결합니다.";
 }
 function connectionMethodLabel(authMethod) {
   if (authMethod === "api_key") return "API 키로 연결";
@@ -66,24 +403,45 @@ function providerControls(provider) {
 function connectionRecoveryMessage(error, providerNameText) {
   if (error?.repairPlan?.detail) return error.repairPlan.detail;
   if (["protected_connection_agent_unavailable", "protected_connection_unavailable"].includes(error?.code)) {
-    return `${providerNameText} 연결을 시작할 준비가 아직 끝나지 않았습니다. GPAO-T를 최신 상태로 유지한 뒤 다시 시도해 주세요.`;
+    return `${providerNameText} 연결을 시작할 준비가 아직 끝나지 않았습니다. GPAO-T3를 최신 상태로 유지한 뒤 다시 시도해 주세요.`;
   }
   if (["protected_connection_outcome_unknown", "external_outcome_unknown"].includes(error?.code)) {
     return "연결 결과를 확인하지 못했습니다. 같은 요청을 반복하지 않고, 잠시 후 연결 확인을 눌러 주세요.";
   }
   return `${providerNameText} 연결을 마치지 못했습니다. 잠시 후 다시 시도해 주세요.`;
 }
-function connectorState(connector) {
+function connectorState(connector, channel = null) {
+  if (managedChannel(connector)) {
+    if (channel?.connection?.state === "connected") return "연결됨";
+    if (channel?.connection?.state === "unavailable") return "상태 확인 필요";
+    return "연결 필요";
+  }
   if (!localConnector(connector)) return "연결 준비 필요";
   if (!connector.enabled) return "사용 안 함";
   if (connector.health?.state === "ready") return "사용 중";
   return "사용 가능";
 }
-function connectorDescription(connector) {
+function cellState(cell) {
+  if (cell.seamlessState === "usable_read") return "바로 읽기 가능";
+  if (cell.seamlessState === "approval_required") return "승인 후 실행";
+  if (cell.seamlessState === "needs_setup_review") return "설정 검토 필요";
+  if (cell.seamlessState === "disabled") return "사용 안 함";
+  if (cell.seamlessState === "degraded") return "상태 확인 필요";
+  return "확인 중";
+}
+function connectorDescription(connector, channel = null) {
+  if (managedChannel(connector)) {
+    const username = channel?.connection?.bot?.username;
+    return username ? `@${username} 계정으로 메시지를 주고받습니다.` : "Telegram Bot을 안전하게 연결해 전용 대화에서 메시지를 주고받습니다.";
+  }
   return localConnector(connector) ? connector.description : "연결을 준비하는 동안 이 도구는 사용되지 않습니다.";
 }
 function connectorName(connector) { return connector.id === "mcp.external" ? "외부 도구 연결" : connector.name; }
-function connectorControl(connector) {
+function connectorControl(connector, channel = null) {
+  if (managedChannel(connector)) {
+    const connected = channel?.connection?.state === "connected";
+    return `<div class="provider-actions"><button type="button" data-channel-connect="telegram">${connected ? "수신 확인" : "연결"}</button>${connected ? `<button type="button" class="subtle-action" data-channel-disconnect="telegram">연결 해제</button>` : ""}</div>`;
+  }
   if (!localConnector(connector)) return `<span class="connector-note">준비 중</span>`;
   const action = connector.enabled ? "사용 안 함" : "사용";
   return `<label class="toggle-control"><input type="checkbox" data-connector="${escape(connector.id)}" ${connector.enabled ? "checked" : ""}><span aria-hidden="true"></span><b class="sr-only">${escape(connectorName(connector))} ${action}</b></label>`;
@@ -96,6 +454,8 @@ function connectionProposalText(proposals) {
     if (proposal.providerId === "google-gemini") return "Gemini";
     if (proposal.connectorId === "web.search") return "웹 검색";
     if (proposal.connectorId === "mcp.external") return "외부 도구";
+    if (proposal.connectorId === "channel.telegram") return "Telegram";
+    if (proposal.connectorId === "channel.document-export") return "문서 내보내기";
     return null;
   }).filter(Boolean);
   return labels.length ? `${labels.join(", ")} 연결을 준비할게요. 연결 정보를 검토한 뒤에만 사용할 수 있습니다.` : null;
@@ -113,14 +473,56 @@ async function proposeConnection(input) {
   if (!text) return null;
   return { text, proposal, openDialog:true };
 }
-function renderConnectors(connectors) {
+function renderConnectors(connectors, channels = []) {
   const list = $("#connector-list");
-  list.innerHTML = connectors.map(connector => `<article class="connector-row ${localConnector(connector) ? "" : "needs-setup"}"><div><strong>${escape(connectorName(connector))}</strong><p>${escape(connectorDescription(connector))}</p></div><div class="connector-state"><span>${connectorState(connector)}</span>${connectorControl(connector)}</div></article>`).join("");
+  list.innerHTML = connectors.map(connector => {
+    const channel = channels.find(item => `channel.${item.channelId}` === connector.id);
+    const visibleState = managedChannel(connector) ? connectorState(connector, channel) : cellState(connector);
+    return `<article class="connector-row ${localConnector(connector) || managedChannel(connector) ? "" : "needs-setup"}"><div><strong>${escape(connectorName(connector))}</strong><p>${escape(connectorDescription(connector, channel))}</p></div><div class="connector-state"><span>${escape(visibleState)}</span>${connectorControl(connector, channel)}</div></article>`;
+  }).join("");
   list.querySelectorAll("input[data-connector]").forEach(input => input.addEventListener("change", () => setConnectorEnabled(input.dataset.connector, input.checked, input)));
+  list.querySelectorAll("button[data-channel-connect]").forEach(button => button.addEventListener("click", () => connectOrPollChannel(button.dataset.channelConnect)));
+  list.querySelectorAll("button[data-channel-disconnect]").forEach(button => button.addEventListener("click", () => disconnectChannel(button.dataset.channelDisconnect)));
+}
+function renderTools(tools) {
+  const list = $("#tool-list");
+  list.innerHTML = tools.map(tool => `<article class="connector-row"><div><strong>${escape(tool.id)}</strong><p>${escape(tool.effect === "read" ? "읽기 전용 · 자동 사전점검" : "실행 전 사용자 승인 필요")}</p></div><div class="connector-state"><span>${escape(tool.readiness === "ready" ? "사용 가능" : "사용 안 함")}</span><label class="toggle-control"><input type="checkbox" data-tool="${escape(tool.id)}" ${tool.readiness === "ready" ? "checked" : ""}><span aria-hidden="true"></span><b class="sr-only">${escape(tool.id)} 사용 설정</b></label></div></article>`).join("");
+  list.querySelectorAll("input[data-tool]").forEach(input => input.addEventListener("change", () => setToolEnabled(input.dataset.tool, input.checked, input)));
+}
+async function setToolEnabled(toolId, enabled, input) {
+  input.disabled = true;
+  try { await request(`/v1/tools/${encodeURIComponent(toolId)}/enabled`, { method:"PUT", body:JSON.stringify({ enabled }) }); await refreshConnectors(); }
+  catch { input.checked = !enabled; $("#connector-status").textContent = "도구 상태를 저장하지 못했습니다."; }
+  finally { input.disabled = false; }
 }
 async function refreshConnectors() {
-  const payload = await request("/v1/connectors");
-  renderConnectors(Array.isArray(payload.connectors) ? payload.connectors : []);
+  const [payload, tools, channels] = await Promise.all([request("/v1/connection-cells"), request("/v1/tools"), request("/v1/channels")]);
+  state.connectionCells = payload;
+  state.tools = tools;
+  state.channels = channels;
+  renderConnectors(Array.isArray(payload.cells) ? payload.cells.filter(cell => cell.kind !== "tool") : [], channels.channels || []);
+  renderTools(tools.tools || []);
+  setCard("tool", toolOverview(payload));
+}
+async function connectOrPollChannel(channelId) {
+  const status = $("#connector-status");
+  const current = state.channels?.channels?.find(item => item.channelId === channelId);
+  status.textContent = current?.connection?.state === "connected" ? "새 메시지를 확인하고 있습니다." : "안전한 Telegram 연결 창을 열고 있습니다.";
+  try {
+    if (current?.connection?.state === "connected") {
+      const result = await request(`/v1/channels/${encodeURIComponent(channelId)}/poll`, { method:"POST", body:"{}" });
+      status.textContent = result.received ? `새 메시지 ${result.received}건을 전용 대화로 가져왔습니다.` : "새 Telegram 메시지가 없습니다.";
+    } else {
+      const result = await request(`/v1/channels/${encodeURIComponent(channelId)}`, { method:"POST", body:"{}" });
+      status.textContent = result.connection?.state === "connected" ? "Telegram 연결을 확인했습니다." : "Telegram 연결 상태를 다시 확인해 주세요.";
+    }
+    await refreshConnectors(); await refreshOperations();
+  } catch (error) { status.textContent = error.message || "Telegram 연결을 마치지 못했습니다. 복구 상태를 확인해 주세요."; }
+}
+async function disconnectChannel(channelId) {
+  const status = $("#connector-status"); status.textContent = "Telegram 연결을 해제하고 있습니다.";
+  try { await request(`/v1/channels/${encodeURIComponent(channelId)}`, { method:"DELETE" }); status.textContent = "Telegram 연결을 해제했습니다."; await refreshConnectors(); await refreshOperations(); }
+  catch (error) { status.textContent = error.message || "Telegram 연결을 해제하지 못했습니다."; }
 }
 async function setConnectorEnabled(connectorId, enabled, input) {
   const status = $("#connector-status");
@@ -130,6 +532,7 @@ async function setConnectorEnabled(connectorId, enabled, input) {
     const result = await request(`/v1/connectors/${encodeURIComponent(connectorId)}/enabled`, { method:"PUT", body:JSON.stringify({ enabled }) });
     status.textContent = result.connector?.enabled ? "이 도구를 사용할 수 있습니다." : "이 도구를 사용하지 않습니다.";
     await refreshConnectors();
+    await refreshOperations();
   } catch {
     status.textContent = "선택을 저장하지 못했습니다. 잠시 후 다시 시도해 주세요.";
     await refreshConnectors().catch(() => { input.checked = !enabled; });
@@ -139,18 +542,96 @@ function readyModels(connections) {
   return connections.providers.flatMap(provider => provider.auth.state === "configured" && provider.health.state === "ready"
     ? provider.models.map(model => ({ provider, model })) : []);
 }
+function routeStatusText(turn) {
+  const route = turn?.providerRoute;
+  if (!route?.providerId || !route?.modelId) return "";
+  const fallback = route.fallbackUsed ? " · 안정적인 대체 연결 사용" : "";
+  const tools = turn?.toolFlow?.state === "succeeded" ? ` · 검색 결과 ${turn.toolFlow.resultCount}건 반영` : "";
+  return `답변 완료${tools}${fallback}`;
+}
 async function refreshConnections() {
   state.connections = await request("/v1/connection-center");
   const connections = state.connections;
-  const ready = readyModels(connections).filter(item => item.provider.id !== "gpao-t-emulator");
+  setCard("model", connectionOverview(connections));
+  const ready = readyModels(connections).filter(item => userFacingProvider(item.provider));
   const select = $("#default-model");
   const selected = connections.defaultSelection;
   select.innerHTML = ready.length ? ready.map(({ provider, model }) => `<option value="${escape(`${provider.id}:${model.id}`)}" ${selected?.preferredProviderId === provider.id && selected?.preferredModelId === model.id ? "selected" : ""}>${escape(provider.display.name)} · ${escape(model.id)}</option>`).join("") : `<option value="">연결된 외부 모델이 없습니다</option>`;
   $("#save-default-model").disabled = ready.length === 0;
-  $("#provider-list").innerHTML = connections.providers.filter(provider => provider.id !== "gpao-t-emulator").map(provider => `<article class="provider-row"><div><strong>${escape(providerName(provider))}</strong><p>${escape(providerDescription(provider))}</p></div><div class="provider-state"><span>${providerState(provider)}</span>${providerControls(provider)}</div></article>`).join("");
+  $("#provider-list").innerHTML = connections.providers.filter(userFacingProvider).map(provider => `<article class="provider-row"><div><strong>${escape(providerName(provider))}</strong><p>${escape(providerDescription(provider))}</p></div><div class="provider-state"><span>${providerState(provider)}</span>${providerControls(provider)}</div></article>`).join("");
   $("#provider-list").querySelectorAll("button[data-provider-connect]").forEach(button => button.addEventListener("click", () => beginProviderConnection(button.dataset.providerConnect, button.dataset.authMethod)));
   $("#provider-list").querySelectorAll("button[data-provider-refresh]").forEach(button => button.addEventListener("click", () => refreshProviderConnection(button.dataset.providerRefresh)));
   $("#provider-list").querySelectorAll("button[data-provider-disconnect]").forEach(button => button.addEventListener("click", () => disconnectProvider(button.dataset.providerDisconnect)));
+}
+function renderMemoryLedger(influence) {
+  $("#ledger-summary").innerHTML = [
+    ["현재 영향", influence.activeCount],
+    ["되돌림", influence.rolledBackCount],
+    ["자동 승격", influence.durableMemoryPromotion ? "허용" : "차단"]
+  ].map(([label, value]) => `<div class="metric"><span>${escape(label)}</span><strong>${escape(value)}</strong></div>`).join("");
+  const entries = influence.entries || [];
+  $("#ledger-list").innerHTML = entries.length ? entries.map(entry => {
+    const active = entry.state === "applied";
+    return `<article class="ledger-row"><div><strong>${escape(entry.useState === "answer_anchor" ? "답변 기준 영향" : "검토된 맥락")}</strong><p>${escape(entry.traceRef || entry.taskPacketId || entry.id)}</p></div><div class="ledger-actions"><span class="state-pill ${active ? "ok" : "warn"}">${escape(active ? "적용 중" : "되돌림")}</span>${active ? `<button class="rollback-button" type="button" data-rollback="${escape(entry.id)}">되돌리기</button>` : ""}</div></article>`;
+  }).join("") : `<p class="empty-ledger">아직 다음 행동에 영향을 주는 승인된 맥락이 없습니다.</p>`;
+  $("#ledger-list").querySelectorAll("button[data-rollback]").forEach(button => button.addEventListener("click", () => rollbackInfluence(button.dataset.rollback)));
+}
+function renderMemoryCandidates(memoryWiki) {
+  const entries = memoryWiki?.entries || [];
+  $("#memory-candidate-list").innerHTML = entries.length ? entries.map(entry => `<article class="ledger-row"><div><strong>${escape(entry.text.slice(0, 120))}</strong><p>${escape(entry.reviewState === "candidate" ? "검토 전 · 행동 영향 없음" : entry.reviewState === "reviewed" ? "검토됨 · 다음 사용 전 안전 확인" : "사용하지 않음")}</p></div><div class="ledger-actions"><span class="state-pill ${entry.reviewState === "reviewed" ? "ok" : "review"}">${escape(entry.reviewState === "candidate" ? "검토 필요" : entry.reviewState === "reviewed" ? "검토됨" : "거절됨")}</span>${entry.reviewState === "candidate" ? `<div><button class="rollback-button" type="button" data-memory-review="${escape(entry.id)}" data-decision="reviewed">승인</button> <button class="rollback-button" type="button" data-memory-review="${escape(entry.id)}" data-decision="rejected">거절</button></div>` : ""}</div></article>`).join("") : `<p class="empty-ledger">아직 검토할 기억 후보가 없습니다.</p>`;
+  $("#memory-candidate-list").querySelectorAll("button[data-memory-review]").forEach(button => button.addEventListener("click", () => reviewMemoryCandidate(button.dataset.memoryReview, button.dataset.decision)));
+}
+async function reviewMemoryCandidate(id, decision) {
+  $("#memory-status").textContent = "기억 후보의 사용 경계를 저장하고 있습니다.";
+  try { await request(`/v1/memory-wiki/${encodeURIComponent(id)}/review`, { method:"POST", body:JSON.stringify({ decision, durablePromotion: decision === "reviewed" }) }); $("#memory-status").textContent = decision === "reviewed" ? "승인했습니다. 관련 대화에서 안전성이 확인된 뒤 사용됩니다." : "이 후보는 다음 행동에 사용하지 않습니다."; await refreshMemoryLedger(); }
+  catch { $("#memory-status").textContent = "기억 후보 상태를 저장하지 못했습니다."; }
+}
+async function refreshMemoryLedger() {
+  const [influence, memoryWiki] = await Promise.all([request("/v1/context-influence"), request("/v1/memory-wiki")]);
+  state.influence = influence;
+  state.memoryWiki = memoryWiki;
+  renderMemoryLedger(influence);
+  renderMemoryCandidates(memoryWiki);
+  setCard("memory", memoryOverview(influence));
+}
+async function rollbackInfluence(id) {
+  $("#memory-status").textContent = "영향을 되돌리고 있습니다.";
+  try {
+    const result = await request(`/v1/context-influence/${encodeURIComponent(id)}/rollback`, { method:"POST", body:JSON.stringify({ reason:"local_dashboard_requested" }) });
+    $("#memory-status").textContent = result.rolledBack ? "이 영향은 다음 대화부터 사용하지 않습니다." : "이미 되돌렸거나 찾을 수 없습니다.";
+    await refreshMemoryLedger();
+  } catch {
+    $("#memory-status").textContent = "되돌리지 못했습니다. 잠시 후 다시 확인해 주세요.";
+  }
+}
+function nextActionLabel(action) {
+  const labels = {
+    open_connection_center: "AI 연결을 열어 상태를 확인하세요",
+    restore_last_verified_snapshot: "마지막 정상 스냅샷으로 복구하세요",
+    restart_runtime_or_run_doctor: "런타임을 다시 시작한 뒤 복구 상태를 확인하세요",
+    restart_runtime_or_wait_for_worker_recovery: "잠시 기다린 뒤 런타임 상태를 다시 확인하세요",
+    request_explicit_approval_before_external_action: "외부 실행 전 승인을 먼저 확인하세요",
+    open_memory_ledger: "기억 장부를 열어 영향 항목을 확인하세요",
+    disable_durable_memory_promotion: "자동 기억 승격을 끄고 장부를 확인하세요",
+    open_local_dashboard: "대시보드를 다시 열어 세션을 갱신하세요",
+    continue_to_distribution_gate: "다음 배포 단계에서 설치와 롤백을 검증하세요",
+    keep_local_only_boundary: "로컬 권한 경계를 유지하세요",
+    run_doctor_before_new_work: "새 작업 전에 복구 상태를 먼저 확인하세요"
+  };
+  return labels[action] || "복구 패널에서 상태를 확인하세요";
+}
+function renderRecovery(doctor) {
+  const recovery = doctor.recovery || doctor;
+  const items = recovery.items || [];
+  const label = status => status === "ok" ? "정상" : status === "review" ? "검토" : "복구";
+  $("#recovery-list").innerHTML = items.map(entry => `<article class="recovery-row"><div><strong>${escape(entry.title)}</strong><p>${escape(entry.detail)}${entry.nextAction && entry.nextAction !== "none" ? ` · 다음 행동: ${escape(nextActionLabel(entry.nextAction))}` : ""}</p></div><span class="state-pill ${escape(entry.status)}">${escape(label(entry.status))}</span></article>`).join("");
+  $("#recovery-status").textContent = recovery.noAutomaticRetryForUnknownOutcome ? "알 수 없는 결과는 먼저 확인하고, 자동으로 반복하지 않습니다." : "";
+}
+async function refreshRecovery() {
+  const recovery = await request("/v1/recovery");
+  state.doctor = { ...(state.doctor || {}), recovery };
+  renderRecovery({ recovery });
+  setCard("recovery", recoveryOverview(recovery));
 }
 async function beginProviderConnection(providerId, authMethod) {
   const provider = state.connections?.providers.find(item => item.id === providerId);
@@ -192,8 +673,32 @@ $("#models").addEventListener("click", async () => {
   const [connections, connectors] = await Promise.allSettled([refreshConnections(), refreshConnectors()]);
   if (connections.status === "rejected") $("#model-selection-status").textContent = "연결 목록을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.";
   if (connectors.status === "rejected") $("#connector-status").textContent = "도구 목록을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.";
+  await refreshOperations().catch(() => {});
 });
+$("#panel-toggle").addEventListener("click", () => setPanelOpen(!state.panel.open));
+$("#panel-close").addEventListener("click", () => setPanelOpen(false, { userClosed:true }));
+$("#panel-backdrop").addEventListener("click", () => setPanelOpen(false, { userClosed:true }));
+document.querySelectorAll("[data-panel-view]").forEach(button => button.addEventListener("click", () => setPanelView(button.dataset.panelView)));
+$("#model-card").addEventListener("click", () => $("#models").click());
+$("#tool-card").addEventListener("click", () => $("#models").click());
+$("#open-tools").addEventListener("click", () => $("#models").click());
 $("#close-connections").addEventListener("click", () => $("#connection-dialog").close());
+$("#memory").addEventListener("click", async () => {
+  $("#memory-dialog").showModal();
+  $("#memory-status").textContent = "";
+  try { await refreshMemoryLedger(); }
+  catch { $("#memory-status").textContent = "기억 상태를 불러오지 못했습니다."; }
+});
+$("#memory-card").addEventListener("click", () => $("#memory").click());
+$("#close-memory").addEventListener("click", () => $("#memory-dialog").close());
+$("#status").addEventListener("click", async () => {
+  $("#recovery-dialog").showModal();
+  $("#recovery-status").textContent = "";
+  try { await refreshRecovery(); }
+  catch { $("#recovery-status").textContent = "복구 상태를 불러오지 못했습니다."; }
+});
+$("#recovery-card").addEventListener("click", () => $("#status").click());
+$("#close-recovery").addEventListener("click", () => $("#recovery-dialog").close());
 $("#save-default-model").addEventListener("click", async () => {
   const [providerId, modelId] = $("#default-model").value.split(":");
   if (!providerId || !modelId) return;
@@ -201,18 +706,54 @@ $("#save-default-model").addEventListener("click", async () => {
     await request("/v1/model-selection/default", { method:"PUT", body:JSON.stringify({ providerId, modelId }) });
     $("#model-selection-status").textContent = "이제 새 대화에서 이 모델을 기본으로 사용합니다.";
     await refreshConnections();
+    await refreshOperations();
   } catch { $("#model-selection-status").textContent = "기본 모델을 저장하지 못했습니다. 잠시 후 다시 시도해 주세요."; }
 });
 $("#new-chat").addEventListener("click", createSession);
-$("#status").addEventListener("click", async () => { await refreshHealth(); $("#turn-status").textContent = $("#runtime-state").textContent; });
+$("#session-menu").addEventListener("click", () => {
+  const open = $(".rail").classList.toggle("sessions-open");
+  $("#session-backdrop").classList.toggle("open", open);
+  $("#session-menu").setAttribute("aria-expanded", String(open));
+});
+$("#session-backdrop").addEventListener("click", () => { $(".rail").classList.remove("sessions-open"); $("#session-backdrop").classList.remove("open"); $("#session-menu").setAttribute("aria-expanded", "false"); });
+$("#close-session-dialog").addEventListener("click", closeSessionDialog);
+$("#cancel-session-action").addEventListener("click", closeSessionDialog);
+$("#confirm-session-action").addEventListener("click", async () => {
+  const action = state.sessionAction;
+  if (!action) return;
+  $("#confirm-session-action").disabled = true;
+  try {
+    if (action.mode === "rename") {
+      const title = $("#session-title-input").value.trim();
+      if (!title) { $("#session-dialog-status").textContent = "대화 이름을 입력해 주세요."; return; }
+      await updateSession(action.sessionId, { title });
+    } else {
+      await deleteSession(action.sessionId);
+    }
+    closeSessionDialog();
+  } catch { $("#session-dialog-status").textContent = "변경을 저장하지 못했습니다. 잠시 후 다시 시도해 주세요."; }
+  finally { $("#confirm-session-action").disabled = false; }
+});
+$("#cancel-turn").addEventListener("click", async () => {
+  if (!state.activeTurn) return;
+  $("#cancel-turn").disabled = true;
+  $("#turn-status").textContent = "응답을 중단하고 있습니다.";
+  try { await request(state.activeTurn.cancelUrl, { method:"POST", body:"{}" }); }
+  catch { $("#turn-status").textContent = "중단 결과를 확인하고 있습니다."; }
+});
 $("#composer").addEventListener("submit", async event => {
   event.preventDefault(); const input = $("#message").value.trim(); if (!input) return;
-  const session = active(); session.messages.push({ role:"user", text:input }); if (session.messages.length === 1) session.title = input.slice(0, 36); persist(); $("#message").value=""; render();
-  $("#send").disabled = true; $("#turn-status").textContent = "GPAO-T가 답변을 준비하고 있습니다.";
+  const session = active(); session.messages ||= []; session.messages.push({ role:"user", text:input }); $("#message").value=""; render();
+  if (state.activeKind === "messenger") {
+    session.messages.pop(); state.pendingChannelSend = { sessionId:session.sessionId, text:input };
+    $("#channel-send-preview").textContent = input; $("#channel-send-status").textContent = ""; $("#channel-send-dialog").showModal(); render(); return;
+  }
+  $("#send").disabled = true; $("#turn-status").textContent = "답변을 준비하고 있습니다.";
+  setPanelActivity("요청을 확인하고 있습니다", "필요한 모델과 도구를 고르고 있습니다.", { notice:true });
   try {
     const connection = await proposeConnection(input);
     if (connection) {
-      session.messages.push({ role:"assistant", text:connection.text }); persist(); render();
+      session.messages.push({ role:"assistant", text:connection.text }); render();
       if (connection.openDialog) {
         $("#connection-dialog").showModal();
         $("#model-selection-status").textContent = "연결할 항목을 확인한 뒤 진행해 주세요.";
@@ -220,13 +761,35 @@ $("#composer").addEventListener("submit", async event => {
         if (connections.status === "rejected") $("#model-selection-status").textContent = "연결 목록을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.";
         if (connectors.status === "rejected") $("#connector-status").textContent = "도구 목록을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.";
       }
+      setPanelActivity("연결 확인이 필요합니다", "사용할 AI 또는 도구를 연결하면 대화를 이어갈 수 있습니다.", { notice:true, view:"tools" });
       $("#turn-status").textContent = "";
       return;
     }
-    const turn = await request("/v1/os-turns", { method:"POST", body:JSON.stringify({ requestId:crypto.randomUUID(), sessionId:session.id, input }) });
-    const answer = turn.turn?.receipt?.result?.echo || "요청을 처리했습니다.";
-    session.messages.push({ role:"assistant", text:answer }); persist(); render(); $("#turn-status").textContent = "";
-  } catch (error) { const recovery = error.repairPlan ? `\n\n${error.repairPlan.title}\n${error.repairPlan.detail}\n${error.repairPlan.action}` : ""; session.messages.push({ role:"assistant", text:`지금은 요청을 끝내지 못했습니다.${recovery}` }); persist(); render(); $("#turn-status").textContent = ""; }
-  finally { $("#send").disabled = false; $("#message").focus(); }
+    const acceptance = await request("/v2/os-turns", { method:"POST", body:JSON.stringify({ requestId:crypto.randomUUID(), sessionId:session.sessionId, input }) });
+    state.activeTurn = acceptance;
+    $("#cancel-turn").hidden = false;
+    $("#cancel-turn").disabled = false;
+    const turn = await awaitOsTurn(acceptance);
+    await loadWorkspace(session.sessionId); $("#turn-status").textContent = turn.status === "completed" ? "답변 완료" : "복구 확인 필요"; await refreshOperations();
+    if (turn.status === "cancelled") { $("#turn-status").textContent = "응답을 중단했습니다."; return; }
+    if (turn.status !== "completed") throw new Error("요청을 끝내지 못했습니다. 문제 해결 보기에서 다음 행동을 확인해 주세요.");
+  } catch (error) { const recovery = error.repairPlan ? `\n\n${error.repairPlan.title}\n${error.repairPlan.detail}\n${error.repairPlan.action}` : ""; session.messages.push({ role:"assistant", text:`지금은 요청을 끝내지 못했습니다.${recovery}` }); render(); $("#turn-status").textContent = ""; setPanelActivity("확인이 필요한 문제가 있습니다", "문제 해결 보기에서 원인과 다음 행동을 확인할 수 있습니다.", { notice:true, view:"recovery" }); }
+  finally { state.activeTurn = null; $("#cancel-turn").hidden = true; $("#send").disabled = false; $("#message").focus(); }
 });
-render(); refreshHealth();
+$("#cancel-channel-send").addEventListener("click", () => { state.pendingChannelSend = null; $("#channel-send-dialog").close(); });
+$("#confirm-channel-send").addEventListener("click", async () => {
+  const pending = state.pendingChannelSend; if (!pending) return;
+  $("#confirm-channel-send").disabled = true; $("#channel-send-status").textContent = "승인된 메시지를 전송하고 있습니다.";
+  try {
+    await request(`/v1/messenger/sessions/${encodeURIComponent(pending.sessionId)}/send`, { method:"POST", body:JSON.stringify({ text:pending.text, approved:true }) });
+    state.pendingChannelSend = null; $("#channel-send-dialog").close(); await refreshSessions();
+  } catch (error) { $("#channel-send-status").textContent = error.message || "전송 결과를 확인하지 못했습니다. 자동으로 다시 보내지 않습니다."; }
+  finally { $("#confirm-channel-send").disabled = false; }
+});
+refreshSessions().catch(() => createSession()).then(() => { refreshHealth(); refreshOperations(); });
+const syncViewportHeight = () => document.documentElement.style.setProperty("--visual-viewport-height", `${window.visualViewport?.height || window.innerHeight}px`);
+window.visualViewport?.addEventListener("resize", syncViewportHeight);
+window.visualViewport?.addEventListener("scroll", syncViewportHeight);
+window.addEventListener("resize", syncViewportHeight);
+syncViewportHeight();
+refreshIcons();

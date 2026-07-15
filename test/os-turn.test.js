@@ -14,16 +14,40 @@ function stateDir() { return fs.mkdtempSync(path.join(os.tmpdir(), "gpao-t-nativ
 test("one native OS turn preserves memory candidates, admission, receipt, replay, and review-only growth", async () => {
   const runtime = await new NativeRuntime({ stateDir: stateDir() }).start();
   const memory = new LocalHybridMemory();
-  memory.ingest({ text: "윤님은 GPAO-T의 빠른 로컬 기억 검색을 중요하게 생각한다.", source: "owner_note", traceRef: "note-1", reviewed: true });
+  memory.ingest({ text: "윤님은 GPAO-T의 빠른 로컬 기억 검색을 중요하게 생각한다.", source: "owner_note", traceRef: "note-1", userId: "owner:a", reviewed: true });
   try {
   const result = await new NativeOsTurnPipeline({ runtime, memory }).run({ principalId: "owner:a", sessionId: "session-a", requestId: "os-turn-1", input: "빠른 로컬 기억 검색 원칙을 알려줘" });
     assert.equal(result.turn.status, "succeeded");
     assert.equal(result.replyMode, "provider_emulator");
-    assert.equal(result.providerReceipt.schema, "gpao_t.provider_receipt.v1");
+    assert.equal(result.providerReceipt.schema, "gpao_t3.provider_receipt.v1");
+    assert.equal(result.turn.receipt.result.kind, "provider_projected_result");
+    assert.equal(result.turn.receipt.result.text, "GPAO-T3 deterministic provider response");
+    assert.equal(result.turn.receipt.result.providerReceipt.schema, "gpao_t3.provider_receipt.v1");
+    assert.equal(result.providerRoute.decision.schema, "gpao_t3.model_route_decision.v1");
+    assert.equal(result.providerRoute.decision.selected.providerId, "local-model");
+    assert.equal(result.providerRoute.decision.selected.modelId, "deterministic-echo");
     assert.equal(result.memory.results.length, 1);
     assert.equal(result.admission.admitted.length, 1);
+    assert.equal(result.contextInfluence.state, "held");
+    assert.equal(result.contextInfluence.reason, "a2_authority_required");
+    assert.equal(result.contextInfluence.durableMemoryPromotion, false);
     assert.equal(result.growthCandidate.applyState, "candidate_only");
-    assert.equal(result.taskPacket.authority.durableMemoryPromotion, false);
+    assert.equal(result.taskPacket.authority.durablePromotion, false);
+  } finally { await runtime.stop(); }
+});
+
+test("reviewed local context cannot become a durable influence without explicit A2 authority", async () => {
+  const runtime = await new NativeRuntime({ stateDir: stateDir() }).start();
+  const memory = new LocalHybridMemory();
+  memory.ingest({ text: "GPAO-T F5는 승인된 영향만 다음 행동에 사용한다.", source: "owner_note", traceRef: "note-f5", userId: "owner:a", reviewed: true });
+  const pipeline = new NativeOsTurnPipeline({ runtime, memory, contextInfluence: runtime.contextInfluence });
+  try {
+    const first = await pipeline.run({ principalId: "owner:a", sessionId: "session-a", requestId: "f5-1", input: "승인된 영향 원칙을 설명해줘" });
+    assert.equal(first.contextInfluence.state, "held");
+    assert.equal(first.contextInfluence.reason, "a2_authority_required");
+    const second = await pipeline.run({ principalId: "owner:a", sessionId: "session-a", requestId: "f5-2", input: "승인된 영향 원칙을 다시 적용해줘" });
+    assert.equal(second.approvedInfluences.length, 0);
+    assert.equal(second.admission.admitted[0].admission, "supporting_context");
   } finally { await runtime.stop(); }
 });
 

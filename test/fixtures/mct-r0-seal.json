@@ -1,0 +1,80 @@
+{
+  "schema": "gpao_t3.mct_r0_seal.v1",
+  "status": "sealed_for_implementation",
+  "comparisonBaselines": ["gpao_t3_0.2.2_foundation", "live_gpao_t_2026_07_16", "openclaw_pure_2026.6.11"],
+  "dataset": {
+    "records": 10000,
+    "seed": "gpao-t3-mct-r0-2026-07-16",
+    "generator": "deterministic-mixed-memory-v1",
+    "canonicalDigestDomain": "gpao_t3.mct_r0_corpus.v1",
+    "canonicalDigest": "sha256:2e305840347926f6217d1cf76d0f8d8372b91bfaf979b7a6d1ecd07e7c0b014b",
+    "splits": { "development": 6000, "evaluation": 2000, "holdout": 2000 },
+    "composition": { "korean": 0.55, "english": 0.2, "code": 0.15, "mixed": 0.1 },
+    "averageRecordTokens": 180,
+    "totalRecordTokens": 1800000,
+    "concurrency": [1, 4],
+    "resultK": [5, 10],
+    "modes": ["lexical_only", "hybrid_local_vector"],
+    "temperatures": ["cold", "warm"],
+    "temperatureContract": {
+      "cold": "fresh_node_process_and_sqlite_connection_no_application_cache_os_page_cache_uncontrolled",
+      "warm": "subsequent_queries_in_same_node_process_and_sqlite_connection"
+    }
+  },
+  "referenceEnvironments": [
+    { "id": "macos_reference", "os": "macOS", "cpuClass": "Apple Silicon 8-core or greater", "memoryGb": 16, "storage": "local SSD" },
+    { "id": "windows_reference", "os": "Windows 11", "cpuClass": "x64 8-core or greater", "memoryGb": 16, "storage": "local SSD" }
+  ],
+  "thresholds": {
+    "retrievalPacketP95Ms": 250,
+    "visibleAcceptedP95Ms": 100,
+    "firstProgressP95Ms": 250,
+    "recallAt10Min": 0.9,
+    "mrrMin": 0.8,
+    "ndcgAt10Min": 0.85,
+    "answerAnchorPrecisionMin": 0.98,
+    "wrongAnchorRateMax": 0.01,
+    "contradictionDetectionMin": 0.95,
+    "growthFalsePositiveMax": 0.05,
+    "recurringFailureReductionMin": 0.3,
+    "qualityPer1000TokensRegressionMax": 0,
+    "unnecessaryApprovalPerLowRiskTurnMax": 0,
+    "approvalDecisionsPerTurnMax": 1
+  },
+  "safetyFixtureExpectations": {
+    "currentRequestOverride": 1,
+    "scopeLeakage": 0,
+    "unauthorizedMutation": 0,
+    "rollbackCompleteness": 1,
+    "projectionFinalDigestMatch": 1,
+    "degradedConversationAvailability": 1
+  },
+  "absoluteMetricScope": "sealed fixtures, property tests, attack scenarios, and comparison datasets only",
+  "retention": {
+    "turn": "turn_end_plus_24h",
+    "session": "session_archive_plus_30d",
+    "project": "until_user_delete_or_project_expiry",
+    "user_global": "until_explicit_user_delete",
+    "rejectedCandidate": "30d",
+    "journalCompaction": "projection_after_90d_keep_digest_and_audit_reference",
+    "sourceDeletionRule": "purge_fts_vector_ui_projection_and_future_influence",
+    "rollbackRule": "purge_active_projection_and_verify_no_future_influence"
+  },
+  "approval": {
+    "ambiguousRememberScope": "session",
+    "scopeOrder": ["turn", "session", "project", "user_global"],
+    "globalRequiresExplicitScope": true,
+    "publicBackgroundMutation": "disabled_until_long_soak_or_explicit_owner_risk_acceptance"
+  },
+  "rejectionConditions": [
+    "memory_overrides_current_request",
+    "unreviewed_candidate_becomes_answer_anchor",
+    "memory_evicts_current_request_or_minimum_output",
+    "scope_or_channel_leakage",
+    "unauthorized_durable_mutation",
+    "surface_event_exposes_secret_or_internal_payload",
+    "foreground_chat_blocks_on_index_rebuild_or_replay",
+    "rollback_leaves_active_projection",
+    "wp8r_contract_or_journal_regression"
+  ]
+}

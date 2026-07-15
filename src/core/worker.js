@@ -1,6 +1,6 @@
 import { verifyPermit } from "./permit.js";
 
-const secret = process.env.GPAO_T_PERMIT_SECRET || "";
+const secret = process.env.GPAO_T3_PERMIT_SECRET || "";
 
 function reject(message, code, text) {
   process.send?.({
@@ -47,6 +47,14 @@ process.on("message", async message => {
     process.send?.({ type: "result", commandId: permit.commandId, principalId: permit.principalId, generation: permit.generation, permitSignature: permit.signature, status: "failed", error: { code: "simulated_failure", message: "Simulated capability failure" } });
     return;
   }
-  const output = { kind: "deterministic_worker_result", echo: payload?.input ?? null };
+  const output = payload?.providerReceipt
+    ? {
+        kind: "provider_projected_result",
+        text: payload?.input ?? null,
+        echo: payload?.input ?? null,
+        taskPacketId: payload?.taskPacketId ?? null,
+        providerReceipt: payload.providerReceipt
+      }
+    : { kind: "deterministic_worker_result", echo: payload?.input ?? null };
   process.send?.({ type: "result", commandId: permit.commandId, principalId: permit.principalId, generation: permit.generation, permitSignature: permit.signature, status: "succeeded", result: output });
 });

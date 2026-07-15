@@ -1,7 +1,7 @@
 import { RuntimeError } from "./errors.js";
 
 const ID_PATTERN = /^[a-z0-9]+(?:[._-][a-z0-9]+)*$/;
-const TRANSPORTS = new Set(["builtin", "stdio", "http", "webhook", "local_api"]);
+const TRANSPORTS = new Set(["builtin", "stdio", "http", "webhook", "local_api", "protected_adapter"]);
 const AUTHORITIES = new Set(["read", "local_write", "external_send", "external_mutation"]);
 const HEALTH_STATES = new Set(["ready", "unknown", "degraded", "unavailable"]);
 const MANIFEST_FIELDS = new Set(["id", "name", "description", "version", "transport", "capabilities", "authority", "enabled", "health", "setup"]);
@@ -90,7 +90,7 @@ export class ConnectorCatalog {
 
   snapshot() {
     return {
-      schema: "gpao_t.connector_catalog.v1",
+      schema: "gpao_t3.connector_catalog.v1",
       connectors: [...this.connectors.values()].map(publicEntry)
     };
   }
@@ -151,7 +151,7 @@ export function createFoundationConnectorCatalog() {
     connectors: [
       {
         id: "local.runtime-status",
-        name: "GPAO-T 상태 확인",
+        name: "GPAO-T3 상태 확인",
         description: "현재 로컬 런타임의 상태를 읽기 전용으로 확인합니다.",
         version: "1.0.0",
         transport: "builtin",
@@ -193,6 +193,30 @@ export function createFoundationConnectorCatalog() {
         transport: "stdio",
         capabilities: ["discover_tools", "invoke_tool"],
         authority: "external_mutation",
+        enabled: false,
+        health: { state: "unknown", checkedAt: null },
+        setup: { authentication: "manual_review", userActionRequired: true }
+      },
+      {
+        id: "channel.telegram",
+        name: "Telegram 채널",
+        description: "승인된 뒤 사용자에게 메시지를 보내는 외부 채널입니다.",
+        version: "1.0.0",
+        transport: "protected_adapter",
+        capabilities: ["receive_message", "send_message", "reconcile_delivery"],
+        authority: "external_send",
+        enabled: false,
+        health: { state: "unknown", checkedAt: null },
+        setup: { authentication: "api_key", userActionRequired: true }
+      },
+      {
+        id: "channel.document-export",
+        name: "문서 내보내기 채널",
+        description: "승인된 뒤 문서나 작업 결과를 외부 위치로 내보냅니다.",
+        version: "1.0.0",
+        transport: "local_api",
+        capabilities: ["export_document"],
+        authority: "local_write",
         enabled: false,
         health: { state: "unknown", checkedAt: null },
         setup: { authentication: "manual_review", userActionRequired: true }

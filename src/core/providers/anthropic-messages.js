@@ -14,6 +14,24 @@ export class AnthropicMessagesAdapter {
     this.version = version;
   }
 
+  async checkConnection({ credential, signal } = {}) {
+    if (!credential) throw new ProviderInvocationError("auth_required", "A provider credential is required");
+    let response;
+    try {
+      response = await this.fetchImpl(`${this.baseUrl}/v1/models`, {
+        headers: { "x-api-key": credential, "anthropic-version": this.version }, signal
+      });
+    } catch {
+      throw new ProviderInvocationError("provider_unavailable", "Provider network request failed");
+    }
+    if (!response.ok) throw failureFromResponse(response);
+    const payload = await response.json();
+    const models = (payload.data || []).map(model => String(model?.id || ""))
+      .filter(id => /^claude-/i.test(id)).slice(0, 128);
+    if (!models.length) throw new ProviderInvocationError("provider_unavailable", "No compatible provider model is available");
+    return { state: "ready", models };
+  }
+
   async invoke(plan, { input, credential, signal } = {}) {
     if (!credential) throw new ProviderInvocationError("auth_required", "A provider credential is required");
     let response;
@@ -32,6 +50,6 @@ export class AnthropicMessagesAdapter {
     const payload = await response.json();
     const text = (payload.content || []).filter(block => block?.type === "text").map(block => block.text || "").join("");
     if (!text) throw new ProviderInvocationError("failed", "Provider returned no text output");
-    return { status: "succeeded", runId: plan.runId, providerId: plan.providerId, modelId: plan.modelId, result: { text }, receipt: { schema: "gpao_t.provider_receipt.v1", runId: plan.runId, generation: plan.generation, terminal: true, providerResponseId: payload.id || null, stopReason: payload.stop_reason || null } };
+    return { status: "succeeded", runId: plan.runId, providerId: plan.providerId, modelId: plan.modelId, result: { text }, receipt: { schema: "gpao_t3.provider_receipt.v1", runId: plan.runId, generation: plan.generation, terminal: true, providerResponseId: payload.id || null, stopReason: payload.stop_reason || null } };
   }
 }

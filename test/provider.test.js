@@ -33,7 +33,7 @@ test("provider registry exposes redacted auth and model capability status", () =
     models: [{ id: "fixture-model", capabilities: ["text"], inputModalities: ["text"], outputModalities: ["text"], contextLimit: 100, responseLimit: 20 }]
   }] });
   const snapshot = registry.snapshot();
-  assert.equal(snapshot.schema, "gpao_t.provider_registry.v1");
+  assert.equal(snapshot.schema, "gpao_t3.provider_registry.v1");
   assert.equal(snapshot.providers[0].auth.state, "auth_required");
   assert.deepEqual(snapshot.providers[0].models[0].capabilities, ["text"]);
   assert.doesNotMatch(JSON.stringify(snapshot), /credentialPresent|secret-value|token-value/);
@@ -58,7 +58,7 @@ test("auth profile states are typed without reading a secret", () => {
 
 test("invocation plan is typed, bounded, and secret-free", () => {
   const invocation = plan({ scenario: "success", timeoutMs: 250, responseBudget: 64 });
-  assert.equal(invocation.schema, "gpao_t.provider_invocation_plan.v1");
+  assert.equal(invocation.schema, "gpao_t3.provider_invocation_plan.v1");
   assert.equal(invocation.timeoutMs, 250);
   assert.equal(invocation.responseBudget, 64);
   assert.equal(Object.hasOwn(invocation, "input"), false);
@@ -78,7 +78,7 @@ test("streaming is a projection with ordered chunks and a terminal receipt", asy
   for await (const chunk of provider.stream(plan({ scenario: "stream" }))) chunks.push(chunk);
   assert.deepEqual(chunks.map(chunk => chunk.seq), [1, 2, 3, 4]);
   assert.equal(chunks.at(-1).terminal, true);
-  assert.equal(chunks.at(-1).text, "GPAO-T provider stream");
+  assert.equal(chunks.at(-1).text, "GPAO-T3 provider stream");
   assert.equal(chunks.at(-1).receipt.generation, 3);
 });
 

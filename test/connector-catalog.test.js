@@ -6,7 +6,7 @@ import { RuntimeError } from "../src/core/errors.js";
 test("foundation catalog exposes safe defaults without credential or endpoint fields", () => {
   const catalog = createFoundationConnectorCatalog();
   const snapshot = catalog.snapshot();
-  assert.equal(snapshot.schema, "gpao_t.connector_catalog.v1");
+  assert.equal(snapshot.schema, "gpao_t3.connector_catalog.v1");
   assert.equal(snapshot.connectors.find(item => item.id === "local.runtime-status").enabled, true);
   assert.equal(snapshot.connectors.find(item => item.id === "web.search").enabled, false);
   assert.equal(snapshot.connectors.find(item => item.id === "mcp.external").setup.userActionRequired, true);

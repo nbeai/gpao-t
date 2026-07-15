@@ -9,8 +9,9 @@ const fixedClock = () => "2026-07-15T12:00:00.000Z";
 test("controller lists safe connector metadata and records authority-bound receipts", () => {
   const controller = new ConnectorController({ catalog: createFoundationConnectorCatalog(), clock: fixedClock });
   const connectors = controller.list();
-  assert.equal(connectors.length, 4);
+  assert.equal(connectors.length, 6);
   assert.equal(connectors.find(item => item.id === "web.search").enabled, false);
+  assert.equal(connectors.find(item => item.id === "channel.telegram").authority, "external_send");
 
   const receipt = controller.recordHealth("local.workspace-read", { state: "ready", checkedAt: fixedClock() });
   assert.equal(receipt.action, "health_recorded");

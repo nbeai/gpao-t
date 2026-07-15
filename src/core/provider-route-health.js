@@ -76,7 +76,7 @@ export class ProviderRouteHealth {
     state.inFlight += 1;
     if (recoveryProbe) state.recoveryProbeInFlight = true;
     const lease = Object.freeze({
-      schema: "gpao_t.provider_route_lease.v1",
+      schema: "gpao_t3.provider_route_lease.v1",
       leaseId: crypto.randomUUID(),
       providerId: id,
       admittedAt: now,
@@ -121,7 +121,7 @@ export class ProviderRouteHealth {
     }
 
     return Object.freeze({
-      schema: "gpao_t.provider_route_latency_receipt.v1",
+      schema: "gpao_t3.provider_route_latency_receipt.v1",
       leaseId: lease.leaseId,
       providerId: lease.providerId,
       recoveryProbe: lease.recoveryProbe,

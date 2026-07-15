@@ -8,6 +8,7 @@ import { NativeRuntime } from "../src/core/runtime.js";
 import { ProviderRegistry } from "../src/core/provider.js";
 import { ProviderAdapterRegistry } from "../src/core/model-router.js";
 import { ProtectedConnectionClient, PROTECTED_CONNECTION_SCHEMA } from "../src/core/protected-connection.js";
+import { createRepairPlan } from "../src/core/repair-plan.js";
 
 const SENTINEL_SECRET = "f2-browser-secret-must-not-cross";
 
@@ -64,6 +65,28 @@ function protectedClient() {
     }
   } });
   return { client, requests, get invocations() { return invocations; } };
+}
+
+function protectedClientWithConnectionStates(states) {
+  const requests = [];
+  let index = 0;
+  const client = new ProtectedConnectionClient({ transport: {
+    async send(request) {
+      requests.push(structuredClone(request));
+      const state = states[Math.min(index, states.length - 1)];
+      if (request.operation === "connection.begin") index += 1;
+      return {
+        schema: PROTECTED_CONNECTION_SCHEMA,
+        operation: request.operation,
+        requestId: request.requestId,
+        credentialRef: "ref-state",
+        authMethod: request.authMethod || "oauth",
+        state,
+        models: ["gpt-protected"]
+      };
+    }
+  } });
+  return { client, requests };
 }
 
 async function startRuntime() {
@@ -129,4 +152,87 @@ test("F2 HTTP qualification keeps API key and OAuth equal, blocks browser secret
     await new Promise(resolve => fixture.server.close(resolve));
     await fixture.runtime.stop();
   }
+});
+
+test("F2 recovery matrix exposes one safe user action for blocked connection states", async () => {
+  const cases = [
+    { protectedState: "auth_required", expectedState: "auth_required", expectedAction: "reconnect_provider" },
+    { protectedState: "expired", expectedState: "expired", expectedAction: "reconnect_provider" },
+    { protectedState: "unavailable", expectedState: "provider_unavailable", expectedAction: "retry_or_view_status" },
+    { protectedState: "unknown", expectedState: "provider_unavailable", expectedAction: "retry_or_view_status" }
+  ];
+
+  for (const item of cases) {
+    const bridge = protectedClientWithConnectionStates([item.protectedState]);
+    const runtime = await new NativeRuntime({
+      stateDir: tempState(),
+      providerRegistry: providerRegistry(),
+      providerAdapters: new ProviderAdapterRegistry(),
+      protectedConnectionClient: bridge.client
+    }).start();
+    try {
+      const status = await runtime.beginProviderConnection({ providerId: "openai", authMethod: "oauth" });
+      assert.equal(status.state, item.expectedState);
+      assert.equal(status.presentation.action, item.expectedAction);
+      assert.equal("credentialRef" in status, false);
+      assert.equal(JSON.stringify(status).includes(SENTINEL_SECRET), false);
+      assert.equal(bridge.requests.length, 1);
+    } finally {
+      await runtime.stop();
+    }
+  }
+
+  const repairCases = [
+    { code: "auth_required", state: "auth_required", action: "reconnect_provider" },
+    { code: "rate_limited", state: "rate_limited", action: "wait_or_choose_alternate" },
+    { code: "provider_unavailable", state: "provider_unavailable", action: "retry_or_view_status" },
+    { code: "external_outcome_unknown", state: "outcome_unknown", action: "reconcile_before_retry" }
+  ];
+  for (const item of repairCases) {
+    const plan = createRepairPlan(item.code);
+    assert.equal(plan.schema, "gpao_t3.repair_plan.v1");
+    assert.equal(plan.state, item.state);
+    assert.equal(plan.action, item.action);
+    assert.equal(JSON.stringify(plan).includes(SENTINEL_SECRET), false);
+  }
+});
+
+test("F2 protected invocation cancel and timeout stay manual-review without automatic retry", async () => {
+  const transportRequests = [];
+  const client = new ProtectedConnectionClient({ transport: {
+    async send(request, { signal }) {
+      transportRequests.push(structuredClone(request));
+      await new Promise(resolve => signal.addEventListener("abort", resolve, { once: true }));
+      return {};
+    }
+  } });
+
+  const timeout = await client.provider.invoke({
+    requestId: "timeout-once",
+    credentialRef: "ref-oauth",
+    providerId: "openai",
+    modelId: "gpt-protected",
+    input: { message: "slow" },
+    deadline: Date.now() + 5
+  }).catch(error => error);
+  assert.equal(timeout.code, "protected_connection_outcome_unknown");
+  assert.equal(timeout.details.reason, "deadline_exceeded");
+  assert.equal(timeout.details.retry, "manual_review_required");
+  assert.equal(transportRequests.filter(request => request.requestId === "timeout-once").length, 1);
+
+  const controller = new AbortController();
+  const cancelled = client.provider.invoke({
+    requestId: "cancel-once",
+    credentialRef: "ref-oauth",
+    providerId: "openai",
+    modelId: "gpt-protected",
+    input: { message: "cancel" },
+    deadline: Date.now() + 1_000
+  }, { signal: controller.signal }).catch(error => error);
+  controller.abort();
+  const cancelResult = await cancelled;
+  assert.equal(cancelResult.code, "protected_connection_outcome_unknown");
+  assert.equal(cancelResult.details.reason, "cancelled");
+  assert.equal(cancelResult.details.retry, "manual_review_required");
+  assert.equal(transportRequests.filter(request => request.requestId === "cancel-once").length, 1);
 });

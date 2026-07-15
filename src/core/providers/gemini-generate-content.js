@@ -14,10 +14,38 @@ function outputText(payload) {
     .map(part => part.text).join("");
 }
 
+function modelPriority(id) {
+  if (/^gemini-[\d.]+-flash$/i.test(id)) return 10;
+  if (/^gemini-[\d.]+-flash-(?:latest|preview)/i.test(id)) return 20;
+  if (/^gemini-[\d.]+-pro$/i.test(id)) return 30;
+  return 100;
+}
+
 export class GeminiGenerateContentAdapter {
   constructor({ fetchImpl = fetch, baseUrl = "https://generativelanguage.googleapis.com/v1beta" } = {}) {
     this.fetchImpl = fetchImpl;
     this.baseUrl = baseUrl.replace(/\/$/, "");
+  }
+
+  async checkConnection({ credential, signal } = {}) {
+    if (!credential) throw new ProviderInvocationError("auth_required", "A provider credential is required");
+    let response;
+    try {
+      response = await this.fetchImpl(`${this.baseUrl}/models`, { headers: { "x-goog-api-key": credential }, signal });
+    } catch {
+      throw new ProviderInvocationError("provider_unavailable", "Provider network request failed");
+    }
+    if (!response.ok) throw failureFromResponse(response);
+    const payload = await response.json();
+    const compatible = (payload.models || [])
+      .filter(model => (model?.supportedGenerationMethods || []).includes("generateContent"))
+      .map(model => ({ id: String(model?.name || "").replace(/^models\//, ""), outputLimit: Number(model?.outputTokenLimit || 0) }))
+      .filter(model => model.id && !/(?:embedding|image|tts|robotics|computer-use|deep-research|aqa)/i.test(model.id))
+      .sort((left, right) => modelPriority(left.id) - modelPriority(right.id) || right.id.localeCompare(left.id))
+      .slice(0, 128);
+    const models = compatible.map(model => model.id);
+    if (!models.length) throw new ProviderInvocationError("provider_unavailable", "No compatible provider model is available");
+    return { state: "ready", models, responseLimits: Object.fromEntries(compatible.map(model => [model.id, model.outputLimit]).filter(([, limit]) => limit > 0)) };
   }
 
   async invoke(plan, { input, credential, signal } = {}) {
@@ -40,6 +68,6 @@ export class GeminiGenerateContentAdapter {
     const text = outputText(payload);
     if (!text) throw new ProviderInvocationError("failed", "Provider returned no text output");
     const candidate = payload.candidates[0];
-    return { status: "succeeded", runId: plan.runId, providerId: plan.providerId, modelId: plan.modelId, result: { text }, receipt: { schema: "gpao_t.provider_receipt.v1", runId: plan.runId, generation: plan.generation, terminal: true, providerResponseId: payload.responseId || null, stopReason: candidate.finishReason || null, modelVersion: payload.modelVersion || null, usage: { promptTokens: payload.usageMetadata?.promptTokenCount ?? null, outputTokens: payload.usageMetadata?.candidatesTokenCount ?? null, totalTokens: payload.usageMetadata?.totalTokenCount ?? null } } };
+    return { status: "succeeded", runId: plan.runId, providerId: plan.providerId, modelId: plan.modelId, result: { text }, receipt: { schema: "gpao_t3.provider_receipt.v1", runId: plan.runId, generation: plan.generation, terminal: true, providerResponseId: payload.responseId || null, stopReason: candidate.finishReason || null, modelVersion: payload.modelVersion || null, usage: { promptTokens: payload.usageMetadata?.promptTokenCount ?? null, outputTokens: payload.usageMetadata?.candidatesTokenCount ?? null, totalTokens: payload.usageMetadata?.totalTokenCount ?? null } } };
   }
 }

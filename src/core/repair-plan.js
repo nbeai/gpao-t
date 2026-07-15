@@ -14,5 +14,5 @@ export function createRepairPlan(errorOrCode) {
   const code = typeof errorOrCode === "string" ? errorOrCode : errorOrCode?.code;
   const state = ERROR_TO_STATE[code] || "provider_unavailable";
   const presentation = presentRuntimeStatus(state);
-  return { schema: "gpao_t.repair_plan.v1", state, title: presentation.title, detail: presentation.detail, action: presentation.action, diagnosticCode: code || "unknown" };
+  return { schema: "gpao_t3.repair_plan.v1", state, title: presentation.title, detail: presentation.detail, action: presentation.action, diagnosticCode: code || "unknown" };
 }

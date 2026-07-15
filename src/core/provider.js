@@ -99,10 +99,11 @@ function publicProvider(entry) {
     adapter: entry.adapter,
     adapterVersion: entry.adapterVersion,
     priority: entry.priority,
+    routePolicy: { ...entry.routePolicy },
     display: { ...entry.display },
     auth: { ...entry.auth },
     health: { ...entry.health },
-    models: entry.models.map(model => ({ ...model, capabilities: [...model.capabilities], inputModalities: [...model.inputModalities], outputModalities: [...model.outputModalities] }))
+    models: entry.models.map(model => ({ ...model, routePolicy: { ...model.routePolicy }, capabilities: [...model.capabilities], inputModalities: [...model.inputModalities], outputModalities: [...model.outputModalities] }))
   };
 }
 
@@ -121,6 +122,11 @@ export class ProviderRegistry {
       adapter: String(entry.adapter),
       adapterVersion: String(entry.adapterVersion || "0.0"),
       priority: Number.isFinite(entry.priority) ? Number(entry.priority) : 100,
+      routePolicy: {
+        latencyMs: Math.max(0, Number(entry.routePolicy?.latencyMs ?? entry.latencyMs ?? 1000)),
+        costRank: Math.max(0, Number(entry.routePolicy?.costRank ?? entry.costRank ?? entry.priority ?? 100)),
+        authorityRank: Math.max(0, Number(entry.routePolicy?.authorityRank ?? entry.authorityRank ?? entry.priority ?? 100))
+      },
       display: {
         name: String(entry.display?.name || entry.id),
         authMethods: [...(entry.display?.authMethods || [])],
@@ -139,7 +145,12 @@ export class ProviderRegistry {
         outputModalities: [...(model.outputModalities || [])],
         contextLimit: Number(model.contextLimit || 0),
         responseLimit: Number(model.responseLimit || 0),
-        priority: Number.isFinite(model.priority) ? Number(model.priority) : 100
+        priority: Number.isFinite(model.priority) ? Number(model.priority) : 100,
+        routePolicy: {
+          latencyMs: Math.max(0, Number(model.routePolicy?.latencyMs ?? model.latencyMs ?? entry.routePolicy?.latencyMs ?? entry.latencyMs ?? 1000)),
+          costRank: Math.max(0, Number(model.routePolicy?.costRank ?? model.costRank ?? entry.routePolicy?.costRank ?? entry.costRank ?? model.priority ?? entry.priority ?? 100)),
+          authorityRank: Math.max(0, Number(model.routePolicy?.authorityRank ?? model.authorityRank ?? entry.routePolicy?.authorityRank ?? entry.authorityRank ?? model.priority ?? entry.priority ?? 100))
+        }
       }))
     };
     this.entries.set(normalized.id, normalized);
@@ -152,7 +163,7 @@ export class ProviderRegistry {
   }
 
   snapshot() {
-    return { schema: "gpao_t.provider_registry.v1", providers: [...this.entries.values()].map(publicProvider) };
+    return { schema: "gpao_t3.provider_registry.v1", providers: [...this.entries.values()].map(publicProvider) };
   }
 
   recordFailure(providerId, failure, { now = Date.now(), cooldownMs = 30_000 } = {}) {
@@ -174,7 +185,7 @@ export class ProviderRegistry {
     return publicProvider(entry);
   }
 
-  updateConnection(providerId, { auth, health } = {}) {
+  updateConnection(providerId, { auth, health, models } = {}) {
     const entry = this.entries.get(providerId);
     if (!entry) return null;
     if (auth) entry.auth = authStatusFromProfile(auth);
@@ -184,6 +195,10 @@ export class ProviderRegistry {
         failureClass: health.failureClass ?? entry.health.failureClass,
         cooldownUntil: health.cooldownUntil ?? entry.health.cooldownUntil
       };
+    }
+    if (Array.isArray(models) && models.length) {
+      const template = entry.models[0];
+      entry.models = [...new Set(models.map(String))].map(id => ({ ...template, id, capabilities: [...template.capabilities], inputModalities: [...template.inputModalities], outputModalities: [...template.outputModalities], routePolicy: { ...template.routePolicy } }));
     }
     return publicProvider(entry);
   }
@@ -202,7 +217,7 @@ export function createInvocationPlan(input = {}) {
   const required = ["runId", "sessionId", "generation", "idempotencyKey", "providerId", "modelId"];
   for (const key of required) if (input[key] === undefined || input[key] === null || input[key] === "") throw new RuntimeError("invalid_invocation_plan", `${key} is required`, 400);
   return {
-    schema: "gpao_t.provider_invocation_plan.v1",
+    schema: "gpao_t3.provider_invocation_plan.v1",
     runId: String(input.runId),
     sessionId: String(input.sessionId),
     generation: Number(input.generation),
@@ -283,22 +298,22 @@ export class DeterministicProviderEmulator {
       runId: plan.runId,
       providerId: plan.providerId,
       modelId: plan.modelId,
-      result: { text: "GPAO-T deterministic provider response" },
-      receipt: { schema: "gpao_t.provider_receipt.v1", runId: plan.runId, generation: plan.generation, terminal: true }
+      result: { text: "GPAO-T3 deterministic provider response" },
+      receipt: { schema: "gpao_t3.provider_receipt.v1", runId: plan.runId, generation: plan.generation, terminal: true }
     };
   }
 
   async *stream(plan, { signal } = {}) {
     if (plan.scenario !== "stream") return yield* this.streamFromInvoke(plan, { signal });
     if (signal?.aborted) throw cancellationFailure("cancelled_before_send");
-    const chunks = ["GPAO-T", " provider", " stream"];
+    const chunks = ["GPAO-T3", " provider", " stream"];
     let answer = "";
     for (let index = 0; index < chunks.length; index += 1) {
       await wait(this.chunkDelayMs, signal);
       answer += chunks[index];
       yield { runId: plan.runId, generation: plan.generation, seq: index + 1, type: "delta", text: chunks[index], terminal: false };
     }
-    yield { runId: plan.runId, generation: plan.generation, seq: chunks.length + 1, type: "terminal", text: answer, terminal: true, receipt: { schema: "gpao_t.provider_receipt.v1", runId: plan.runId, generation: plan.generation, terminal: true } };
+    yield { runId: plan.runId, generation: plan.generation, seq: chunks.length + 1, type: "terminal", text: answer, terminal: true, receipt: { schema: "gpao_t3.provider_receipt.v1", runId: plan.runId, generation: plan.generation, terminal: true } };
   }
 
   async *streamFromInvoke(plan, { signal } = {}) {

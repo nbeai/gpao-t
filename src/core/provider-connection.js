@@ -76,7 +76,7 @@ export class ProviderConnectionCenter {
     const entry = this.connections.get(providerId);
     const state = entry ? runtimeState(entry.state) : "not_configured";
     return {
-      schema: "gpao_t.provider_connection.v2",
+      schema: "gpao_t3.provider_connection.v2",
       providerId,
       state,
       configured: Boolean(entry),
@@ -113,12 +113,13 @@ export class ProviderConnectionCenter {
     return Object.freeze({ credentialRef: entry.credentialRef, authMethod: entry.authMethod });
   }
 
-  updateRegistry(providerId, state, authMethod) {
+  updateRegistry(providerId, state, authMethod, models = []) {
     if (!this.providerRegistry) return;
     const connected = state === "connected";
     this.providerRegistry.updateConnection(providerId, {
       auth: { kind: authMethod === "oauth" ? "oauth" : "keychain", credentialPresent: connected },
-      health: { state: connected ? "ready" : "unknown", failureClass: null, cooldownUntil: null }
+      health: { state: connected ? "ready" : "unknown", failureClass: null, cooldownUntil: null },
+      models
     });
   }
 
@@ -126,7 +127,7 @@ export class ProviderConnectionCenter {
     const protectedConnection = validateConnection(connection);
     const entry = { ...protectedConnection, updatedAt: this.clock() };
     this.connections.set(entry.providerId, entry);
-    this.updateRegistry(entry.providerId, entry.state, entry.authMethod);
+    this.updateRegistry(entry.providerId, entry.state, entry.authMethod, entry.models);
     return this.status(entry.providerId);
   }
 
