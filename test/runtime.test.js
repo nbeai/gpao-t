@@ -194,3 +194,23 @@ test("cancelled in flight records bounded uncertainty and rejects late completio
 test("live GPAO-T state is rejected", () => {
   assert.throws(() => new NativeRuntime({ stateDir: path.resolve(os.homedir(), ".gpao-t") }), error => error.code === "protected_live_path");
 });
+
+test("connector controls persist safe state without granting tool authority", async () => {
+  const stateDir = tempState();
+  const first = await new NativeRuntime({ stateDir }).start();
+  try {
+    assert.equal(first.connectorStatus().connectors.find(entry => entry.id === "local.workspace-read").enabled, true);
+    const receipt = await first.setConnectorEnabled("local.workspace-read", false);
+    assert.equal(receipt.executionAuthorityGranted, false);
+    assert.equal(first.connectorStatus().connectors.find(entry => entry.id === "local.workspace-read").enabled, false);
+  } finally {
+    await first.stop();
+  }
+  const second = await new NativeRuntime({ stateDir }).start();
+  try {
+    assert.equal(second.connectorStatus().connectors.find(entry => entry.id === "local.workspace-read").enabled, false);
+    assert.equal((await second.doctor()).connectors.schema, "gpao_t.connector_center.v1");
+  } finally {
+    await second.stop();
+  }
+});

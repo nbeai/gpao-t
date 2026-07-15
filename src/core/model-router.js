@@ -97,10 +97,16 @@ export class ModelRouter {
       });
       const admission = this.routeHealth?.admit({ providerId: provider.id });
       if (admission && !admission.admitted) {
-        throw new ProviderInvocationError("provider_unavailable", "The selected provider is temporarily unavailable", {
+        const blocked = new ProviderInvocationError("provider_unavailable", "The selected provider is temporarily unavailable", {
           routeHealthReason: admission.reason,
           retryAt: admission.retryAt
         });
+        failures.push({ providerId: provider.id, modelId: model.id, routeHealthReceipt: null, failureClass: "provider_unavailable", externalEffect: false, routeHealthReason: admission.reason });
+        const requested = Boolean(normalizedSelection.preferredProviderId || normalizedSelection.preferredModelId);
+        const nextCandidate = candidates[index + 1] || null;
+        const crossProvider = nextCandidate && nextCandidate.provider.id !== provider.id;
+        if (!requested && nextCandidate && (!crossProvider || selection.allowCrossProviderFallback === true)) continue;
+        throw Object.assign(blocked, { failures, providerPlan: plan });
       }
       let routeHealthReceipt = null;
       try {

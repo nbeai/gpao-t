@@ -62,6 +62,9 @@ test("HTTP health is public, work is owner-authenticated, and turn state is scop
   assert.equal(sockets.sockets[0].id, "local-deterministic-worker");
   const tools = await fetch(`${base}/v1/tools`, { headers: { authorization: `Bearer ${runtime.ownerToken}` } }).then(response => response.json());
   assert.equal(tools.tools[0].id, "local.runtime_status");
+  const connectors = await fetch(`${base}/v1/connectors`, { headers: { authorization: `Bearer ${runtime.ownerToken}` } }).then(response => response.json());
+  assert.equal(connectors.schema, "gpao_t.connector_center.v1");
+  assert.equal(connectors.connectors.find(entry => entry.id === "web.search").enabled, false);
 
   const osTurnResponse = await fetch(`${base}/v1/os-turns`, {
     method: "POST",

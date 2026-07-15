@@ -19,13 +19,16 @@ import { createFoundationToolRegistry } from "./tool-registry.js";
 import { LocalSessionAuthority } from "./local-session.js";
 import { MacKeychainCredentialStore } from "./credential-store.js";
 import { ProviderConnectionCenter } from "./provider-connection.js";
+import { ProviderRouteHealth } from "./provider-route-health.js";
+import { createFoundationConnectorCatalog } from "./connector-catalog.js";
+import { ConnectorController } from "./connector-controller.js";
 
 function requestDigest(payload) {
   return crypto.createHash("sha256").update(JSON.stringify(payload)).digest("hex");
 }
 
 export class NativeRuntime {
-  constructor({ stateDir, providerRegistry = null, providerAdapter = new DeterministicProviderEmulator(), providerAdapters = null, credentialResolver = null, credentialStore = null, connectionCenter = null, providerEnvironment = process.env, providerFetch = fetch, socketRegistry = createFoundationSocketRegistry(), memory = new LocalHybridMemory(), toolRegistry = createFoundationToolRegistry(), workerPath = path.resolve(new URL("./worker.js", import.meta.url).pathname), writerPath = path.resolve(new URL("./state-writer.js", import.meta.url).pathname), maxInflight = 4, maxQueue = 64, workerDispatchTimeoutMs = 250, workerResultTimeoutMs = 30_000, writerRequestTimeoutMs = 5_000, writerCloseTimeoutMs = 1_000, maxWorkerRestarts = 5, workerRestartWindowMs = 10_000, workerRestartBaseDelayMs = 25, workerStableWindowMs = 1_000 } = {}) {
+  constructor({ stateDir, providerRegistry = null, providerAdapter = new DeterministicProviderEmulator(), providerAdapters = null, credentialResolver = null, credentialStore = null, connectionCenter = null, providerEnvironment = process.env, providerFetch = fetch, socketRegistry = createFoundationSocketRegistry(), memory = new LocalHybridMemory(), toolRegistry = createFoundationToolRegistry(), connectorCatalog = null, connectorController = null, routeHealth = null, workerPath = path.resolve(new URL("./worker.js", import.meta.url).pathname), writerPath = path.resolve(new URL("./state-writer.js", import.meta.url).pathname), maxInflight = 4, maxQueue = 64, workerDispatchTimeoutMs = 250, workerResultTimeoutMs = 30_000, writerRequestTimeoutMs = 5_000, writerCloseTimeoutMs = 1_000, maxWorkerRestarts = 5, workerRestartWindowMs = 10_000, workerRestartBaseDelayMs = 25, workerStableWindowMs = 1_000 } = {}) {
     this.stateDir = assertSafeStateDir(stateDir);
     this.workerPath = workerPath;
     this.writerPath = writerPath;
@@ -45,11 +48,15 @@ export class NativeRuntime {
       providerRegistry: this.providerRegistry,
       verify: input => this.verifyProviderConnection(input)
     });
+    this.routeHealth = routeHealth || new ProviderRouteHealth();
     this.modelRouter = new ModelRouter({
       providerRegistry: this.providerRegistry,
       adapterRegistry: this.providerAdapters,
-      credentialResolver: async route => (await this.connectionCenter.credential(route.providerId)) || this.catalogCredentialResolver(route)
+      credentialResolver: async route => (await this.connectionCenter.credential(route.providerId)) || this.catalogCredentialResolver(route),
+      routeHealth: this.routeHealth
     });
+    this.connectorCatalog = connectorCatalog || createFoundationConnectorCatalog();
+    this.connectorController = connectorController || new ConnectorController({ catalog: this.connectorCatalog });
     this.socketRegistry = socketRegistry;
     this.router = new ExecutionRouter({ socketRegistry });
     this.controller = new ExecutionController({ runtime: this });
@@ -103,6 +110,7 @@ export class NativeRuntime {
       await this.writer.call("verifyIntegrity");
       this.generation = (await this.writer.call("bootstrapRuntime", { instanceId: this.instanceId })).generation;
       await this.hydrateProviderConnections();
+      await this.hydrateConnectorControls();
       this.accepting = true;
       this.healthSnapshot = { status: "ready", state: "online", generation: this.generation, inflight: 0 };
       this.readyAt = Date.now();
@@ -463,6 +471,31 @@ export class NativeRuntime {
     return this.writer.call("setPreference", { key: "provider_connections", value: this.connectionCenter.exportMetadata() });
   }
 
+  async hydrateConnectorControls() {
+    const preference = await this.writer.call("getPreference", { key: "connector_controls" });
+    for (const saved of preference?.value || []) {
+      if (!this.connectorCatalog.get(saved?.id)) continue;
+      if (typeof saved.setupState === "string" && saved.setupState !== "not_started") this.connectorController.setSetupState(saved.id, saved.setupState);
+      if (saved.health && typeof saved.health === "object") this.connectorController.recordHealth(saved.id, saved.health);
+      if (saved.enabled === true) this.connectorController.enable(saved.id);
+      else this.connectorController.disable(saved.id);
+    }
+  }
+
+  async persistConnectorControls() {
+    return this.writer.call("setPreference", { key: "connector_controls", value: this.connectorController.list().map(entry => ({ id: entry.id, enabled: entry.enabled, health: entry.health, setupState: entry.setupState })) });
+  }
+
+  connectorStatus() {
+    return { schema: "gpao_t.connector_center.v1", connectors: this.connectorController.list() };
+  }
+
+  async setConnectorEnabled(connectorId, enabled) {
+    const receipt = enabled === true ? this.connectorController.enable(connectorId) : this.connectorController.disable(connectorId);
+    await this.persistConnectorControls();
+    return receipt;
+  }
+
   async verifyProviderConnection({ providerId, secret }) {
     const provider = this.providerRegistry.get(providerId);
     if (!provider) throw new RuntimeError("invalid_provider", "The selected GPAO-T provider is unavailable", 404);
@@ -558,7 +591,10 @@ export class NativeRuntime {
     return publicHealth;
   }
 
-  async doctor() { return { ...this.health(), provider: this.providerStatus(), sockets: this.socketRegistry.snapshot(), tools: this.tools.snapshot(), localSessions: this.localSessions?.snapshot(), integrity: await this.writer.call("verifyIntegrity"), readOnly: true, worker: Boolean(this.worker && this.worker.connected), ownerTokenMode: "0600" }; }
+  async doctor() {
+    const provider = this.providerStatus();
+    return { ...this.health(), provider, providerRouteHealth: provider.providers.map(entry => this.routeHealth.snapshot(entry.id)), connectors: this.connectorStatus(), sockets: this.socketRegistry.snapshot(), tools: this.tools.snapshot(), localSessions: this.localSessions?.snapshot(), integrity: await this.writer.call("verifyIntegrity"), readOnly: true, worker: Boolean(this.worker && this.worker.connected), ownerTokenMode: "0600" };
+  }
 
   async stop() {
     if (!this.writer) return;

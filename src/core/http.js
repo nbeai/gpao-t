@@ -75,6 +75,13 @@ export function createHttpServer(runtime, { host = "127.0.0.1", port = 18899 } =
       if (request.method === "GET" && url.pathname === "/v1/doctor") return send(response, 200, await runtime.doctor());
       if (request.method === "GET" && url.pathname === "/v1/providers") return send(response, 200, runtime.providerStatus());
       if (request.method === "GET" && url.pathname === "/v1/connection-center") return send(response, 200, await runtime.connectionCenterStatus());
+      if (request.method === "GET" && url.pathname === "/v1/connectors") return send(response, 200, runtime.connectorStatus());
+      const connectorMatch = url.pathname.match(/^\/v1\/connectors\/([a-z0-9.-]+)\/enabled$/i);
+      if (request.method === "PUT" && connectorMatch) {
+        assertTrustedLocalMutation(request, session, host, port);
+        const body = await readJson(request);
+        return send(response, 200, await runtime.setConnectorEnabled(connectorMatch[1], body.enabled));
+      }
       if (request.method === "PUT" && url.pathname === "/v1/model-selection/default") {
         assertTrustedLocalMutation(request, session, host, port);
         const body = await readJson(request);

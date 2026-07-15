@@ -68,7 +68,10 @@ export class ConnectorController {
   }
 
   list() {
-    return this.catalog.snapshot().connectors.map(publicConnector);
+    return this.catalog.snapshot().connectors.map(connector => ({
+      ...publicConnector(connector),
+      setupState: this.setupStates.get(connector.id) || "not_started"
+    }));
   }
 
   get(connectorId) {
