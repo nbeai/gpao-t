@@ -81,13 +81,17 @@ export function createHttpServer(runtime, { host = "127.0.0.1", port = 18899 } =
       if (request.method === "POST" && url.pathname === "/v1/os-turns") {
         const body = await readJson(request);
         const sessionId = dashboardSessionId(body.sessionId);
+        const authority = {
+          ...(body.authority || {}),
+          modelSelection: body.modelSelection || body.authority?.modelSelection || {}
+        };
         const turn = await runtime.runOsTurn({
           principalId: `${principalId}:conversation:${sessionId}`,
           sessionId,
           requestId: body.requestId,
           input: body.input,
           activeGoal: body.activeGoal || null,
-          authority: body.authority || {}
+          authority
         });
         return send(response, turn.turn?.status === "succeeded" ? 200 : 409, turn);
       }

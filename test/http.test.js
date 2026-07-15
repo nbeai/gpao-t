@@ -54,7 +54,8 @@ test("HTTP health is public, work is owner-authenticated, and turn state is scop
   assert.equal((await localOsTurn.json()).turn.status, "succeeded");
   const providers = await fetch(`${base}/v1/providers`, { headers: { authorization: `Bearer ${runtime.ownerToken}` } }).then(response => response.json());
   assert.equal(providers.schema, "gpao_t.provider_registry.v1");
-  assert.equal(providers.providers[0].auth.state, "configured");
+  assert.equal(providers.providers.find(provider => provider.id === "gpao-t-emulator").auth.state, "configured");
+  assert.equal(providers.providers.find(provider => provider.id === "openai").auth.state, "auth_required");
   assert.equal((await fetch(`${base}/v1/providers/gpao-t-emulator`, { headers: { authorization: `Bearer ${runtime.ownerToken}` } })).status, 200);
   const sockets = await fetch(`${base}/v1/sockets`, { headers: { authorization: `Bearer ${runtime.ownerToken}` } }).then(response => response.json());
   assert.equal(sockets.sockets[0].id, "local-deterministic-worker");

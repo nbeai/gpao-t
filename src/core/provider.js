@@ -95,6 +95,7 @@ function publicProvider(entry) {
     id: entry.id,
     adapter: entry.adapter,
     adapterVersion: entry.adapterVersion,
+    priority: entry.priority,
     auth: { ...entry.auth },
     health: { ...entry.health },
     models: entry.models.map(model => ({ ...model, capabilities: [...model.capabilities], inputModalities: [...model.inputModalities], outputModalities: [...model.outputModalities] }))
@@ -115,6 +116,7 @@ export class ProviderRegistry {
       id: String(entry.id),
       adapter: String(entry.adapter),
       adapterVersion: String(entry.adapterVersion || "0.0"),
+      priority: Number.isFinite(entry.priority) ? Number(entry.priority) : 100,
       auth: authStatusFromProfile(entry.auth || entry.credentialSource || { kind: "none" }),
       health: {
         state: entry.health?.state || "unknown",
@@ -127,7 +129,8 @@ export class ProviderRegistry {
         inputModalities: [...(model.inputModalities || [])],
         outputModalities: [...(model.outputModalities || [])],
         contextLimit: Number(model.contextLimit || 0),
-        responseLimit: Number(model.responseLimit || 0)
+        responseLimit: Number(model.responseLimit || 0),
+        priority: Number.isFinite(model.priority) ? Number(model.priority) : 100
       }))
     };
     this.entries.set(normalized.id, normalized);

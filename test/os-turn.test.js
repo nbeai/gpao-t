@@ -27,6 +27,15 @@ test("one native OS turn preserves memory candidates, admission, receipt, replay
   } finally { await runtime.stop(); }
 });
 
+test("a pasted provider secret is rejected before task packet, provider, or memory handling", async () => {
+  const memory = new LocalHybridMemory();
+  const runtime = await new NativeRuntime({ stateDir: stateDir(), memory }).start();
+  try {
+    await assert.rejects(() => runtime.runOsTurn({ principalId: "owner:a", sessionId: "session-a", requestId: "secret-turn", input: "please use sk-1234567890abcdef" }), error => error.code === "secret_in_turn_payload");
+    assert.equal(memory.entries.size, 0);
+  } finally { await runtime.stop(); }
+});
+
 test("a successful turn becomes only a fast, review-only memory candidate for a later turn", async () => {
   const runtime = await new NativeRuntime({ stateDir: stateDir() }).start();
   const memory = new LocalHybridMemory();

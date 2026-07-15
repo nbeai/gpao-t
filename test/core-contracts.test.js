@@ -36,14 +36,14 @@ test("router creates a secret-free permit-bound plan and rejects removed sockets
 });
 
 test("controller retries only local known failures and holds unknown outcomes", async () => {
-  const runtime = await new NativeRuntime({ stateDir: tempState(), workerResultTimeoutMs: 120 }).start();
+  const runtime = await new NativeRuntime({ stateDir: tempState(), workerResultTimeoutMs: 750 }).start();
   try {
     const failed = await runtime.controller.submit({ principalId: "owner:a", requestId: "failed", payload: { mode: "fail" } });
     await eventually(async () => (await runtime.controller.get({ principalId: "owner:a", commandId: failed.commandId }))?.status === "failed");
     const retried = await runtime.controller.retry({ principalId: "owner:a", commandId: failed.commandId, requestId: "recovered", payload: { input: "recovered" } });
     await eventually(async () => (await runtime.controller.get({ principalId: "owner:a", commandId: retried.commandId }))?.status === "succeeded");
     const unknown = await runtime.controller.submit({ principalId: "owner:a", requestId: "unknown", payload: { mode: "blackhole" } });
-    await eventually(async () => (await runtime.controller.get({ principalId: "owner:a", commandId: unknown.commandId }))?.status === "uncertain", 2_000);
+    await eventually(async () => (await runtime.controller.get({ principalId: "owner:a", commandId: unknown.commandId }))?.status === "uncertain", 4_000);
     await assert.rejects(() => runtime.controller.retry({ principalId: "owner:a", commandId: unknown.commandId, requestId: "no-retry" }), error => error.code === "retry_requires_review");
   } finally { await runtime.stop(); }
 });

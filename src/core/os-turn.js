@@ -1,7 +1,7 @@
 import { createTaskPacket } from "./task-packet.js";
 import { LocalHybridMemory } from "./local-memory.js";
 import { admitTcellCandidates, createReplayAndGrowthCandidate } from "./tcell.js";
-import { createInvocationPlan, normalizeProviderFailure } from "./provider.js";
+import { normalizeProviderFailure } from "./provider.js";
 import { createRepairPlan } from "./repair-plan.js";
 
 async function waitForTerminal(runtime, principalId, commandId, timeoutMs = 4_000) {
@@ -21,17 +21,28 @@ export class NativeOsTurnPipeline {
     const memorySearch = this.memory.search(input, { sessionId });
     const taskPacket = createTaskPacket({ sessionId, input, activeGoal, memoryCandidates: memorySearch.results, authority });
     const admission = admitTcellCandidates(taskPacket, memorySearch.results);
-    const provider = this.runtime.providerRegistry.snapshot().providers[0];
-    const providerPlan = createInvocationPlan({ runId: taskPacket.id, sessionId, generation: this.runtime.generation, idempotencyKey: `${principalId}:${requestId}`, providerId: provider.id, modelId: provider.models[0].id, inputDigest: "local-turn-input", authorityPermitDigest: "runtime-bound", sourceContextDigest: JSON.stringify(admission.trace) });
-    let providerResult;
-    try { providerResult = await this.runtime.providerAdapter.invoke(providerPlan); }
-    catch (error) { const providerFailure = normalizeProviderFailure(error); return { schema: "gpao_t.os_turn.v1", taskPacket, memory: memorySearch, admission, providerPlan, providerFailure, repairPlan: createRepairPlan(providerFailure.failureClass), replyMode: "provider_blocked", replay: null, growthCandidate: null }; }
+    let routed;
+    try {
+      routed = await this.runtime.modelRouter.invoke({
+        runId: taskPacket.id,
+        sessionId,
+        generation: this.runtime.generation,
+        idempotencyKey: `${principalId}:${requestId}`,
+        input,
+        sourceContextDigest: JSON.stringify(admission.trace),
+        selection: { ...(authority.modelSelection || {}), allowCrossProviderFallback: Boolean(authority.allowCrossProviderFallback) }
+      });
+    } catch (error) {
+      const providerFailure = normalizeProviderFailure(error);
+      return { schema: "gpao_t.os_turn.v1", taskPacket, memory: memorySearch, admission, providerPlan: error.providerPlan || null, providerFailure, repairPlan: createRepairPlan(providerFailure.failureClass), replyMode: "provider_blocked", replay: null, growthCandidate: null };
+    }
+    const { providerPlan, providerResult } = routed;
     const submitted = await this.runtime.controller.submit({ principalId, requestId, payload: { input: providerResult.result.text, taskPacketId: taskPacket.id, contextDigest: admission.trace, providerReceipt: providerResult.receipt } });
     const turn = await waitForTerminal(this.runtime, principalId, submitted.commandId);
     const { replay, growthCandidate } = createReplayAndGrowthCandidate({ taskPacket, admission, outcome: turn });
     const observation = turn?.status === "succeeded"
       ? this.memory.ingest({ text: input, source: "turn_observation", traceRef: taskPacket.id, sessionId, reviewed: false })
       : { accepted: false, reason: "non_terminal_success" };
-    return { schema: "gpao_t.os_turn.v1", submitted, taskPacket, memory: memorySearch, admission, providerPlan, providerReceipt: providerResult.receipt, turn, observation, replyMode: turn?.status === "succeeded" ? "provider_emulator" : "blocked_or_failed", replay, growthCandidate };
+    return { schema: "gpao_t.os_turn.v1", submitted, taskPacket, memory: memorySearch, admission, providerPlan, providerRoute: { providerId: routed.provider.id, modelId: routed.model.id, fallbackUsed: routed.fallbackUsed, failures: routed.failures }, providerReceipt: providerResult.receipt, turn, observation, replyMode: turn?.status === "succeeded" ? (routed.provider.adapter === "native-deterministic-emulator" ? "provider_emulator" : "provider_response") : "blocked_or_failed", replay, growthCandidate };
   }
 }

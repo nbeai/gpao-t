@@ -6,7 +6,9 @@ import { assertFileMode, assertSafeStateDir } from "./paths.js";
 import { RuntimeError } from "./errors.js";
 import { createPermit } from "./permit.js";
 import { StateWriterClient } from "./state-writer-client.js";
-import { DeterministicProviderEmulator, ProviderRegistry } from "./provider.js";
+import { DeterministicProviderEmulator } from "./provider.js";
+import { ModelRouter } from "./model-router.js";
+import { createNativeProviderCatalog } from "./provider-catalog.js";
 import { createFoundationSocketRegistry } from "./socket-registry.js";
 import { ExecutionRouter } from "./execution-router.js";
 import { ExecutionController } from "./execution-controller.js";
@@ -21,7 +23,7 @@ function requestDigest(payload) {
 }
 
 export class NativeRuntime {
-  constructor({ stateDir, providerRegistry = new ProviderRegistry(), providerAdapter = new DeterministicProviderEmulator(), socketRegistry = createFoundationSocketRegistry(), memory = new LocalHybridMemory(), toolRegistry = createFoundationToolRegistry(), workerPath = path.resolve(new URL("./worker.js", import.meta.url).pathname), writerPath = path.resolve(new URL("./state-writer.js", import.meta.url).pathname), maxInflight = 4, maxQueue = 64, workerDispatchTimeoutMs = 250, workerResultTimeoutMs = 30_000, writerRequestTimeoutMs = 5_000, writerCloseTimeoutMs = 1_000, maxWorkerRestarts = 5, workerRestartWindowMs = 10_000, workerRestartBaseDelayMs = 25, workerStableWindowMs = 1_000 } = {}) {
+  constructor({ stateDir, providerRegistry = null, providerAdapter = new DeterministicProviderEmulator(), providerAdapters = null, credentialResolver = null, providerEnvironment = process.env, providerFetch = fetch, socketRegistry = createFoundationSocketRegistry(), memory = new LocalHybridMemory(), toolRegistry = createFoundationToolRegistry(), workerPath = path.resolve(new URL("./worker.js", import.meta.url).pathname), writerPath = path.resolve(new URL("./state-writer.js", import.meta.url).pathname), maxInflight = 4, maxQueue = 64, workerDispatchTimeoutMs = 250, workerResultTimeoutMs = 30_000, writerRequestTimeoutMs = 5_000, writerCloseTimeoutMs = 1_000, maxWorkerRestarts = 5, workerRestartWindowMs = 10_000, workerRestartBaseDelayMs = 25, workerStableWindowMs = 1_000 } = {}) {
     this.stateDir = assertSafeStateDir(stateDir);
     this.workerPath = workerPath;
     this.writerPath = writerPath;
@@ -31,8 +33,11 @@ export class NativeRuntime {
     this.workerResultTimeoutMs = workerResultTimeoutMs;
     this.writerRequestTimeoutMs = writerRequestTimeoutMs;
     this.writerCloseTimeoutMs = writerCloseTimeoutMs;
-    this.providerRegistry = providerRegistry;
+    const providerCatalog = createNativeProviderCatalog({ environment: providerEnvironment, fetchImpl: providerFetch, emulator: providerAdapter });
+    this.providerRegistry = providerRegistry || providerCatalog.providerRegistry;
     this.providerAdapter = providerAdapter;
+    this.providerAdapters = providerAdapters || providerCatalog.providerAdapters;
+    this.modelRouter = new ModelRouter({ providerRegistry: this.providerRegistry, adapterRegistry: this.providerAdapters, credentialResolver: credentialResolver || providerCatalog.credentialResolver });
     this.socketRegistry = socketRegistry;
     this.router = new ExecutionRouter({ socketRegistry });
     this.controller = new ExecutionController({ runtime: this });
@@ -53,6 +58,7 @@ export class NativeRuntime {
     this.pumpRetryTimer = null;
     this.pumpPromise = null;
     this.progressClients = new Set();
+    this.osTurnInflight = new Map();
     this.worker = null;
     this.respawning = false;
     this.workerRestartAttempts = 0;
@@ -240,7 +246,17 @@ export class NativeRuntime {
     if (!principalId || !requestId || typeof input !== "string" || !input.trim()) {
       throw new RuntimeError("invalid_os_turn", "A session, request id, and message are required", 400);
     }
-    return this.osTurns.run({ principalId, sessionId, requestId, input, activeGoal, authority });
+    assertPayloadHasNoSecrets({ input });
+    const idempotencyKey = `${principalId}:${sessionId}:${requestId}`;
+    const inFlight = this.osTurnInflight.get(idempotencyKey);
+    if (inFlight) return inFlight;
+    const run = this.osTurns.run({ principalId, sessionId, requestId, input, activeGoal, authority });
+    this.osTurnInflight.set(idempotencyKey, run);
+    try {
+      return await run;
+    } finally {
+      if (this.osTurnInflight.get(idempotencyKey) === run) this.osTurnInflight.delete(idempotencyKey);
+    }
   }
 
   async pump() {

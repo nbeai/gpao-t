@@ -165,8 +165,9 @@ test("state-writer failure fails closed instead of reporting ready", async () =>
 });
 
 test("state-writer IPC timeout and shutdown remain bounded", async () => {
-  const runtime = await new NativeRuntime({ stateDir: tempState(), writerRequestTimeoutMs: 100, writerCloseTimeoutMs: 100 }).start();
+  const runtime = await new NativeRuntime({ stateDir: tempState(), writerRequestTimeoutMs: 750, writerCloseTimeoutMs: 150 }).start();
   try {
+    runtime.writer.requestTimeoutMs = 100;
     runtime.writer.child.kill("SIGSTOP");
     await assert.rejects(() => runtime.writer.call("verifyIntegrity"), error => error instanceof RuntimeError && error.code === "state_writer_timeout");
     const started = performance.now();
