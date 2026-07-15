@@ -188,7 +188,7 @@ test("HTTP never serializes internal RuntimeError details to a local dashboard r
   }
 });
 
-test("API-key HTTP endpoint fails closed before it accepts a browser credential", async () => {
+test("the common connection endpoint rejects browser credentials before a secure agent call", async () => {
   const secret = "http-connection-secret";
   const runtime = await new NativeRuntime({ stateDir: tempState(), providerEnvironment: {} }).start();
   const { server } = createHttpServer(runtime, { port: 0 });
@@ -198,13 +198,13 @@ test("API-key HTTP endpoint fails closed before it accepts a browser credential"
     const dashboard = await fetch(`${base}/`);
     const cookie = dashboard.headers.get("set-cookie");
     const headers = { cookie, origin: base, "content-type": "application/json" };
-    const configured = await fetch(`${base}/v1/connections/openai/api-key`, { method: "PUT", headers, body: JSON.stringify({ secret }) });
-    assert.equal(configured.status, 501);
+    const configured = await fetch(`${base}/v1/connections/openai`, { method: "POST", headers, body: JSON.stringify({ authMethod: "api_key", secret }) });
+    assert.equal(configured.status, 400);
     const body = await configured.json();
-    assert.equal(body.code, "credential_connection_pending_secure_bridge");
+    assert.equal(body.code, "protected_connection_secret_forbidden");
     assert.doesNotMatch(JSON.stringify(body), new RegExp(secret));
     const source = fs.readFileSync(new URL("../src/core/http.js", import.meta.url), "utf8");
-    assert.doesNotMatch(source, /configureProviderApiKey\(providerId, body\.secret\)/);
+    assert.doesNotMatch(source, /body\.secret/);
   } finally {
     await new Promise(resolve => server.close(resolve));
     await runtime.stop();

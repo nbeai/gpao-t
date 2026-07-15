@@ -128,12 +128,22 @@ function publicInvocation(response, request) {
   assertObject(response.receipt, "protected_connection_invalid_response", "Response receipt is required");
   const allowed = new Set(["providerId", "modelId", "outcome", "startedAt", "finishedAt"]);
   assertKnownKeys(response.receipt, allowed, "Response receipt", "protected_connection_invalid_response", 502);
-  return Object.freeze({
-    schema: PROTECTED_CONNECTION_SCHEMA,
-    requestId: request.requestId,
-    state: response.state,
-    receipt: Object.freeze({ ...response.receipt })
-  });
+  const receipt = Object.freeze({ ...response.receipt });
+  if (response.state === "unknown") {
+    if (response.result !== undefined) throw failure("protected_connection_invalid_response", "Unknown invocation outcome cannot include a result", 502);
+    return Object.freeze({ schema: PROTECTED_CONNECTION_SCHEMA, requestId: request.requestId, state: response.state, receipt });
+  }
+  assertObject(response.result, "protected_connection_invalid_response", "Completed invocation result is required");
+  assertKnownKeys(response.result, new Set(["text", "usage"]), "Response result", "protected_connection_invalid_response", 502);
+  if (typeof response.result.text !== "string") {
+    throw failure("protected_connection_invalid_response", "Response result text must be a string", 502);
+  }
+  if (response.result.usage !== undefined && (!Number.isFinite(response.result.usage) || response.result.usage < 0)) {
+    throw failure("protected_connection_invalid_response", "Response result usage must be a non-negative finite number", 502);
+  }
+  const result = { text: response.result.text };
+  if (response.result.usage !== undefined) result.usage = response.result.usage;
+  return Object.freeze({ schema: PROTECTED_CONNECTION_SCHEMA, requestId: request.requestId, state: response.state, result: Object.freeze(result), receipt });
 }
 
 function publicCancellation(response, request) {
@@ -148,7 +158,7 @@ function publicCancellation(response, request) {
 function validateResponse(response, request) {
   assertObject(response, "protected_connection_invalid_response", "Protected connection response must be an object");
   assertNoSecret(response, "response");
-  assertKnownKeys(response, new Set(["schema", "operation", "requestId", "credentialRef", "authMethod", "state", "models", "operationId", "receipt"]), "Protected connection response", "protected_connection_invalid_response", 502);
+  assertKnownKeys(response, new Set(["schema", "operation", "requestId", "credentialRef", "authMethod", "state", "models", "operationId", "result", "receipt"]), "Protected connection response", "protected_connection_invalid_response", 502);
   if (response.schema !== PROTECTED_CONNECTION_SCHEMA || response.operation !== request.operation || response.requestId !== request.requestId) {
     throw failure("protected_connection_invalid_response", "Protected connection response does not match its request", 502);
   }

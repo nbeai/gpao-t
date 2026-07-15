@@ -18,6 +18,17 @@ async function readJson(request) {
   try { return JSON.parse(body); } catch { throw new RuntimeError("invalid_json", "Request body must be valid JSON", 400); }
 }
 
+function connectionRequest(body) {
+  if (!body || typeof body !== "object" || Array.isArray(body)) {
+    throw new RuntimeError("protected_connection_invalid_request", "A connection method is required", 400);
+  }
+  const fields = Object.keys(body);
+  if (fields.length !== 1 || fields[0] !== "authMethod" || typeof body.authMethod !== "string") {
+    throw new RuntimeError("protected_connection_secret_forbidden", "Connection secrets must stay inside the GPAO-T secure connection agent", 400);
+  }
+  return { authMethod: body.authMethod };
+}
+
 function send(response, status, value) {
   response.writeHead(status, { "content-type": "application/json; charset=utf-8", "cache-control": "no-store" });
   response.end(JSON.stringify(value));
@@ -91,25 +102,17 @@ export function createHttpServer(runtime, { host = "127.0.0.1", port = 18899 } =
         const body = await readJson(request);
         return send(response, 200, { schema: "gpao_t.model_selection.v1", selection: await runtime.setDefaultModelSelection(body.selection || body) });
       }
-      const connectionMatch = url.pathname.match(/^\/v1\/connections\/([a-z0-9-]+)(?:\/(api-key|verify))?$/i);
-      if (request.method === "POST" && url.pathname === "/v1/connections/codex-oauth/recheck") {
-        assertTrustedLocalMutation(request, session, host, port);
-        return send(response, 200, { schema: "gpao_t.connection_update.v1", connection: await runtime.recheckCodexOAuth() });
-      }
+      const connectionMatch = url.pathname.match(/^\/v1\/connections\/([a-z0-9-]+)(?:\/(refresh))?$/i);
       if (connectionMatch) {
         const [, providerId, action] = connectionMatch;
-        if (request.method === "PUT" && action === "api-key") {
+        if (request.method === "POST" && !action) {
           assertTrustedLocalMutation(request, session, host, port);
-          throw new RuntimeError(
-            "credential_connection_pending_secure_bridge",
-            "This build does not accept API keys until the native secure connection bridge is installed",
-            501,
-            { providerId }
-          );
+          const body = connectionRequest(await readJson(request));
+          return send(response, 200, { schema: "gpao_t.connection_update.v1", connection: await runtime.beginProviderConnection({ providerId, authMethod: body.authMethod }) });
         }
-        if (request.method === "POST" && action === "verify") {
+        if (request.method === "POST" && action === "refresh") {
           assertTrustedLocalMutation(request, session, host, port);
-          return send(response, 200, { schema: "gpao_t.connection_update.v1", connection: await runtime.verifyProviderApiKey(providerId) });
+          return send(response, 200, { schema: "gpao_t.connection_update.v1", connection: await runtime.refreshProviderConnection(providerId) });
         }
         if (request.method === "DELETE" && !action) {
           assertTrustedLocalMutation(request, session, host, port);

@@ -21,6 +21,8 @@ export class NativeOsTurnPipeline {
     const memorySearch = this.memory.search(input, { sessionId });
     const taskPacket = createTaskPacket({ sessionId, input, activeGoal, memoryCandidates: memorySearch.results, authority });
     const admission = admitTcellCandidates(taskPacket, memorySearch.results);
+    const selection = { ...(authority.modelSelection || {}), allowCrossProviderFallback: Boolean(authority.allowCrossProviderFallback) };
+    const selectedProviderId = selection.preferredProviderId || selection.providerId || null;
     let routed;
     try {
       routed = await this.runtime.modelRouter.invoke({
@@ -30,7 +32,8 @@ export class NativeOsTurnPipeline {
         idempotencyKey: `${principalId}:${requestId}`,
         input,
         sourceContextDigest: JSON.stringify(admission.trace),
-        selection: { ...(authority.modelSelection || {}), allowCrossProviderFallback: Boolean(authority.allowCrossProviderFallback) }
+        selection,
+        protectedConnection: selectedProviderId ? this.runtime.protectedConnectionMetadata(selectedProviderId) : null
       });
     } catch (error) {
       const providerFailure = normalizeProviderFailure(error);

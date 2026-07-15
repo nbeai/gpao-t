@@ -43,6 +43,7 @@ function fakeTransport() {
           requestId: request.requestId,
           operationId: request.requestId,
           state: "completed",
+          result: { text: "safe model response", usage: 7 },
           receipt: { providerId: request.providerId, modelId: request.modelId, outcome: "completed" }
         };
       }
@@ -76,7 +77,7 @@ test("API-key and OAuth connections expose the same typed public state shape", a
   assert.equal(Object.hasOwn(transport.requests[0], "secret"), false);
 });
 
-test("connection and provider operations stay secret-free and project a redacted public receipt", async () => {
+test("connection and provider operations stay secret-free and project an allowlisted model result with a redacted receipt", async () => {
   const transport = fakeTransport();
   const contract = client(transport);
   const status = await contract.connection.status({ requestId: requestId(3), credentialRef: "credential-main", deadline: NOW + 1_000 });
@@ -84,10 +85,65 @@ test("connection and provider operations stay secret-free and project a redacted
   const cancelled = await contract.provider.cancel({ requestId: requestId(5), operationId: requestId(4), deadline: NOW + 1_000 });
   const revoked = await contract.connection.revoke({ requestId: requestId(6), credentialRef: status.credentialRef, deadline: NOW + 1_000 });
 
+  assert.deepEqual(invocation.result, { text: "safe model response", usage: 7 });
   assert.deepEqual(invocation.receipt, { providerId: "openai", modelId: "model-main", outcome: "completed" });
   assert.equal(cancelled.state, "cancelled");
   assert.equal(revoked.state, "revoked");
   assert.doesNotMatch(JSON.stringify([status, invocation, cancelled, revoked]), /api[_-]?key|token|password|secret/i);
+});
+
+test("provider invocation only exposes text and optional numeric usage from completed results", async () => {
+  const withoutUsage = client({
+    async send(request) {
+      return {
+        schema: PROTECTED_CONNECTION_SCHEMA,
+        operation: request.operation,
+        requestId: request.requestId,
+        operationId: request.requestId,
+        state: "completed",
+        result: { text: "safe text only" },
+        receipt: { providerId: request.providerId, modelId: request.modelId, outcome: "completed" }
+      };
+    }
+  });
+  const invocation = await withoutUsage.provider.invoke({ requestId: requestId(11), credentialRef: "credential-main", providerId: "openai", modelId: "model-main", input: { message: "hello" }, deadline: NOW + 1_000 });
+  assert.deepEqual(invocation.result, { text: "safe text only" });
+
+  const unsupportedResult = client({
+    async send(request) {
+      return {
+        schema: PROTECTED_CONNECTION_SCHEMA,
+        operation: request.operation,
+        requestId: request.requestId,
+        operationId: request.requestId,
+        state: "completed",
+        result: { text: "safe text", providerResponse: { raw: "not allowed" } },
+        receipt: { providerId: request.providerId, modelId: request.modelId, outcome: "completed" }
+      };
+    }
+  });
+  await assert.rejects(
+    () => unsupportedResult.provider.invoke({ requestId: requestId(12), credentialRef: "credential-main", providerId: "openai", modelId: "model-main", input: { message: "hello" }, deadline: NOW + 1_000 }),
+    error => error.code === "protected_connection_invalid_response"
+  );
+
+  const nonNumericUsage = client({
+    async send(request) {
+      return {
+        schema: PROTECTED_CONNECTION_SCHEMA,
+        operation: request.operation,
+        requestId: request.requestId,
+        operationId: request.requestId,
+        state: "completed",
+        result: { text: "safe text", usage: "7" },
+        receipt: { providerId: request.providerId, modelId: request.modelId, outcome: "completed" }
+      };
+    }
+  });
+  await assert.rejects(
+    () => nonNumericUsage.provider.invoke({ requestId: requestId(13), credentialRef: "credential-main", providerId: "openai", modelId: "model-main", input: { message: "hello" }, deadline: NOW + 1_000 }),
+    error => error.code === "protected_connection_invalid_response"
+  );
 });
 
 test("sentinel secrets are rejected before transport ingress and at transport egress", async () => {
@@ -115,6 +171,24 @@ test("sentinel secrets are rejected before transport ingress and at transport eg
   });
   await assert.rejects(
     () => egress.connection.begin({ requestId: requestId(8), providerId: "openai", authMethod: "oauth", deadline: NOW + 1_000 }),
+    error => error.code === "protected_connection_secret_leak"
+  );
+
+  const invocationEgress = client({
+    async send(request) {
+      return {
+        schema: PROTECTED_CONNECTION_SCHEMA,
+        operation: request.operation,
+        requestId: request.requestId,
+        operationId: request.requestId,
+        state: "completed",
+        result: { text: "safe text", usage: 2, secret: "F2-SENTINEL-SECRET" },
+        receipt: { providerId: request.providerId, modelId: request.modelId, outcome: "completed" }
+      };
+    }
+  });
+  await assert.rejects(
+    () => invocationEgress.provider.invoke({ requestId: requestId(14), credentialRef: "credential-main", providerId: "openai", modelId: "model-main", input: { message: "hello" }, deadline: NOW + 1_000 }),
     error => error.code === "protected_connection_secret_leak"
   );
 });

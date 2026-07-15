@@ -122,6 +122,87 @@ test("model router settles retry-after failures and never falls back after an un
   assert.equal(health.snapshot("fast").inFlight, 0);
 });
 
+test("model router invokes an optional protected invoker with opaque connection metadata", async () => {
+  let credentialResolverCalls = 0;
+  let adapterCalls = 0;
+  const protectedCalls = [];
+  const adapters = new ProviderAdapterRegistry({ adapters: [
+    { id: "fake-fast", adapter: { invoke: async () => { adapterCalls += 1; return { result: { text: "must not run" }, receipt: {} }; } } },
+    { id: "fake-backup", adapter: { invoke: async () => ({ result: { text: "must not run" }, receipt: {} }) } }
+  ] });
+  const router = new ModelRouter({
+    providerRegistry: registry(),
+    adapterRegistry: adapters,
+    credentialResolver: async () => { credentialResolverCalls += 1; return "must-not-enter-protected-path"; },
+    protectedInvoker: async request => {
+      protectedCalls.push(request);
+      return { result: { text: "protected answer" }, receipt: { outcome: "completed", providerId: request.plan.providerId, modelId: request.plan.modelId } };
+    }
+  });
+  const result = await router.invoke({
+    runId: "run", sessionId: "session", generation: 1, idempotencyKey: "key", input: "hello", sourceContextDigest: "trace",
+    protectedConnection: { credentialRef: "credential-main", authMethod: "oauth" }
+  });
+  assert.equal(result.providerResult.result.text, "protected answer");
+  assert.deepEqual(result.providerResult.receipt, { outcome: "completed", providerId: "fast", modelId: "fast-1" });
+  assert.equal(credentialResolverCalls, 0);
+  assert.equal(adapterCalls, 0);
+  assert.equal(protectedCalls.length, 1);
+  assert.deepEqual(Object.keys(protectedCalls[0]).sort(), ["authMethod", "credentialRef", "input", "plan", "signal"]);
+  assert.equal(protectedCalls[0].credentialRef, "credential-main");
+  assert.equal(protectedCalls[0].authMethod, "oauth");
+});
+
+test("model router rejects raw secrets before they enter the protected invoker", async () => {
+  let protectedCalls = 0;
+  const router = new ModelRouter({
+    providerRegistry: registry(),
+    adapterRegistry: new ProviderAdapterRegistry(),
+    protectedInvoker: async () => { protectedCalls += 1; return { result: { text: "must not run" }, receipt: {} }; }
+  });
+  await assert.rejects(
+    () => router.invoke({
+      runId: "run", sessionId: "session", generation: 1, idempotencyKey: "key", input: "hello", sourceContextDigest: "trace",
+      protectedConnection: { credentialRef: "sk-test-raw-secret-value", authMethod: "api_key" }
+    }),
+    error => error.failureClass === "invalid_request"
+  );
+  await assert.rejects(
+    () => router.invoke({
+      runId: "run", sessionId: "session", generation: 1, idempotencyKey: "key", input: "hello", sourceContextDigest: "trace",
+      protectedConnection: { credentialRef: "credential-main", authMethod: "oauth", secret: "F2-SENTINEL-SECRET" }
+    }),
+    error => error.failureClass === "invalid_request"
+  );
+  assert.equal(protectedCalls, 0);
+});
+
+test("protected unknown outcome never falls back", async () => {
+  const calls = [];
+  const adapters = new ProviderAdapterRegistry({ adapters: [
+    { id: "fake-fast", adapter: { invoke: async () => { calls.push("adapter-fast"); return { result: { text: "must not run" }, receipt: {} }; } } },
+    { id: "fake-backup", adapter: { invoke: async () => { calls.push("adapter-backup"); return { result: { text: "must not run" }, receipt: {} }; } } }
+  ] });
+  const router = new ModelRouter({
+    providerRegistry: registry(),
+    adapterRegistry: adapters,
+    protectedInvoker: async ({ plan }) => {
+      calls.push(`protected-${plan.providerId}`);
+      const error = new Error("deadline outcome unknown");
+      error.code = "protected_connection_outcome_unknown";
+      throw error;
+    }
+  });
+  await assert.rejects(
+    () => router.invoke({
+      runId: "run", sessionId: "session", generation: 1, idempotencyKey: "key", input: "hello", sourceContextDigest: "trace",
+      selection: { allowCrossProviderFallback: true }, protectedConnection: { credentialRef: "credential-main", authMethod: "oauth" }
+    }),
+    error => error.failureClass === "external_outcome_unknown" && error.failures.length === 1
+  );
+  assert.deepEqual(calls, ["protected-fast"]);
+});
+
 test("OpenAI and Anthropic adapters map official response envelopes without exposing credentials", async () => {
   const openai = new OpenAiResponsesAdapter({ baseUrl: "https://provider.test/v1", fetchImpl: async (_url, init) => {
     assert.match(init.headers.authorization, /^Bearer /);

@@ -1,5 +1,9 @@
 import { ProviderInvocationError, createInvocationPlan, normalizeProviderFailure } from "./provider.js";
 
+const IDENTIFIER = /^[a-z0-9][a-z0-9._:-]{0,127}$/i;
+const AUTH_METHODS = new Set(["api_key", "oauth", "local"]);
+const RAW_SECRET = /(?:^|[\s"'=])(?:sk[-_][a-z0-9_-]{8,}|bearer\s+[a-z0-9._~+\/-]{12,}|api[_-]?key\s*[=:]\s*\S+)/i;
+
 function rank(value, fallback = 100) {
   return Number.isFinite(value) ? value : fallback;
 }
@@ -9,6 +13,25 @@ function normalizeSelection(selection = {}) {
     preferredProviderId: selection.preferredProviderId || selection.providerId || null,
     preferredModelId: selection.preferredModelId || selection.modelId || null
   };
+}
+
+function protectedConnectionMetadata(connection) {
+  if (connection === undefined || connection === null) return null;
+  if (!connection || typeof connection !== "object" || Array.isArray(connection)) {
+    throw new ProviderInvocationError("invalid_request", "Protected connection metadata must be an object");
+  }
+  for (const key of Object.keys(connection)) {
+    if (!["credentialRef", "authMethod"].includes(key)) {
+      throw new ProviderInvocationError("invalid_request", "Protected connection metadata contains an unsupported field", { field: key });
+    }
+  }
+  if (typeof connection.credentialRef !== "string" || !IDENTIFIER.test(connection.credentialRef) || RAW_SECRET.test(connection.credentialRef)) {
+    throw new ProviderInvocationError("invalid_request", "Protected connection credentialRef must be an opaque identifier");
+  }
+  if (!AUTH_METHODS.has(connection.authMethod)) {
+    throw new ProviderInvocationError("invalid_request", "Protected connection authMethod is invalid");
+  }
+  return Object.freeze({ credentialRef: connection.credentialRef, authMethod: connection.authMethod });
 }
 
 function readyCandidates(registry, { requiredCapabilities = ["text"], preferredProviderId = null, preferredModelId = null } = {}) {
@@ -57,10 +80,12 @@ export class ProviderAdapterRegistry {
 }
 
 export class ModelRouter {
-  constructor({ providerRegistry, adapterRegistry, credentialResolver = async () => null, routeHealth = null } = {}) {
+  constructor({ providerRegistry, adapterRegistry, credentialResolver = async () => null, protectedInvoker = null, routeHealth = null } = {}) {
+    if (protectedInvoker !== null && typeof protectedInvoker !== "function") throw new TypeError("A protected invoker must be a function");
     this.providerRegistry = providerRegistry;
     this.adapterRegistry = adapterRegistry;
     this.credentialResolver = credentialResolver;
+    this.protectedInvoker = protectedInvoker;
     this.routeHealth = routeHealth;
   }
 
@@ -76,8 +101,12 @@ export class ModelRouter {
     throw new ProviderInvocationError("provider_unavailable", "No ready provider can satisfy this request");
   }
 
-  async invoke({ runId, sessionId, generation, idempotencyKey, input, sourceContextDigest, selection = {}, timeoutMs = 30_000, responseBudget = 8_192, signal } = {}) {
+  async invoke({ runId, sessionId, generation, idempotencyKey, input, sourceContextDigest, selection = {}, protectedConnection = null, timeoutMs = 30_000, responseBudget = 8_192, signal } = {}) {
     const normalizedSelection = normalizeSelection(selection);
+    const protectedMetadata = protectedConnectionMetadata(protectedConnection);
+    if (protectedMetadata && !this.protectedInvoker) {
+      throw new ProviderInvocationError("provider_unavailable", "No protected provider invoker is configured");
+    }
     const candidates = this.select(normalizedSelection);
     const failures = [];
     for (let index = 0; index < candidates.length; index += 1) {
@@ -110,7 +139,7 @@ export class ModelRouter {
       }
       let routeHealthReceipt = null;
       try {
-        const credential = await this.credentialResolver({ providerId: provider.id, modelId: model.id });
+        const credential = protectedMetadata ? null : await this.credentialResolver({ providerId: provider.id, modelId: model.id });
         const controller = new AbortController();
         const cancel = () => controller.abort(signal?.reason || new ProviderInvocationError("external_outcome_unknown", "Provider request was cancelled"));
         if (signal?.aborted) cancel();
@@ -118,7 +147,15 @@ export class ModelRouter {
         const deadline = setTimeout(() => controller.abort(new ProviderInvocationError("provider_timeout", "Provider response exceeded the local deadline")), timeoutMs);
         let result;
         try {
-          result = await this.adapterRegistry.invoke({ adapterId: provider.adapter, plan, input, credential, signal: controller.signal });
+          result = protectedMetadata
+            ? await this.#invokeProtected({ plan, input, protectedMetadata, signal: controller.signal })
+            : await this.adapterRegistry.invoke({
+              adapterId: provider.adapter,
+              plan,
+              input,
+              credential,
+              signal: controller.signal
+            });
         } finally {
           clearTimeout(deadline);
           signal?.removeEventListener("abort", cancel);
@@ -143,5 +180,24 @@ export class ModelRouter {
 
   #settleRouteHealth(lease, outcome) {
     return lease ? this.routeHealth.settle({ lease, outcome }) : null;
+  }
+
+  async #invokeProtected({ plan, input, protectedMetadata, signal }) {
+    try {
+      return await this.protectedInvoker({
+        plan,
+        input,
+        credentialRef: protectedMetadata.credentialRef,
+        authMethod: protectedMetadata.authMethod,
+        signal
+      });
+    } catch (error) {
+      if (error?.code === "protected_connection_outcome_unknown") {
+        throw new ProviderInvocationError("external_outcome_unknown", "Protected provider outcome is unknown", {
+          protectedOutcome: "unknown"
+        });
+      }
+      throw error;
+    }
   }
 }

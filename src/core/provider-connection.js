@@ -1,101 +1,137 @@
-import crypto from "node:crypto";
 import { RuntimeError } from "./errors.js";
 import { presentRuntimeStatus } from "./presentation-status.js";
 
+const AUTH_METHODS = new Set(["api_key", "oauth", "local"]);
+const CONNECTION_STATES = new Set(["not_connected", "connecting", "connected", "auth_required", "expired", "unavailable", "revoked", "unknown"]);
+const RUNTIME_STATES = Object.freeze({
+  not_connected: "not_configured",
+  connecting: "verifying",
+  connected: "ready",
+  unavailable: "provider_unavailable",
+  revoked: "auth_required",
+  unknown: "provider_unavailable"
+});
+const IDENTIFIER = /^[a-z0-9][a-z0-9._:-]{0,127}$/i;
+const SENSITIVE_KEY = /(?:api[_-]?key|access[_-]?token|refresh[_-]?token|authorization|password|secret|credential(?!ref))/i;
+const RAW_SECRET = /(?:^|[\s"'=])(?:sk[-_][a-z0-9_-]{8,}|bearer\s+[a-z0-9._~+\/-]{12,}|api[_-]?key\s*[=:]\s*\S+)/i;
+const CONNECTION_FIELDS = new Set(["providerId", "credentialRef", "authMethod", "state", "models"]);
+
+function failure(code, message, details = undefined) {
+  return new RuntimeError(code, message, 400, details);
+}
+
+function secretPath(value, path = [], seen = new Set()) {
+  if (typeof value === "string" && RAW_SECRET.test(value)) return path.join(".") || "value";
+  if (!value || typeof value !== "object" || seen.has(value)) return null;
+  seen.add(value);
+  if (Array.isArray(value)) {
+    for (let index = 0; index < value.length; index += 1) {
+      const found = secretPath(value[index], [...path, String(index)], seen);
+      if (found) return found;
+    }
+    return null;
+  }
+  for (const [key, child] of Object.entries(value)) {
+    if (SENSITIVE_KEY.test(key) && child !== undefined && child !== null && child !== "") return [...path, key].join(".");
+    const found = secretPath(child, [...path, key], seen);
+    if (found) return found;
+  }
+  return null;
+}
+
+function validateConnection(connection) {
+  if (!connection || typeof connection !== "object" || Array.isArray(connection)) {
+    throw failure("protected_connection_invalid_request", "Protected connection metadata must be an object");
+  }
+  const sensitiveField = secretPath(connection);
+  if (sensitiveField) {
+    throw failure("protected_connection_secret_forbidden", "Raw secrets cannot enter provider connection metadata", { field: sensitiveField });
+  }
+  for (const key of Object.keys(connection)) {
+    if (!CONNECTION_FIELDS.has(key)) throw failure("protected_connection_invalid_request", "Protected connection metadata contains an unsupported field", { field: key });
+  }
+  const { providerId, credentialRef, authMethod, state, models } = connection;
+  if (typeof providerId !== "string" || !IDENTIFIER.test(providerId)) throw failure("protected_connection_invalid_request", "providerId is required");
+  if (typeof credentialRef !== "string" || !IDENTIFIER.test(credentialRef)) throw failure("protected_connection_invalid_request", "credentialRef is required");
+  if (!AUTH_METHODS.has(authMethod)) throw failure("protected_connection_invalid_request", "authMethod is invalid");
+  if (!CONNECTION_STATES.has(state)) throw failure("protected_connection_invalid_request", "state is invalid");
+  if (!Array.isArray(models) || models.some(model => typeof model !== "string" || !IDENTIFIER.test(model))) {
+    throw failure("protected_connection_invalid_request", "models must contain provider model identifiers");
+  }
+  return Object.freeze({ providerId, credentialRef, authMethod, state, models: Object.freeze([...models]) });
+}
+
+function runtimeState(state) {
+  return RUNTIME_STATES[state] || state;
+}
+
 export class ProviderConnectionCenter {
-  constructor({ credentialStore, providerRegistry = null, verify = async () => ({ state: "ready" }), verifyTimeoutMs = 15_000, clock = () => Date.now() } = {}) {
-    if (!credentialStore) throw new RuntimeError("connection_configuration_error", "A credential store is required", 500);
-    this.credentialStore = credentialStore;
-    this.verify = verify;
+  constructor({ providerRegistry = null, clock = () => Date.now() } = {}) {
     this.providerRegistry = providerRegistry;
-    this.verifyTimeoutMs = verifyTimeoutMs;
     this.clock = clock;
     this.connections = new Map();
-    this.verifications = new Map();
   }
 
   status(providerId) {
-    const entry = this.connections.get(providerId) || { providerId, state: "not_configured", credentialHandle: null, updatedAt: null, verifiedAt: null };
-    return { schema: "gpao_t.provider_connection.v1", providerId: entry.providerId, state: entry.state, configured: entry.connectionType === "oauth" || Boolean(entry.credentialHandle), updatedAt: entry.updatedAt, verifiedAt: entry.verifiedAt, presentation: presentRuntimeStatus(entry.state) };
+    const entry = this.connections.get(providerId);
+    const state = entry ? runtimeState(entry.state) : "not_configured";
+    return {
+      schema: "gpao_t.provider_connection.v2",
+      providerId,
+      state,
+      configured: Boolean(entry),
+      updatedAt: entry?.updatedAt || null,
+      verifiedAt: entry?.state === "connected" ? entry.updatedAt : null,
+      models: entry ? [...entry.models] : [],
+      presentation: presentRuntimeStatus(state)
+    };
   }
 
   hydrate(entries = []) {
     for (const entry of entries) {
-      if (!entry?.providerId || (!entry.credentialHandle && entry.connectionType !== "oauth")) continue;
-      this.connections.set(entry.providerId, { providerId: entry.providerId, credentialHandle: entry.credentialHandle, connectionType: entry.connectionType || "api_key", state: entry.state || "not_configured", updatedAt: Number(entry.updatedAt || 0) || null, verifiedAt: Number(entry.verifiedAt || 0) || null });
+      try {
+        this.adopt(entry);
+      } catch {
+        // Persisted legacy secret-bearing records are intentionally not revived.
+      }
     }
   }
 
   exportMetadata() {
-    return [...this.connections.values()].map(({ providerId, credentialHandle, connectionType, state, updatedAt, verifiedAt }) => ({ providerId, credentialHandle, connectionType, state, updatedAt, verifiedAt }));
+    return [...this.connections.values()].map(({ providerId, credentialRef, authMethod, state, models }) => ({
+      providerId,
+      credentialRef,
+      authMethod,
+      state,
+      models: [...models]
+    }));
   }
 
-  updateRegistry(providerId, state, connectionType = "api_key") {
+  protectedMetadata(providerId) {
+    const entry = this.connections.get(providerId);
+    if (!entry || entry.state !== "connected") return null;
+    return Object.freeze({ credentialRef: entry.credentialRef, authMethod: entry.authMethod });
+  }
+
+  updateRegistry(providerId, state, authMethod) {
     if (!this.providerRegistry) return;
-    const configured = state === "ready" || state === "verifying";
+    const connected = state === "connected";
     this.providerRegistry.updateConnection(providerId, {
-      auth: { kind: connectionType === "oauth" ? "oauth" : "keychain", credentialPresent: configured },
-      health: { state: state === "ready" ? "ready" : "unknown", failureClass: null, cooldownUntil: null }
+      auth: { kind: authMethod === "oauth" ? "oauth" : "keychain", credentialPresent: connected },
+      health: { state: connected ? "ready" : "unknown", failureClass: null, cooldownUntil: null }
     });
   }
 
-  async refresh(providerId) {
-    const entry = this.connections.get(providerId);
-    if (!entry) return this.status(providerId);
-    if (entry.connectionType === "oauth") {
-      this.updateRegistry(providerId, entry.state, "oauth");
-      return this.status(providerId);
-    }
-    if (!await this.credentialStore.has(entry.credentialHandle, providerId)) {
-      this.connections.delete(providerId);
-      this.providerRegistry?.updateConnection(providerId, { auth: { kind: "keychain", credentialPresent: false }, health: { state: "unknown", failureClass: null, cooldownUntil: null } });
-      return this.status(providerId);
-    }
-    this.updateRegistry(providerId, entry.state, entry.connectionType);
-    return this.status(providerId);
+  adopt(connection) {
+    const protectedConnection = validateConnection(connection);
+    const entry = { ...protectedConnection, updatedAt: this.clock() };
+    this.connections.set(entry.providerId, entry);
+    this.updateRegistry(entry.providerId, entry.state, entry.authMethod);
+    return this.status(entry.providerId);
   }
 
-  async configure({ providerId, secret }) {
-    this.cancelVerification(providerId, "connection_reconfigured");
-    const credential = await this.credentialStore.save({ providerId, secret });
-    const entry = { providerId, state: "verifying", credentialHandle: credential.handle, connectionType: "api_key", updatedAt: this.clock(), verificationId: crypto.randomUUID() };
-    this.connections.set(providerId, entry);
-    this.updateRegistry(providerId, entry.state, entry.connectionType);
-    return this.status(providerId);
-  }
-
-  async verifyConnection(providerId) {
-    const entry = this.connections.get(providerId);
-    if (!entry || !await this.credentialStore.has(entry.credentialHandle, providerId)) return this.status(providerId);
-    const current = this.verifications.get(providerId);
-    if (current?.promise) return current.promise;
-    const controller = new AbortController();
-    const verificationId = entry.verificationId;
-    const timeout = setTimeout(() => controller.abort(new RuntimeError("provider_timeout", "Provider connection verification timed out", 504)), this.verifyTimeoutMs);
-    timeout.unref?.();
-    const verification = { verificationId, controller, promise: null };
-    const complete = async () => {
-      try {
-        try {
-          const result = await this.credentialStore.withCredential(entry.credentialHandle, providerId, secret => this.verify({ providerId, secret, credentialHandle: entry.credentialHandle, signal: controller.signal }));
-          if (!this.isCurrentVerification(providerId, entry, verificationId)) return this.status(providerId);
-          entry.state = result?.state === "ready" ? "ready" : (result?.state || "provider_unavailable");
-        } catch (error) {
-          if (!this.isCurrentVerification(providerId, entry, verificationId)) return this.status(providerId);
-          entry.state = error.code === "auth_required" ? "auth_required" : "provider_unavailable";
-        }
-        entry.updatedAt = this.clock();
-        entry.verifiedAt = entry.state === "ready" ? entry.updatedAt : null;
-        this.updateRegistry(providerId, entry.state, entry.connectionType);
-        return this.status(providerId);
-      } finally {
-        clearTimeout(timeout);
-        if (this.verifications.get(providerId) === verification) this.verifications.delete(providerId);
-      }
-    };
-    verification.promise = complete();
-    this.verifications.set(providerId, verification);
-    return verification.promise;
+  refresh(connection) {
+    return this.adopt(connection);
   }
 
   async credential(providerId) {
@@ -108,30 +144,12 @@ export class ProviderConnectionCenter {
   }
 
   async disconnect(providerId) {
-    this.cancelVerification(providerId, "connection_disconnected");
     const entry = this.connections.get(providerId);
-    if (entry?.credentialHandle) await this.credentialStore.remove(entry.credentialHandle, providerId);
     this.connections.delete(providerId);
-    this.providerRegistry?.updateConnection(providerId, { auth: { kind: entry?.connectionType === "oauth" ? "oauth" : "keychain", credentialPresent: false }, health: { state: "unknown", failureClass: null, cooldownUntil: null } });
+    this.providerRegistry?.updateConnection(providerId, {
+      auth: { kind: entry?.authMethod === "oauth" ? "oauth" : "keychain", credentialPresent: false },
+      health: { state: "unknown", failureClass: null, cooldownUntil: null }
+    });
     return this.status(providerId);
-  }
-
-  markOAuthReady(providerId) {
-    const now = this.clock();
-    this.connections.set(providerId, { providerId, credentialHandle: null, connectionType: "oauth", state: "ready", updatedAt: now, verifiedAt: now });
-    this.updateRegistry(providerId, "ready", "oauth");
-    return this.status(providerId);
-  }
-
-  cancelVerification(providerId, reason = "connection_changed") {
-    const verification = this.verifications.get(providerId);
-    if (!verification) return false;
-    this.verifications.delete(providerId);
-    verification.controller.abort(new RuntimeError("provider_verification_cancelled", "Provider connection verification was cancelled", 409, { reason }));
-    return true;
-  }
-
-  isCurrentVerification(providerId, entry, verificationId) {
-    return this.connections.get(providerId) === entry && entry.verificationId === verificationId;
   }
 }

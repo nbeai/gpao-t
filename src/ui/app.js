@@ -29,6 +29,7 @@ async function request(path, init = {}) {
   }
   if (!response.ok) {
     const error = new Error(body?.repairPlan?.detail || body?.message || "요청을 처리하지 못했습니다.");
+    error.code = body?.code || null;
     error.repairPlan = body?.repairPlan || null;
     throw error;
   }
@@ -40,18 +41,37 @@ async function refreshHealth() {
 }
 function providerState(provider) {
   if (provider.auth.state === "configured" && provider.health.state === "ready") return "연결됨";
-  if (provider.connection?.state === "verifying") return "연결 확인 필요";
+  if (["verifying", "connecting"].includes(provider.connection?.state)) return "연결 확인 중";
+  if (["expired", "auth_required"].includes(provider.connection?.state)) return "다시 연결 필요";
   if (provider.auth.state === "auth_required") return "연결 필요";
   return "현재 사용할 수 없음";
 }
-function providerAction(provider) {
-  if (provider.id === "codex-oauth") return "Codex 로그인 확인";
-  if (provider.display.authMethods.includes("api_key")) return "안전한 연결 준비 중";
-  return "상태 확인";
-}
 function providerName(provider) { return provider.display.name.replace(/\s*API$/i, ""); }
 function providerDescription(provider) {
-  return provider.id === "codex-oauth" ? "이 기기에 로그인된 Codex 계정을 사용합니다." : "이 AI 서비스를 위한 안전한 연결을 준비하고 있습니다.";
+  return provider.display.description || "이 AI 서비스를 GPAO-T에 안전하게 연결합니다.";
+}
+function connectionMethodLabel(authMethod) {
+  if (authMethod === "api_key") return "API 키로 연결";
+  if (authMethod === "oauth") return "계정으로 연결";
+  if (authMethod === "local") return "로컬 모델 연결";
+  return "연결";
+}
+function providerControls(provider) {
+  const connected = provider.connection?.state === "ready" || (provider.auth.state === "configured" && provider.health.state === "ready");
+  if (connected) {
+    return `<div class="provider-actions"><button type="button" data-provider-refresh="${escape(provider.id)}">연결 확인</button><button type="button" class="subtle-action" data-provider-disconnect="${escape(provider.id)}">연결 해제</button></div>`;
+  }
+  return `<div class="provider-actions">${provider.display.authMethods.map(authMethod => `<button type="button" data-provider-connect="${escape(provider.id)}" data-auth-method="${escape(authMethod)}">${escape(connectionMethodLabel(authMethod))}</button>`).join("")}</div>`;
+}
+function connectionRecoveryMessage(error, providerNameText) {
+  if (error?.repairPlan?.detail) return error.repairPlan.detail;
+  if (["protected_connection_agent_unavailable", "protected_connection_unavailable"].includes(error?.code)) {
+    return `${providerNameText} 연결을 시작할 준비가 아직 끝나지 않았습니다. GPAO-T를 최신 상태로 유지한 뒤 다시 시도해 주세요.`;
+  }
+  if (["protected_connection_outcome_unknown", "external_outcome_unknown"].includes(error?.code)) {
+    return "연결 결과를 확인하지 못했습니다. 같은 요청을 반복하지 않고, 잠시 후 연결 확인을 눌러 주세요.";
+  }
+  return `${providerNameText} 연결을 마치지 못했습니다. 잠시 후 다시 시도해 주세요.`;
 }
 function connectorState(connector) {
   if (!localConnector(connector)) return "연결 준비 필요";
@@ -127,23 +147,43 @@ async function refreshConnections() {
   const selected = connections.defaultSelection;
   select.innerHTML = ready.length ? ready.map(({ provider, model }) => `<option value="${escape(`${provider.id}:${model.id}`)}" ${selected?.preferredProviderId === provider.id && selected?.preferredModelId === model.id ? "selected" : ""}>${escape(provider.display.name)} · ${escape(model.id)}</option>`).join("") : `<option value="">연결된 외부 모델이 없습니다</option>`;
   $("#save-default-model").disabled = ready.length === 0;
-  $("#provider-list").innerHTML = connections.providers.filter(provider => provider.id !== "gpao-t-emulator").map(provider => `<article class="provider-row"><div><strong>${escape(providerName(provider))}</strong><p>${escape(providerDescription(provider))}</p></div><div class="provider-state"><span>${providerState(provider)}</span><button type="button" data-provider="${escape(provider.id)}">${providerAction(provider)}</button></div></article>`).join("");
-  $("#provider-list").querySelectorAll("button[data-provider]").forEach(button => button.addEventListener("click", () => openProviderAction(button.dataset.provider)));
+  $("#provider-list").innerHTML = connections.providers.filter(provider => provider.id !== "gpao-t-emulator").map(provider => `<article class="provider-row"><div><strong>${escape(providerName(provider))}</strong><p>${escape(providerDescription(provider))}</p></div><div class="provider-state"><span>${providerState(provider)}</span>${providerControls(provider)}</div></article>`).join("");
+  $("#provider-list").querySelectorAll("button[data-provider-connect]").forEach(button => button.addEventListener("click", () => beginProviderConnection(button.dataset.providerConnect, button.dataset.authMethod)));
+  $("#provider-list").querySelectorAll("button[data-provider-refresh]").forEach(button => button.addEventListener("click", () => refreshProviderConnection(button.dataset.providerRefresh)));
+  $("#provider-list").querySelectorAll("button[data-provider-disconnect]").forEach(button => button.addEventListener("click", () => disconnectProvider(button.dataset.providerDisconnect)));
 }
-async function openProviderAction(providerId) {
+async function beginProviderConnection(providerId, authMethod) {
   const provider = state.connections?.providers.find(item => item.id === providerId);
   if (!provider) return;
-  if (provider.id === "codex-oauth") {
-    $("#model-selection-status").textContent = "이 Mac의 Codex 로그인 상태를 확인하고 있습니다.";
-    try {
-      const result = await request("/v1/connections/codex-oauth/recheck", { method:"POST", body:"{}" });
-      $("#model-selection-status").textContent = result.connection.state === "ready" ? "ChatGPT / Codex 연결을 확인했습니다." : "Codex 연결을 확인하지 못했습니다.";
-      await refreshConnections();
-    } catch { $("#model-selection-status").textContent = "연결 상태를 확인하지 못했습니다. 잠시 후 다시 시도해 주세요."; }
-    return;
-  }
-  if (!provider.display.authMethods.includes("api_key")) return;
-  $("#model-selection-status").textContent = `${providerName(provider)} 연결은 전용 보안 모듈을 준비한 뒤 사용할 수 있습니다. 이 화면에서는 API 키를 입력받지 않습니다.`;
+  const status = $("#model-selection-status");
+  status.textContent = `${providerName(provider)} 연결을 시작하고 있습니다.`;
+  try {
+    const result = await request(`/v1/connections/${encodeURIComponent(providerId)}`, { method:"POST", body:JSON.stringify({ authMethod }) });
+    status.textContent = result.connection?.state === "ready" ? `${providerName(provider)} 연결을 확인했습니다.` : "연결을 계속 확인하고 있습니다. 잠시 후 연결 확인을 눌러 주세요.";
+    await refreshConnections();
+  } catch (error) { status.textContent = connectionRecoveryMessage(error, providerName(provider)); }
+}
+async function refreshProviderConnection(providerId) {
+  const provider = state.connections?.providers.find(item => item.id === providerId);
+  if (!provider) return;
+  const status = $("#model-selection-status");
+  status.textContent = `${providerName(provider)} 연결을 확인하고 있습니다.`;
+  try {
+    const result = await request(`/v1/connections/${encodeURIComponent(providerId)}/refresh`, { method:"POST", body:"{}" });
+    status.textContent = result.connection?.state === "ready" ? `${providerName(provider)} 연결이 정상입니다.` : "연결 상태를 다시 확인해 주세요.";
+    await refreshConnections();
+  } catch (error) { status.textContent = connectionRecoveryMessage(error, providerName(provider)); }
+}
+async function disconnectProvider(providerId) {
+  const provider = state.connections?.providers.find(item => item.id === providerId);
+  if (!provider) return;
+  const status = $("#model-selection-status");
+  status.textContent = `${providerName(provider)} 연결을 해제하고 있습니다.`;
+  try {
+    await request(`/v1/connections/${encodeURIComponent(providerId)}`, { method:"DELETE" });
+    status.textContent = `${providerName(provider)} 연결을 해제했습니다.`;
+    await refreshConnections();
+  } catch (error) { status.textContent = connectionRecoveryMessage(error, providerName(provider)); }
 }
 $("#models").addEventListener("click", async () => {
   $("#connection-dialog").showModal();
