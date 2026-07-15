@@ -1,6 +1,7 @@
 const storageKey = "gpao-t-native.sessions.v1";
 const state = { sessions: JSON.parse(localStorage.getItem(storageKey) || "[]"), activeId: null, connections: null };
 const $ = selector => document.querySelector(selector);
+const localConnector = connector => connector.transport === "builtin";
 
 function persist() { localStorage.setItem(storageKey, JSON.stringify(state.sessions)); }
 function active() { return state.sessions.find(session => session.id === state.activeId); }
@@ -45,8 +46,49 @@ function providerState(provider) {
 }
 function providerAction(provider) {
   if (provider.id === "codex-oauth") return "Codex 로그인 확인";
-  if (provider.display.authMethods.includes("api_key")) return provider.auth.state === "configured" ? "다시 연결" : "API 키 연결";
+  if (provider.display.authMethods.includes("api_key")) return provider.auth.state === "configured" ? "다시 연결" : "연결 정보 입력";
   return "상태 확인";
+}
+function providerName(provider) { return provider.display.name.replace(/\s*API$/i, ""); }
+function providerDescription(provider) {
+  return provider.id === "codex-oauth" ? "이 기기에 로그인된 Codex 계정을 사용합니다." : "이 AI 서비스를 연결합니다.";
+}
+function connectorState(connector) {
+  if (!localConnector(connector)) return "연결 준비 필요";
+  if (!connector.enabled) return "사용 안 함";
+  if (connector.health?.state === "ready") return "사용 중";
+  return "사용 가능";
+}
+function connectorDescription(connector) {
+  return localConnector(connector) ? connector.description : "연결을 준비하는 동안 이 도구는 사용되지 않습니다.";
+}
+function connectorName(connector) { return connector.id === "mcp.external" ? "외부 도구 연결" : connector.name; }
+function connectorControl(connector) {
+  if (!localConnector(connector)) return `<span class="connector-note">준비 중</span>`;
+  const action = connector.enabled ? "사용 안 함" : "사용";
+  return `<label class="toggle-control"><input type="checkbox" data-connector="${escape(connector.id)}" ${connector.enabled ? "checked" : ""}><span aria-hidden="true"></span><b class="sr-only">${escape(connectorName(connector))} ${action}</b></label>`;
+}
+function renderConnectors(connectors) {
+  const list = $("#connector-list");
+  list.innerHTML = connectors.map(connector => `<article class="connector-row ${localConnector(connector) ? "" : "needs-setup"}"><div><strong>${escape(connectorName(connector))}</strong><p>${escape(connectorDescription(connector))}</p></div><div class="connector-state"><span>${connectorState(connector)}</span>${connectorControl(connector)}</div></article>`).join("");
+  list.querySelectorAll("input[data-connector]").forEach(input => input.addEventListener("change", () => setConnectorEnabled(input.dataset.connector, input.checked, input)));
+}
+async function refreshConnectors() {
+  const payload = await request("/v1/connectors");
+  renderConnectors(Array.isArray(payload.connectors) ? payload.connectors : []);
+}
+async function setConnectorEnabled(connectorId, enabled, input) {
+  const status = $("#connector-status");
+  input.disabled = true;
+  status.textContent = "선택을 저장하고 있습니다.";
+  try {
+    const result = await request(`/v1/connectors/${encodeURIComponent(connectorId)}/enabled`, { method:"PUT", body:JSON.stringify({ enabled }) });
+    status.textContent = result.connector?.enabled ? "이 도구를 사용할 수 있습니다." : "이 도구를 사용하지 않습니다.";
+    await refreshConnectors();
+  } catch {
+    status.textContent = "선택을 저장하지 못했습니다. 잠시 후 다시 시도해 주세요.";
+    await refreshConnectors().catch(() => { input.checked = !enabled; });
+  } finally { input.disabled = false; }
 }
 function readyModels(connections) {
   return connections.providers.flatMap(provider => provider.auth.state === "configured" && provider.health.state === "ready"
@@ -60,7 +102,7 @@ async function refreshConnections() {
   const selected = connections.defaultSelection;
   select.innerHTML = ready.length ? ready.map(({ provider, model }) => `<option value="${escape(`${provider.id}:${model.id}`)}" ${selected?.preferredProviderId === provider.id && selected?.preferredModelId === model.id ? "selected" : ""}>${escape(provider.display.name)} · ${escape(model.id)}</option>`).join("") : `<option value="">연결된 외부 모델이 없습니다</option>`;
   $("#save-default-model").disabled = ready.length === 0;
-  $("#provider-list").innerHTML = connections.providers.filter(provider => provider.id !== "gpao-t-emulator").map(provider => `<article class="provider-row"><div><strong>${escape(provider.display.name)}</strong><p>${escape(provider.display.description)}</p></div><div class="provider-state"><span>${providerState(provider)}</span><button type="button" data-provider="${escape(provider.id)}">${providerAction(provider)}</button></div></article>`).join("");
+  $("#provider-list").innerHTML = connections.providers.filter(provider => provider.id !== "gpao-t-emulator").map(provider => `<article class="provider-row"><div><strong>${escape(providerName(provider))}</strong><p>${escape(providerDescription(provider))}</p></div><div class="provider-state"><span>${providerState(provider)}</span><button type="button" data-provider="${escape(provider.id)}">${providerAction(provider)}</button></div></article>`).join("");
   $("#provider-list").querySelectorAll("button[data-provider]").forEach(button => button.addEventListener("click", () => openProviderAction(button.dataset.provider)));
 }
 async function openProviderAction(providerId) {
@@ -72,12 +114,12 @@ async function openProviderAction(providerId) {
       const result = await request("/v1/connections/codex-oauth/recheck", { method:"POST", body:"{}" });
       $("#model-selection-status").textContent = result.connection.state === "ready" ? "ChatGPT / Codex 연결을 확인했습니다." : "Codex 연결을 확인하지 못했습니다.";
       await refreshConnections();
-    } catch (error) { $("#model-selection-status").textContent = error.message; }
+    } catch { $("#model-selection-status").textContent = "연결 상태를 확인하지 못했습니다. 잠시 후 다시 시도해 주세요."; }
     return;
   }
   if (!provider.display.authMethods.includes("api_key")) return;
   $("#api-provider-id").value = provider.id;
-  $("#api-key-label").textContent = `${provider.display.name} API 키`;
+  $("#api-key-label").textContent = `${providerName(provider)} 연결 정보`;
   $("#api-key-input").value = "";
   $("#api-key-status").textContent = "키는 GPAO-T 기록에 남지 않습니다.";
   $("#api-key-form").hidden = false;
@@ -86,7 +128,10 @@ async function openProviderAction(providerId) {
 $("#models").addEventListener("click", async () => {
   $("#connection-dialog").showModal();
   $("#model-selection-status").textContent = "";
-  try { await refreshConnections(); } catch { $("#model-selection-status").textContent = "연결 목록을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요."; }
+  $("#connector-status").textContent = "";
+  const [connections, connectors] = await Promise.allSettled([refreshConnections(), refreshConnectors()]);
+  if (connections.status === "rejected") $("#model-selection-status").textContent = "연결 목록을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.";
+  if (connectors.status === "rejected") $("#connector-status").textContent = "도구 목록을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.";
 });
 $("#close-connections").addEventListener("click", () => $("#connection-dialog").close());
 $("#save-default-model").addEventListener("click", async () => {
@@ -96,7 +141,7 @@ $("#save-default-model").addEventListener("click", async () => {
     await request("/v1/model-selection/default", { method:"PUT", body:JSON.stringify({ providerId, modelId }) });
     $("#model-selection-status").textContent = "이제 새 대화에서 이 모델을 기본으로 사용합니다.";
     await refreshConnections();
-  } catch (error) { $("#model-selection-status").textContent = error.message; }
+  } catch { $("#model-selection-status").textContent = "기본 모델을 저장하지 못했습니다. 잠시 후 다시 시도해 주세요."; }
 });
 $("#api-key-form").addEventListener("submit", async event => {
   event.preventDefault();
@@ -112,7 +157,7 @@ $("#api-key-form").addEventListener("submit", async event => {
     const verified = await request(`/v1/connections/${encodeURIComponent(providerId)}/verify`, { method:"POST", body:"{}" });
     status.textContent = verified.connection.state === "ready" ? "연결되었습니다. 이제 기본 모델로 선택할 수 있습니다." : "연결을 확인하지 못했습니다. 키와 연결 상태를 다시 확인해 주세요.";
     await refreshConnections();
-  } catch (error) { $("#api-key-input").value = ""; status.textContent = error.message; }
+  } catch { $("#api-key-input").value = ""; status.textContent = "연결을 확인하지 못했습니다. 입력 내용을 확인한 뒤 다시 시도해 주세요."; }
   finally { $("#save-api-key").disabled = false; }
 });
 $("#new-chat").addEventListener("click", createSession);

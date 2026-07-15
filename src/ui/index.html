@@ -34,10 +34,15 @@
     <section id="provider-list" class="provider-list" aria-label="AI 연결 목록"></section>
     <form id="api-key-form" class="api-key-form" hidden>
       <input id="api-provider-id" type="hidden">
-      <label id="api-key-label" for="api-key-input">API 키</label>
+      <label id="api-key-label" for="api-key-input">연결 정보</label>
       <div class="key-row"><input id="api-key-input" type="password" autocomplete="off" spellcheck="false" required><button id="save-api-key" type="submit">연결 확인</button></div>
       <p id="api-key-status" class="form-status" aria-live="polite"></p>
     </form>
+    <section class="tool-connections" aria-labelledby="tool-connections-title">
+      <div class="section-heading"><div><span class="eyebrow">연결 관리</span><h3 id="tool-connections-title">AI 및 도구 연결</h3></div><p>이 기기에서 사용할 도구를 선택합니다.</p></div>
+      <p id="connector-status" class="form-status" aria-live="polite"></p>
+      <div id="connector-list" class="connector-list" aria-label="AI 및 도구 연결 목록"></div>
+    </section>
   </dialog>
   <script type="module" src="/app.js"></script>
 </body>
