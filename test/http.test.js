@@ -65,6 +65,16 @@ test("HTTP health is public, work is owner-authenticated, and turn state is scop
   const connectors = await fetch(`${base}/v1/connectors`, { headers: { authorization: `Bearer ${runtime.ownerToken}` } }).then(response => response.json());
   assert.equal(connectors.schema, "gpao_t.connector_center.v1");
   assert.equal(connectors.connectors.find(entry => entry.id === "web.search").enabled, false);
+  const connectionProposal = await fetch(`${base}/v1/connection-proposals`, {
+    method: "POST",
+    headers: { cookie: localSession, "content-type": "application/json" },
+    body: JSON.stringify({ input: "웹 검색 연결해줘" })
+  });
+  assert.equal(connectionProposal.status, 200);
+  const proposalBody = await connectionProposal.json();
+  assert.equal(proposalBody.status, "proposed");
+  assert.equal(proposalBody.execute, false);
+  assert.equal(proposalBody.proposals[0].connectorId, "web.search");
   const connectorToggle = await fetch(`${base}/v1/connectors/local.workspace-read/enabled`, {
     method: "PUT",
     headers: { cookie: localSession, origin: base, "content-type": "application/json" },

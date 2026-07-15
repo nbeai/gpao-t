@@ -22,13 +22,14 @@ import { ProviderConnectionCenter } from "./provider-connection.js";
 import { ProviderRouteHealth } from "./provider-route-health.js";
 import { createFoundationConnectorCatalog } from "./connector-catalog.js";
 import { ConnectorController } from "./connector-controller.js";
+import { createConnectionConcierge } from "./connection-concierge.js";
 
 function requestDigest(payload) {
   return crypto.createHash("sha256").update(JSON.stringify(payload)).digest("hex");
 }
 
 export class NativeRuntime {
-  constructor({ stateDir, providerRegistry = null, providerAdapter = new DeterministicProviderEmulator(), providerAdapters = null, credentialResolver = null, credentialStore = null, connectionCenter = null, providerEnvironment = process.env, providerFetch = fetch, socketRegistry = createFoundationSocketRegistry(), memory = new LocalHybridMemory(), toolRegistry = createFoundationToolRegistry(), connectorCatalog = null, connectorController = null, routeHealth = null, workerPath = path.resolve(new URL("./worker.js", import.meta.url).pathname), writerPath = path.resolve(new URL("./state-writer.js", import.meta.url).pathname), maxInflight = 4, maxQueue = 64, workerDispatchTimeoutMs = 250, workerResultTimeoutMs = 30_000, writerRequestTimeoutMs = 5_000, writerCloseTimeoutMs = 1_000, maxWorkerRestarts = 5, workerRestartWindowMs = 10_000, workerRestartBaseDelayMs = 25, workerStableWindowMs = 1_000 } = {}) {
+  constructor({ stateDir, providerRegistry = null, providerAdapter = new DeterministicProviderEmulator(), providerAdapters = null, credentialResolver = null, credentialStore = null, connectionCenter = null, providerEnvironment = process.env, providerFetch = fetch, socketRegistry = createFoundationSocketRegistry(), memory = new LocalHybridMemory(), toolRegistry = createFoundationToolRegistry(), connectorCatalog = null, connectorController = null, connectionConcierge = null, routeHealth = null, workerPath = path.resolve(new URL("./worker.js", import.meta.url).pathname), writerPath = path.resolve(new URL("./state-writer.js", import.meta.url).pathname), maxInflight = 4, maxQueue = 64, workerDispatchTimeoutMs = 250, workerResultTimeoutMs = 30_000, writerRequestTimeoutMs = 5_000, writerCloseTimeoutMs = 1_000, maxWorkerRestarts = 5, workerRestartWindowMs = 10_000, workerRestartBaseDelayMs = 25, workerStableWindowMs = 1_000 } = {}) {
     this.stateDir = assertSafeStateDir(stateDir);
     this.workerPath = workerPath;
     this.writerPath = writerPath;
@@ -57,6 +58,10 @@ export class NativeRuntime {
     });
     this.connectorCatalog = connectorCatalog || createFoundationConnectorCatalog();
     this.connectorController = connectorController || new ConnectorController({ catalog: this.connectorCatalog });
+    this.connectionConcierge = connectionConcierge || createConnectionConcierge({
+      providerCatalog: this.providerRegistry,
+      connectorCatalog: this.connectorCatalog
+    });
     this.socketRegistry = socketRegistry;
     this.router = new ExecutionRouter({ socketRegistry });
     this.controller = new ExecutionController({ runtime: this });
@@ -488,6 +493,10 @@ export class NativeRuntime {
 
   connectorStatus() {
     return { schema: "gpao_t.connector_center.v1", connectors: this.connectorController.list() };
+  }
+
+  proposeConnectionSetup(input) {
+    return this.connectionConcierge.propose(input);
   }
 
   async setConnectorEnabled(connectorId, enabled) {

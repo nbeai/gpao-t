@@ -68,6 +68,31 @@ function connectorControl(connector) {
   const action = connector.enabled ? "사용 안 함" : "사용";
   return `<label class="toggle-control"><input type="checkbox" data-connector="${escape(connector.id)}" ${connector.enabled ? "checked" : ""}><span aria-hidden="true"></span><b class="sr-only">${escape(connectorName(connector))} ${action}</b></label>`;
 }
+function connectionProposalText(proposals) {
+  const labels = proposals.map(proposal => {
+    if (proposal.providerId === "codex-oauth") return "ChatGPT / Codex";
+    if (proposal.providerId === "openai") return "OpenAI";
+    if (proposal.providerId === "anthropic") return "Claude";
+    if (proposal.providerId === "google-gemini") return "Gemini";
+    if (proposal.connectorId === "web.search") return "웹 검색";
+    if (proposal.connectorId === "mcp.external") return "외부 도구";
+    return null;
+  }).filter(Boolean);
+  return labels.length ? `${labels.join(", ")} 연결을 준비할게요. 연결 정보를 검토한 뒤에만 사용할 수 있습니다.` : null;
+}
+async function proposeConnection(input) {
+  const proposal = await request("/v1/connection-proposals", { method:"POST", body:JSON.stringify({ input }) });
+  if (proposal.status === "not_supported") {
+    return { text:"아직 지원되는 연결 항목에서 찾지 못했습니다. AI 연결에서 현재 연결할 수 있는 항목을 확인해 주세요.", proposal, openDialog:false };
+  }
+  if (proposal.status === "rejected" && proposal.reason === "secret_like_input") {
+    return { text:"연결 정보는 대화에 입력하지 마세요. AI 연결 화면에서 안전하게 입력해 주세요.", proposal, openDialog:true };
+  }
+  if (proposal.status !== "proposed") return null;
+  const text = connectionProposalText(proposal.proposals || []);
+  if (!text) return null;
+  return { text, proposal, openDialog:true };
+}
 function renderConnectors(connectors) {
   const list = $("#connector-list");
   list.innerHTML = connectors.map(connector => `<article class="connector-row ${localConnector(connector) ? "" : "needs-setup"}"><div><strong>${escape(connectorName(connector))}</strong><p>${escape(connectorDescription(connector))}</p></div><div class="connector-state"><span>${connectorState(connector)}</span>${connectorControl(connector)}</div></article>`).join("");
@@ -167,6 +192,19 @@ $("#composer").addEventListener("submit", async event => {
   const session = active(); session.messages.push({ role:"user", text:input }); if (session.messages.length === 1) session.title = input.slice(0, 36); persist(); $("#message").value=""; render();
   $("#send").disabled = true; $("#turn-status").textContent = "GPAO-T가 답변을 준비하고 있습니다.";
   try {
+    const connection = await proposeConnection(input);
+    if (connection) {
+      session.messages.push({ role:"assistant", text:connection.text }); persist(); render();
+      if (connection.openDialog) {
+        $("#connection-dialog").showModal();
+        $("#model-selection-status").textContent = "연결할 항목을 확인한 뒤 진행해 주세요.";
+        const [connections, connectors] = await Promise.allSettled([refreshConnections(), refreshConnectors()]);
+        if (connections.status === "rejected") $("#model-selection-status").textContent = "연결 목록을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.";
+        if (connectors.status === "rejected") $("#connector-status").textContent = "도구 목록을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.";
+      }
+      $("#turn-status").textContent = "";
+      return;
+    }
     const turn = await request("/v1/os-turns", { method:"POST", body:JSON.stringify({ requestId:crypto.randomUUID(), sessionId:session.id, input }) });
     const answer = turn.turn?.receipt?.result?.echo || "요청을 처리했습니다.";
     session.messages.push({ role:"assistant", text:answer }); persist(); render(); $("#turn-status").textContent = "";
