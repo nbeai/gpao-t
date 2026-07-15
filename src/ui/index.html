@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>nBeAI. GPAO-T</title>
+  <link rel="stylesheet" href="/app.css">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="rail" aria-label="대화 탐색">
+      <div class="brand"><span class="mark" aria-hidden="true">∞</span><strong>nBeAI. GPAO-T</strong></div>
+      <button class="new-chat" id="new-chat" type="button">+ 새 대화</button>
+      <nav id="sessions" aria-label="대화 목록"></nav>
+      <div class="runtime-state" id="runtime-state">연결 상태 확인 중</div>
+    </aside>
+    <main class="conversation">
+      <header class="topbar"><div><span class="eyebrow">작업 공간</span><h1 id="chat-title">새 대화</h1></div><button id="status" type="button" aria-label="런타임 상태">상태</button></header>
+      <section class="messages" id="messages" aria-live="polite">
+        <div class="welcome"><span class="mark" aria-hidden="true">∞</span><h2>무엇을 함께 해볼까요?</h2><p>대화를 시작하면 이 대화 안에서 필요한 맥락과 실행 흐름을 안전하게 정리합니다.</p></div>
+      </section>
+      <form class="composer" id="composer">
+        <label class="sr-only" for="message">GPAO-T에 메시지 입력</label>
+        <textarea id="message" rows="1" placeholder="GPAO-T에 메시지 입력" required></textarea>
+        <button type="submit" id="send">보내기</button>
+      </form>
+      <p class="quiet-status" id="turn-status"></p>
+    </main>
+  </div>
+  <script type="module" src="/app.js"></script>
+</body>
+</html>

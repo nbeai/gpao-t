@@ -6,14 +6,22 @@ import { assertFileMode, assertSafeStateDir } from "./paths.js";
 import { RuntimeError } from "./errors.js";
 import { createPermit } from "./permit.js";
 import { StateWriterClient } from "./state-writer-client.js";
-import { ProviderRegistry } from "./provider.js";
+import { DeterministicProviderEmulator, ProviderRegistry } from "./provider.js";
+import { createFoundationSocketRegistry } from "./socket-registry.js";
+import { ExecutionRouter } from "./execution-router.js";
+import { ExecutionController } from "./execution-controller.js";
+import { assertPayloadHasNoSecrets } from "./secret-hygiene.js";
+import { NativeOsTurnPipeline } from "./os-turn.js";
+import { LocalHybridMemory } from "./local-memory.js";
+import { createFoundationToolRegistry } from "./tool-registry.js";
+import { LocalSessionAuthority } from "./local-session.js";
 
 function requestDigest(payload) {
   return crypto.createHash("sha256").update(JSON.stringify(payload)).digest("hex");
 }
 
 export class NativeRuntime {
-  constructor({ stateDir, providerRegistry = new ProviderRegistry(), workerPath = path.resolve(new URL("./worker.js", import.meta.url).pathname), writerPath = path.resolve(new URL("./state-writer.js", import.meta.url).pathname), maxInflight = 4, maxQueue = 64, workerDispatchTimeoutMs = 250, workerResultTimeoutMs = 30_000, writerRequestTimeoutMs = 5_000, writerCloseTimeoutMs = 1_000, maxWorkerRestarts = 5, workerRestartWindowMs = 10_000, workerRestartBaseDelayMs = 25, workerStableWindowMs = 1_000 } = {}) {
+  constructor({ stateDir, providerRegistry = new ProviderRegistry(), providerAdapter = new DeterministicProviderEmulator(), socketRegistry = createFoundationSocketRegistry(), memory = new LocalHybridMemory(), toolRegistry = createFoundationToolRegistry(), workerPath = path.resolve(new URL("./worker.js", import.meta.url).pathname), writerPath = path.resolve(new URL("./state-writer.js", import.meta.url).pathname), maxInflight = 4, maxQueue = 64, workerDispatchTimeoutMs = 250, workerResultTimeoutMs = 30_000, writerRequestTimeoutMs = 5_000, writerCloseTimeoutMs = 1_000, maxWorkerRestarts = 5, workerRestartWindowMs = 10_000, workerRestartBaseDelayMs = 25, workerStableWindowMs = 1_000 } = {}) {
     this.stateDir = assertSafeStateDir(stateDir);
     this.workerPath = workerPath;
     this.writerPath = writerPath;
@@ -24,6 +32,13 @@ export class NativeRuntime {
     this.writerRequestTimeoutMs = writerRequestTimeoutMs;
     this.writerCloseTimeoutMs = writerCloseTimeoutMs;
     this.providerRegistry = providerRegistry;
+    this.providerAdapter = providerAdapter;
+    this.socketRegistry = socketRegistry;
+    this.router = new ExecutionRouter({ socketRegistry });
+    this.controller = new ExecutionController({ runtime: this });
+    this.memory = memory;
+    this.tools = toolRegistry;
+    this.osTurns = new NativeOsTurnPipeline({ runtime: this, memory: this.memory });
     this.maxWorkerRestarts = maxWorkerRestarts;
     this.workerRestartWindowMs = workerRestartWindowMs;
     this.workerRestartBaseDelayMs = workerRestartBaseDelayMs;
@@ -46,6 +61,7 @@ export class NativeRuntime {
     this.generation = 0;
     this.instanceId = null;
     this.ownerToken = null;
+    this.localSessions = null;
     this.lockFd = null;
     this.lockToken = null;
     this.lockPath = path.join(this.stateDir, "runtime.lock");
@@ -61,10 +77,12 @@ export class NativeRuntime {
     this.acquireLock();
     try {
       this.ownerToken = this.loadOwnerToken();
+      this.tools.setPermitSecret?.(this.ownerToken);
+      this.localSessions = new LocalSessionAuthority({ secret: this.ownerToken });
       this.instanceId = crypto.randomUUID();
       this.writer = new StateWriterClient({ stateDir: this.stateDir, writerPath: this.writerPath, requestTimeoutMs: this.writerRequestTimeoutMs, closeTimeoutMs: this.writerCloseTimeoutMs, onUnavailable: details => this.handleWriterUnavailable(details) });
       await this.writer.start();
-      await this.writer.call("verifyCheckpoint");
+      await this.writer.call("verifyIntegrity");
       this.generation = (await this.writer.call("bootstrapRuntime", { instanceId: this.instanceId })).generation;
       this.accepting = true;
       this.healthSnapshot = { status: "ready", state: "online", generation: this.generation, inflight: 0 };
@@ -134,7 +152,7 @@ export class NativeRuntime {
   spawnWorker() {
     if (this.stopping || this.worker || this.respawning || this.healthSnapshot.status === "failed") return;
     this.respawning = true;
-    const child = fork(this.workerPath, [], { execArgv: [], env: { ...process.env, GPAO_T_PERMIT_SECRET: this.ownerToken }, stdio: ["ignore", "ignore", "pipe", "ipc"] });
+    const child = fork(this.workerPath, [], { execArgv: [], env: { GPAO_T_PERMIT_SECRET: this.ownerToken }, stdio: ["ignore", "ignore", "pipe", "ipc"] });
     this.worker = child;
     child.on("message", message => { void this.handleWorkerMessage(message); });
     child.on("error", () => {});
@@ -187,6 +205,7 @@ export class NativeRuntime {
   async submitTurn({ principalId, requestId, payload = {} }) {
     if (!this.accepting) throw new RuntimeError("runtime_not_ready", "Native Runtime is not accepting work", 503);
     if (!principalId || !requestId) throw new RuntimeError("invalid_request", "principalId and requestId are required", 400);
+    assertPayloadHasNoSecrets(payload);
     const serialized = JSON.stringify(payload);
     if (Buffer.byteLength(serialized) > 64 * 1024) throw new RuntimeError("payload_too_large", "Turn payload exceeds 64 KiB", 413);
     const command = { id: crypto.randomUUID(), principalId, requestId, requestDigest: requestDigest(payload), payload, createdAt: Date.now() };
@@ -194,6 +213,34 @@ export class NativeRuntime {
     await this.emitProgress(result.commandId, principalId);
     void this.pump().catch(() => {});
     return result;
+  }
+
+  async cancelTurn({ principalId, commandId }) {
+    if (!principalId || !commandId) throw new RuntimeError("invalid_cancel_request", "principalId and commandId are required", 400);
+    const turn = await this.getTurn(principalId, commandId);
+    if (!turn) return null;
+    if (["succeeded", "failed", "uncertain", "cancelled"].includes(turn.status)) return { commandId, status: turn.status, changed: false };
+    const cancellation = await this.writer.call("cancelCommand", { commandId, principalId, generation: this.generation });
+    if (cancellation.changed && cancellation.kind === "cancelled_in_flight") {
+      this.pending.delete(commandId);
+      this.clearWorkerTimers(commandId);
+      this.healthSnapshot.inflight = this.pending.size + this.finalizationQueue.size;
+      void this.pump().catch(() => {});
+    }
+    if (cancellation.changed) await this.emitProgress(commandId, principalId);
+    const current = await this.getTurn(principalId, commandId);
+    return { commandId, status: current?.status || "unknown", changed: cancellation.changed, cancellation: cancellation.kind };
+  }
+
+  retryTurn(input) { return this.controller.retry(input); }
+
+  reconcileTurn(input) { return this.controller.reconcile(input); }
+
+  async runOsTurn({ principalId, sessionId = principalId, requestId, input, activeGoal = null, authority = {} }) {
+    if (!principalId || !requestId || typeof input !== "string" || !input.trim()) {
+      throw new RuntimeError("invalid_os_turn", "A session, request id, and message are required", 400);
+    }
+    return this.osTurns.run({ principalId, sessionId, requestId, input, activeGoal, authority });
   }
 
   async pump() {
@@ -206,13 +253,27 @@ export class NativeRuntime {
         const command = await this.writer.call("leaseCommand", { commandId: row.command_id, principalId: row.principal_id, generation: this.generation });
         if (!command) continue;
         const permit = createPermit(this.ownerToken, { commandId: command.id, principalId: command.principalId, requestDigest: requestDigest(command.payload), generation: this.generation });
+        let routePlan;
+        try {
+          routePlan = this.router.plan({ command, generation: this.generation, permit });
+        } catch (error) {
+          await this.writer.call("markTerminal", {
+            commandId: command.id,
+            principalId: command.principalId,
+            generation: this.generation,
+            status: "failed",
+            result: { error: { code: error.code || "route_plan_failed", message: "Execution route could not be prepared" } }
+          });
+          await this.emitProgress(command.id, command.principalId);
+          continue;
+        }
         try {
           await this.writer.call("recordDispatch", { commandId: command.id, principalId: command.principalId, generation: this.generation });
         } catch (error) {
           await this.markOneUncertain(command.id, command.principalId, "dispatch_record_failed");
           throw error;
         }
-        this.pending.set(command.id, { commandId: command.id, principalId: command.principalId, generation: this.generation, permit });
+        this.pending.set(command.id, { commandId: command.id, principalId: command.principalId, generation: this.generation, permit, routePlan });
         this.healthSnapshot.inflight = this.pending.size + this.finalizationQueue.size;
         await this.emitProgress(command.id, command.principalId);
         const dispatchTimer = setTimeout(() => {
@@ -226,7 +287,7 @@ export class NativeRuntime {
         resultTimer.unref();
         this.resultTimers.set(command.id, resultTimer);
         try {
-          this.worker.send({ type: "execute", permit, payload: command.payload }, error => {
+          this.worker.send({ type: "execute", permit, routePlan, payload: command.payload }, error => {
             clearTimeout(this.dispatchTimers.get(command.id));
             this.dispatchTimers.delete(command.id);
             if (error && this.pending.has(command.id)) void this.markOneUncertain(command.id, command.principalId, "worker_send_failed").catch(() => {});
@@ -369,7 +430,12 @@ export class NativeRuntime {
     };
   }
 
-  async doctor() { return { ...this.health(), provider: this.providerStatus(), integrity: await this.writer.call("verifyIntegrity"), readOnly: true, worker: Boolean(this.worker && this.worker.connected), ownerTokenMode: "0600" }; }
+  publicHealth() {
+    const { stateDir, instanceId, ...publicHealth } = this.health();
+    return publicHealth;
+  }
+
+  async doctor() { return { ...this.health(), provider: this.providerStatus(), sockets: this.socketRegistry.snapshot(), tools: this.tools.snapshot(), localSessions: this.localSessions?.snapshot(), integrity: await this.writer.call("verifyIntegrity"), readOnly: true, worker: Boolean(this.worker && this.worker.connected), ownerTokenMode: "0600" }; }
 
   async stop() {
     if (!this.writer) return;

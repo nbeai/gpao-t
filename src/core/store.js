@@ -209,6 +209,26 @@ export class StateStore {
     this.addProgress(commandId, principalId, "outcome_unknown", { reason });
   }
 
+  cancelCommand(commandId, principalId, generation) {
+    if (Number(this.getMeta("runtime_generation") || 0) !== generation) throw new RuntimeError("stale_generation", "Cancellation belongs to an old runtime generation", 409);
+    const now = Date.now();
+    const row = this.db.prepare("SELECT state, generation FROM outbox WHERE command_id = ? AND principal_id = ?").get(commandId, principalId);
+    if (!row) return { changed: false, kind: "not_found" };
+    if (row.state === "pending") {
+      const changed = this.db.prepare("UPDATE outbox SET state = 'cancelled', updated_at = ? WHERE command_id = ? AND principal_id = ? AND state = 'pending'").run(now, commandId, principalId);
+      if (changed.changes !== 1) return { changed: false, kind: "race_lost" };
+      this.db.prepare("UPDATE commands SET status = 'cancelled', updated_at = ? WHERE id = ? AND principal_id = ? AND status = 'accepted'").run(now, commandId, principalId);
+      this.appendEvent({ commandId, principalId, type: "turn.cancelled", payload: { cancellation: "cancelled_before_dispatch" }, runtimeGeneration: generation });
+      this.addProgress(commandId, principalId, "cancelled", { cancellation: "cancelled_before_dispatch" });
+      return { changed: true, kind: "cancelled_before_dispatch" };
+    }
+    if (row.state === "leased" && row.generation === generation) {
+      this.markUncertain(commandId, principalId, generation, "cancelled_in_flight");
+      return { changed: true, kind: "cancelled_in_flight" };
+    }
+    return { changed: false, kind: row.state };
+  }
+
   markTerminal(commandId, principalId, generation, status, result) {
     const now = Date.now();
     const outboxState = status === "succeeded" ? "completed" : "failed";

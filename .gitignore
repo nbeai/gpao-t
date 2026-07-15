@@ -1,6 +1,12 @@
 node_modules/
+.env
+.env.*
+*.log
+.gpao-t/releases/
 *.sqlite
 *.sqlite-*
 runtime.lock
 owner.token
 .DS_Store
+/.beai-harness/
+/workspace-notes/

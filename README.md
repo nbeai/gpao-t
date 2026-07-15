@@ -9,7 +9,7 @@ Fixed boundaries:
 - source: `/Users/jyp/Developer/gpao-t-native-runtime-lab`
 - state: `~/.gpao-t-next` by default
 - default HTTP port: `18899`
-- comparison references: current GPAO-T and OpenClaw copies are read-only
+- comparison references: external reference copies are read-only
 
 The foundation uses only Node built-ins. It owns the canonical command/event/
 outbox state, local owner authentication, bounded worker execution, generation
@@ -27,3 +27,19 @@ npm start -- --state-dir "$HOME/.gpao-t-next" --port 18899
 
 The owner token is generated at first boot and written only to
 `~/.gpao-t-next/owner.token` with mode `0600`.
+
+Native package verification:
+
+```sh
+npm run package:release
+npm run release:smoke
+```
+
+State is always isolated. Stop the runtime before snapshot, migration, or
+restore:
+
+```sh
+node src/index.js snapshot --state-dir "$HOME/.gpao-t-next" --label before-update
+node src/index.js migrate --state-dir "$HOME/.gpao-t-next"
+node src/index.js restore --state-dir "$HOME/.gpao-t-next" --snapshot <snapshot-directory>
+```

@@ -1,6 +1,7 @@
 import { defaultStateDir } from "./core/paths.js";
 import { NativeRuntime } from "./core/runtime.js";
 import { createHttpServer } from "./core/http.js";
+import { migrateState, restoreState, snapshotState } from "./core/release-state.js";
 
 function arg(name, fallback) {
   const index = process.argv.indexOf(name);
@@ -22,6 +23,14 @@ if (command === "doctor") {
   const shutdown = async () => { server.close(); await runtime.stop(); process.exit(0); };
   process.once("SIGINT", shutdown);
   process.once("SIGTERM", shutdown);
+} else if (command === "snapshot") {
+  console.log(JSON.stringify(snapshotState({ stateDir, label: arg("--label", "manual") }), null, 2));
+} else if (command === "restore") {
+  const snapshot = arg("--snapshot", null);
+  if (!snapshot) throw new Error("--snapshot is required for restore");
+  console.log(JSON.stringify(restoreState({ stateDir, snapshot }), null, 2));
+} else if (command === "migrate") {
+  console.log(JSON.stringify(migrateState({ stateDir }), null, 2));
 } else {
   console.error(`Unknown command: ${command}`);
   process.exitCode = 2;

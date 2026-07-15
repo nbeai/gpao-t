@@ -144,7 +144,41 @@ test("old generation results are ignored", async () => {
   await runtime.stop();
 });
 
-test("live state and foreign OpenClaw paths are rejected", () => {
+test("route plans are permit-bound, secret-free, and use a ready local socket", async () => {
+  const runtime = await new NativeRuntime({ stateDir: tempState() }).start();
+  const result = await runtime.submitTurn({ principalId: "owner:a", requestId: "route", payload: { input: "route" } });
+  await eventually(async () => (await runtime.getTurn("owner:a", result.commandId))?.status === "succeeded");
+  const sockets = (await runtime.doctor()).sockets;
+  assert.equal(sockets.sockets[0].id, "local-deterministic-worker");
+  assert.equal(sockets.sockets[0].permitRequired, true);
+  await runtime.stop();
+});
+
+test("cancelled before dispatch records a terminal cancellation without execution", async () => {
+  const runtime = await new NativeRuntime({ stateDir: tempState() }).start();
+  const originalPump = runtime.pump;
+  runtime.pump = async () => {};
+  const result = await runtime.submitTurn({ principalId: "owner:a", requestId: "cancel-before", payload: { input: "stop" } });
+  const cancelled = await runtime.cancelTurn({ principalId: "owner:a", commandId: result.commandId });
+  assert.equal(cancelled.cancellation, "cancelled_before_dispatch");
+  assert.equal((await runtime.getTurn("owner:a", result.commandId)).status, "cancelled");
+  assert.equal((await runtime.getProgress("owner:a", result.commandId)).at(-1).phase, "cancelled");
+  runtime.pump = originalPump;
+  await runtime.stop();
+});
+
+test("cancelled in flight records bounded uncertainty and rejects late completion", async () => {
+  const runtime = await new NativeRuntime({ stateDir: tempState(), workerResultTimeoutMs: 2_000 }).start();
+  const result = await runtime.submitTurn({ principalId: "owner:a", requestId: "cancel-in-flight", payload: { input: "stop", delayMs: 400 } });
+  await eventually(() => runtime.pending.has(result.commandId));
+  const cancelled = await runtime.cancelTurn({ principalId: "owner:a", commandId: result.commandId });
+  assert.equal(cancelled.cancellation, "cancelled_in_flight");
+  assert.equal((await runtime.getTurn("owner:a", result.commandId)).status, "uncertain");
+  await new Promise(resolve => setTimeout(resolve, 450));
+  assert.equal((await runtime.getTurn("owner:a", result.commandId)).status, "uncertain");
+  await runtime.stop();
+});
+
+test("live GPAO-T state is rejected", () => {
   assert.throws(() => new NativeRuntime({ stateDir: path.resolve(os.homedir(), ".gpao-t") }), error => error.code === "protected_live_path");
-  assert.throws(() => new NativeRuntime({ stateDir: path.join(os.tmpdir(), ".openclaw") }), error => error.code === "foreign_state_path");
 });

@@ -15,9 +15,6 @@ export function assertSafeStateDir(input) {
   if (stateDir === LIVE_STATE_DIR || stateDir === LIVE_SOURCE_DIR || stateDir.startsWith(`${LIVE_STATE_DIR}${path.sep}`)) {
     throw new RuntimeError("protected_live_path", "Native Runtime cannot use the live GPAO-T path", 409);
   }
-  if (stateDir.includes(`${path.sep}.openclaw${path.sep}`) || stateDir.endsWith(`${path.sep}.openclaw`)) {
-    throw new RuntimeError("foreign_state_path", "Native Runtime cannot use an OpenClaw state path", 409);
-  }
   fs.mkdirSync(stateDir, { recursive: true, mode: 0o700 });
   const stat = fs.lstatSync(stateDir);
   if (!stat.isDirectory() || stat.isSymbolicLink()) {

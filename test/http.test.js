@@ -29,15 +29,45 @@ test("HTTP health is public, work is owner-authenticated, and turn state is scop
   await new Promise(resolve => server.listen(0, "127.0.0.1", resolve));
   const port = server.address().port;
   const base = `http://127.0.0.1:${port}`;
+  try {
 
   const health = await fetch(`${base}/health`).then(response => response.json());
   assert.equal(health.status, "ready");
+  assert.equal("stateDir" in health, false);
   const unauthorized = await fetch(`${base}/v1/doctor`);
   assert.equal(unauthorized.status, 401);
+  const dashboard = await fetch(`${base}/`);
+  assert.equal(dashboard.status, 200);
+  assert.match(await dashboard.text(), /nBeAI\. GPAO-T/);
+  const localSession = dashboard.headers.get("set-cookie");
+  assert.match(localSession, /HttpOnly/);
+  assert.equal((await fetch(`${base}/v1/doctor`, { headers: { cookie: localSession } })).status, 200);
+  const localOsTurn = await fetch(`${base}/v1/os-turns`, {
+    method: "POST",
+    headers: { cookie: localSession, "content-type": "application/json" },
+    body: JSON.stringify({ requestId: "local-browser-turn", sessionId: "56a09944-c239-4a14-a2c0-70d58a3f1fa0", input: "local browser path" })
+  });
+  assert.equal(localOsTurn.status, 200);
+  assert.equal((await localOsTurn.json()).turn.status, "succeeded");
   const providers = await fetch(`${base}/v1/providers`, { headers: { authorization: `Bearer ${runtime.ownerToken}` } }).then(response => response.json());
   assert.equal(providers.schema, "gpao_t.provider_registry.v1");
   assert.equal(providers.providers[0].auth.state, "configured");
   assert.equal((await fetch(`${base}/v1/providers/gpao-t-emulator`, { headers: { authorization: `Bearer ${runtime.ownerToken}` } })).status, 200);
+  const sockets = await fetch(`${base}/v1/sockets`, { headers: { authorization: `Bearer ${runtime.ownerToken}` } }).then(response => response.json());
+  assert.equal(sockets.sockets[0].id, "local-deterministic-worker");
+  const tools = await fetch(`${base}/v1/tools`, { headers: { authorization: `Bearer ${runtime.ownerToken}` } }).then(response => response.json());
+  assert.equal(tools.tools[0].id, "local.runtime_status");
+
+  const osTurnResponse = await fetch(`${base}/v1/os-turns`, {
+    method: "POST",
+    headers: { authorization: `Bearer ${runtime.ownerToken}`, "content-type": "application/json" },
+    body: JSON.stringify({ requestId: "os-http-1", sessionId: "43c9712f-5f7d-4ca9-8ea6-41e7b0885e2e", input: "native OS turn" })
+  });
+  assert.equal(osTurnResponse.status, 200);
+  const osTurn = await osTurnResponse.json();
+  assert.equal(osTurn.schema, "gpao_t.os_turn.v1");
+  assert.equal(osTurn.turn.status, "succeeded");
+  assert.equal(osTurn.growthCandidate.applyState, "candidate_only");
 
   const accepted = await fetch(`${base}/v1/turns`, {
     method: "POST",
@@ -53,10 +83,46 @@ test("HTTP health is public, work is owner-authenticated, and turn state is scop
   assert.equal(doctor.readOnly, true);
   assert.equal(doctor.integrity.ok, true);
 
+  const queued = await fetch(`${base}/v1/turns`, {
+    method: "POST",
+    headers: { authorization: `Bearer ${runtime.ownerToken}`, "content-type": "application/json" },
+    body: JSON.stringify({ requestId: "http-cancel", payload: { input: "cancel", delayMs: 300 } })
+  }).then(response => response.json());
+  const cancellation = await fetch(`${base}/v1/turns/${queued.commandId}/cancel`, { method: "POST", headers: { authorization: `Bearer ${runtime.ownerToken}` } }).then(response => response.json());
+  assert.ok(["uncertain", "cancelled", "succeeded"].includes(cancellation.status));
+
   runtime.handleWriterUnavailable({ code: "test" });
   assert.equal((await fetch(`${base}/health`)).status, 200);
   assert.equal((await fetch(`${base}/ready`)).status, 503);
 
-  await new Promise(resolve => server.close(resolve));
-  await runtime.stop();
+  } finally {
+    await new Promise(resolve => server.close(resolve));
+    await runtime.stop();
+  }
+});
+
+test("SSE progress reconnect replays a durable snapshot after a real client disconnect", async () => {
+  const runtime = await new NativeRuntime({ stateDir: tempState() }).start();
+  const { server } = createHttpServer(runtime, { port: 0 });
+  await new Promise(resolve => server.listen(0, "127.0.0.1", resolve));
+  const base = `http://127.0.0.1:${server.address().port}`;
+  const headers = { authorization: `Bearer ${runtime.ownerToken}`, "content-type": "application/json" };
+  try {
+    const accepted = await fetch(`${base}/v1/turns`, { method: "POST", headers, body: JSON.stringify({ requestId: "sse-reconnect", payload: { input: "slow", delayMs: 250 } }) }).then(response => response.json());
+    const first = await fetch(`${base}/v1/progress/${accepted.commandId}`, { headers });
+    assert.equal(first.status, 200);
+    const reader = first.body.getReader();
+    const firstChunk = await reader.read();
+    assert.match(new TextDecoder().decode(firstChunk.value), /event: snapshot/);
+    await reader.cancel();
+    const resumed = await fetch(`${base}/v1/progress/${accepted.commandId}`, { headers });
+    const resumedText = await resumed.text();
+    assert.match(resumedText, /event: snapshot/);
+    assert.match(resumedText, /event: progress/);
+    const final = await eventually(`${base}/v1/turns/${accepted.commandId}`, (_response, body) => body.status === "succeeded", { headers });
+    assert.equal(final.status, "succeeded");
+  } finally {
+    await new Promise(resolve => server.close(resolve));
+    await runtime.stop();
+  }
 });

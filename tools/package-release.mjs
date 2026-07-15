@@ -1,0 +1,23 @@
+import crypto from "node:crypto";
+import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
+import { spawnSync } from "node:child_process";
+
+const root = path.resolve(new URL("..", import.meta.url).pathname);
+const version = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8")).version;
+const output = path.join(root, ".gpao-t", "releases");
+const name = `gpao-t-native-runtime-${version}`;
+fs.mkdirSync(output, { recursive: true, mode: 0o700 });
+const archive = path.join(output, `${name}.tar.gz`);
+const files = ["src", "tools/install-native.mjs", "package.json", "README.md"];
+const temporaryArchive = `${archive}.${process.pid}.tmp`;
+const result = spawnSync("tar", ["-czf", temporaryArchive, ...files], { cwd: root, encoding: "utf8" });
+if (result.status !== 0) throw new Error(result.stderr || "Archive creation failed");
+fs.renameSync(temporaryArchive, archive);
+const sha256 = crypto.createHash("sha256").update(fs.readFileSync(archive)).digest("hex");
+const git = spawnSync("git", ["rev-parse", "HEAD"], { cwd: root, encoding: "utf8" });
+const gitStatus = spawnSync("git", ["status", "--porcelain"], { cwd: root, encoding: "utf8" });
+const manifest = { schema: "gpao_t.release_manifest.v1", name, version, platform: `${process.platform}-${process.arch}`, node: process.version, sourceCommit: git.status === 0 ? git.stdout.trim() : null, sourceDirty: gitStatus.status === 0 ? Boolean(gitStatus.stdout.trim()) : null, createdAt: new Date().toISOString(), archive: path.basename(archive), sha256, files, install: "node tools/install-native.mjs --archive <archive> --install-dir <local-install-dir> --state-dir <isolated-state-dir>", rollback: "node src/index.js restore --state-dir <isolated-state-dir> --snapshot <snapshot-directory>" };
+fs.writeFileSync(path.join(output, `${name}.manifest.json`), `${JSON.stringify(manifest, null, 2)}\n`, { mode: 0o600 });
+console.log(JSON.stringify(manifest, null, 2));
