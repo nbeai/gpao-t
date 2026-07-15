@@ -381,7 +381,7 @@ export class NativeRuntime {
     if (this.progressClients.size >= 16) throw new RuntimeError("progress_capacity", "Progress stream capacity is full", 429);
     response.write(`event: snapshot\ndata: ${JSON.stringify(progress)}\n\n`);
     const turn = await this.getTurn(principalId, commandId);
-    if (["succeeded", "failed", "uncertain"].includes(turn.status)) {
+    if (["succeeded", "failed", "uncertain", "cancelled"].includes(turn.status)) {
       response.end();
       return true;
     }
@@ -404,7 +404,7 @@ export class NativeRuntime {
           this.progressClients.delete(client);
           continue;
         }
-        if (["succeeded", "failed", "uncertain"].includes(turn.status)) {
+        if (["succeeded", "failed", "uncertain", "cancelled"].includes(turn.status)) {
           client.response.end();
           this.progressClients.delete(client);
         }

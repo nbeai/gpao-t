@@ -10,7 +10,7 @@ const output = path.join(root, ".gpao-t", "releases");
 const name = `gpao-t-native-runtime-${version}`;
 fs.mkdirSync(output, { recursive: true, mode: 0o700 });
 const archive = path.join(output, `${name}.tar.gz`);
-const files = ["src", "tools/install-native.mjs", "package.json", "README.md"];
+const files = ["src", "tools/install-native.mjs", "tools/uninstall-native.mjs", "package.json", "README.md"];
 const temporaryArchive = `${archive}.${process.pid}.tmp`;
 const result = spawnSync("tar", ["-czf", temporaryArchive, ...files], { cwd: root, encoding: "utf8" });
 if (result.status !== 0) throw new Error(result.stderr || "Archive creation failed");

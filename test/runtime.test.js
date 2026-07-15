@@ -76,6 +76,18 @@ test("worker crash after dispatch becomes unknown and is not retried", async () 
   await runtime.stop();
 });
 
+test("worker removal recovers before a later local turn without breaking doctor", async () => {
+  const runtime = await new NativeRuntime({ stateDir: tempState() }).start();
+  try {
+    const removed = runtime.worker;
+    removed.kill();
+    await eventually(() => runtime.worker && runtime.worker !== removed && runtime.worker.connected, 2000);
+    const result = await runtime.submitTurn({ principalId: "owner:a", requestId: "after-worker-removal", payload: { input: "recovered" } });
+    await eventually(async () => (await runtime.getTurn("owner:a", result.commandId))?.status === "succeeded", 2000);
+    assert.equal((await runtime.doctor()).integrity.ok, true);
+  } finally { await runtime.stop(); }
+});
+
 test("worker crash loop trips a restart breaker instead of churning", async () => {
   const runtime = await new NativeRuntime({ stateDir: tempState(), maxWorkerRestarts: 1, workerStableWindowMs: 500 }).start();
   try {

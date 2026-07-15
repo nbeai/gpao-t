@@ -22,7 +22,8 @@ export class LocalHybridMemory {
       if (sessionId && entry.sessionId && entry.sessionId !== sessionId) continue;
       const overlap = queryTokens.filter(token => entry.tokens.includes(token)).length;
       if (!overlap) continue;
-      candidates.push({ id: entry.id, source: entry.source, text: entry.text.slice(0, 600), score: overlap / Math.max(queryTokens.length, 1), traceRef: entry.traceRef, sessionId: entry.sessionId, reviewed: entry.reviewed, admission: "search_support_candidate" });
+      const confidence = overlap / Math.max(queryTokens.length, 1);
+      candidates.push({ id: entry.id, source: entry.source, text: entry.text.slice(0, 600), score: confidence, confidence, reason: "local_token_overlap", traceRef: entry.traceRef, sessionId: entry.sessionId, reviewed: entry.reviewed, admission: "search_support_candidate" });
     }
     candidates.sort((a, b) => b.score - a.score);
     return { results: candidates.slice(0, limit), degraded: null, elapsedMs: performance.now() - started };
