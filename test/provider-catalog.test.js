@@ -4,6 +4,7 @@ import os from "node:os";
 import path from "node:path";
 import test from "node:test";
 import { NativeRuntime } from "../src/core/runtime.js";
+import { createTrustedProviderCatalog, TRUSTED_PROVIDER_CATALOG, validateTrustedProviderCatalog } from "../src/core/provider-catalog-policy.js";
 
 function stateDir() { return fs.mkdtempSync(path.join(os.tmpdir(), "gpao-t-native-provider-catalog-")); }
 
@@ -70,4 +71,45 @@ test("concurrent duplicate OS requests share one external provider invocation", 
   } finally {
     await runtime.stop();
   }
+});
+
+test("trusted catalog uses only package-defined official HTTPS hosts and ignores normal endpoint overrides", async () => {
+  const calls = [];
+  const runtime = await new NativeRuntime({
+    stateDir: stateDir(),
+    providerEnvironment: {
+      GPAO_T_OPENAI_API_KEY: "catalog-host-test-secret",
+      GPAO_T_OPENAI_BASE_URL: "http://127.0.0.1:9999/redirected"
+    },
+    providerFetch: async url => {
+      calls.push(url);
+      return new Response(JSON.stringify({ id: "official-host", output_text: "official host only" }), { status: 200 });
+    }
+  }).start();
+  try {
+    await runtime.runOsTurn({ principalId: "owner:test", sessionId: "host-session", requestId: "host-turn", input: "Use official host" });
+    assert.deepEqual(calls, ["https://api.openai.com/v1/responses"]);
+  } finally {
+    await runtime.stop();
+  }
+});
+
+test("trusted catalog rejects secrets, untrusted endpoints, invalid migrations, and adapter drift", () => {
+  const adapterVersions = {
+    "openai-responses": "0.1",
+    "anthropic-messages": "0.1",
+    "gemini-generate-content": "0.1",
+    "codex-oauth": "0.1",
+    "native-deterministic-emulator": "0.1"
+  };
+  assert.equal(createTrustedProviderCatalog({ adapterVersions }).schema, "gpao_t.provider_catalog.v1");
+  const invalidCases = [
+    { ...TRUSTED_PROVIDER_CATALOG, apiKey: "must-not-be-here" },
+    { ...TRUSTED_PROVIDER_CATALOG, catalogVersion: 2, migration: { fromCatalogVersions: [1, 2] } },
+    { ...TRUSTED_PROVIDER_CATALOG, migration: { fromCatalogVersions: [2] } },
+    { ...TRUSTED_PROVIDER_CATALOG, providers: TRUSTED_PROVIDER_CATALOG.providers.map(provider => provider.id === "openai" ? { ...provider, baseUrl: "http://api.openai.com/v1" } : provider) },
+    { ...TRUSTED_PROVIDER_CATALOG, providers: TRUSTED_PROVIDER_CATALOG.providers.map(provider => provider.id === "openai" ? { ...provider, baseUrl: "https://example.invalid/v1" } : provider) }
+  ];
+  for (const catalog of invalidCases) assert.throws(() => validateTrustedProviderCatalog(catalog, { adapterVersions }));
+  assert.throws(() => validateTrustedProviderCatalog(TRUSTED_PROVIDER_CATALOG, { adapterVersions: { ...adapterVersions, "openai-responses": "2.0" } }));
 });

@@ -4,6 +4,7 @@ import { OpenAiResponsesAdapter } from "./providers/openai-responses.js";
 import { AnthropicMessagesAdapter } from "./providers/anthropic-messages.js";
 import { CodexOAuthAdapter } from "./providers/codex-oauth.js";
 import { GeminiGenerateContentAdapter } from "./providers/gemini-generate-content.js";
+import { createTrustedProviderCatalog } from "./provider-catalog-policy.js";
 
 function configured(environment, key) {
   return typeof environment?.[key] === "string" && environment[key].trim().length > 0;
@@ -13,6 +14,14 @@ function value(environment, key, fallback) {
   const candidate = environment?.[key];
   return typeof candidate === "string" && candidate.trim() ? candidate.trim() : fallback;
 }
+
+const ADAPTER_VERSIONS = Object.freeze({
+  "openai-responses": "0.1",
+  "anthropic-messages": "0.1",
+  "gemini-generate-content": "0.1",
+  "codex-oauth": "0.1",
+  "native-deterministic-emulator": "0.1"
+});
 
 function externalProvider({ id, adapter, priority, credentialPresent, modelId, display }) {
   return {
@@ -40,6 +49,8 @@ function externalProvider({ id, adapter, priority, credentialPresent, modelId, d
  * registry, persisted state, task packets, receipts, or logs.
  */
 export function createNativeProviderCatalog({ environment = process.env, fetchImpl = fetch, emulator } = {}) {
+  const trustedCatalog = createTrustedProviderCatalog({ adapterVersions: ADAPTER_VERSIONS });
+  const providerDefinition = id => trustedCatalog.providers.find(provider => provider.id === id);
   const openAiConfigured = configured(environment, "GPAO_T_OPENAI_API_KEY");
   const anthropicConfigured = configured(environment, "GPAO_T_ANTHROPIC_API_KEY");
   const registry = new ProviderRegistry({
@@ -100,9 +111,9 @@ export function createNativeProviderCatalog({ environment = process.env, fetchIm
   });
   const adapters = new ProviderAdapterRegistry({
     adapters: [
-      { id: "openai-responses", adapter: new OpenAiResponsesAdapter({ fetchImpl, baseUrl: value(environment, "GPAO_T_OPENAI_BASE_URL", "https://api.openai.com/v1") }) },
-      { id: "anthropic-messages", adapter: new AnthropicMessagesAdapter({ fetchImpl, baseUrl: value(environment, "GPAO_T_ANTHROPIC_BASE_URL", "https://api.anthropic.com") }) },
-      { id: "gemini-generate-content", adapter: new GeminiGenerateContentAdapter({ fetchImpl, baseUrl: value(environment, "GPAO_T_GEMINI_BASE_URL", "https://generativelanguage.googleapis.com/v1beta") }) },
+      { id: "openai-responses", adapter: new OpenAiResponsesAdapter({ fetchImpl, baseUrl: providerDefinition("openai").baseUrl }) },
+      { id: "anthropic-messages", adapter: new AnthropicMessagesAdapter({ fetchImpl, baseUrl: providerDefinition("anthropic").baseUrl }) },
+      { id: "gemini-generate-content", adapter: new GeminiGenerateContentAdapter({ fetchImpl, baseUrl: providerDefinition("google-gemini").baseUrl }) },
       { id: "codex-oauth", adapter: new CodexOAuthAdapter({ command: value(environment, "GPAO_T_CODEX_BIN", "codex") }) },
       { id: "native-deterministic-emulator", adapter: emulator }
     ]
