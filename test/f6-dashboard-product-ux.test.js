@@ -24,6 +24,7 @@ test("F6 dashboard is a conversation-first workspace with session-scoped assista
     assert.match(html, /id="assistant-panel"/);
     assert.match(html, /작업 보조/);
     assert.match(html, /data-panel-content="activity"/);
+    assert.match(html, /data-panel-content="authority"/);
     assert.match(html, /AI 연결/);
     assert.match(html, /도구/);
     assert.match(html, /기억/);
@@ -51,6 +52,8 @@ test("F6 dashboard is a conversation-first workspace with session-scoped assista
     assert.match(app, /renderSessions\(\)/);
     assert.match(app, /ArrowDown/);
     assert.match(app, /aria-modal/);
+    assert.match(app, /panelProjections:new Map/);
+    assert.match(app, /syncMobileRailAccessibility/);
     assert.match(app, /sessions-open/);
     assert.match(app, /gpao-t3:assistant-panel:/);
     assert.match(app, /sessionStorage\.setItem/);

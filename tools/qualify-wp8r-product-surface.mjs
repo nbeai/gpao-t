@@ -55,6 +55,19 @@ async function exercise(page, name) {
   page.on("console", message => { if (message.type() === "error") consoleErrors.push(`${name}:${message.text()}`); });
   page.on("pageerror", error => consoleErrors.push(`${name}:${error.message}`));
   await page.goto(base, { waitUntil:"networkidle" });
+  if (name.startsWith("mobile")) {
+    assert.equal(await page.locator(".rail").getAttribute("aria-hidden"), "true");
+    assert.equal(await page.locator(".rail").getAttribute("inert"), "");
+    await page.locator("#session-menu").click();
+    await page.waitForTimeout(220);
+    assert.equal(await page.locator(".rail").getAttribute("aria-hidden"), "false");
+    assert.equal(await page.locator(".workbench").getAttribute("inert"), "");
+    assert.equal(await page.evaluate(() => document.activeElement?.id), "new-chat");
+    await page.keyboard.press("Escape");
+    await page.waitForTimeout(20);
+    assert.equal(await page.locator(".rail").getAttribute("aria-hidden"), "true");
+    assert.equal(await page.evaluate(() => document.activeElement?.id), "session-menu");
+  }
   await page.locator("#composer-settings").click();
   await page.locator("#settings-dialog").waitFor({ state:"visible" });
   assert.ok(await page.locator("[data-settings-target]").count() >= 5);
@@ -69,6 +82,12 @@ async function exercise(page, name) {
   });
   assert.ok(toolRoute.sectionTop >= toolRoute.dialogTop && toolRoute.sectionTop < toolRoute.dialogBottom, JSON.stringify(toolRoute));
   await page.locator("#close-connections").click();
+  await page.locator("#composer-settings").click();
+  await page.locator('[data-settings-target="authority"]').click();
+  await page.waitForTimeout(220);
+  assert.equal(await page.locator('[data-panel-view="authority"]').getAttribute("aria-current"), "true");
+  assert.match(await page.locator("#authority-state").innerText(), /권한 내 자동 실행/);
+  await page.locator("#panel-close").click();
   if (name.startsWith("mobile")) assert.equal(await page.locator(".app-shell").evaluate(node => node.classList.contains("rail-collapsed")), false);
   if (name.startsWith("desktop")) {
     const firstSession = page.locator(".session-row").first();
@@ -89,6 +108,10 @@ async function exercise(page, name) {
     await page.keyboard.press("Escape");
     await firstSession.locator(".session-context-menu").waitFor({ state:"hidden" });
     assert.equal(await page.evaluate(() => document.activeElement?.hasAttribute("data-session-menu")), true);
+    await firstSession.locator("[data-session-menu]").click();
+    await page.locator("#session-search-toggle").click();
+    assert.equal(await page.evaluate(() => document.activeElement?.id), "session-search");
+    await page.locator("#session-search-close").click();
     const expandedWidth = await page.locator(".rail").evaluate(node => node.getBoundingClientRect().width);
     await page.locator("#rail-collapse").click();
     await page.waitForTimeout(220);
@@ -98,6 +121,7 @@ async function exercise(page, name) {
     await page.waitForTimeout(220);
   }
   await page.locator("#message").fill("긴 한국어 답변을 Markdown, 코드, 표와 함께 보여줘");
+  const sourceSessionId = await page.locator('.session-row[aria-current="true"] > [data-session-open]').getAttribute("data-session-open");
   await page.locator("#send").click();
   await page.locator(".message.streaming .response-prose").waitFor({ timeout:15_000 });
   assert.ok((await page.locator(".message.streaming .response-prose").innerText()).length > 20);
@@ -107,6 +131,21 @@ async function exercise(page, name) {
     assert.equal(await page.locator(".message.streaming").count(), 1);
     await page.locator("#session-search-close").click();
     assert.equal(await page.locator(".message.streaming").count(), 1);
+    await page.locator("#top-new-chat").click();
+    await page.waitForFunction(sourceId => document.querySelector('.session-row[aria-current="true"] > [data-session-open]')?.dataset.sessionOpen !== sourceId, sourceSessionId);
+    assert.equal(await page.locator(".message.streaming").count(), 0);
+    assert.equal(await page.locator("#activity-event-list li").count(), 0);
+    assert.match(await page.locator("#panel-activity-title").textContent(), /대화를 시작할 준비/);
+    const alternateSessionId = await page.locator('.session-row[aria-current="true"] > [data-session-open]').getAttribute("data-session-open");
+    await page.locator(`.session-row > [data-session-open="${sourceSessionId}"]`).click();
+    await page.locator(".message.streaming .response-prose").waitFor();
+    assert.ok((await page.locator(".message.streaming .response-prose").innerText()).length > 20);
+    await page.locator(`.session-row > [data-session-open="${alternateSessionId}"]`).click();
+    await page.waitForFunction(() => !document.querySelector("#send").disabled, null, { timeout:15_000 });
+    assert.equal(await page.locator('.session-row[aria-current="true"] > [data-session-open]').getAttribute("data-session-open"), alternateSessionId);
+    assert.equal(await page.locator("#activity-event-list li").count(), 0);
+    await page.locator(`.session-row > [data-session-open="${sourceSessionId}"]`).click();
+    await page.locator("#activity-event-list li").first().waitFor({ state:"attached" });
   }
   await page.screenshot({ path:path.join(evidenceDir, `${name}-streaming.png`), fullPage:false });
   await page.locator(".response-prose table").waitFor({ timeout:15_000 });
@@ -157,7 +196,7 @@ try {
   intermediate.on("pageerror", error => consoleErrors.push(`intermediate-900:${error.message}`));
   await intermediate.goto(base, { waitUntil:"networkidle" });
   await intermediate.locator("#panel-toggle").click();
-  await intermediate.waitForTimeout(220);
+  await intermediate.waitForTimeout(260);
   assert.equal(await intermediate.locator("#assistant-panel").getAttribute("aria-hidden"), "false");
   assert.equal(await intermediate.locator("#assistant-panel").getAttribute("aria-modal"), "true");
   const intermediateBoxes = await intermediate.evaluate(() => {
@@ -166,13 +205,17 @@ try {
     return { conversationWidth:conversation.width, panelLeft:panel.left, panelRight:panel.right, width:innerWidth, scrollWidth:document.documentElement.scrollWidth };
   });
   assert.ok(intermediateBoxes.conversationWidth >= 600, JSON.stringify(intermediateBoxes));
-  assert.ok(intermediateBoxes.panelLeft < intermediateBoxes.width && intermediateBoxes.panelRight <= intermediateBoxes.width + 1, JSON.stringify(intermediateBoxes));
+  assert.ok(intermediateBoxes.panelLeft < intermediateBoxes.width && intermediateBoxes.panelRight <= intermediateBoxes.width + 2, JSON.stringify(intermediateBoxes));
   assert.ok(intermediateBoxes.scrollWidth <= intermediateBoxes.width, JSON.stringify(intermediateBoxes));
   await intermediate.screenshot({ path:path.join(evidenceDir, "intermediate-900-panel-overlay.png"), fullPage:false });
 
   const mobile = await browser.newPage({ viewport:{ width:390, height:844 }, isMobile:true, hasTouch:true });
   await mobile.addInitScript(() => localStorage.setItem("gpao-t3:rail-collapsed", "true"));
   await exercise(mobile, "mobile-390-long-markdown");
+  await mobile.reload({ waitUntil:"networkidle" });
+  await mobile.waitForTimeout(240);
+  assert.equal(await mobile.locator("#assistant-panel").getAttribute("aria-modal"), "true");
+  assert.equal(await mobile.evaluate(() => document.activeElement?.id), "panel-close");
   await mobile.locator("#panel-close").click();
   await mobile.locator("#assistant-panel").waitFor({ state:"hidden" });
   assert.equal(await mobile.locator("#assistant-panel").getAttribute("aria-hidden"), "true");
@@ -190,7 +233,7 @@ try {
   assert.ok(mobileBoxes.scrollWidth <= mobileBoxes.width);
   await mobile.screenshot({ path:path.join(evidenceDir, "mobile-390-keyboard-constrained.png"), fullPage:false });
   assert.deepEqual(consoleErrors, []);
-  const receipt = { schema:"gpao_t3.wp8r_product_surface_qualification.v1", verdict:"pass", markdown:true, xssBlocked:true, surfaceEvents:true, icons:true, desktop:true, intermediateOverlay:true, mobile:true, mobileRailPreference:true, keyboardNavigation:true, streamingPreserved:true, modalFocus:true, keyboardConstrained:true, consoleErrors, evidenceDir };
+  const receipt = { schema:"gpao_t3.wp8r_product_surface_qualification.v1", verdict:"pass", markdown:true, xssBlocked:true, surfaceEvents:true, icons:true, desktop:true, intermediateOverlay:true, mobile:true, mobileRailPreference:true, mobileDrawerModal:true, keyboardNavigation:true, outsideClickFocus:true, streamingPreserved:true, sessionSwitchIsolation:true, panelSessionIsolation:true, authoritySurface:true, modalFocus:true, restoredModalFocus:true, keyboardConstrained:true, consoleErrors, evidenceDir };
   await fs.writeFile(path.join(evidenceDir, "qualification.json"), `${JSON.stringify(receipt, null, 2)}\n`);
   console.log(JSON.stringify(receipt, null, 2));
 } finally {

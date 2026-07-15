@@ -1,4 +1,4 @@
-const state = { sessions: [], messengerSessions: [], activeId: null, activeKind: "workspace", sessionAction: null, sessionMenuId: null, sessionSearch: "", pendingChannelSend: null, activeTurn: null, surfaceEventIds:new Set(), streamText:new Map(), connections: null, channels: null, connectionCells: null, tools: null, influence: null, memoryWiki: null, doctor: null, panel: { sessionId:null, open:false, userClosed:false, view:"activity", notices:0 } };
+const state = { sessions: [], messengerSessions: [], activeId: null, activeKind: "workspace", sessionAction: null, sessionMenuId: null, sessionSearch: "", pendingChannelSend: null, activeTurn: null, surfaceEventIds:new Set(), streamText:new Map(), panelProjections:new Map(), connections: null, channels: null, connectionCells: null, tools: null, influence: null, memoryWiki: null, doctor: null, panel: { sessionId:null, open:false, userClosed:false, view:"activity", notices:0 } };
 const $ = selector => document.querySelector(selector);
 function refreshIcons(root = document) { globalThis.lucide?.createIcons?.({ root, attrs:{ "stroke-width":1.8 } }); }
 const localConnector = connector => (connector.compatibility?.transport || connector.transport) === "builtin";
@@ -7,7 +7,26 @@ const userFacingProvider = provider => provider.adapter !== "native-deterministi
 let panelReturnFocus = null;
 
 function active() { return (state.activeKind === "messenger" ? state.messengerSessions : state.sessions).find(session => session.sessionId === state.activeId); }
-const panelTitles = { activity:"진행 상황", tools:"도구와 결과", memory:"기억", recovery:"문제 해결" };
+const panelTitles = { activity:"진행 상황", tools:"도구와 결과", memory:"기억", authority:"권한과 승인", recovery:"문제 해결" };
+function panelProjection(sessionId = state.activeId) {
+  if (!state.panelProjections.has(sessionId)) state.panelProjections.set(sessionId, { title:"대화를 시작할 준비가 됐습니다", detail:"필요한 작업과 결과가 여기에 정리됩니다.", notices:0, events:[] });
+  return state.panelProjections.get(sessionId);
+}
+function renderPanelProjection(sessionId = state.activeId) {
+  const projection = panelProjection(sessionId);
+  $("#panel-activity-title").textContent = projection.title;
+  $("#panel-activity-detail").textContent = projection.detail;
+  const list = $("#activity-event-list");
+  list.replaceChildren();
+  for (const event of projection.events) {
+    const item = document.createElement("li");
+    item.dataset.eventId = event.eventId;
+    item.className = event.terminal ? "terminal" : "";
+    const title = document.createElement("strong"); title.textContent = event.title;
+    const detail = document.createElement("span"); detail.textContent = event.detail;
+    item.append(title, detail); list.append(item);
+  }
+}
 function panelStorageKey(sessionId = state.activeId) { return `gpao-t3:assistant-panel:${sessionId || "new"}`; }
 function readPanelState(sessionId) {
   try { return JSON.parse(sessionStorage.getItem(panelStorageKey(sessionId))) || {}; }
@@ -35,15 +54,21 @@ function renderPanelState() {
 }
 function restorePanelForSession(sessionId) {
   const saved = readPanelState(sessionId);
-  state.panel = { sessionId, open:saved.open === true, userClosed:saved.userClosed === true, view:panelTitles[saved.view] ? saved.view : "activity", notices:0 };
+  const projection = panelProjection(sessionId);
+  state.panel = { sessionId, open:saved.open === true, userClosed:saved.userClosed === true, view:panelTitles[saved.view] ? saved.view : "activity", notices:projection.notices };
+  renderPanelProjection(sessionId);
   renderPanelState();
+  if (state.panel.open && window.innerWidth <= 980) {
+    panelReturnFocus = $("#panel-toggle");
+    setTimeout(() => $("#panel-close").focus(), 200);
+  }
 }
 function setPanelOpen(open, { userClosed = false } = {}) {
   const wasModal = $("#assistant-panel").getAttribute("aria-modal") === "true";
   if (open && !state.panel.open) panelReturnFocus = document.activeElement;
   state.panel.open = open;
   state.panel.userClosed = !open && userClosed;
-  if (open) state.panel.notices = 0;
+  if (open) { state.panel.notices = 0; panelProjection().notices = 0; }
   savePanelState();
   renderPanelState();
   if (open && window.innerWidth <= 980) setTimeout(() => $("#panel-close").focus(), 200);
@@ -55,11 +80,15 @@ function setPanelView(view) {
   savePanelState();
   renderPanelState();
 }
-function setPanelActivity(title, detail, { notice = false, view = "activity" } = {}) {
-  $("#panel-activity-title").textContent = title;
-  $("#panel-activity-detail").textContent = detail;
+function setPanelActivity(title, detail, { notice = false, view = "activity", sessionId = state.activeId } = {}) {
+  const projection = panelProjection(sessionId);
+  projection.title = title;
+  projection.detail = detail;
+  if (notice && (sessionId !== state.activeId || !state.panel.open)) projection.notices += 1;
+  if (sessionId !== state.activeId) return;
+  renderPanelProjection(sessionId);
   if (panelTitles[view]) state.panel.view = view;
-  if (notice && !state.panel.open) state.panel.notices += 1;
+  state.panel.notices = projection.notices;
   savePanelState();
   renderPanelState();
 }
@@ -86,32 +115,35 @@ function showSurfaceEvent(event) {
   if (state.surfaceEventIds.has(event.eventId)) return;
   state.surfaceEventIds.add(event.eventId);
   const copy = SURFACE_EVENT_COPY[event.type] || ["진행", "작업 상태가 갱신됐습니다."];
-  setPanelActivity(copy[0], copy[1], { notice:true, view:event.type.includes("failed") || event.type.startsWith("recovery.") ? "recovery" : "activity" });
-  const list = $("#activity-event-list");
-  if (!list || list.querySelector(`[data-event-id="${CSS.escape(event.eventId)}"]`)) return;
-  const item = document.createElement("li");
-  item.dataset.eventId = event.eventId;
-  item.className = event.terminal ? "terminal" : "";
-  const title = document.createElement("strong");
-  title.textContent = copy[0];
-  const detail = document.createElement("span");
-  detail.textContent = copy[1];
-  item.append(title, detail);
-  list.append(item);
-  while (list.children.length > 30) list.firstElementChild.remove();
+  const projection = panelProjection(event.sessionId);
+  projection.title = copy[0]; projection.detail = copy[1];
+  projection.events.push({ eventId:event.eventId, terminal:event.terminal, title:copy[0], detail:copy[1] });
+  if (projection.events.length > 30) projection.events.shift();
   if (event.type === "text.delta") renderStreamingDelta(event);
+  if (event.sessionId !== state.activeId) { projection.notices += 1; return; }
+  if (!state.panel.open) projection.notices += 1;
+  state.panel.notices = projection.notices;
+  state.panel.view = event.type.includes("failed") || event.type.startsWith("recovery.") ? "recovery" : "activity";
+  renderPanelProjection(event.sessionId);
+  savePanelState(); renderPanelState();
 }
 
 function renderStreamingDelta(event) {
   if (state.activeTurn?.turnId !== event.turnId || typeof event.payload?.text !== "string") return;
   const text = `${state.streamText.get(event.turnId) || ""}${event.payload.text}`;
   state.streamText.set(event.turnId, text);
+  if (event.sessionId !== state.activeId) return;
+  renderStreamingProjection(event.turnId);
+}
+function renderStreamingProjection(turnId) {
+  const text = state.streamText.get(turnId) || "";
+  if (!text) return;
   const messages = $("#messages");
-  let article = messages.querySelector(`[data-stream-turn="${CSS.escape(event.turnId)}"]`);
+  let article = messages.querySelector(`[data-stream-turn="${CSS.escape(turnId)}"]`);
   if (!article) {
     article = document.createElement("article");
     article.className = "message assistant streaming";
-    article.dataset.streamTurn = event.turnId;
+    article.dataset.streamTurn = turnId;
     const who = document.createElement("span");
     who.className = "who";
     who.textContent = "GPAO-T3";
@@ -149,7 +181,7 @@ function awaitOsTurn(acceptance) {
     });
     source.onerror = () => {
       if (terminal) return;
-      setPanelActivity("연결을 복구하고 있습니다", "저장된 진행 위치부터 다시 연결합니다.", { notice:true });
+      setPanelActivity("연결을 복구하고 있습니다", "저장된 진행 위치부터 다시 연결합니다.", { notice:true, sessionId:acceptance.sessionId });
     };
   });
 }
@@ -167,18 +199,35 @@ async function loadWorkspace(sessionId) {
   state.activeKind = "workspace"; state.activeId = sessionId; closeSessionMenu(); render();
 }
 function loadMessengerSession(sessionId) { state.activeKind = "messenger"; state.activeId = sessionId; closeSessionMenu(); render(); }
-function closeSessionMenu() {
+async function syncWorkspace(sessionId) {
+  const workspace = await request(`/v1/workspaces/${encodeURIComponent(sessionId)}`);
+  const index = state.sessions.findIndex(item => item.sessionId === sessionId);
+  if (index >= 0) state.sessions[index] = workspace; else state.sessions.unshift(workspace);
+  if (state.activeKind === "workspace" && state.activeId === sessionId) render(); else renderSessions();
+  return workspace;
+}
+function syncMobileRailAccessibility(open = $(".rail").classList.contains("sessions-open")) {
+  const mobile = window.innerWidth <= 760;
+  const rail = $(".rail"), workbench = $(".workbench");
+  rail.toggleAttribute("inert", mobile && !open);
+  workbench.toggleAttribute("inert", mobile && open);
+  if (mobile) rail.setAttribute("aria-hidden", String(!open)); else rail.removeAttribute("aria-hidden");
+}
+function closeSessionMenu({ restoreFocus = false } = {}) {
+  const wasOpen = $(".rail").classList.contains("sessions-open");
   $(".rail").classList.remove("sessions-open");
   $("#session-backdrop").classList.remove("open");
   $("#session-menu").setAttribute("aria-expanded", "false");
+  syncMobileRailAccessibility(false);
+  if (restoreFocus && wasOpen) setTimeout(() => $("#session-menu").focus(), 0);
 }
-function closeSessionContextMenu() {
+function closeSessionContextMenu({ restoreFocus = false } = {}) {
   const closingId = state.sessionMenuId;
   state.sessionMenuId = null;
   document.querySelectorAll(".session-context-menu").forEach(menu => { menu.hidden = true; });
   document.querySelectorAll(".session-row.menu-open").forEach(row => row.classList.remove("menu-open"));
   document.querySelectorAll("[data-session-menu]").forEach(button => button.setAttribute("aria-expanded", "false"));
-  if (closingId) queueMicrotask(() => document.querySelector(`[data-session-menu="${CSS.escape(closingId)}"]`)?.focus());
+  if (restoreFocus && closingId) queueMicrotask(() => document.querySelector(`[data-session-menu="${CSS.escape(closingId)}"]`)?.focus());
 }
 function positionSessionContextMenu() {
   const menu = document.querySelector(".session-context-menu:not([hidden])");
@@ -327,7 +376,14 @@ function renderSessions() {
   $("#sessions").querySelectorAll("[data-session-open]").forEach(button => button.addEventListener("click", () => loadWorkspace(button.dataset.sessionOpen)));
   $("#sessions").querySelectorAll("[data-messenger-open]").forEach(button => button.addEventListener("click", () => loadMessengerSession(button.dataset.messengerOpen)));
   $("#sessions").querySelectorAll("[data-session-pin]").forEach(button => button.addEventListener("click", () => { const item = state.sessions.find(entry => entry.sessionId === button.dataset.sessionPin); updateSession(item.sessionId, { pinned:!item.pinned }); }));
-  $("#sessions").querySelectorAll("[data-session-menu]").forEach(button => button.addEventListener("click", event => { event.stopPropagation(); state.sessionMenuId = state.sessionMenuId === button.dataset.sessionMenu ? null : button.dataset.sessionMenu; renderSessions(); if (state.sessionMenuId) queueMicrotask(() => document.querySelector(".session-context-menu:not([hidden]) [role=menuitem]")?.focus()); }));
+  $("#sessions").querySelectorAll("[data-session-menu]").forEach(button => button.addEventListener("click", event => {
+    event.stopPropagation();
+    const sessionId = button.dataset.sessionMenu;
+    const opening = state.sessionMenuId !== sessionId;
+    state.sessionMenuId = opening ? sessionId : null;
+    renderSessions();
+    queueMicrotask(() => opening ? document.querySelector(".session-context-menu:not([hidden]) [role=menuitem]")?.focus() : document.querySelector(`[data-session-menu="${CSS.escape(sessionId)}"]`)?.focus());
+  }));
   $("#sessions").querySelectorAll("[data-session-rename]").forEach(button => button.addEventListener("click", () => openSessionDialog("rename", button.dataset.sessionRename)));
   $("#sessions").querySelectorAll("[data-session-archive]").forEach(button => button.addEventListener("click", () => updateSession(button.dataset.sessionArchive, { archived:true })));
   $("#sessions").querySelectorAll("[data-session-delete]").forEach(button => button.addEventListener("click", () => openSessionDialog("delete", button.dataset.sessionDelete)));
@@ -340,9 +396,13 @@ function render() {
   if (state.panel.sessionId !== state.activeId) restorePanelForSession(state.activeId);
   const messenger = state.activeKind === "messenger";
   $("#chat-title").textContent = messenger ? `${session.channelId === "telegram" ? "Telegram" : session.channelId} · ${session.peer.id}` : session.title;
+  const activeTurnHere = state.activeTurn?.sessionId === state.activeId;
+  $("#cancel-turn").hidden = !activeTurnHere;
+  if (!activeTurnHere) $("#turn-status").textContent = "";
   renderSessions();
   const messages = $("#messages");
   renderMessages(messages, session, messenger);
+  if (activeTurnHere) renderStreamingProjection(state.activeTurn.turnId);
   refreshIcons();
   messages.scrollTop = messages.scrollHeight;
 }
@@ -392,6 +452,12 @@ function toolOverview(cells) {
   if (approval || setup) return { tone:"hold", summary:"승인 후 사용", detail:`검토 필요한 연결 ${approval + setup}개` };
   return { tone:"warn", summary:"도구 확인 필요", detail:"도구 연결 상태를 불러오지 못했습니다" };
 }
+function renderAuthorityPanel() {
+  const cells = state.connectionCells?.cells || [];
+  const automatic = cells.filter(cell => cell.seamlessState === "usable_read").length;
+  const approval = cells.filter(cell => cell.seamlessState === "approval_required").length;
+  $("#authority-state").innerHTML = `<p><span>권한 내 자동 실행</span><strong>${automatic}개</strong></p><p><span>실행 전 승인 필요</span><strong>${approval}개</strong></p><p><span>결과 불명 시</span><strong>자동 재시도 안 함</strong></p>`;
+}
 function memoryOverview(influence) {
   if (!influence) return { tone:"hold", summary:"확인 중", detail:"기억 상태를 불러오고 있습니다" };
   if (influence.activeCount > 0) return { tone:"ok", summary:`영향 ${influence.activeCount}개`, detail:`되돌림 ${influence.rolledBackCount || 0}개 · 자동 승격 없음` };
@@ -426,6 +492,7 @@ async function refreshOperations() {
     setCard("tool", toolOverview(cells));
     setCard("memory", memoryOverview(influence));
     setCard("recovery", recoveryOverview(doctor));
+    renderAuthorityPanel();
     $("#runtime-state").textContent = doctor.status === "ready" ? "런타임 준비됨" : "런타임 확인 필요";
   } catch {
     setCard("model", { tone:"warn", summary:"확인 필요", detail:"연결 상태를 불러오지 못했습니다" });
@@ -568,6 +635,7 @@ async function refreshConnectors() {
   renderConnectors(Array.isArray(payload.cells) ? payload.cells.filter(cell => cell.kind !== "tool") : [], channels.channels || []);
   renderTools(tools.tools || []);
   setCard("tool", toolOverview(payload));
+  renderAuthorityPanel();
 }
 async function connectOrPollChannel(channelId) {
   const status = $("#connector-status");
@@ -759,7 +827,7 @@ document.querySelectorAll("[data-settings-target]").forEach(button => button.add
   if (["models", "tools"].includes(target)) return openConnectionCenter(target);
   if (target === "memory") return $("#memory").click();
   if (target === "recovery") return $("#status").click();
-  if (target === "authority") { setPanelView("activity"); setPanelOpen(true); }
+  if (target === "authority") { renderAuthorityPanel(); setPanelView("authority"); setPanelOpen(true); }
 }));
 $("#overview").addEventListener("click", () => { setPanelView("activity"); setPanelOpen(true); });
 $("#panel-toggle").addEventListener("click", () => setPanelOpen(!state.panel.open));
@@ -769,6 +837,7 @@ document.querySelectorAll("[data-panel-view]").forEach(button => button.addEvent
 $("#model-card").addEventListener("click", () => $("#models").click());
 $("#tool-card").addEventListener("click", () => openConnectionCenter("tools"));
 $("#open-tools").addEventListener("click", () => openConnectionCenter("tools"));
+$("#open-authority-tools").addEventListener("click", () => openConnectionCenter("tools"));
 $("#close-connections").addEventListener("click", () => $("#connection-dialog").close());
 $("#memory").addEventListener("click", async () => {
   $("#memory-dialog").showModal();
@@ -806,9 +875,10 @@ function applyRailPreference() {
   $("#rail-collapse").setAttribute("title", mobile ? "대화 목록 닫기" : collapsed ? "사이드바 펼치기" : "사이드바 접기");
   $("#rail-collapse i, #rail-collapse svg")?.setAttribute("data-lucide", collapsed ? "panel-left-open" : "panel-left-close");
   refreshIcons($("#rail-collapse"));
+  syncMobileRailAccessibility();
 }
 $("#rail-collapse").addEventListener("click", () => {
-  if (window.innerWidth <= 760) { closeSessionMenu(); return; }
+  if (window.innerWidth <= 760) { closeSessionMenu({ restoreFocus:true }); return; }
   const collapsed = $(".app-shell").classList.toggle("rail-collapsed");
   localStorage.setItem("gpao-t3:rail-collapsed", String(collapsed));
   applyRailPreference();
@@ -826,11 +896,22 @@ $("#session-menu").addEventListener("click", () => {
   const open = $(".rail").classList.toggle("sessions-open");
   $("#session-backdrop").classList.toggle("open", open);
   $("#session-menu").setAttribute("aria-expanded", String(open));
+  syncMobileRailAccessibility(open);
+  if (open) setTimeout(() => $("#new-chat").focus(), 200);
 });
-$("#session-backdrop").addEventListener("click", closeSessionMenu);
+$("#session-backdrop").addEventListener("click", () => closeSessionMenu({ restoreFocus:true }));
 $("#sessions").addEventListener("scroll", closeSessionContextMenu, { passive:true });
 document.addEventListener("click", event => { if (!event.target.closest("[data-session-menu]") && !event.target.closest(".session-context-menu")) closeSessionContextMenu(); });
 document.addEventListener("keydown", event => {
+  const railModal = window.innerWidth <= 760 && $(".rail").classList.contains("sessions-open");
+  if (railModal && event.key === "Tab") {
+    const focusable = [...$(".rail").querySelectorAll('button:not([disabled]), input:not([disabled]), [href], [tabindex]:not([tabindex="-1"])')].filter(item => item.getClientRects().length > 0);
+    if (!focusable.length) return;
+    const first = focusable[0], last = focusable.at(-1);
+    if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+    else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+    return;
+  }
   const menu = document.querySelector(".session-context-menu:not([hidden])");
   if (menu && ["ArrowDown", "ArrowUp", "Home", "End"].includes(event.key)) {
     const items = [...menu.querySelectorAll('[role="menuitem"]:not([disabled])')];
@@ -851,7 +932,8 @@ document.addEventListener("keydown", event => {
     return;
   }
   if (event.key === "Escape") {
-    if (menu) closeSessionContextMenu();
+    if (railModal) closeSessionMenu({ restoreFocus:true });
+    else if (menu) closeSessionContextMenu({ restoreFocus:true });
     else if (panel.getAttribute("aria-modal") === "true") setPanelOpen(false, { userClosed:true });
   }
 });
@@ -905,15 +987,28 @@ $("#composer").addEventListener("submit", async event => {
       return;
     }
     const acceptance = await request("/v2/os-turns", { method:"POST", body:JSON.stringify({ requestId:crypto.randomUUID(), sessionId:session.sessionId, input }) });
+    acceptance.sessionId = session.sessionId;
     state.activeTurn = acceptance;
     $("#cancel-turn").hidden = false;
     $("#cancel-turn").disabled = false;
     const turn = await awaitOsTurn(acceptance);
-    await loadWorkspace(session.sessionId); $("#turn-status").textContent = turn.status === "completed" ? "답변 완료" : "복구 확인 필요"; await refreshOperations();
+    await syncWorkspace(session.sessionId);
+    if (state.activeKind === "workspace" && state.activeId === session.sessionId) $("#turn-status").textContent = turn.status === "completed" ? "답변 완료" : "복구 확인 필요";
+    await refreshOperations();
     if (turn.status === "cancelled") { $("#turn-status").textContent = "응답을 중단했습니다."; return; }
     if (turn.status !== "completed") throw new Error("요청을 끝내지 못했습니다. 문제 해결 보기에서 다음 행동을 확인해 주세요.");
-  } catch (error) { const recovery = error.repairPlan ? `\n\n${error.repairPlan.title}\n${error.repairPlan.detail}\n${error.repairPlan.action}` : ""; session.messages.push({ role:"assistant", text:`지금은 요청을 끝내지 못했습니다.${recovery}` }); render(); $("#turn-status").textContent = ""; setPanelActivity("확인이 필요한 문제가 있습니다", "문제 해결 보기에서 원인과 다음 행동을 확인할 수 있습니다.", { notice:true, view:"recovery" }); }
-  finally { state.activeTurn = null; $("#cancel-turn").hidden = true; $("#send").disabled = false; $("#message").focus(); }
+  } catch (error) { const recovery = error.repairPlan ? `\n\n${error.repairPlan.title}\n${error.repairPlan.detail}\n${error.repairPlan.action}` : ""; session.messages.push({ role:"assistant", text:`지금은 요청을 끝내지 못했습니다.${recovery}` }); if (state.activeId === session.sessionId) render(); else renderSessions(); $("#turn-status").textContent = ""; setPanelActivity("확인이 필요한 문제가 있습니다", "문제 해결 보기에서 원인과 다음 행동을 확인할 수 있습니다.", { notice:true, view:"recovery", sessionId:session.sessionId }); }
+  finally {
+    const finishedTurnId = state.activeTurn?.turnId;
+    if (finishedTurnId) {
+      state.streamText.delete(finishedTurnId);
+      document.querySelector(`[data-stream-turn="${CSS.escape(finishedTurnId)}"]`)?.remove();
+    }
+    state.activeTurn = null;
+    $("#cancel-turn").hidden = true;
+    $("#send").disabled = false;
+    if (state.activeId === session.sessionId) $("#message").focus();
+  }
 });
 $("#cancel-channel-send").addEventListener("click", () => { state.pendingChannelSend = null; $("#channel-send-dialog").close(); });
 $("#confirm-channel-send").addEventListener("click", async () => {
