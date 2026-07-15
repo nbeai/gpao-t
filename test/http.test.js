@@ -65,6 +65,19 @@ test("HTTP health is public, work is owner-authenticated, and turn state is scop
   const connectors = await fetch(`${base}/v1/connectors`, { headers: { authorization: `Bearer ${runtime.ownerToken}` } }).then(response => response.json());
   assert.equal(connectors.schema, "gpao_t.connector_center.v1");
   assert.equal(connectors.connectors.find(entry => entry.id === "web.search").enabled, false);
+  const connectorToggle = await fetch(`${base}/v1/connectors/local.workspace-read/enabled`, {
+    method: "PUT",
+    headers: { cookie: localSession, origin: base, "content-type": "application/json" },
+    body: JSON.stringify({ enabled: false })
+  });
+  assert.equal(connectorToggle.status, 200);
+  assert.equal((await connectorToggle.json()).executionAuthorityGranted, false);
+  const blockedConnectorToggle = await fetch(`${base}/v1/connectors/local.workspace-read/enabled`, {
+    method: "PUT",
+    headers: { cookie: localSession, origin: "http://attacker.invalid", "content-type": "application/json" },
+    body: JSON.stringify({ enabled: true })
+  });
+  assert.equal(blockedConnectorToggle.status, 403);
 
   const osTurnResponse = await fetch(`${base}/v1/os-turns`, {
     method: "POST",
