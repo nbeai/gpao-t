@@ -21,6 +21,9 @@ function backend() {
       const record = records.get(credentialRef);
       record.state = "revoked";
       return { credentialRef, authMethod: record.authMethod, state: record.state, models: record.models };
+    },
+    async invoke({ providerId, modelId }) {
+      return { result: { text: "secure agent answer", usage: 3 }, receipt: { providerId, modelId, outcome: "completed" } };
     }
   };
 }
@@ -60,4 +63,12 @@ test("secure connection agent fails closed without an OS-native backend and reje
     () => agent.begin({ requestId: "bad-begin", providerId: "openai", authMethod: "api_key", apiKey: "sk-F2-SENTINEL-SECRET-123456", deadline: deadline() }),
     error => error.code === "secure_connection_agent_invalid_request"
   );
+});
+
+test("secure connection agent returns only an allowlisted provider result", async () => {
+  const agent = new SecureConnectionAgent({ backend: backend(), now: () => NOW });
+  const connection = await agent.begin({ requestId: "invoke-begin", providerId: "openai", authMethod: "api_key", deadline: deadline() });
+  const result = await agent.invoke({ requestId: "invoke", credentialRef: connection.credentialRef, providerId: "openai", modelId: "model-main", input: { message: "hello" }, deadline: deadline() });
+  assert.deepEqual(result.result, { text: "secure agent answer", usage: 3 });
+  assert.deepEqual(result.receipt, { providerId: "openai", modelId: "model-main", outcome: "completed" });
 });

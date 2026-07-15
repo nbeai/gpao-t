@@ -45,6 +45,19 @@ function assertOpaqueRequest(value, operation, now) {
   assertDeadline(value.deadline, now);
 }
 
+function assertInvokeRequest(value, now) {
+  assertObject(value, "secure_connection_agent_invalid_request", "Secure provider request must be an object");
+  assertOnlyKeys(value, new Set(["requestId", "credentialRef", "providerId", "modelId", "input", "deadline"]), "provider invoke request");
+  assertIdentifier(value.requestId, "requestId");
+  assertIdentifier(value.credentialRef, "credentialRef");
+  assertIdentifier(value.providerId, "providerId");
+  assertIdentifier(value.modelId, "modelId");
+  if (!value.input || typeof value.input !== "object" || Array.isArray(value.input)) {
+    throw failure("secure_connection_agent_invalid_request", "Provider input must be structured", 400);
+  }
+  assertDeadline(value.deadline, now);
+}
+
 function redactBoundaryPayload(value) {
   if (!value || typeof value !== "object" || Array.isArray(value)) return value;
   const copy = {};
@@ -74,6 +87,24 @@ function assertPublicConnection(response, request) {
     authMethod: response.authMethod,
     state: response.state,
     models: Object.freeze([...response.models])
+  });
+}
+
+function assertPublicInvocation(response, request) {
+  assertObject(response, "secure_connection_agent_invalid_response", "Secure provider response must be an object");
+  assertOnlyKeys(response, new Set(["result", "receipt"]), "secure provider response");
+  assertObject(response.result, "secure_connection_agent_invalid_response", "Secure provider result is required");
+  assertOnlyKeys(response.result, new Set(["text", "usage"]), "secure provider result");
+  if (typeof response.result.text !== "string") throw failure("secure_connection_agent_invalid_response", "Secure provider result text is required", 502);
+  if (response.result.usage !== undefined && (!Number.isFinite(response.result.usage) || response.result.usage < 0)) {
+    throw failure("secure_connection_agent_invalid_response", "Secure provider usage is invalid", 502);
+  }
+  assertObject(response.receipt, "secure_connection_agent_invalid_response", "Secure provider receipt is required");
+  return Object.freeze({
+    schema: SECURE_CONNECTION_AGENT_SCHEMA,
+    requestId: request.requestId,
+    result: Object.freeze(response.result.usage === undefined ? { text: response.result.text } : { text: response.result.text, usage: response.result.usage }),
+    receipt: Object.freeze({ ...response.receipt })
   });
 }
 
@@ -129,6 +160,14 @@ export class SecureConnectionAgent {
     if (!this.backend) this.unavailable();
     const response = await this.backend.revoke({ ...request }, { now });
     return assertPublicConnection(response, request);
+  }
+
+  async invoke(request) {
+    const now = this.now();
+    assertInvokeRequest(request, now);
+    if (!this.backend?.invoke) this.unavailable();
+    const response = await this.backend.invoke({ ...request }, { now });
+    return assertPublicInvocation(response, request);
   }
 
   /** Safe diagnostics for a UI/Doctor surface. Never expose acquisition data. */

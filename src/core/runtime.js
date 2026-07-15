@@ -8,6 +8,8 @@ import { createPermit } from "./permit.js";
 import { StateWriterClient } from "./state-writer-client.js";
 import { DeterministicProviderEmulator } from "./provider.js";
 import { ModelRouter } from "./model-router.js";
+import { ProtectedConnectionClient } from "./protected-connection.js";
+import { SecureConnectionTransport } from "./secure-connection-transport.js";
 import { createNativeProviderCatalog } from "./provider-catalog.js";
 import { createFoundationSocketRegistry } from "./socket-registry.js";
 import { ExecutionRouter } from "./execution-router.js";
@@ -40,7 +42,7 @@ function protectedConnectionRecord(providerId, connection) {
 }
 
 export class NativeRuntime {
-  constructor({ stateDir, providerRegistry = null, providerAdapter = new DeterministicProviderEmulator(), providerAdapters = null, credentialResolver = null, credentialStore = null, connectionCenter = null, protectedConnectionClient = null, providerEnvironment = process.env, allowEnvironmentCredentialCompatibility = false, providerFetch = fetch, socketRegistry = createFoundationSocketRegistry(), memory = new LocalHybridMemory(), toolRegistry = createFoundationToolRegistry(), connectorCatalog = null, connectorController = null, connectionConcierge = null, routeHealth = null, eventRouter = new EventRouter(), workerPath = path.resolve(new URL("./worker.js", import.meta.url).pathname), writerPath = path.resolve(new URL("./state-writer.js", import.meta.url).pathname), maxInflight = 4, maxQueue = 64, workerDispatchTimeoutMs = 250, workerResultTimeoutMs = 30_000, writerRequestTimeoutMs = 5_000, writerCloseTimeoutMs = 1_000, maxWorkerRestarts = 5, workerRestartWindowMs = 10_000, workerRestartBaseDelayMs = 25, workerStableWindowMs = 1_000 } = {}) {
+  constructor({ stateDir, providerRegistry = null, providerAdapter = new DeterministicProviderEmulator(), providerAdapters = null, credentialResolver = null, credentialStore = null, connectionCenter = null, protectedConnectionClient = null, secureConnectionAgent = null, providerEnvironment = process.env, allowEnvironmentCredentialCompatibility = false, providerFetch = fetch, socketRegistry = createFoundationSocketRegistry(), memory = new LocalHybridMemory(), toolRegistry = createFoundationToolRegistry(), connectorCatalog = null, connectorController = null, connectionConcierge = null, routeHealth = null, eventRouter = new EventRouter(), workerPath = path.resolve(new URL("./worker.js", import.meta.url).pathname), writerPath = path.resolve(new URL("./state-writer.js", import.meta.url).pathname), maxInflight = 4, maxQueue = 64, workerDispatchTimeoutMs = 250, workerResultTimeoutMs = 30_000, writerRequestTimeoutMs = 5_000, writerCloseTimeoutMs = 1_000, maxWorkerRestarts = 5, workerRestartWindowMs = 10_000, workerRestartBaseDelayMs = 25, workerStableWindowMs = 1_000 } = {}) {
     this.stateDir = assertSafeStateDir(stateDir);
     this.workerPath = workerPath;
     this.writerPath = writerPath;
@@ -55,7 +57,9 @@ export class NativeRuntime {
     this.providerAdapter = providerAdapter;
     this.providerAdapters = providerAdapters || providerCatalog.providerAdapters;
     this.catalogCredentialResolver = credentialResolver || providerCatalog.credentialResolver;
-    this.protectedConnectionClient = protectedConnectionClient;
+    this.protectedConnectionClient = protectedConnectionClient || (secureConnectionAgent
+      ? new ProtectedConnectionClient({ transport: new SecureConnectionTransport({ agent: secureConnectionAgent }) })
+      : null);
     this.connectionCenter = connectionCenter || new ProviderConnectionCenter({ providerRegistry: this.providerRegistry });
     this.routeHealth = routeHealth || new ProviderRouteHealth();
     this.modelRouter = new ModelRouter({
