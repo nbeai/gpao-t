@@ -1,4 +1,5 @@
 import { selectModelAdapter } from "./adapter-boundary.js";
+import { buildTimeoutBudget, verifyTimeoutBudget } from "./tester-failure-guards.js";
 
 const ROUTER_PROFILES = [
   {
@@ -239,6 +240,8 @@ export function buildModelRouterPolicy({
   },
 } = {}) {
   const boundary = buildModelRouterBoundary({ request, inputSignal, authorityDecision });
+  const timeoutBudget = buildTimeoutBudget({ request });
+  const timeoutVerification = verifyTimeoutBudget({ budget: timeoutBudget });
 
   return {
     schema: "gpao_t.model_router_policy.v0_1",
@@ -269,6 +272,11 @@ export function buildModelRouterPolicy({
       fallbackOrder: boundary.latencyCostFallback.fallbackChain,
       failureStates: FAILURE_STATES,
       defaultRecoveryState: "stay_in_preview_and_show_next_safe_action",
+    },
+    timeoutBudget,
+    timeoutVerification: {
+      status: timeoutVerification.status,
+      findings: timeoutVerification.findings,
     },
     modelOutputBoundary: {
       outputIsActionAuthority: false,
@@ -322,6 +330,8 @@ export function verifyModelRouterPolicy({
   if ((policy.contextMeshTaskPacket?.becomesModelInputWhen || []).length < 4) findings.push("missing_task_packet_conditions");
   if (policy.contextMeshTaskPacket?.rawMemoryDumpAllowed !== false) findings.push("raw_memory_dump_allowed");
   if ((policy.fallbackAndFailure?.failureStates || []).length < 5) findings.push("missing_failure_states");
+  if (!policy.timeoutBudget) findings.push("missing_timeout_budget");
+  if (policy.timeoutVerification?.status !== "ready") findings.push("timeout_budget_not_ready");
   if (policy.modelOutputBoundary?.outputIsActionAuthority !== false) findings.push("model_output_action_authority_open");
   if (policy.modelOutputBoundary?.toolCliMcpExecution !== "blocked_until_preview_approval_replay_and_audit") findings.push("tool_cli_mcp_boundary_open");
   if ((policy.replayAudit?.requiredCriteria || []).length < 6) findings.push("missing_replay_audit_criteria");

@@ -393,6 +393,17 @@ import {
   verifyModelRouterPolicy,
 } from "./model-router.js";
 import {
+  buildTesterFailureGuardSummary,
+  buildTimeoutBudget,
+  guardExternalWriteCompletion,
+  isolateHeartbeatFailures,
+  sanitizeChatSendParams,
+  verifyChatSendSanitizer,
+  verifyExternalWriteCompletionGuard,
+  verifyHeartbeatFailureIsolation,
+  verifyTimeoutBudget,
+} from "./tester-failure-guards.js";
+import {
   buildModelInvocationPacket,
   buildModelProviderRegistry,
   invokeModelLocally,
@@ -2899,6 +2910,79 @@ export function handleGatewayRequest({ method = "GET", path = "/", body = {}, ro
       schema: "gpao_t.gateway_response.v0_1",
       status: 200,
       body: verifyModelRouterPolicy(),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/stage-1/tester-failure-guards") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: buildTesterFailureGuardSummary(),
+    };
+  }
+
+  if (normalizedMethod === "POST" && path === "/stage-1/chat-send/sanitize") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: sanitizeChatSendParams(body),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/stage-1/chat-send/sanitize/verify") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: verifyChatSendSanitizer(),
+    };
+  }
+
+  if (normalizedMethod === "POST" && path === "/stage-1/timeout-budget") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: buildTimeoutBudget(body),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/stage-1/timeout-budget/verify") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: verifyTimeoutBudget(),
+    };
+  }
+
+  if (normalizedMethod === "POST" && path === "/stage-1/external-write/guard") {
+    const guard = guardExternalWriteCompletion(body);
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: guard.status === "blocked" ? 409 : 200,
+      body: guard,
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/stage-1/external-write/guard/verify") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: verifyExternalWriteCompletionGuard(),
+    };
+  }
+
+  if (normalizedMethod === "POST" && path === "/stage-1/heartbeat/isolate") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: isolateHeartbeatFailures(body),
+    };
+  }
+
+  if (normalizedMethod === "GET" && path === "/stage-1/heartbeat/isolate/verify") {
+    return {
+      schema: "gpao_t.gateway_response.v0_1",
+      status: 200,
+      body: verifyHeartbeatFailureIsolation(),
     };
   }
 

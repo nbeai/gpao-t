@@ -10,6 +10,12 @@ import {
   verifyExecutionRuntimePlan,
 } from "./execution-runtime.js";
 import { buildAuthorityDecision } from "./authority.js";
+import {
+  guardExternalWriteCompletion,
+  isolateHeartbeatFailures,
+  verifyExternalWriteCompletionGuard,
+  verifyHeartbeatFailureIsolation,
+} from "./tester-failure-guards.js";
 
 const SCHEMA = "gpao_t.tool_authority_heart.v1";
 
@@ -42,6 +48,19 @@ export function buildToolAuthorityHeart({
     admissionPacket: { admittedCells: [] },
   }),
   now = new Date().toISOString(),
+  externalWriteGuard = guardExternalWriteCompletion({
+    action: "git.push",
+    claim: "푸시 완료했습니다.",
+  }),
+  heartbeatIsolation = isolateHeartbeatFailures({
+    failures: [
+      { id: "heartbeat.fixture.1" },
+      { id: "heartbeat.fixture.2" },
+      { id: "heartbeat.fixture.3" },
+    ],
+    mainChatStatus: "ready",
+    now,
+  }),
 } = {}) {
   const governanceVerification = verifyConnectorToolGovernance({ governance });
   const executionVerification = verifyExecutionRuntimePlan({ plan: executionPlan });
@@ -50,6 +69,7 @@ export function buildToolAuthorityHeart({
     ...classifyExecutionPlan({ executionPlan, executionVerification }),
     ...classifyConnectors({ connectorRegistry, localReadReview, externalSendReview, readOnlyInspection }),
     ...classifyAuthorityDecisions({ safeAuthorityDecision, riskyAuthorityDecision }),
+    ...classifyTesterFailureGuards({ externalWriteGuard, heartbeatIsolation }),
   ];
   const severity = highestSeverity(observations);
   return {
@@ -83,6 +103,12 @@ export function buildToolAuthorityHeart({
       safeStatus: safeAuthorityDecision.status,
       riskyStatus: riskyAuthorityDecision.status,
       riskyRequiredApprovals: riskyAuthorityDecision.requiredApprovals,
+    },
+    testerFailureGuards: {
+      externalWriteCompletionStatus: externalWriteGuard.status,
+      externalWriteCanClaimCompletion: externalWriteGuard.canClaimCompletion,
+      heartbeatIsolationStatus: heartbeatIsolation.status,
+      heartbeatVisibleChatMessages: heartbeatIsolation.visibleChatMessages.length,
     },
     observations,
     authorityBoundary: {
@@ -121,6 +147,8 @@ export function verifyToolAuthorityHeart({
   if (!ids.has("execution_preview_ready")) findings.push("execution_preview_not_ready");
   if (!ids.has("connector_permission_separation_ready")) findings.push("connector_permission_separation_missing");
   if (!ids.has("authority_decision_blocks_risky_request")) findings.push("risky_authority_not_blocked");
+  if (!ids.has("external_write_claim_guard_ready")) findings.push("external_write_claim_guard_missing");
+  if (!ids.has("heartbeat_failure_isolation_ready")) findings.push("heartbeat_failure_isolation_missing");
   if (heart.userVisibleStatus?.language !== "gpao_t_user_safe") findings.push("user_safe_language_missing");
   return {
     schema: `${SCHEMA}.verification`,
@@ -132,6 +160,41 @@ export function verifyToolAuthorityHeart({
       ? "Repair Tool/MCP/Authority Heart before expanding execution."
       : "Run the full Runtime Heart verification and live evidence pass.",
   };
+}
+
+function classifyTesterFailureGuards({ externalWriteGuard, heartbeatIsolation }) {
+  const externalWriteVerification = verifyExternalWriteCompletionGuard({
+    action: externalWriteGuard.action,
+    claim: "푸시 완료했습니다.",
+  });
+  const heartbeatVerification = verifyHeartbeatFailureIsolation({ isolation: heartbeatIsolation });
+  const externalReady = externalWriteVerification.status === "ready"
+    && externalWriteGuard.status === "blocked"
+    && externalWriteGuard.canClaimCompletion === false;
+  const heartbeatReady = heartbeatVerification.status === "ready"
+    && heartbeatIsolation.visibleChatMessages.length === 0;
+  return [
+    {
+      id: externalReady ? "external_write_claim_guard_ready" : "external_write_claim_guard_blocked",
+      severity: externalReady ? "info" : "P0",
+      ok: externalReady,
+      userLabel: externalReady ? "외부 실행 완료 주장 보호 정상" : "외부 실행 완료 주장 보호 문제",
+      userMessage: externalReady
+        ? "GitHub push 같은 외부 쓰기는 실제 실행 영수증 없이는 완료로 말하지 않습니다."
+        : "실제 실행 영수증 없이 외부 쓰기 완료를 말할 위험이 있습니다.",
+      details: { status: externalWriteGuard.status, findings: externalWriteVerification.findings },
+    },
+    {
+      id: heartbeatReady ? "heartbeat_failure_isolation_ready" : "heartbeat_failure_isolation_blocked",
+      severity: heartbeatReady ? "info" : "P0",
+      ok: heartbeatReady,
+      userLabel: heartbeatReady ? "상태 점검 경고 격리 정상" : "상태 점검 경고 격리 문제",
+      userMessage: heartbeatReady
+        ? "Heartbeat 경고는 Doctor로 모이고 정상 대화창에 반복 출력되지 않습니다."
+        : "Heartbeat 경고가 대화창 흐름을 오염시킬 위험이 있습니다.",
+      details: { status: heartbeatIsolation.status, findings: heartbeatVerification.findings },
+    },
+  ];
 }
 
 function classifyGovernance({ governance, governanceVerification }) {
