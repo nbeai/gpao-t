@@ -57,10 +57,11 @@ export class ProviderAdapterRegistry {
 }
 
 export class ModelRouter {
-  constructor({ providerRegistry, adapterRegistry, credentialResolver = async () => null } = {}) {
+  constructor({ providerRegistry, adapterRegistry, credentialResolver = async () => null, routeHealth = null } = {}) {
     this.providerRegistry = providerRegistry;
     this.adapterRegistry = adapterRegistry;
     this.credentialResolver = credentialResolver;
+    this.routeHealth = routeHealth;
   }
 
   select(options = {}) {
@@ -94,6 +95,14 @@ export class ModelRouter {
         timeoutMs,
         responseBudget
       });
+      const admission = this.routeHealth?.admit({ providerId: provider.id });
+      if (admission && !admission.admitted) {
+        throw new ProviderInvocationError("provider_unavailable", "The selected provider is temporarily unavailable", {
+          routeHealthReason: admission.reason,
+          retryAt: admission.retryAt
+        });
+      }
+      let routeHealthReceipt = null;
       try {
         const credential = await this.credentialResolver({ providerId: provider.id, modelId: model.id });
         const controller = new AbortController();
@@ -108,19 +117,25 @@ export class ModelRouter {
           clearTimeout(deadline);
           signal?.removeEventListener("abort", cancel);
         }
-        return { provider, model, providerPlan: plan, providerResult: result, failures, fallbackUsed: index > 0 };
+        routeHealthReceipt = this.#settleRouteHealth(admission?.lease, { ok: true });
+        return { provider, model, providerPlan: plan, providerResult: result, routeHealthReceipt, failures, fallbackUsed: index > 0 };
       } catch (error) {
         const failure = normalizeProviderFailure(error);
+        routeHealthReceipt ||= this.#settleRouteHealth(admission?.lease, { ...failure, ok: false });
         this.providerRegistry.recordFailure?.(provider.id, failure);
-        failures.push({ providerId: provider.id, modelId: model.id, ...failure });
+        failures.push({ providerId: provider.id, modelId: model.id, routeHealthReceipt, ...failure });
         const requested = Boolean(normalizedSelection.preferredProviderId || normalizedSelection.preferredModelId);
         const nextCandidate = candidates[index + 1] || null;
         const crossProvider = nextCandidate && nextCandidate.provider.id !== provider.id;
-        const canFallback = !requested && failure.externalEffect === false && ["rate_limited", "provider_timeout", "provider_unavailable"].includes(failure.failureClass)
+        const canFallback = !requested && failure.failureClass !== "external_outcome_unknown" && failure.externalEffect === false && ["rate_limited", "provider_timeout", "provider_unavailable"].includes(failure.failureClass)
           && (!crossProvider || selection.allowCrossProviderFallback === true);
         if (!canFallback || index === candidates.length - 1) throw Object.assign(error, { failures, providerPlan: plan });
       }
     }
     throw new ProviderInvocationError("failed", "No model route completed");
+  }
+
+  #settleRouteHealth(lease, outcome) {
+    return lease ? this.routeHealth.settle({ lease, outcome }) : null;
   }
 }

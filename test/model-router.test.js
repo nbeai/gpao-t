@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { ProviderInvocationError, ProviderRegistry } from "../src/core/provider.js";
 import { ModelRouter, ProviderAdapterRegistry } from "../src/core/model-router.js";
+import { ProviderRouteHealth } from "../src/core/provider-route-health.js";
 import { OpenAiResponsesAdapter } from "../src/core/providers/openai-responses.js";
 import { AnthropicMessagesAdapter } from "../src/core/providers/anthropic-messages.js";
 import { GeminiGenerateContentAdapter } from "../src/core/providers/gemini-generate-content.js";
@@ -78,6 +79,47 @@ test("explicit unavailable model selection is blocked instead of falling through
   const router = new ModelRouter({ providerRegistry: registry(), adapterRegistry: adapters });
   await assert.rejects(() => router.invoke({ runId: "run", sessionId: "session", generation: 1, idempotencyKey: "key", input: "hello", sourceContextDigest: "trace", selection: { providerId: "fast", modelId: "missing-model" } }), error => error.failureClass === "invalid_request");
   assert.deepEqual(calls, []);
+});
+
+test("model router admits and settles the optional provider route health policy", async () => {
+  let now = 1_000;
+  const health = new ProviderRouteHealth({ now: () => now });
+  const adapters = new ProviderAdapterRegistry({ adapters: [
+    { id: "fake-fast", adapter: { invoke: async () => { now += 17; return { result: { text: "healthy answer" }, receipt: {} }; } } },
+    { id: "fake-backup", adapter: { invoke: async () => ({ result: { text: "must not run" }, receipt: {} }) } }
+  ] });
+  const router = new ModelRouter({ providerRegistry: registry(), adapterRegistry: adapters, routeHealth: health });
+  const result = await router.invoke({ runId: "run", sessionId: "session", generation: 1, idempotencyKey: "key", input: "hello", sourceContextDigest: "trace" });
+  assert.equal(result.routeHealthReceipt.outcome, "succeeded");
+  assert.equal(result.routeHealthReceipt.latencyMs, 17);
+  assert.equal(health.snapshot("fast").inFlight, 0);
+});
+
+test("model router refuses a provider route health admission before external invocation", async () => {
+  const health = new ProviderRouteHealth({ policy: { maxConcurrent: 1 } });
+  const held = health.admit({ providerId: "fast" });
+  const calls = [];
+  const adapters = new ProviderAdapterRegistry({ adapters: [
+    { id: "fake-fast", adapter: { invoke: async () => { calls.push("fast"); return { result: { text: "must not run" }, receipt: {} }; } } },
+    { id: "fake-backup", adapter: { invoke: async () => { calls.push("backup"); return { result: { text: "must not run" }, receipt: {} }; } } }
+  ] });
+  const router = new ModelRouter({ providerRegistry: registry(), adapterRegistry: adapters, routeHealth: health });
+  await assert.rejects(() => router.invoke({ runId: "run", sessionId: "session", generation: 1, idempotencyKey: "key", input: "hello", sourceContextDigest: "trace", selection: { preferredProviderId: "fast", preferredModelId: "fast-1" } }), error => error.failureClass === "provider_unavailable" && error.details.routeHealthReason === "provider_concurrency_limited");
+  assert.deepEqual(calls, []);
+  health.settle({ lease: held.lease, outcome: { ok: true } });
+});
+
+test("model router settles retry-after failures and never falls back after an unknown external outcome", async () => {
+  const health = new ProviderRouteHealth();
+  const calls = [];
+  const adapters = new ProviderAdapterRegistry({ adapters: [
+    { id: "fake-fast", adapter: { invoke: async () => { calls.push("fast"); throw new ProviderInvocationError("external_outcome_unknown", "unknown outcome", { retryAfterSeconds: 2 }); } } },
+    { id: "fake-backup", adapter: { invoke: async () => { calls.push("backup"); return { result: { text: "must not run" }, receipt: {} }; } } }
+  ] });
+  const router = new ModelRouter({ providerRegistry: registry(), adapterRegistry: adapters, routeHealth: health });
+  await assert.rejects(() => router.invoke({ runId: "run", sessionId: "session", generation: 1, idempotencyKey: "key", input: "hello", sourceContextDigest: "trace", selection: { allowCrossProviderFallback: true } }), error => error.failureClass === "external_outcome_unknown" && error.failures[0].routeHealthReceipt.outcome === "failed");
+  assert.deepEqual(calls, ["fast"]);
+  assert.equal(health.snapshot("fast").inFlight, 0);
 });
 
 test("OpenAI and Anthropic adapters map official response envelopes without exposing credentials", async () => {
