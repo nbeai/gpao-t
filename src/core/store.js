@@ -114,6 +114,19 @@ function fuzzyTokenScore(query, text) {
   return Math.max(0, best);
 }
 
+function lexicalCoverage(query, text) {
+  const queryTokens = [...new Set(searchText(query).match(/[\p{L}\p{N}_-]{2,}/gu) || [])];
+  if (!queryTokens.length) return 0;
+  const textTokens = [...new Set(searchText(text).match(/[\p{L}\p{N}_-]{2,}/gu) || [])];
+  const matched = queryTokens.filter(left => textTokens.some(right => {
+    if (left === right) return true;
+    if (Math.abs(left.length - right.length) <= 2 && (left.startsWith(right) || right.startsWith(left))) return true;
+    if (Math.min(left.length, right.length) < 3 || Math.abs(left.length - right.length) > 2) return false;
+    return 1 - editDistance(left, right) / Math.max(left.length, right.length, 1) >= 0.75;
+  }));
+  return matched.length / queryTokens.length;
+}
+
 export class StateStore {
   constructor(stateDir) {
     this.stateDir = stateDir;
@@ -759,7 +772,8 @@ export class StateStore {
     const ranked = [...candidates.values()].map(({ row, lexical, fuzzy, vector }) => {
       const reviewed = row.review_state === "reviewed" ? 1 : 0;
       const freshness = Math.max(0, 1 - ((now - row.updated_at) / (365 * 24 * 60 * 60 * 1000)));
-      const score = lexical * 0.5 + fuzzy * 0.28 + vector * 0.12 + reviewed * 0.07 + freshness * 0.03;
+      const coverage = lexicalCoverage(query, row.text);
+      const score = lexical * 0.42 + coverage * 0.18 + fuzzy * 0.25 + vector * 0.08 + reviewed * 0.04 + freshness * 0.03;
       const scope = row.scope_level === "project"
         ? { level: "project", turnId: null, sessionId: null, projectId: row.project_id, userId: null }
         : row.scope_level === "user_global"
@@ -775,7 +789,7 @@ export class StateStore {
       };
       return {
         id: row.memory_id, source: row.source, text: row.text.slice(0, 600), score, confidence: score,
-        scores: { lexical, fuzzy, localVector: vector, reviewed: reviewed * 0.07, freshness: freshness * 0.03, combined: score },
+        scores: { lexical, lexicalCoverage: coverage, fuzzy, localVector: vector, reviewed: reviewed * 0.04, freshness: freshness * 0.03, combined: score },
         reason: "sqlite_fts5_hybrid", traceRef: row.trace_ref, sessionId: row.session_id, scopeLevel: row.scope_level, projectId: row.project_id, userId: row.user_id, channelId: row.channel_id,
         contradictionGroup: row.contradiction_group, supersedesMemoryId: row.supersedes_memory_id, invalidatedAt: row.invalidated_at,
         reviewed: Boolean(reviewed), allowedUse: reviewed ? "supporting_context" : "candidate_only", createdAt: row.created_at, updatedAt: row.updated_at,
@@ -785,11 +799,25 @@ export class StateStore {
         admission: "search_support_candidate", retrievalHit
       };
     }).sort((left, right) => right.score - left.score || left.id.localeCompare(right.id));
+    const [top, runnerUp] = ranked;
+    const numericFragments = String(query || "").match(/\d{3,}/g) || [];
+    const topPreservesDistinctiveFragment = numericFragments.some(fragment => top?.text.toLowerCase().includes(fragment.toLowerCase()));
+    const topHasRankingMargin = !runnerUp || top.score >= runnerUp.score * 1.08;
+    const reviewedMatches = ranked.filter(item => item.reviewed && item.scores.lexicalCoverage >= 0.6);
+    const selected = top?.scores.lexical > 0
+      ? top.scores.lexicalCoverage >= 0.9
+        ? ranked.filter(item => item.scores.lexical > 0 && (item.scores.lexicalCoverage >= 0.9 || reviewedMatches.some(reviewed => reviewed.id === item.id)))
+        : top.scores.lexicalCoverage >= 0.6 && ranked.length <= 3
+          ? [top, ...reviewedMatches.filter(item => item.id !== top.id)]
+          : reviewedMatches
+      : top?.scores.fuzzy >= 0.75 && (topPreservesDistinctiveFragment || topHasRankingMargin)
+        ? [top]
+        : [];
     const elapsedMs = performance.now() - started;
     return {
-      schema: "gpao_t3.memory_search_result.v1", results: ranked.slice(0, boundedLimit),
+      schema: "gpao_t3.memory_search_result.v1", results: selected.slice(0, boundedLimit),
       degraded: elapsedMs > budgetMs ? "latency_budget_exceeded" : null, elapsedMs,
-      receipt: { mode: "sqlite_fts5_lexical_fuzzy_local_vector", semanticAvailable: false, vectorAlgorithm: "char_trigram_hash_v1", vectorDimensions: 64, lexicalCandidates: [...candidates.values()].filter(value => value.lexical > 0).length, fuzzyCandidates: [...candidates.values()].filter(value => value.fuzzy > 0).length, localVectorCandidates: [...candidates.values()].filter(value => value.vector > 0).length, candidateCount: candidates.size, limit: boundedLimit }
+      receipt: { mode: "sqlite_fts5_lexical_fuzzy_local_vector", semanticAvailable: false, vectorAlgorithm: "char_trigram_hash_v1", vectorDimensions: 64, lexicalCandidates: [...candidates.values()].filter(value => value.lexical > 0).length, fuzzyCandidates: [...candidates.values()].filter(value => value.fuzzy > 0).length, localVectorCandidates: [...candidates.values()].filter(value => value.vector > 0).length, candidateCount: candidates.size, selectedCount:selected.length, limit: boundedLimit }
     };
   }
 

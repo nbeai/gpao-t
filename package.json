@@ -8,8 +8,8 @@
     "node": ">=24"
   },
   "scripts": {
-    "precheck": "npm run check:wp8r && npm run check:mct-r0 && npm run check:mct-r1 && npm run check:mct-r2 && npm run check:mct-r3 && npm run check:mct-r4 && npm run check:release",
-    "pretest": "npm run test:wp8r && npm run test:mct-r0 && npm run test:mct-r1 && npm run test:mct-r2 && npm run test:mct-r3 && npm run test:mct-r4",
+    "precheck": "npm run check:wp8r && npm run check:mct-r0 && npm run check:mct-r1 && npm run check:mct-r2 && npm run check:mct-r3 && npm run check:mct-r4 && npm run check:mct-r5 && npm run check:release",
+    "pretest": "npm run test:wp8r && npm run test:mct-r0 && npm run test:mct-r1 && npm run test:mct-r2 && npm run test:mct-r3 && npm run test:mct-r4 && npm run test:mct-r5",
     "check:release": "node --check tools/install-native.mjs && node --check tools/update-native.mjs && node --check tools/rollback-native.mjs && node --check tools/package-release.mjs && node --check tools/update-rollback-smoke.mjs",
     "check:wp3": "node --check src/core/control-frame.js && node --check src/core/event-router.js && node --check src/core/runtime.js && node --check src/core/store.js && node --check src/core/state-writer.js && node --check src/core/http.js && node --check tools/benchmark-control-flow.mjs",
     "test:wp3": "node --test --test-concurrency=1 --test-timeout=30000 --test-reporter=spec test/runtime.test.js test/event-router.test.js test/core-contracts.test.js test/http.test.js test/state-writer.test.js test/release-state.test.js",
@@ -37,6 +37,9 @@
     "test:mct-r3": "node --test --test-concurrency=1 --test-timeout=30000 --test-reporter=spec test/mct-r3-growth.test.js",
     "check:mct-r4": "node --check src/core/store.js && node --check src/core/state-writer.js && node --check src/core/runtime.js && node --check src/core/http.js && node --check src/ui/app.js && node --check test/mct-r4-surface.test.js",
     "test:mct-r4": "node --test --test-concurrency=1 --test-timeout=30000 --test-reporter=spec test/mct-r4-surface.test.js",
+    "check:mct-r5": "node --check src/core/mct-comparison.js && node --check test/fixtures/mct-r5-cases.js && node --check test/mct-r5-comparison.test.js && node --check tools/qualify-mct-r5.mjs",
+    "test:mct-r5": "node --test --test-concurrency=1 --test-timeout=30000 --test-reporter=spec test/mct-r5-comparison.test.js",
+    "qualify:mct-r5": "node tools/qualify-mct-r5.mjs",
     "hygiene:releases": "node tools/prune-releases.mjs --keep-release-id=0.2.2-foundation-a25a2efea245",
     "qualify:wp8r-ui": "node tools/qualify-wp8r-product-surface.mjs",
     "check:wp9": "node --check src/core/turn-tool-orchestrator.js && node --check src/core/os-turn.js && node --check test/wp9-integrated-tool-turn.test.js && node --check src/core/telegram-bot-api-backend.js && node --check src/core/telegram-messenger-adapter.js && node --check src/core/telegram-channel-process.js && node --check src/core/telegram-channel-process-client.js && node --check test/telegram-production-adapter.test.js && node --check src/core/channel-adapter-sdk.js && node --check src/core/messenger-runtime.js && node --check src/core/connector-catalog.js && node --check src/core/connector-controller.js && node --check src/core/store.js && node --check src/core/state-writer.js && node --check src/core/runtime.js && node --check src/core/http.js && node --check src/ui/app.js && node --check tools/package-release.mjs && node --check tools/update-native.mjs && node --check tools/update-rollback-smoke.mjs && node --check tools/release-smoke.mjs && node --check tools/installer-command-smoke.mjs && node --check tools/service-manifest-smoke.mjs && node --check tools/service-activation-smoke.mjs",
