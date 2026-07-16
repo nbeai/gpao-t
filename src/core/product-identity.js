@@ -28,7 +28,7 @@ export const STATE_OWNERSHIP = Object.freeze([
   Object.freeze({ domain: "channel_context_packet", owner: "runtime_core", durability: "derived_authority_boundary", table: "messenger_sessions/channel_inbound" }),
   Object.freeze({ domain: "local_auth_session", owner: "runtime_process", durability: "ephemeral_security_boundary", table: null }),
   Object.freeze({ domain: "memory_wiki", owner: "sqlite", durability: "durable_review_gated", table: "memory_wiki" }),
-  Object.freeze({ domain: "memory_search_projection", owner: "sqlite", durability: "derived_rebuildable", table: "memory_lexical_fts/memory_vector_fts/memory_vector_projection" }),
+  Object.freeze({ domain: "memory_search_projection", owner: "sqlite", durability: "derived_rebuildable", table: "memory_lexical_fts/memory_vector_fts/memory_semantic_fts/memory_vector_projection" }),
   Object.freeze({ domain: "context_influence", owner: "sqlite", durability: "durable_replay_gated", table: "context_influences" }),
   Object.freeze({ domain: "mct_admission", owner: "sqlite", durability: "durable_canonical", table: "mct_task_packets/mct_tcell_candidates/mct_admission_decisions" }),
   Object.freeze({ domain: "mct_response_influence", owner: "sqlite", durability: "durable_trace_ledger", table: "mct_response_influences" }),

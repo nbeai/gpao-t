@@ -39,7 +39,7 @@ test("one native OS turn preserves memory candidates, admission, receipt, replay
 test("reviewed local context cannot become a durable influence without explicit A2 authority", async () => {
   const runtime = await new NativeRuntime({ stateDir: stateDir() }).start();
   const memory = new LocalHybridMemory();
-  memory.ingest({ text: "GPAO-T F5는 승인된 영향만 다음 행동에 사용한다.", source: "owner_note", traceRef: "note-f5", userId: "owner:a", reviewed: true });
+  memory.ingest({ text: "승인된 영향 원칙은 승인된 영향만 다음 행동에 사용하며 다시 적용할 때도 A2 승인이 필요하다.", source: "owner_note", traceRef: "note-f5", userId: "owner:a", reviewed: true });
   const pipeline = new NativeOsTurnPipeline({ runtime, memory, contextInfluence: runtime.contextInfluence });
   try {
     const first = await pipeline.run({ principalId: "owner:a", sessionId: "session-a", requestId: "f5-1", input: "승인된 영향 원칙을 설명해줘" });

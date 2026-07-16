@@ -124,16 +124,21 @@
       } }], "unevaluatedProperties": false
     },
     "AdmissionDecision": {
-      "allOf": [{ "$ref": "#/$defs/base" }, { "type": "object", "required": ["candidateId", "sourceCandidateId", "taskPacketId", "state", "permission", "role", "risk", "checks", "reason", "requiredEvidence", "blockedBy", "traceRefs", "replayRefs", "score"], "properties": {
+      "allOf": [{ "$ref": "#/$defs/base" }, { "type": "object", "required": ["candidateId", "sourceCandidateId", "taskPacketId", "state", "permission", "role", "risk", "checks", "reason", "requiredEvidence", "blockedBy", "traceRefs", "replayRefs", "score", "retrievalScore", "taskFit"], "properties": {
         "schema": { "const": "gpao_t3.admission_decision.v1" }, "candidateId": { "$ref": "#/$defs/id" }, "sourceCandidateId": { "$ref": "#/$defs/id" }, "taskPacketId": { "$ref": "#/$defs/id" },
         "state": { "enum": ["not_activated", "activated_candidate", "supporting_context", "answer_anchor", "review_needed", "conflict_boundary", "blocked", "rejected"] },
         "permission": { "enum": ["deny", "hold", "allow"] }, "role": { "enum": ["none", "candidate", "support", "anchor"] }, "risk": { "enum": ["normal", "review", "conflict", "blocked"] },
-        "checks": { "type": "object", "additionalProperties": false, "required": ["currentRequest", "scope", "trace", "authority", "conflict", "freshness"], "properties": {
-          "currentRequest": { "type": "boolean" }, "scope": { "type": "boolean" }, "trace": { "type": "boolean" }, "authority": { "type": "boolean" }, "conflict": { "type": "boolean" }, "freshness": { "type": "boolean" }
+        "checks": { "type": "object", "additionalProperties": false, "required": ["currentRequest", "scope", "trace", "authority", "conflict", "freshness", "relevance", "entailment"], "properties": {
+          "currentRequest": { "type": "boolean" }, "scope": { "type": "boolean" }, "trace": { "type": "boolean" }, "authority": { "type": "boolean" }, "conflict": { "type": "boolean" }, "freshness": { "type": "boolean" }, "relevance": { "type": "boolean" }, "entailment": { "type": "boolean" }
         } }, "reason": { "type": "string", "minLength": 1 },
         "requiredEvidence": { "type": "array", "items": { "type": "string", "minLength": 1 } }, "blockedBy": { "type": "array", "items": { "type": "string", "minLength": 1 } },
         "traceRefs": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/id" } }, "replayRefs": { "type": "array", "items": { "$ref": "#/$defs/id" } },
-        "score": { "type": "number", "minimum": 0, "maximum": 1 }
+        "score": { "type": "number", "minimum": 0, "maximum": 1 }, "retrievalScore": { "type": "number", "minimum": 0, "maximum": 1 },
+        "taskFit": { "type": "object", "additionalProperties": false, "required": ["schema", "providerNeutral", "algorithm", "hasSignal", "relevance", "entailment", "tokenCoverage", "trigramCoverage", "queryNegated", "candidateNegated", "polarityComparable", "polarityCompatible", "queryConcepts", "candidateConcepts", "queryClauses", "candidateClauses", "sharedClauses"], "properties": {
+          "schema": { "const": "gpao_t3.semantic_task_fit.v1" }, "providerNeutral": { "const": true }, "algorithm": { "const": "bounded_semantic_features_v2" }, "hasSignal": { "type": "boolean" }, "relevance": { "type": "number", "minimum": 0, "maximum": 1 }, "entailment": { "type": "boolean" },
+          "tokenCoverage": { "type": "number", "minimum": 0, "maximum": 1 }, "trigramCoverage": { "type": "number", "minimum": 0, "maximum": 1 }, "queryNegated": { "type": "boolean" }, "candidateNegated": { "type": "boolean" }, "polarityComparable": { "type": "boolean" }, "polarityCompatible": { "type": "boolean" },
+          "queryConcepts": { "type": "array", "items": { "type": "string" } }, "candidateConcepts": { "type": "array", "items": { "type": "string" } }, "queryClauses": { "type": "array", "items": { "type": "string" } }, "candidateClauses": { "type": "array", "items": { "type": "string" } }, "sharedClauses": { "type": "array", "items": { "type": "string" } }
+        } }
       } }], "unevaluatedProperties": false
     },
     "TaskPacket": {

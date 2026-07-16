@@ -8,6 +8,8 @@ import { estimateContextTokens, summarizeRetrieval } from "../src/core/mct-compa
 import { StateStore } from "../src/core/store.js";
 import { createMctR5Corpus, MCT_R5_DEVELOPMENT_CASES, MCT_R5_HOLDOUT_CASES, MCT_R5_CORPUS_SIZE, MCT_R5_TOP_K } from "./fixtures/mct-r5-cases.js";
 
+const priorHoldoutV2 = JSON.parse(fs.readFileSync(new URL("./fixtures/mct-r5-development-holdout-v2.json", import.meta.url), "utf8"));
+
 test("MCT-R5 freezes one target-neutral offline comparison contract", () => {
   const corpus = createMctR5Corpus();
   assert.equal(corpus.length, MCT_R5_CORPUS_SIZE);
@@ -75,5 +77,23 @@ test("MCT-R5 reinforced retrieval returns useful context without low-confidence 
     assert.deepEqual(search("기억열쇠 9876 회계 규칙").map(item => item.id), []);
     assert.deepEqual(search("r5rec0005").map(item => item.id), []);
     assert.deepEqual(search("존재하지않는봉인키9999").map(item => item.id), []);
+  } finally { store.close(); fs.rmSync(dir, { recursive:true, force:true }); }
+});
+
+test("MCT-R5 preserves every retained v2 HOLD failure as development regression", () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "gpao-t3-mct-r5-v2-regression-")); const store = new StateStore(dir);
+  const replacements = new Map(priorHoldoutV2.records.map(item => [item.index, item]));
+  try {
+    store.transaction(() => createMctR5Corpus().forEach((item, offset) => {
+      const replacement = replacements.get(offset + 1);
+      const text = replacement ? `${item.marker} 기억열쇠${String(offset + 1).padStart(4, "0")} ${replacement.text}` : item.text;
+      store.addMemoryCandidate({ id:item.id, text, source:"mct_r5_v2_regression", traceRef:`trace:${item.id}`, sessionId:replacement?.sessionId || item.sessionId, userId:"owner:r5", scopeLevel:"session" });
+    }));
+    for (const fixture of priorHoldoutV2.cases) {
+      const results = store.searchMemory(fixture.query, { sessionId:fixture.sessionId, userId:"owner:r5", limit:5, budgetMs:250 }).results;
+      const markers = results.flatMap(item => item.text.match(/r5rec\d{4}/gu) || []);
+      if (fixture.shouldFind) assert.ok(markers.includes(fixture.expectedMarker), fixture.id);
+      else assert.equal(markers.length, 0, fixture.id);
+    }
   } finally { store.close(); fs.rmSync(dir, { recursive:true, force:true }); }
 });

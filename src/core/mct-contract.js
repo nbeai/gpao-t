@@ -29,7 +29,7 @@ const MCT_PAYLOAD_VALUE_RULES = Object.freeze({
   answerAnchorIds: value => Array.isArray(value) && value.every(item => typeof item === "string" && item.length > 0),
   supportingContextIds: value => Array.isArray(value) && value.every(item => typeof item === "string" && item.length > 0),
   candidateId: value => typeof value === "string" && value.length > 0,
-  reasonCode: value => ["scope_mismatch", "trace_missing", "authority_denied", "conflict_detected", "stale", "budget_exceeded", "user_rejected", "relevance_below_threshold", "review_required", "supporting_context_capacity_exceeded", "answer_anchor_capacity_degraded_to_support"].includes(value),
+  reasonCode: value => ["scope_mismatch", "trace_missing", "authority_denied", "conflict_detected", "stale", "budget_exceeded", "user_rejected", "relevance_below_threshold", "entailment_not_supported", "review_required", "supporting_context_capacity_exceeded", "answer_anchor_capacity_degraded_to_support"].includes(value),
   responseDocumentId: value => typeof value === "string" && value.length > 0,
   influenceIds: value => Array.isArray(value) && value.every(item => typeof item === "string" && item.length > 0),
   proposalId: value => typeof value === "string" && value.length > 0,

@@ -1,5 +1,6 @@
 import crypto from "node:crypto";
 import { assertTaskPacket } from "./mct-contract.js";
+import { evaluateSemanticCandidate } from "./semantic-candidate.js";
 
 const STATE_SHAPE = Object.freeze({
   not_activated: ["hold", "none", "normal"],
@@ -40,7 +41,11 @@ function estimatedTokens(value) {
 function hardConflict(candidate, currentRequest) {
   if (candidate.hardConflict === true || CURRENT_OVERRIDE.test(currentRequest)) return true;
   const candidateText = candidate.text || candidate.summary || "";
-  const approvalPolicyConflict = (APPROVAL_REQUIRED.test(candidateText) && APPROVAL_BYPASS.test(currentRequest)) || (APPROVAL_BYPASS.test(candidateText) && APPROVAL_REQUIRED.test(currentRequest));
+  const candidateBypass = APPROVAL_BYPASS.test(candidateText);
+  const requestBypass = APPROVAL_BYPASS.test(currentRequest);
+  const candidateRequires = APPROVAL_REQUIRED.test(candidateText) && !candidateBypass;
+  const requestRequires = APPROVAL_REQUIRED.test(currentRequest) && !requestBypass;
+  const approvalPolicyConflict = (candidateRequires && requestBypass) || (candidateBypass && requestRequires);
   if (approvalPolicyConflict && overlap(candidateText, currentRequest) >= 0.1) return true;
   const polarityDiffers = NEGATION.test(candidateText) !== NEGATION.test(currentRequest);
   return polarityDiffers && NEGATION.test(currentRequest) && overlap(candidateText, currentRequest) >= 0.25;
@@ -49,8 +54,7 @@ function hardConflict(candidate, currentRequest) {
 function candidateScope(candidate, taskPacket) {
   if (candidate.scopeLevel === "user_global") return { level: "user_global", turnId: null, sessionId: null, projectId: null, userId: candidate.userId };
   if (candidate.scopeLevel === "project") return { level: "project", turnId: null, sessionId: null, projectId: candidate.projectId, userId: candidate.userId };
-  if (!candidate.sessionId) return taskPacket.scope;
-  return { level: "session", turnId: null, sessionId: candidate.sessionId, projectId: null, userId: candidate.userId };
+  return { level: "session", turnId: null, sessionId: candidate.sessionId || null, projectId: null, userId: candidate.userId };
 }
 
 function scopeAllowed(candidate, taskPacket) {
@@ -58,7 +62,7 @@ function scopeAllowed(candidate, taskPacket) {
   if (!channelAllowed) return false;
   if (candidate.scopeLevel === "user_global") return Boolean(candidate.userId) && candidate.userId === taskPacket.contextIdentity.userId;
   if (candidate.scopeLevel === "project") return Boolean(candidate.projectId) && candidate.projectId === taskPacket.contextIdentity.projectId && candidate.userId === taskPacket.contextIdentity.userId;
-  return (!candidate.sessionId || candidate.sessionId === taskPacket.sessionId) && candidate.userId === taskPacket.contextIdentity.userId;
+  return Boolean(candidate.sessionId) && candidate.sessionId === taskPacket.sessionId && candidate.userId === taskPacket.contextIdentity.userId;
 }
 
 function shapeCandidate(taskPacket, candidate, now, staleAfterMs) {
@@ -90,8 +94,11 @@ function shapeCandidate(taskPacket, candidate, now, staleAfterMs) {
 }
 
 function decide(taskPacket, cell, candidate, { relevanceThreshold, anchorThreshold, staleAfterMs, now }) {
-  const score = Math.max(0, Math.min(1, Number(candidate.score || candidate.confidence || 0)));
-  const conflict = hardConflict(candidate, taskPacket.currentRequest);
+  const retrievalScore = Math.max(0, Math.min(1, Number(candidate.score || candidate.confidence || 0)));
+  const semanticFit = evaluateSemanticCandidate(taskPacket.currentRequest, candidate.text || candidate.summary || "");
+  const score = semanticFit.relevance;
+  const entailment = semanticFit.entailment;
+  const conflict = hardConflict(candidate, taskPacket.currentRequest) || (!semanticFit.polarityCompatible && score >= relevanceThreshold);
   const scope = scopeAllowed(candidate, taskPacket);
   const trace = candidate.sourceResolved === true && candidate.sourceInvalidated !== true && Boolean(candidate.traceRef || candidate.retrievalHit?.trace?.refs?.length);
   const sourceAuthority = candidate.authority || cell.authority;
@@ -99,13 +106,14 @@ function decide(taskPacket, cell, candidate, { relevanceThreshold, anchorThresho
   const allowedUse = sourceAuthority?.allowedUse || "candidate_only";
   const anchorAuthority = candidate.approvedInfluence === true && sourceAuthority?.durablePromotion === true && sourceAuthority?.decisionClass === "A2" && Boolean(sourceAuthority?.decisionId);
   const freshness = candidate.invalidatedAt == null && candidate.sourceInvalidated !== true && now - cell.updatedAt <= staleAfterMs;
-  const checks = { currentRequest: !conflict, scope, trace, authority, conflict: !conflict, freshness };
+  const checks = { currentRequest: !conflict, scope, trace, authority, conflict: !conflict, freshness, relevance: score >= relevanceThreshold, entailment };
   let state;
   let reasonCode;
   if (!scope) [state, reasonCode] = ["rejected", "scope_mismatch"];
-  else if (score < relevanceThreshold) [state, reasonCode] = ["rejected", "relevance_below_threshold"];
-  else if (!authority) [state, reasonCode] = ["blocked", "authority_denied"];
   else if (conflict) [state, reasonCode] = ["conflict_boundary", "conflict_detected"];
+  else if (score < relevanceThreshold) [state, reasonCode] = ["rejected", "relevance_below_threshold"];
+  else if (!entailment) [state, reasonCode] = ["rejected", "entailment_not_supported"];
+  else if (!authority) [state, reasonCode] = ["blocked", "authority_denied"];
   else if (!trace) [state, reasonCode] = ["review_needed", "trace_missing"];
   else if (!freshness) [state, reasonCode] = ["review_needed", "stale"];
   else if (anchorAuthority && allowedUse === "answer_anchor" && score >= anchorThreshold) [state, reasonCode] = ["answer_anchor", "approved_replay_trace_within_radius"];
@@ -128,10 +136,12 @@ function decide(taskPacket, cell, candidate, { relevanceThreshold, anchorThresho
     taskPacketId: taskPacket.id,
     state, permission, role, risk, checks, reason: reasonCode,
     requiredEvidence: state === "review_needed" ? [reasonCode] : [],
-    blockedBy: [!scope && "scope", !authority && "authority", conflict && "current_request_conflict", !trace && "trace", !freshness && "freshness"].filter(Boolean),
+    blockedBy: [!scope && "scope", score < relevanceThreshold && "relevance", !entailment && "entailment", !authority && "authority", conflict && "current_request_conflict", !trace && "trace", !freshness && "freshness"].filter(Boolean),
     traceRefs: [...cell.trace.refs],
     replayRefs: candidate.influenceId ? [candidate.influenceId] : [],
-    score
+    score,
+    retrievalScore,
+    taskFit: semanticFit
   };
 }
 

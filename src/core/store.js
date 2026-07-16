@@ -9,8 +9,9 @@ import { verifyResponseDocument } from "./response-document.js";
 import { createSurfaceEvent } from "./surface-event.js";
 import { approveGrowthProposal, createCanaryMutation, requestCanaryRollback, verifyCanaryRollback } from "./growth-engine.js";
 import { MEMORY_SCOPE_ORDER } from "./mct-contract.js";
+import { evaluateSemanticCandidate, semanticFtsQuery, semanticProjectionTerms } from "./semantic-candidate.js";
 
-const CURRENT_SCHEMA_VERSION = 14;
+const CURRENT_SCHEMA_VERSION = 15;
 const LEGACY_DATABASE_FILES = ["runtime.sqlite"];
 const TELEMETRY_STAGES = new Set(["accepted", "dispatching", "responding", "completed", "failed", "cancelled", "uncertain"]);
 
@@ -579,6 +580,13 @@ export class StateStore {
           CREATE INDEX IF NOT EXISTS idx_mct_mutation_owner ON mct_mutation_ledger(owner_id, status, expires_at);
         `);
       }
+      const semanticTableExisted = Boolean(this.db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'memory_semantic_fts'").get());
+      this.db.exec("CREATE VIRTUAL TABLE IF NOT EXISTS memory_semantic_fts USING fts5(memory_id UNINDEXED, features, tokenize='unicode61')");
+      if (startingVersion < 15 || !semanticTableExisted) {
+        this.db.exec("DELETE FROM memory_semantic_fts");
+        const semantic = this.db.prepare("INSERT INTO memory_semantic_fts(memory_id, features) VALUES(?, ?)");
+        for (const row of this.db.prepare("SELECT memory_id, text FROM memory_wiki").all()) semantic.run(row.memory_id, semanticProjectionTerms(row.text).join(" "));
+      }
       const statement = this.db.prepare("INSERT INTO state_ownership(domain, owner, durability, table_name, updated_at) VALUES(?, ?, ?, ?, ?) ON CONFLICT(domain) DO UPDATE SET owner = excluded.owner, durability = excluded.durability, table_name = excluded.table_name, updated_at = excluded.updated_at");
       const ownershipUpdatedAt = Date.now();
       for (const entry of STATE_OWNERSHIP) statement.run(entry.domain, entry.owner, entry.durability, entry.table, ownershipUpdatedAt);
@@ -711,6 +719,7 @@ export class StateStore {
     if (changed.changes === 1) {
       this.db.prepare("INSERT INTO memory_lexical_fts(memory_id, text) VALUES(?, ?)").run(record.id, record.text);
       this.db.prepare("INSERT INTO memory_vector_fts(memory_id, text) VALUES(?, ?)").run(record.id, searchText(record.text).replaceAll(" ", ""));
+      this.db.prepare("INSERT INTO memory_semantic_fts(memory_id, features) VALUES(?, ?)").run(record.id, semanticProjectionTerms(record.text).join(" "));
       this.db.prepare("INSERT INTO memory_vector_projection(memory_id, algorithm, dimensions, vector_json, updated_at) VALUES(?, 'char_trigram_hash_v1', 64, ?, ?)").run(record.id, json(localVector(record.text)), now);
       if (record.supersedesMemoryId) {
         this.db.prepare("UPDATE memory_wiki SET invalidated_at = ?, promotion_state = CASE WHEN promotion_state = 'approved' THEN 'rolled_back' ELSE promotion_state END, updated_at = ? WHERE memory_id = ? AND user_id = ? AND invalidated_at IS NULL").run(now, now, record.supersedesMemoryId, ownerId);
@@ -770,10 +779,11 @@ export class StateStore {
     const candidateLimit = Math.min(300, boundedLimit * 12);
     const lexicalQuery = lexicalFtsQuery(query);
     const vectorQuery = vectorFtsQuery(query);
+    const semanticQuery = semanticFtsQuery(query);
     const queryVector = localVector(query);
     const candidates = new Map();
     const collect = (rows, key, valueFor = (_, index) => 1 / (index + 1)) => rows.forEach((row, index) => {
-      const current = candidates.get(row.memory_id) || { row, lexical: 0, fuzzy: 0, vector: 0, concept: 0 };
+      const current = candidates.get(row.memory_id) || { row, lexical: 0, fuzzy: 0, vector: 0, concept: 0, semantic: 0, semanticEntailment: false, semanticFit: null };
       current[key] = valueFor(row, index);
       candidates.set(row.memory_id, current);
     });
@@ -787,30 +797,42 @@ export class StateStore {
       const sql = `SELECT w.*, p.vector_json, bm25(memory_vector_fts) AS rank FROM memory_vector_fts JOIN memory_wiki w ON w.memory_id = memory_vector_fts.memory_id JOIN memory_vector_projection p ON p.memory_id = w.memory_id WHERE memory_vector_fts MATCH ? ${scopeSql} ORDER BY rank LIMIT ?`;
       const rows = this.db.prepare(sql).all(vectorQuery, ...scopeArgs, candidateLimit);
       rows.forEach((row, index) => {
-        const current = candidates.get(row.memory_id) || { row, lexical: 0, fuzzy: 0, vector: 0, concept: 0 };
+        const current = candidates.get(row.memory_id) || { row, lexical: 0, fuzzy: 0, vector: 0, concept: 0, semantic: 0, semanticEntailment: false, semanticFit: null };
         current.fuzzy = Math.max((1 / (index + 1)) * 0.25, fuzzyTokenScore(query, row.text));
         current.vector = Math.max(0, cosine(queryVector, JSON.parse(row.vector_json)));
         candidates.set(row.memory_id, current);
       });
     }
+    if (semanticQuery && performance.now() - started <= budgetMs) {
+      const sql = `SELECT w.*, bm25(memory_semantic_fts) AS rank FROM memory_semantic_fts JOIN memory_wiki w ON w.memory_id = memory_semantic_fts.memory_id WHERE memory_semantic_fts MATCH ? ${scopeSql} ORDER BY rank LIMIT ?`;
+      const rows = this.db.prepare(sql).all(semanticQuery, ...scopeArgs, candidateLimit);
+      rows.forEach(row => {
+        const current = candidates.get(row.memory_id) || { row, lexical: 0, fuzzy: 0, vector: 0, concept: 0, semantic: 0, semanticEntailment: false, semanticFit: null };
+        const fit = evaluateSemanticCandidate(query, row.text);
+        current.semantic = Math.max(current.semantic, fit.relevance);
+        current.semanticEntailment ||= fit.entailment;
+        current.semanticFit = fit;
+        candidates.set(row.memory_id, current);
+      });
+    }
     const queryConcepts = koreanWorkConcepts(query);
-    if (queryConcepts.length && performance.now() - started <= budgetMs) {
+    if (queryConcepts.length >= 2 && performance.now() - started <= budgetMs) {
       const variants = [...new Set(queryConcepts.flatMap(concept => KOREAN_WORK_CONCEPTS[concept]))];
       const clauses = variants.map(() => "lower(w.text) LIKE ?").join(" OR ");
       const rows = this.db.prepare(`SELECT w.* FROM memory_wiki w WHERE (${clauses}) ${scopeSql} ORDER BY w.updated_at DESC LIMIT ?`)
         .all(...variants.map(variant => `%${variant.toLowerCase()}%`), ...scopeArgs, candidateLimit);
       rows.forEach(row => {
-        const current = candidates.get(row.memory_id) || { row, lexical: 0, fuzzy: 0, vector: 0, concept: 0 };
+        const current = candidates.get(row.memory_id) || { row, lexical: 0, fuzzy: 0, vector: 0, concept: 0, semantic: 0, semanticEntailment: false, semanticFit: null };
         current.concept = Math.max(current.concept, koreanConceptScore(query, row.text));
         candidates.set(row.memory_id, current);
       });
     }
     const now = Date.now();
-    const ranked = [...candidates.values()].map(({ row, lexical, fuzzy, vector, concept }) => {
+    const ranked = [...candidates.values()].map(({ row, lexical, fuzzy, vector, concept, semantic, semanticEntailment, semanticFit }) => {
       const reviewed = row.review_state === "reviewed" ? 1 : 0;
       const freshness = Math.max(0, 1 - ((now - row.updated_at) / (365 * 24 * 60 * 60 * 1000)));
       const coverage = lexicalCoverage(query, row.text);
-      const score = Math.min(1, lexical * 0.3 + coverage * 0.14 + fuzzy * 0.16 + vector * 0.04 + concept * 0.5 + reviewed * 0.04 + freshness * 0.03);
+      const score = Math.min(1, lexical * 0.28 + coverage * 0.12 + fuzzy * 0.14 + vector * 0.03 + concept * 0.22 + semantic * 0.48 + reviewed * 0.04 + freshness * 0.03);
       const scope = row.scope_level === "project"
         ? { level: "project", turnId: null, sessionId: null, projectId: row.project_id, userId: null }
         : row.scope_level === "user_global"
@@ -822,11 +844,12 @@ export class StateStore {
         authority: { allowedUse: "candidate_only", durablePromotion: false, decisionClass: "A0", decisionId: null },
         lifecycle: "candidate", createdAt: retrievedAt, updatedAt: retrievedAt, expiresAt: null,
         invalidConditions: ["source_deleted", "scope_changed", "user_correction"],
-        memoryRecordId: row.memory_id, queryId, scores: { lexical, semantic: 0, fuzzy, localVector: vector, combined: score }, retrievedAt
+        memoryRecordId: row.memory_id, queryId, scores: { lexical, semantic, fuzzy, localVector: vector, combined: score }, retrievedAt
       };
       return {
         id: row.memory_id, source: row.source, text: row.text.slice(0, 600), score, confidence: score,
-        scores: { lexical, lexicalCoverage: coverage, fuzzy, localVector: vector, localConcept: concept, reviewed: reviewed * 0.04, freshness: freshness * 0.03, combined: score },
+        scores: { lexical, lexicalCoverage: coverage, fuzzy, localVector: vector, localConcept: concept, semantic, reviewed: reviewed * 0.04, freshness: freshness * 0.03, combined: score },
+        semanticFit, semanticEntailment,
         reason: "sqlite_fts5_hybrid", traceRef: row.trace_ref, sessionId: row.session_id, scopeLevel: row.scope_level, projectId: row.project_id, userId: row.user_id, channelId: row.channel_id,
         contradictionGroup: row.contradiction_group, supersedesMemoryId: row.supersedes_memory_id, invalidatedAt: row.invalidated_at,
         reviewed: Boolean(reviewed), allowedUse: reviewed ? "supporting_context" : "candidate_only", createdAt: row.created_at, updatedAt: row.updated_at,
@@ -840,7 +863,7 @@ export class StateStore {
     const numericFragments = String(query || "").match(/\d{3,}/g) || [];
     const topPreservesDistinctiveFragment = numericFragments.some(fragment => top?.text.toLowerCase().includes(fragment.toLowerCase()));
     const topHasRankingMargin = !runnerUp || top.score >= runnerUp.score * 1.08;
-    const selectionConfidence = item => item ? item.scores.lexicalCoverage * 0.45 + item.scores.fuzzy * 0.2 + item.scores.localVector * 0.15 + item.scores.localConcept * 0.2 : 0;
+    const selectionConfidence = item => item ? item.scores.lexicalCoverage * 0.32 + item.scores.fuzzy * 0.16 + item.scores.localVector * 0.08 + item.scores.localConcept * 0.12 + item.scores.semantic * 0.32 : 0;
     const topSelectionConfidence = selectionConfidence(top);
     const topHasSemanticMargin = !runnerUp || topSelectionConfidence >= selectionConfidence(runnerUp) * 1.15;
     const topHasConceptMargin = !runnerUp || top.scores.localConcept >= runnerUp.scores.localConcept + 0.2;
@@ -850,32 +873,41 @@ export class StateStore {
         ? ranked.filter(item => item.scores.lexical > 0 && (item.scores.lexicalCoverage >= 0.9 || reviewedMatches.some(reviewed => reviewed.id === item.id)))
         : top.scores.lexicalCoverage >= 0.6 && ranked.length <= 3
           ? [top, ...reviewedMatches.filter(item => item.id !== top.id)]
-          : numericFragments.length === 0 && top.scores.localConcept >= 0.6 && (topHasConceptMargin || topHasSemanticMargin)
-            ? [top, ...reviewedMatches.filter(item => item.id !== top.id)]
-            : reviewedMatches
-      : top?.scores.localConcept >= 0.6 && (topHasConceptMargin || topHasSemanticMargin)
+            : numericFragments.length === 0 && top.scores.semantic >= 0.7 && top.semanticEntailment && topHasSemanticMargin
+              ? [top, ...reviewedMatches.filter(item => item.id !== top.id)]
+            : numericFragments.length === 0 && top.scores.localConcept >= 0.6 && top.semanticEntailment && (topHasConceptMargin || topHasSemanticMargin)
+              ? [top, ...reviewedMatches.filter(item => item.id !== top.id)]
+              : reviewedMatches
+      : top?.scores.semantic >= 0.7 && top.semanticEntailment && topHasSemanticMargin
+        ? [top]
+      : top?.scores.localConcept >= 0.6 && top.semanticEntailment && (topHasConceptMargin || topHasSemanticMargin)
         ? [top]
       : top?.scores.fuzzy >= 0.75 && (topPreservesDistinctiveFragment || (top.scores.lexicalCoverage >= 0.5 && topHasRankingMargin))
         ? [top]
+      : numericFragments.length === 0 && top?.scores.fuzzy >= 0.7 && top.scores.localVector >= 0.35 && top.scores.lexicalCoverage >= (1 / 3) && topHasRankingMargin && topHasSemanticMargin
+        ? [top]
         : [];
     const elapsedMs = performance.now() - started;
+    const results = selected.slice(0, boundedLimit).map(item => item.semanticFit ? item : { ...item, semanticFit:evaluateSemanticCandidate(query, item.text) });
     return {
-      schema: "gpao_t3.memory_search_result.v1", results: selected.slice(0, boundedLimit),
+      schema: "gpao_t3.memory_search_result.v1", results,
       degraded: elapsedMs > budgetMs ? "latency_budget_exceeded" : null, elapsedMs,
-      receipt: { mode: "sqlite_fts5_lexical_fuzzy_local_vector", semanticAvailable: false, semanticFallback: "korean_work_concepts_v1", vectorAlgorithm: "char_trigram_hash_v1", vectorDimensions: 64, lexicalCandidates: [...candidates.values()].filter(value => value.lexical > 0).length, fuzzyCandidates: [...candidates.values()].filter(value => value.fuzzy > 0).length, localVectorCandidates: [...candidates.values()].filter(value => value.vector > 0).length, localConceptCandidates: [...candidates.values()].filter(value => value.concept > 0).length, candidateCount: candidates.size, selectedCount:selected.length, selection: { topScores:top?.scores || null, topConfidence:topSelectionConfidence, runnerConfidence:selectionConfidence(runnerUp), semanticMargin:topHasSemanticMargin }, limit: boundedLimit }
+      receipt: { mode: "sqlite_fts5_lexical_fuzzy_local_vector_semantic", semanticAvailable: true, semanticProvider:"provider_neutral", semanticAlgorithm:"bounded_semantic_features_v2", semanticFallback: "korean_work_concepts_v1", vectorAlgorithm: "char_trigram_hash_v1", vectorDimensions: 64, lexicalCandidates: [...candidates.values()].filter(value => value.lexical > 0).length, fuzzyCandidates: [...candidates.values()].filter(value => value.fuzzy > 0).length, localVectorCandidates: [...candidates.values()].filter(value => value.vector > 0).length, semanticCandidates:[...candidates.values()].filter(value => value.semantic > 0).length, localConceptCandidates: [...candidates.values()].filter(value => value.concept > 0).length, candidateCount: candidates.size, selectedCount:selected.length, selection: { topScores:top?.scores || null, topConfidence:topSelectionConfidence, runnerConfidence:selectionConfidence(runnerUp), semanticMargin:topHasSemanticMargin }, limit: boundedLimit }
     };
   }
 
   rebuildMemorySearchIndex() {
     return this.transaction(() => {
-      this.db.exec("DELETE FROM memory_lexical_fts; DELETE FROM memory_vector_fts; DELETE FROM memory_vector_projection;");
+      this.db.exec("DELETE FROM memory_lexical_fts; DELETE FROM memory_vector_fts; DELETE FROM memory_semantic_fts; DELETE FROM memory_vector_projection;");
       const rows = this.db.prepare("SELECT memory_id, text FROM memory_wiki ORDER BY memory_id").all();
       const lexical = this.db.prepare("INSERT INTO memory_lexical_fts(memory_id, text) VALUES(?, ?)");
       const vector = this.db.prepare("INSERT INTO memory_vector_fts(memory_id, text) VALUES(?, ?)");
+      const semantic = this.db.prepare("INSERT INTO memory_semantic_fts(memory_id, features) VALUES(?, ?)");
       const projection = this.db.prepare("INSERT INTO memory_vector_projection(memory_id, algorithm, dimensions, vector_json, updated_at) VALUES(?, 'char_trigram_hash_v1', 64, ?, ?)");
       for (const row of rows) {
         lexical.run(row.memory_id, row.text);
         vector.run(row.memory_id, searchText(row.text).replaceAll(" ", ""));
+        semantic.run(row.memory_id, semanticProjectionTerms(row.text).join(" "));
         projection.run(row.memory_id, json(localVector(row.text)), Date.now());
       }
       return { schema: "gpao_t3.memory_search_rebuild.v1", rebuilt: rows.length, verified: this.memorySearchStatus().parity };
@@ -887,22 +919,23 @@ export class StateStore {
     this.db.exec(`
       DELETE FROM memory_lexical_fts WHERE memory_id NOT IN (SELECT memory_id FROM memory_wiki);
       DELETE FROM memory_vector_fts WHERE memory_id NOT IN (SELECT memory_id FROM memory_wiki);
+      DELETE FROM memory_semantic_fts WHERE memory_id NOT IN (SELECT memory_id FROM memory_wiki);
       DELETE FROM memory_vector_projection WHERE memory_id NOT IN (SELECT memory_id FROM memory_wiki);
     `);
-    const rows = this.db.prepare(`SELECT memory_id, text, updated_at FROM memory_wiki w WHERE
-      NOT EXISTS (SELECT 1 FROM memory_lexical_fts f WHERE f.memory_id = w.memory_id) OR
-      NOT EXISTS (SELECT 1 FROM memory_vector_fts f WHERE f.memory_id = w.memory_id) OR
-      NOT EXISTS (SELECT 1 FROM memory_vector_projection p WHERE p.memory_id = w.memory_id)
-      ORDER BY memory_id LIMIT ?`).all(bounded);
+    const mismatchIds = new Set(this.memoryProjectionMismatches(bounded));
+    const rows = this.db.prepare("SELECT memory_id, text, updated_at FROM memory_wiki ORDER BY memory_id").all().filter(row => mismatchIds.has(row.memory_id));
     const lexical = this.db.prepare("INSERT INTO memory_lexical_fts(memory_id, text) VALUES(?, ?)");
     const vectorCandidate = this.db.prepare("INSERT INTO memory_vector_fts(memory_id, text) VALUES(?, ?)");
+    const semantic = this.db.prepare("INSERT INTO memory_semantic_fts(memory_id, features) VALUES(?, ?)");
     const projection = this.db.prepare("INSERT INTO memory_vector_projection(memory_id, algorithm, dimensions, vector_json, updated_at) VALUES(?, 'char_trigram_hash_v1', 64, ?, ?)");
     for (const row of rows) {
       this.db.prepare("DELETE FROM memory_lexical_fts WHERE memory_id = ?").run(row.memory_id);
       this.db.prepare("DELETE FROM memory_vector_fts WHERE memory_id = ?").run(row.memory_id);
+      this.db.prepare("DELETE FROM memory_semantic_fts WHERE memory_id = ?").run(row.memory_id);
       this.db.prepare("DELETE FROM memory_vector_projection WHERE memory_id = ?").run(row.memory_id);
       lexical.run(row.memory_id, row.text);
       vectorCandidate.run(row.memory_id, searchText(row.text).replaceAll(" ", ""));
+      semantic.run(row.memory_id, semanticProjectionTerms(row.text).join(" "));
       projection.run(row.memory_id, json(localVector(row.text)), row.updated_at);
     }
     const status = this.memorySearchStatus();
@@ -913,8 +946,30 @@ export class StateStore {
     const canonical = Number(this.db.prepare("SELECT count(*) AS count FROM memory_wiki").get().count);
     const lexical = Number(this.db.prepare("SELECT count(*) AS count FROM memory_lexical_fts").get().count);
     const localVectorCandidates = Number(this.db.prepare("SELECT count(*) AS count FROM memory_vector_fts").get().count);
+    const semanticCandidates = Number(this.db.prepare("SELECT count(*) AS count FROM memory_semantic_fts").get().count);
     const localVector = Number(this.db.prepare("SELECT count(*) AS count FROM memory_vector_projection").get().count);
-    return { schema: "gpao_t3.memory_search_status.v1", canonical, lexical, localVectorCandidates, localVector, parity: canonical === lexical && canonical === localVectorCandidates && canonical === localVector };
+    const contentMismatches = this.memoryProjectionMismatches(1).length;
+    return { schema: "gpao_t3.memory_search_status.v1", canonical, lexical, localVectorCandidates, semanticCandidates, localVector, contentMismatches, parity: canonical === lexical && canonical === localVectorCandidates && canonical === semanticCandidates && canonical === localVector && contentMismatches === 0 };
+  }
+
+  memoryProjectionMismatches(limit = Number.POSITIVE_INFINITY) {
+    const lexical = new Map(this.db.prepare("SELECT memory_id, text FROM memory_lexical_fts").all().map(row => [row.memory_id, row.text]));
+    const vectorCandidates = new Map(this.db.prepare("SELECT memory_id, text FROM memory_vector_fts").all().map(row => [row.memory_id, row.text]));
+    const semantic = new Map(this.db.prepare("SELECT memory_id, features FROM memory_semantic_fts").all().map(row => [row.memory_id, row.features]));
+    const vectors = new Map(this.db.prepare("SELECT memory_id, algorithm, dimensions, vector_json FROM memory_vector_projection").all().map(row => [row.memory_id, row]));
+    const mismatches = [];
+    for (const row of this.db.prepare("SELECT memory_id, text FROM memory_wiki ORDER BY memory_id").all()) {
+      const projected = vectors.get(row.memory_id);
+      const mismatch = lexical.get(row.memory_id) !== row.text
+        || vectorCandidates.get(row.memory_id) !== searchText(row.text).replaceAll(" ", "")
+        || semantic.get(row.memory_id) !== semanticProjectionTerms(row.text).join(" ")
+        || projected?.algorithm !== "char_trigram_hash_v1"
+        || projected?.dimensions !== 64
+        || projected?.vector_json !== json(localVector(row.text));
+      if (mismatch) mismatches.push(row.memory_id);
+      if (mismatches.length >= limit) break;
+    }
+    return mismatches;
   }
 
   deleteMemory(memoryId) {
@@ -923,6 +978,7 @@ export class StateStore {
     const influencesPurged = this.db.prepare("DELETE FROM context_influences WHERE source_memory_id = ?").run(memoryId).changes;
     this.db.prepare("DELETE FROM memory_lexical_fts WHERE memory_id = ?").run(memoryId);
     this.db.prepare("DELETE FROM memory_vector_fts WHERE memory_id = ?").run(memoryId);
+    this.db.prepare("DELETE FROM memory_semantic_fts WHERE memory_id = ?").run(memoryId);
     this.db.prepare("DELETE FROM memory_vector_projection WHERE memory_id = ?").run(memoryId);
     const deleted = this.db.prepare("DELETE FROM memory_wiki WHERE memory_id = ?").run(memoryId).changes === 1;
     return { memoryId, deleted, projectionsPurged: deleted, influencesPurged };

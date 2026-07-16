@@ -37,6 +37,10 @@ test("MCT-R2 gives every candidate a schema-valid task-relative admission decisi
     assert.equal(decision.state, fixture.expected, fixture.id);
     assert.equal(validate(result.candidates[0]), true, `${fixture.id} candidate: ${JSON.stringify(validate.errors)}`);
     assert.equal(validate(decision), true, `${fixture.id} decision: ${JSON.stringify(validate.errors)}`);
+    const legacyDecision = { ...decision };
+    delete legacyDecision.retrievalScore;
+    delete legacyDecision.taskFit;
+    assert.equal(validate(legacyDecision), false, `${fixture.id} legacy decision must fail canonical schema`);
     assert.equal(validate(result.taskPacket), true, `${fixture.id} packet: ${JSON.stringify(validate.errors)}`);
     if (decision.state === fixture.expected) correct += 1;
     if (decision.state === "answer_anchor" && fixture.expected !== "answer_anchor") wrongAnchor += 1;
@@ -48,12 +52,12 @@ test("MCT-R2 gives every candidate a schema-valid task-relative admission decisi
 test("MCT-R2 prompt contains only admitted context and ends with the current request", () => {
   const request = "승인을 자동으로 요청하지 마";
   const candidates = [
-    { ...MCT_R2_CASES[0].candidate, id: "safe-anchor", text: "위험한 삭제는 실행 전에 확인한다", traceRef: "trace-safe" },
+    { ...MCT_R2_CASES[0].candidate, id: "safe-anchor", text: "승인을 자동 요청하지 않고 위험한 삭제만 실행 전에 확인한다", traceRef: "trace-safe" },
     { ...MCT_R2_CASES[2].candidate, id: "conflict", traceRef: "trace-conflict" }
   ];
   const admission = admitTcellCandidates(packet(request), candidates, { now: MCT_R2_NOW });
   const input = composeAdmittedProviderInput({ currentRequest: request, providerInput: request, admission });
-  assert.match(input, /위험한 삭제는 실행 전에 확인한다/);
+  assert.match(input, /위험한 삭제만 실행 전에 확인한다/);
   assert.doesNotMatch(input, /승인을 자동으로 요청한다/);
   assert.ok(input.endsWith(request));
   assert.equal(admission.taskPacket.conflictBoundaries.length, 1);
@@ -61,7 +65,7 @@ test("MCT-R2 prompt contains only admitted context and ends with the current req
 });
 
 test("MCT-R2 relation projection keeps only the newest contradiction-group member anchorable", () => {
-  const request = "대화 승인 원칙을 알려줘";
+  const request = "대화에서 위험한 작업 승인 원칙을 알려줘";
   const base = MCT_R2_CASES[0].candidate;
   const admission = admitTcellCandidates(packet(request), [
     { ...base, id: "old-rule", traceRef: "trace-old", text: "대화마다 승인을 요청한다", contradictionGroup: "approval-policy", updatedAt: MCT_R2_NOW - 10_000 },
@@ -127,7 +131,7 @@ test("MCT-R2 canonical authority cap cannot be laundered into an answer anchor",
 test("MCT-R2 memory pressure cannot evict the current request or minimum output", () => {
   const request = "현재 요청은 반드시 보존한다";
   const smallPacket = createTaskPacket({ sessionId: "session-a", input: request, contextWindow: 2048, userId: "owner:a" });
-  const huge = { ...MCT_R2_CASES[0].candidate, id: "huge-anchor", traceRef: "trace-huge", text: "긴기억 ".repeat(2_000) };
+  const huge = { ...MCT_R2_CASES[0].candidate, id: "huge-anchor", traceRef: "trace-huge", text: "현재 요청은 반드시 보존한다 긴기억 ".repeat(2_000) };
   const admission = admitTcellCandidates(smallPacket, [huge], { now: MCT_R2_NOW });
   assert.equal(admission.decisions[0].state, "review_needed");
   assert.equal(admission.decisions[0].reason, "budget_exceeded");
@@ -257,7 +261,7 @@ test("MCT-R2 admission ledger survives restart without projection drift", () => 
     assert.deepEqual(restored.taskPacket, admission.taskPacket);
     assert.deepEqual(restored.candidates, admission.candidates);
     assert.deepEqual(restored.decisions, admission.decisions);
-    assert.equal(store.identitySnapshot().schemaVersion, 14);
+    assert.equal(store.identitySnapshot().schemaVersion, 15);
     store.close();
   } finally {
     fs.rmSync(dir, { recursive: true, force: true });

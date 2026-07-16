@@ -1,0 +1,156 @@
+{
+  "schema": "gpao_t3.mct_r5_sealed_holdout.v1",
+  "implementationFreeze": "e47eeb536d883172b7e70e7b9f61301ae8ceceb1",
+  "generatedAfterFreeze": "2026-07-16T15:17:17+09:00",
+  "author": "independent_audit_agent",
+  "records": [
+    {
+      "index": 301,
+      "text": "솔바람접수대 운영 종료 시각은 오후 다섯 시다",
+      "sessionId": "session-a"
+    },
+    {
+      "index": 302,
+      "text": "물결무늬자료집의 최종 교열자는 지후다",
+      "sessionId": "session-a"
+    },
+    {
+      "index": 303,
+      "text": "단풍우체통알림은 오후 여섯 시에 발송한다",
+      "sessionId": "session-a"
+    },
+    {
+      "index": 304,
+      "text": "하얀고래원장은 남관 지하 보존실에 둔다",
+      "sessionId": "session-a"
+    },
+    {
+      "index": 305,
+      "text": "회의 결과를 전달할 때 결정된 항목과 아직 논의 중인 항목을 구분한다",
+      "sessionId": "session-a"
+    },
+    {
+      "index": 306,
+      "text": "파일을 덮어쓰기 전에 복사본을 만들어 원래 상태로 돌아갈 수 있게 한다",
+      "sessionId": "session-a"
+    },
+    {
+      "index": 307,
+      "text": "제비꽃열쇠함의 인수인계 문구는 맑은종소리다",
+      "sessionId": "session-b"
+    },
+    {
+      "index": 308,
+      "text": "북극성창작실의 예약 코드는 잔잔한호수다",
+      "sessionId": "session-b"
+    },
+    {
+      "index": 309,
+      "text": "해질녘민원함 방문 접수는 오후 네 시까지 가능하다",
+      "sessionId": "session-a"
+    },
+    {
+      "index": 310,
+      "text": "옥빛도면목록은 분기 첫날에 새로 작성한다",
+      "sessionId": "session-a"
+    }
+  ],
+  "cases": [
+    {
+      "id": "sealed-v2-exact-301",
+      "kind": "korean_exact",
+      "query": "솔바람접수대 운영 종료 시각",
+      "expectedMarker": "r5rec0301",
+      "sessionId": "session-a",
+      "shouldFind": true
+    },
+    {
+      "id": "sealed-v2-exact-302",
+      "kind": "korean_exact",
+      "query": "물결무늬자료집 최종 교열자",
+      "expectedMarker": "r5rec0302",
+      "sessionId": "session-a",
+      "shouldFind": true
+    },
+    {
+      "id": "sealed-v2-exact-309",
+      "kind": "korean_exact",
+      "query": "해질녘민원함 방문 접수 마감",
+      "expectedMarker": "r5rec0309",
+      "sessionId": "session-a",
+      "shouldFind": true
+    },
+    {
+      "id": "sealed-v2-typo-303",
+      "kind": "korean_typo",
+      "query": "단풍우채통알림 발송 시간",
+      "expectedMarker": "r5rec0303",
+      "sessionId": "session-a",
+      "shouldFind": true
+    },
+    {
+      "id": "sealed-v2-typo-304",
+      "kind": "korean_typo",
+      "query": "하얀고래원쟝 보존 장소",
+      "expectedMarker": "r5rec0304",
+      "sessionId": "session-a",
+      "shouldFind": true
+    },
+    {
+      "id": "sealed-v2-typo-310",
+      "kind": "korean_typo",
+      "query": "옥빛도면목녹 작성 주기",
+      "expectedMarker": "r5rec0310",
+      "sessionId": "session-a",
+      "shouldFind": true
+    },
+    {
+      "id": "sealed-v2-semantic-305",
+      "kind": "semantic_paraphrase",
+      "query": "합의가 끝난 내용과 결론 나지 않은 내용을 나눠서 알려준다",
+      "expectedMarker": "r5rec0305",
+      "sessionId": "session-a",
+      "shouldFind": true
+    },
+    {
+      "id": "sealed-v2-semantic-306",
+      "kind": "semantic_paraphrase",
+      "query": "자료를 바꾸기 앞서 되돌릴 수 있도록 사본을 남긴다",
+      "expectedMarker": "r5rec0306",
+      "sessionId": "session-a",
+      "shouldFind": true
+    },
+    {
+      "id": "sealed-v2-common-none-1",
+      "kind": "common_no_result",
+      "query": "회의 자료의 작성 상태와 전달 일정을 확인해줘",
+      "expectedMarker": null,
+      "sessionId": "session-a",
+      "shouldFind": false
+    },
+    {
+      "id": "sealed-v2-number-none-1",
+      "kind": "numeric_collision_no_result",
+      "query": "문서 7314번의 만료 조건을 찾아줘",
+      "expectedMarker": null,
+      "sessionId": "session-a",
+      "shouldFind": false
+    },
+    {
+      "id": "sealed-v2-cross-307",
+      "kind": "cross_session",
+      "query": "제비꽃열쇠함 인수인계 문구",
+      "expectedMarker": "r5rec0307",
+      "sessionId": "session-a",
+      "shouldFind": false
+    },
+    {
+      "id": "sealed-v2-cross-308",
+      "kind": "cross_session",
+      "query": "북극성창작실 예약 코드",
+      "expectedMarker": "r5rec0308",
+      "sessionId": "session-a",
+      "shouldFind": false
+    }
+  ]
+}

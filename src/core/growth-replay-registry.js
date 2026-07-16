@@ -6,9 +6,9 @@ import { admitTcellCandidates } from "./tcell.js";
 
 const REPLAY_NOW = 1_784_160_000_000;
 
-function approvedCandidate(id, score = 0.9) {
+function approvedCandidate(id, score = 0.9, text = `중요한 작업의 승인 원칙 ${id}`) {
   return Object.freeze({
-    id, text: `중요한 작업의 승인 원칙 ${id}`, source: "sealed_growth_replay",
+    id, text, source: "sealed_growth_replay",
     traceRef: `trace-${id}`, sessionId: "growth-replay-session", userId: "owner:a", score,
     reviewed: true, approvedInfluence: true, sourceResolved: true, sourceInvalidated: false,
     influenceId: `influence-${id}`,
@@ -20,7 +20,7 @@ function approvedCandidate(id, score = 0.9) {
 function capacityFixture(id) {
   return Object.freeze({
     id, request: "중요한 작업의 승인 원칙을 알려줘",
-    candidates: Object.freeze([approvedCandidate(`${id}-1`), approvedCandidate(`${id}-2`), approvedCandidate(`${id}-3`)]),
+    candidates: Object.freeze([1, 2, 3].map(index => approvedCandidate(`${id}-${index}`, 0.9, "중요한 작업의 승인 원칙을 알려줘"))),
     expectedStates: Object.freeze(["answer_anchor", "answer_anchor", "supporting_context"])
   });
 }

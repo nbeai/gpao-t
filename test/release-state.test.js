@@ -23,7 +23,7 @@ test("isolated state snapshot, migration, and restore preserve a verified baseli
   const migration = migrateState({ stateDir });
   const restored = restoreState({ stateDir, snapshot: snapshot.directory });
   assert.equal(fs.readFileSync(path.join(stateDir, "marker.txt"), "utf8"), "before");
-  assert.equal(migration.after.schemaVersion, 14);
+  assert.equal(migration.after.schemaVersion, 15);
   assert.equal(migration.after.identity.productId, PRODUCT_IDENTITY.productId);
   assert.equal(restored.restoredSnapshot, snapshot.id);
   assert.ok(fs.existsSync(path.join(stateDir, "snapshots", restored.safetySnapshot, "manifest.json")));
@@ -41,7 +41,7 @@ test("legacy isolated state is atomically adopted into the GPAO-T3 namespace and
     assert.equal(fs.existsSync(legacyPath), false);
     assert.equal(fs.existsSync(path.join(stateDir, PRODUCT_IDENTITY.databaseFile)), true);
     assert.equal(store.getMeta("legacy_marker"), "preserved");
-    assert.equal(store.identitySnapshot().schemaVersion, 14);
+    assert.equal(store.identitySnapshot().schemaVersion, 15);
     assert.equal(store.identitySnapshot().productId, "gpao-t3");
     assert.ok(store.stateOwnership().domains.some(entry => entry.domain === "runtime_intent" && entry.owner === "sqlite"));
     for (const table of ["messenger_sessions", "channel_bindings", "channel_inbound", "channel_checkpoints", "channel_deliveries"]) {

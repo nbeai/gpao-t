@@ -142,7 +142,7 @@ test("MCT-R3 replays each canary against the active baseline and composes chrono
   const dir = stateDir(); const runtime = await new NativeRuntime({ stateDir: dir }).start();
   try {
     const firstInput = proposalInput({ proposedChange: { maxAnchors: 2 } }); delete firstInput.now;
-    const secondInput = proposalInput({ proposedChange: { relevanceThreshold: 0.2 } }); delete secondInput.now;
+    const secondInput = proposalInput({ proposedChange: { relevanceThreshold: 0.8 } }); delete secondInput.now;
     const firstProposal = await runtime.proposeGrowth("owner:a", firstInput);
     const firstReplay = await runtime.replayGrowth("owner:a", firstProposal.proposal.id);
     await runtime.reviewGrowth("owner:a", firstProposal.proposal.id, true);
@@ -153,8 +153,8 @@ test("MCT-R3 replays each canary against the active baseline and composes chrono
     const second = await runtime.applyGrowth("owner:a", secondProposal.proposal.id, secondReplay.replayResult.id, 60_000);
     const projected = runtime.growthAdmissionPolicy({ userId: "owner:a", projectId: "project-t3" });
     assert.equal(projected.policy.maxAnchors, 2);
-    assert.equal(projected.policy.relevanceThreshold, 0.2);
-    assert.equal(projected.policy.anchorThreshold, 0.2);
+    assert.equal(projected.policy.relevanceThreshold, 0.8);
+    assert.equal(projected.policy.anchorThreshold, 0.8);
     assert.deepEqual(projected.mutationIds, [first.mutation.id, second.mutation.id]);
     assert.ok(second.mutation.createdAt > first.mutation.createdAt);
   } finally { await runtime.stop(); fs.rmSync(dir, { recursive: true, force: true }); }
@@ -164,7 +164,7 @@ test("MCT-R3 rejects a replay when another canary changes its sealed baseline", 
   const dir = stateDir(); const runtime = await new NativeRuntime({ stateDir: dir }).start();
   try {
     const firstInput = proposalInput({ proposedChange: { maxAnchors: 2 } }); delete firstInput.now;
-    const staleInput = proposalInput({ proposedChange: { relevanceThreshold: 0.2 } }); delete staleInput.now;
+    const staleInput = proposalInput({ proposedChange: { relevanceThreshold: 0.8 } }); delete staleInput.now;
     const firstProposal = await runtime.proposeGrowth("owner:a", firstInput);
     const firstReplay = await runtime.replayGrowth("owner:a", firstProposal.proposal.id);
     const staleProposal = await runtime.proposeGrowth("owner:a", staleInput);

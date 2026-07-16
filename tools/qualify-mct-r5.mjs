@@ -20,17 +20,38 @@ const openClawBin = "/Users/jyp/.local/bin/openclaw";
 const evidenceDir = path.resolve(process.argv[2] || "../engineering/evidence/mct-r5-comparison-2026-07-16");
 const sealedHoldoutPath = path.resolve(process.argv[3] || process.env.MCT_R5_SEALED_HOLDOUT || "");
 if (!process.argv[3] && !process.env.MCT_R5_SEALED_HOLDOUT) throw new Error("A separately generated sealed holdout JSON path is required");
-const priorDevelopmentPath = path.join(root, "test/fixtures/mct-r5-development-holdout-v1.json");
-const priorDevelopment = JSON.parse(fs.readFileSync(priorDevelopmentPath, "utf8"));
+const priorDevelopmentPaths = ["mct-r5-development-holdout-v1.json", "mct-r5-development-holdout-v2.json"].map(name => path.join(root, "test/fixtures", name));
+const priorDevelopment = priorDevelopmentPaths.map(file => JSON.parse(fs.readFileSync(file, "utf8")));
 const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "gpao-t3-mct-r5-"));
-const implementationFreeze = Object.freeze({
-  commit:"e47eeb536d883172b7e70e7b9f61301ae8ceceb1",
-  storeDigest:"sha256:8c35e37ff7660e7feb6669b988b426de5d55e18b3752adbd10312ad373c3ec8a"
-});
 const sealedHoldout = JSON.parse(fs.readFileSync(sealedHoldoutPath, "utf8"));
-if (sealedHoldout.schema !== "gpao_t3.mct_r5_sealed_holdout.v1") throw new Error("Unsupported sealed holdout schema");
-if (sealedHoldout.implementationFreeze !== implementationFreeze.commit) throw new Error("Sealed holdout does not target the frozen implementation");
+if (sealedHoldout.schema !== "gpao_t3.mct_r5_sealed_holdout.v2") throw new Error("Unsupported sealed holdout schema");
+const implementationFreeze = Object.freeze({ commit:sealedHoldout.implementationFreeze, sourceDigests:Object.freeze({ ...(sealedHoldout.implementationSourceDigests || {}) }) });
+if (!/^[a-f0-9]{40}$/u.test(implementationFreeze.commit || "")) throw new Error("Sealed holdout does not target a valid frozen implementation");
+for (const key of ["store", "tcell", "semanticCandidate", "contractSchema", "qualifier"]) if (!/^sha256:[a-f0-9]{64}$/u.test(implementationFreeze.sourceDigests[key] || "")) throw new Error(`Sealed holdout implementation digest missing: ${key}`);
+if (sealedHoldout.generatedAfterFreeze !== true || !Number.isFinite(Date.parse(sealedHoldout.generatedAt || ""))) throw new Error("Sealed holdout must record a valid post-freeze generation time");
 if (!Array.isArray(sealedHoldout.records) || !Array.isArray(sealedHoldout.cases) || sealedHoldout.cases.length < 8) throw new Error("Sealed holdout requires records and at least eight cases");
+if (!Array.isArray(sealedHoldout.admissionProbes) || sealedHoldout.admissionProbes.length < 4 || !sealedHoldout.admissionProbes.some(item => item.shouldAdmit === true) || !sealedHoldout.admissionProbes.some(item => item.shouldAdmit === false)) throw new Error("Sealed holdout requires positive and negative task-fit admission probes");
+const declaration = sealedHoldout.authoringDeclaration || {};
+if (declaration.implementationSourceInspected !== false || declaration.priorFixturesInspected !== false || declaration.targetNeutral !== true) throw new Error("Sealed holdout requires an independent target-neutral authoring declaration");
+const normalizedText = value => String(value || "").normalize("NFC").toLowerCase().replace(/[^\p{L}\p{N}]+/gu, " ").trim();
+const developmentCases = [...MCT_R5_DEVELOPMENT_CASES, ...priorDevelopment.flatMap(item => item.cases)];
+const developmentQueries = new Set(developmentCases.map(item => normalizedText(item.query)));
+const sealedQueries = sealedHoldout.cases.map(item => normalizedText(item.query));
+if (new Set(sealedQueries).size !== sealedQueries.length || sealedQueries.some(query => developmentQueries.has(query))) throw new Error("Sealed holdout queries must be new and unique");
+if (sealedHoldout.cases.some(item => !item.id || !item.kind || !item.query || typeof item.shouldFind !== "boolean" || (item.expectedMarker && normalizedText(item.query).includes(normalizedText(item.expectedMarker))))) throw new Error("Invalid or marker-leaking sealed holdout case");
+const syntheticLookupKey = /(?:r5rec\s*\d{4}|기억열쇠\s*\d{4})/iu;
+if (sealedHoldout.cases.some(item => item.kind === "semantic_paraphrase" && syntheticLookupKey.test(item.query))) throw new Error("Semantic holdout cases cannot query synthetic corpus identifiers");
+const positiveSemantic = sealedHoldout.cases.filter(item => item.shouldFind && item.kind === "semantic_paraphrase").length;
+const negativeRestraint = sealedHoldout.cases.filter(item => !item.shouldFind && item.kind.includes("no_result")).length;
+const crossSession = sealedHoldout.cases.filter(item => !item.shouldFind && item.kind === "cross_session").length;
+if (positiveSemantic < 2 || negativeRestraint < 2 || crossSession < 2) throw new Error("Sealed holdout requires semantic, restraint, and cross-session coverage");
+const priorRecordTexts = new Set(priorDevelopment.flatMap(item => item.records).map(item => normalizedText(item.text)));
+if (sealedHoldout.records.some(item => priorRecordTexts.has(normalizedText(item.text)))) throw new Error("Sealed holdout records must not reuse prior holdout records");
+if (sealedHoldout.admissionProbes.some(item => !item.id || !item.query || !item.candidateText || !["entailed", "topical_distractor", "polarity_conflict", "unrelated"].includes(item.kind))) throw new Error("Invalid sealed admission probe");
+const probeIds = sealedHoldout.admissionProbes.map(item => item.id);
+const probePairs = sealedHoldout.admissionProbes.map(item => `${normalizedText(item.query)}\0${normalizedText(item.candidateText)}`);
+if (new Set(probeIds).size !== probeIds.length || new Set(probePairs).size !== probePairs.length) throw new Error("Sealed admission probes must be unique");
+if (!sealedHoldout.admissionProbes.some(item => item.shouldAdmit && item.kind === "entailed") || !sealedHoldout.admissionProbes.some(item => !item.shouldAdmit && item.kind === "topical_distractor") || !sealedHoldout.admissionProbes.some(item => !item.shouldAdmit && item.kind === "polarity_conflict")) throw new Error("Sealed admission probes require entailed, topical distractor, and polarity conflict coverage");
 const replacementRecords = new Map(sealedHoldout.records.map(item => {
   if (!Number.isInteger(item.index) || item.index < 1 || item.index > 500 || !item.text || !item.sessionId) throw new Error("Invalid sealed holdout record");
   return [item.index, item];
@@ -42,7 +63,7 @@ const corpus = createMctR5Corpus().map((item, offset) => {
 });
 const holdoutCases = Object.freeze(sealedHoldout.cases.map(item => Object.freeze({ ...item })));
 if (holdoutCases.some(item => "target" in item || "product" in item)) throw new Error("Sealed holdout must remain target-neutral");
-const thresholds = Object.freeze({ recallGainMinimum:0.15, semanticRecallBaselineRatioMinimum:1, noResultRestraintMinimum:1, crossSessionLeakageMaximum:0, crossSessionFalseRecallMaximum:0, retrievalP95MaximumMs:250, retrievalEfficiencyBaselineRatioMinimum:0.9, answerAnchorAccuracyMinimum:1, promptBudgetComplianceMinimum:1, currentRequestPreservationMinimum:1, taskFlowP95MaximumMs:250, recoveryCompletenessMinimum:1 });
+const thresholds = Object.freeze({ recallGainMinimum:0.15, semanticRecallBaselineRatioMinimum:1, noResultRestraintMinimum:1, crossSessionLeakageMaximum:0, crossSessionFalseRecallMaximum:0, retrievalP95MaximumMs:250, retrievalEfficiencyBaselineRatioMinimum:0.9, answerAnchorAccuracyMinimum:1, taskFitGateAccuracyMinimum:1, promptBudgetComplianceMinimum:1, currentRequestPreservationMinimum:1, taskFlowP95MaximumMs:250, recoveryCompletenessMinimum:1 });
 const metricDefinitions = Object.freeze({
   recallAt5:"gate-positive cases with expected marker in first five results / gate-positive cases",
   semanticRecallAt5:"gate-positive cases whose kind contains semantic and expected marker appears in first five results / semantic cases",
@@ -51,11 +72,12 @@ const metricDefinitions = Object.freeze({
   correctRetrievalsPer1000ContextTokens:"correct gate-positive retrievals / estimated UTF-8 retrieval-context tokens x 1000; includes context returned on negative cases",
   deterministicAnswerAnchorAccuracy:"sealed deterministic provider extracts the expected marker from the composed admitted Task Packet input; this measures prompt influence, not general LLM quality",
   measuredPromptTokens:"ceil UTF-8 bytes / 4 for the exact composed provider input",
-  recoveryCompleteness:"projection corruption repaired, parity restored, correct retrieval survives restart"
+  taskFitGateAccuracy:"independent positive and topical-distractor probes correctly admitted or rejected by current-task relevance and entailment",
+  recoveryCompleteness:"all lexical, fuzzy, semantic, and vector projections repaired; parity restored; correct retrieval survives restart"
 });
 const sealedHoldoutDigest = sha256File(sealedHoldoutPath);
-const contract = { schema:"gpao_t3.mct_r5_comparison_contract.v5", corpusSize:corpus.length, topK:MCT_R5_TOP_K, developmentCases:[...MCT_R5_DEVELOPMENT_CASES, ...priorDevelopment.cases], priorDevelopmentRecords:priorDevelopment.records, priorHoldoutSourceDigest:priorDevelopment.sourceDigest, holdoutCases, sealedHoldoutDigest, holdoutGeneratedAfterFreeze:sealedHoldout.generatedAfterFreeze, implementationFreeze, thresholds, metricDefinitions, lane:"offline_local_no_provider_no_network", baselineCommit:MCT_R5_BASELINE_COMMIT };
-const contractDigest = canonicalDigest("gpao_t3.mct_r5_comparison_contract.v5", { corpus, ...contract });
+const contract = { schema:"gpao_t3.mct_r5_comparison_contract.v6", corpusSize:corpus.length, topK:MCT_R5_TOP_K, developmentCases:[...MCT_R5_DEVELOPMENT_CASES, ...priorDevelopment.flatMap(item => item.cases)], priorDevelopmentRecords:priorDevelopment.flatMap(item => item.records), priorHoldoutSourceDigests:priorDevelopment.map(item => item.sourceDigest), holdoutCases, admissionProbes:sealedHoldout.admissionProbes, sealedHoldoutDigest, holdoutGeneratedAfterFreeze:sealedHoldout.generatedAfterFreeze, implementationFreeze, thresholds, metricDefinitions, lane:"offline_local_no_provider_no_network", baselineCommit:MCT_R5_BASELINE_COMMIT };
+const contractDigest = canonicalDigest("gpao_t3.mct_r5_comparison_contract.v6", { corpus, ...contract });
 
 function run(command, args, options = {}) {
   const result = spawnSync(command, args, { encoding:"utf8", maxBuffer:32 * 1024 * 1024, ...options });
@@ -67,6 +89,20 @@ function sha256Files(files) {
   const entries = [...files].sort().map(file => ({ file:path.relative(openClawRoot, file), digest:sha256File(file) }));
   return canonicalDigest("gpao_t3.external_file_set.v1", entries);
 }
+const actualFreeze = Object.freeze({
+  commit:run("git", ["rev-parse", "HEAD"], { cwd:root }),
+  sourceDigests:Object.freeze({
+    store:sha256File(path.join(root, "src/core/store.js")),
+    tcell:sha256File(path.join(root, "src/core/tcell.js")),
+    semanticCandidate:sha256File(path.join(root, "src/core/semantic-candidate.js")),
+    contractSchema:sha256File(path.join(root, "src/schemas/mct-contract.v1.schema.json")),
+    qualifier:sha256File(path.join(root, "tools/qualify-mct-r5.mjs"))
+  })
+});
+if (actualFreeze.commit !== implementationFreeze.commit) throw new Error("Current source is not the sealed implementation commit");
+for (const [key, value] of Object.entries(actualFreeze.sourceDigests)) if (value !== implementationFreeze.sourceDigests[key]) throw new Error(`Frozen implementation source drift: ${key}`);
+const freezeCommittedAt = Date.parse(run("git", ["show", "-s", "--format=%cI", implementationFreeze.commit], { cwd:root }));
+if (Date.parse(sealedHoldout.generatedAt) <= freezeCommittedAt) throw new Error("Sealed holdout was not generated after the frozen implementation commit");
 const openClawMemoryBundles = fs.readdirSync(path.join(openClawRoot, "dist"))
   .filter(name => /^memory-search-.*\.js$/u.test(name))
   .map(name => path.join(openClawRoot, "dist", name));
@@ -100,7 +136,7 @@ async function qualifyReinforcedT3() {
       const result = store.searchMemory(fixture.query, { sessionId:fixture.sessionId, userId:"owner:r5", limit:MCT_R5_TOP_K, budgetMs:250 });
       return observe(fixture, result.results, performance.now() - started);
     });
-    return summarize("gpao_t3_reinforced", observations, { mode:"sqlite_fts5_lexical_fuzzy_char_trigram", semanticProvider:false });
+    return summarize("gpao_t3_reinforced", observations, { mode:"sqlite_fts5_lexical_fuzzy_char_trigram_semantic", semanticProvider:"provider_neutral", semanticAlgorithm:"bounded_semantic_features_v2" });
   } finally { store.close(); }
 }
 
@@ -173,11 +209,24 @@ async function qualifyTaskPacketFlow() {
         promptTokens, outputTokens, latencyMs:performance.now() - started
       };
     });
+    const admissionProbes = sealedHoldout.admissionProbes.map(probe => {
+      const packet = createTaskPacket({ sessionId:probe.sessionId || "session-a", input:probe.query, contextWindow:4096, userId:"owner:r5" });
+      const candidate = {
+        id:`probe_${probe.id}`, text:probe.candidateText, sessionId:probe.sessionId || "session-a", userId:"owner:r5", scopeLevel:"session",
+        reviewed:true, approvedInfluence:true, replayPassed:true, sourceResolved:true, sourceInvalidated:false, score:0.95, traceRef:`trace:${probe.id}`,
+        authority:{ allowedUse:"answer_anchor", durablePromotion:true, decisionClass:"A2", decisionId:`sealed-probe-${probe.id}` }
+      };
+      const admission = admitTcellCandidates(packet, [candidate]);
+      const decision = admission.decisions[0];
+      const admitted = decision.state === "answer_anchor";
+      return { id:probe.id, shouldAdmit:probe.shouldAdmit, admitted, correct:admitted === probe.shouldAdmit, state:decision.state, reason:decision.reason, relevance:decision.taskFit.relevance, entailment:decision.taskFit.entailment };
+    });
     const count = observations.length || 1;
     return {
-      schema:"gpao_t3.mct_r5_task_packet_flow.v1", observations,
+      schema:"gpao_t3.mct_r5_task_packet_flow.v2", observations, admissionProbes,
       metrics:{
         deterministicAnswerAnchorAccuracy:observations.filter(item => item.correct).length / count,
+        taskFitGateAccuracy:admissionProbes.filter(item => item.correct).length / admissionProbes.length,
         currentRequestPreservation:observations.filter(item => item.currentRequestPreserved).length / count,
         promptBudgetCompliance:observations.filter(item => item.promptBudgetCompliant).length / count,
         measuredPromptTokens:observations.reduce((sum, item) => sum + item.promptTokens, 0),
@@ -193,6 +242,12 @@ function qualifyRecovery() {
   let store = new StateStore(stateDir);
   try {
     store.transaction(() => corpus.forEach(item => store.addMemoryCandidate({ id:item.id, text:item.text, source:"mct_r5", traceRef:`trace:${item.id}`, sessionId:item.sessionId, userId:"owner:r5", scopeLevel:"session" })));
+    store.db.exec("DROP TABLE memory_semantic_fts");
+    store.close();
+    store = new StateStore(stateDir);
+    const missingTableRecovered = store.memorySearchStatus().parity === true;
+    store.db.prepare("UPDATE memory_semantic_fts SET features = 'corrupted_feature' WHERE rowid = (SELECT min(rowid) FROM memory_semantic_fts)").run();
+    const contentCorruptionDetected = store.memorySearchStatus().parity === false;
     store.db.exec("DELETE FROM memory_lexical_fts; DELETE FROM memory_vector_fts; DELETE FROM memory_vector_projection;");
     const corrupted = store.memorySearchStatus();
     const started = performance.now();
@@ -202,10 +257,10 @@ function qualifyRecovery() {
     store.close();
     store = new StateStore(stateDir);
     const afterRestart = store.searchMemory("라일락회의실 배포창구", { sessionId:"session-a", userId:"owner:r5", limit:5 });
-    const complete = corrupted.parity === false && repair.status.parity === true
+    const complete = missingTableRecovered && contentCorruptionDetected && corrupted.parity === false && repair.status.parity === true
       && beforeRestart.results.some(item => item.text.includes("r5rec0101"))
       && afterRestart.results.some(item => item.text.includes("r5rec0101"));
-    return { schema:"gpao_t3.mct_r5_recovery.v1", corrupted, repair, repairMs, restartParity:store.memorySearchStatus().parity, complete };
+    return { schema:"gpao_t3.mct_r5_recovery.v1", missingTableRecovered, contentCorruptionDetected, corrupted, repair, repairMs, restartParity:store.memorySearchStatus().parity, complete };
   } finally { store.close(); }
 }
 
@@ -215,7 +270,7 @@ function sourceManifest() {
     schema:"gpao_t3.mct_r5_source_manifest.v1", contractDigest,
     environment:{ platform:process.platform, arch:process.arch, node:process.version },
     targets:{
-      gpaoT3Reinforced:{ commit:run("git", ["rev-parse", "HEAD"], { cwd:root }), sourceDirty:run("git", ["status", "--porcelain"], { cwd:root }).length > 0, implementationCommit:implementationFreeze.commit, source:sha256File(path.join(root, "src/core/store.js")), scorer:sha256File(path.join(root, "src/core/mct-comparison.js")), developmentFixtures:[sha256File(path.join(root, "test/fixtures/mct-r5-cases.js")), sha256File(priorDevelopmentPath)], sealedHoldout:sealedHoldoutDigest, qualifier:sha256File(path.join(root, "tools/qualify-mct-r5.mjs")) },
+      gpaoT3Reinforced:{ commit:actualFreeze.commit, sourceDirty:run("git", ["status", "--porcelain"], { cwd:root }).length > 0, implementationCommit:implementationFreeze.commit, sources:actualFreeze.sourceDigests, scorer:sha256File(path.join(root, "src/core/mct-comparison.js")), developmentFixtures:[sha256File(path.join(root, "test/fixtures/mct-r5-cases.js")), ...priorDevelopmentPaths.map(sha256File)], sealedHoldout:sealedHoldoutDigest },
       gpaoT3PreMct:{ commit:run("git", ["rev-parse", MCT_R5_BASELINE_COMMIT], { cwd:root }), source:canonicalDigest("gpao_t3.mct_r5_baseline_source.v1", run("git", ["show", `${MCT_R5_BASELINE_COMMIT}:src/core/local-memory.js`], { cwd:root })) },
       gpaoT:{ sourceCommit:run("git", ["rev-parse", "HEAD"], { cwd:gpaoRoot }), sourceDirty:run("git", ["status", "--porcelain"], { cwd:gpaoRoot }).length > 0, liveTarget, source:sha256File(path.join(gpaoRoot, "src/core/memory-search.js")) },
       openClaw:{ version:run(openClawBin, ["--version"], { env:{ ...process.env, HOME:path.join(tempRoot, "version-home"), OPENCLAW_STATE_DIR:path.join(tempRoot, "version-state") } }), package:sha256File(path.join(openClawRoot, "package.json")), entrypoint:sha256File(path.join(openClawRoot, "openclaw.mjs")), memoryBundles:sha256Files(openClawMemoryBundles) }
@@ -241,18 +296,21 @@ try {
     reinforcedRetrievalEfficiency:reinforced.summary.correctRetrievalsPer1000ContextTokens >= baseline.summary.correctRetrievalsPer1000ContextTokens * thresholds.retrievalEfficiencyBaselineRatioMinimum,
     admission:admission.gate === "pass",
     taskPacketAnswerInfluence:taskPacketFlow.metrics.deterministicAnswerAnchorAccuracy >= thresholds.answerAnchorAccuracyMinimum,
+    taskFitRelevanceEntailment:taskPacketFlow.metrics.taskFitGateAccuracy >= thresholds.taskFitGateAccuracyMinimum,
     taskPacketBudget:taskPacketFlow.metrics.promptBudgetCompliance >= thresholds.promptBudgetComplianceMinimum,
     taskPacketCurrentRequest:taskPacketFlow.metrics.currentRequestPreservation >= thresholds.currentRequestPreservationMinimum,
     taskPacketLatency:taskPacketFlow.metrics.latency.p95Ms <= thresholds.taskFlowP95MaximumMs,
     recovery:recovery.complete === true && Number(recovery.complete) >= thresholds.recoveryCompletenessMinimum,
-    implementationFrozen:manifest.targets.gpaoT3Reinforced.source === implementationFreeze.storeDigest,
+    implementationFrozen:manifest.targets.gpaoT3Reinforced.commit === implementationFreeze.commit
+      && Object.entries(implementationFreeze.sourceDigests).every(([key, value]) => manifest.targets.gpaoT3Reinforced.sources[key] === value)
+      && manifest.targets.gpaoT3Reinforced.sourceDirty === false,
     originalsUntouched:manifest.targets.gpaoT.source === originalFingerprints.gpaoTSource
       && manifest.targets.openClaw.package === originalFingerprints.openClawPackage
       && manifest.targets.openClaw.entrypoint === originalFingerprints.openClawEntrypoint
       && manifest.targets.openClaw.memoryBundles === originalFingerprints.openClawMemoryBundles
       && manifest.targets.gpaoT.liveTarget === originalFingerprints.liveTarget
   };
-  const qualification = { schema:"gpao_t3.mct_r5_comparative_qualification.v4", verdict:Object.values(gateChecks).every(Boolean) ? "pass" : "hold", contractDigest, gateChecks, measured:{ retrieval:targets, admission:{ target:"gpao_t3_reinforced", ...admission }, taskPacketFlow, recovery }, tradeoffs:{ reinforcedContextTokensChange:(reinforced.summary.retrievedContextTokens / baseline.summary.retrievedContextTokens) - 1, reinforcedRecallChange:reinforced.summary.recallAt5 - baseline.summary.recallAt5, reinforcedRetrievalEfficiencyChange:(reinforced.summary.correctRetrievalsPer1000ContextTokens / baseline.summary.correctRetrievalsPer1000ContextTokens) - 1 }, limits:{ generalModelAnswerQuality:"not_measured; deterministic answer-anchor extraction measures Task Packet influence only", providerReportedTokens:"not_measured_no_provider; exact composed prompt is measured with sealed UTF-8 estimator", openClawLatency:"cold CLI process latency; not comparable to in-process T3/GPAO-T latency", openClawAdmission:"no equivalent public per-hit admission surface", gpaoTSessionIsolation:"search API has no session filter", semantic:"bounded Korean work-concept fallback only; no external embedding or general semantic superiority claim" }, manifest };
+  const qualification = { schema:"gpao_t3.mct_r5_comparative_qualification.v5", verdict:Object.values(gateChecks).every(Boolean) ? "pass" : "hold", contractDigest, gateChecks, measured:{ retrieval:targets, admission:{ target:"gpao_t3_reinforced", ...admission }, taskPacketFlow, recovery }, tradeoffs:{ reinforcedContextTokensChange:(reinforced.summary.retrievedContextTokens / baseline.summary.retrievedContextTokens) - 1, reinforcedRecallChange:reinforced.summary.recallAt5 - baseline.summary.recallAt5, reinforcedRetrievalEfficiencyChange:(reinforced.summary.correctRetrievalsPer1000ContextTokens / baseline.summary.correctRetrievalsPer1000ContextTokens) - 1 }, limits:{ generalModelAnswerQuality:"not_measured; deterministic answer-anchor extraction measures Task Packet influence only", providerReportedTokens:"not_measured_no_provider; exact composed prompt is measured with sealed UTF-8 estimator", openClawLatency:"cold CLI process latency; not comparable to in-process T3/GPAO-T latency", openClawAdmission:"no equivalent public per-hit admission surface", gpaoTSessionIsolation:"search API has no session filter", semantic:"provider-neutral bounded semantic feature and clause matching; not an embedding model and no universal semantic superiority claim" }, manifest };
   fs.mkdirSync(evidenceDir, { recursive:true });
   fs.writeFileSync(path.join(evidenceDir, "contract.json"), `${JSON.stringify(contract, null, 2)}\n`);
   fs.writeFileSync(path.join(evidenceDir, "source-manifest.json"), `${JSON.stringify(manifest, null, 2)}\n`);

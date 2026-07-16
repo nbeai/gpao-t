@@ -5,11 +5,11 @@ function tokens(text) { return [...new Set(String(text).toLowerCase().match(/[\p
 export class LocalHybridMemory {
   constructor({ maxEntries = 10_000, maxResultCount = 12 } = {}) { this.entries = new Map(); this.maxEntries = maxEntries; this.maxResultCount = maxResultCount; }
 
-  ingest({ text, source = "local_note", traceRef = null, sessionId = null, userId = "local-owner", reviewed = false }) {
+  ingest({ text, source = "local_note", traceRef = null, sessionId = null, userId = "local-owner", reviewed = false, scopeLevel = sessionId ? "session" : "user_global" }) {
     const normalized = String(text || "").trim();
     if (!normalized || Buffer.byteLength(normalized) > 64 * 1024 || this.entries.size >= this.maxEntries) return { accepted: false, reason: !normalized ? "empty" : "capacity_or_size" };
     const id = `mem_${crypto.randomUUID()}`;
-    const record = { id, text: normalized, tokens: tokens(normalized), source, traceRef, sessionId, userId, reviewed, createdAt: Date.now() };
+    const record = { id, text: normalized, tokens: tokens(normalized), source, traceRef, sessionId, userId, scopeLevel, reviewed, createdAt: Date.now() };
     this.entries.set(id, record);
     return { accepted: true, id, record: { ...record, tokens: undefined } };
   }
@@ -34,7 +34,7 @@ export class LocalHybridMemory {
       const overlap = queryTokens.filter(token => entry.tokens.includes(token)).length;
       if (!overlap) continue;
       const confidence = overlap / Math.max(queryTokens.length, 1);
-      candidates.push({ id: entry.id, source: entry.source, text: entry.text.slice(0, 600), score: confidence, confidence, reason: "local_token_overlap", traceRef: entry.traceRef, sessionId: entry.sessionId, userId: entry.userId || "local-owner", reviewed: entry.reviewed, allowedUse: entry.reviewed ? "supporting_context" : "candidate_only", sourceResolved: true, sourceInvalidated: false, authority: { allowedUse: entry.reviewed ? "supporting_context" : "candidate_only", durablePromotion: false, decisionClass: "A0", decisionId: null }, createdAt: entry.createdAt, updatedAt: entry.createdAt, admission: "search_support_candidate" });
+      candidates.push({ id: entry.id, source: entry.source, text: entry.text.slice(0, 600), score: confidence, confidence, reason: "local_token_overlap", traceRef: entry.traceRef, sessionId: entry.sessionId, userId: entry.userId || "local-owner", scopeLevel:entry.scopeLevel || (entry.sessionId ? "session" : "user_global"), reviewed: entry.reviewed, allowedUse: entry.reviewed ? "supporting_context" : "candidate_only", sourceResolved: true, sourceInvalidated: false, authority: { allowedUse: entry.reviewed ? "supporting_context" : "candidate_only", durablePromotion: false, decisionClass: "A0", decisionId: null }, createdAt: entry.createdAt, updatedAt: entry.createdAt, admission: "search_support_candidate" });
     }
     candidates.sort((a, b) => b.score - a.score);
     return { results: candidates.slice(0, limit), degraded: null, elapsedMs: performance.now() - started };
