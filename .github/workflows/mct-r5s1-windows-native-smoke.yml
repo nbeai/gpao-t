@@ -1,0 +1,53 @@
+name: MCT R5S1 Windows Native Smoke
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_sha:
+        description: Exact T3 commit to qualify
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  offline-embedding-smoke:
+    name: Windows 2022 Offline Embedding Smoke
+    runs-on: windows-2022
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.source_sha }}
+          fetch-depth: 1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24.14.0
+          cache: npm
+      - name: Install T3 runtime dependencies
+        run: npm ci
+      - name: Prepare isolated qualification runtime
+        shell: pwsh
+        run: |
+          $root = Join-Path $env:RUNNER_TEMP "gpao-t3-r5s1-distribution"
+          $source = git rev-parse HEAD
+          New-Item -ItemType Directory -Force -Path $root | Out-Null
+          npm install --prefix $root @huggingface/transformers@4.2.0
+          node tools/prepare-mct-r5s1-candidate-cache.mjs --cache-dir (Join-Path $root "model-cache") --transformers-root (Join-Path $root "node_modules") --receipt (Join-Path $root "candidate-prepare.json")
+          node tools/package-conditional-embedding-bundle.mjs --model-root (Join-Path $root "model-cache/intfloat/multilingual-e5-small/614241f622f53c4eeff9890bdc4f31cfecc418b3") --output-dir (Join-Path $root "bundle") --source-commit $source
+      - name: Run network-disabled bundle smoke
+        shell: pwsh
+        run: |
+          $root = Join-Path $env:RUNNER_TEMP "gpao-t3-r5s1-distribution"
+          & tools/qualify-mct-r5s1-windows-smoke.ps1 -Bundle (Join-Path $root "bundle/embedding-intfloat-multilingual-e5-small-fp32.tar.gz") -TransformersRoot (Join-Path $root "node_modules") -Receipt (Join-Path $root "windows-offline-smoke.json")
+      - name: Upload Windows qualification receipts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mct-r5s1-windows-native-smoke-${{ github.sha }}
+          path: |
+            ${{ runner.temp }}/gpao-t3-r5s1-distribution/candidate-prepare.json
+            ${{ runner.temp }}/gpao-t3-r5s1-distribution/bundle/embedding-intfloat-multilingual-e5-small-fp32.bundle-receipt.json
+            ${{ runner.temp }}/gpao-t3-r5s1-distribution/windows-offline-smoke.json
+          if-no-files-found: error
