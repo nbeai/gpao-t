@@ -36,7 +36,7 @@ test("MCT-R5S0 seals one provider-neutral semantic runtime contract", () => {
   assert.equal(semanticContractDigest(), seal.contractDigest);
   assert.deepEqual(SEMANTIC_COMPARISON_TARGETS, [
     "t3_pre_semantic_lexical_checkpoint",
-    "live_gpao_t_local_hybrid",
+    "live_reference_local_hybrid",
     "openclaw_fixed_version",
     "t3_reinforced_semantic"
   ]);

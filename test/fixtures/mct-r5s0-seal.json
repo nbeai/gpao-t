@@ -4,7 +4,7 @@
   "approvedPlan": "GPAO-T3-SEMANTIC-POM-COGROWTH-MASTER-DEVELOPMENT-PLAN-v0.1-ko.md",
   "sourceInputBaselineCommit": "66bec59d8d895d534f56c048e37d56739fcaccc3",
   "contractDigestDomain": "gpao_t3.semantic_runtime_contract.v1",
-  "contractDigest": "sha256:f653b4d452a0870c67673c7675f2898904d5cac6a280d1f837da696763e3efe5",
+  "contractDigest": "sha256:4b4dabc508e8c4b6d53d3a6eb4c7ae93df9a6db070fae5ff6aa9b45ed3228139",
   "candidateMatrixDigestDomain": "gpao_t3.mct_r5s0_model_candidate_matrix.v1",
   "candidateMatrixDigest": "sha256:76a48e45c3e02df54e242e67f37b406ff05031d6d2c367209d8a7f704ab9b39f",
   "inheritedCorpus": {

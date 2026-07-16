@@ -26,7 +26,7 @@ export const RERANKER_ADAPTER_CAPABILITIES = Object.freeze([
 
 export const SEMANTIC_COMPARISON_TARGETS = Object.freeze([
   "t3_pre_semantic_lexical_checkpoint",
-  "live_gpao_t_local_hybrid",
+  "live_reference_local_hybrid",
   "openclaw_fixed_version",
   "t3_reinforced_semantic"
 ]);
