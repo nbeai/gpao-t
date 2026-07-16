@@ -5,6 +5,10 @@ const localConnector = connector => (connector.compatibility?.transport || conne
 const managedChannel = connector => connector.id === "channel.telegram";
 const userFacingProvider = provider => provider.adapter !== "native-deterministic-emulator";
 let panelReturnFocus = null;
+let voiceRecognition = null;
+let voiceListening = false;
+let voiceBaseText = "";
+let voiceFinalText = "";
 
 function active() { return (state.activeKind === "messenger" ? state.messengerSessions : state.sessions).find(session => session.sessionId === state.activeId); }
 const panelTitles = { activity:"진행 상황", tools:"도구와 결과", memory:"기억", authority:"권한과 승인", recovery:"문제 해결" };
@@ -441,9 +445,107 @@ function render() {
   renderSessions();
   const messages = $("#messages");
   renderMessages(messages, session, messenger);
+  updateContextUsage(session);
   if (activeTurnHere) renderStreamingProjection(state.activeTurn.turnId);
   refreshIcons();
   messages.scrollTop = messages.scrollHeight;
+}
+
+function formatTokenCount(value) {
+  if (!Number.isFinite(value) || value < 0) return "-";
+  if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(value >= 10_000_000 ? 0 : 1).replace(/\.0$/, "")}m`;
+  if (value >= 1_000) return `${(value / 1_000).toFixed(value >= 100_000 ? 0 : 1).replace(/\.0$/, "")}k`;
+  return String(Math.round(value));
+}
+
+function selectedModel() {
+  const connections = state.connections;
+  if (!connections) return null;
+  const selection = connections.defaultSelection;
+  if (selection?.preferredProviderId && selection?.preferredModelId) {
+    const provider = connections.providers.find(item => item.id === selection.preferredProviderId);
+    const model = provider?.models?.find(item => item.id === selection.preferredModelId);
+    if (model) return { provider, model };
+  }
+  return readyModels(connections).find(item => userFacingProvider(item.provider)) || null;
+}
+
+function updateContextUsage(session = active()) {
+  const usage = $("#context-usage");
+  const label = $("#context-usage-label");
+  if (!usage || !label || !session) return;
+  const messages = Array.isArray(session.messages) ? session.messages : [];
+  const estimatedTokens = messages.reduce((total, item) => total + Math.max(1, Math.ceil(new Blob([String(item.text || "")]).size / 4)), 0);
+  const model = selectedModel()?.model;
+  const contextWindow = Number(model?.contextLimit) > 0 ? Number(model.contextLimit) : 32_768;
+  const percent = Math.min(100, Math.round((estimatedTokens / contextWindow) * 100));
+  usage.style.setProperty("--context-progress", `${percent * 3.6}deg`);
+  label.textContent = `약 ${formatTokenCount(estimatedTokens)} / ${formatTokenCount(contextWindow)}`;
+  usage.title = `현재 대화 텍스트 기준 추정치 · ${percent}%`;
+  usage.setAttribute("aria-label", `현재 대화 컨텍스트 추정 사용량 ${formatTokenCount(estimatedTokens)}, 한도 ${formatTokenCount(contextWindow)}`);
+}
+
+function setVoiceState(listening, message = "") {
+  voiceListening = listening;
+  const button = $("#voice-input");
+  button.classList.toggle("listening", listening);
+  button.setAttribute("aria-pressed", String(listening));
+  button.setAttribute("aria-label", listening ? "음성 입력 중단" : "음성 입력 시작");
+  button.title = listening ? "음성 입력 중단" : "음성 입력 시작";
+  button.innerHTML = `<i data-lucide="${listening ? "square" : "mic"}" aria-hidden="true"></i>`;
+  $("#voice-status").textContent = message;
+  refreshIcons(button);
+}
+
+function stopVoiceInput(message = "") {
+  if (voiceListening) {
+    voiceListening = false;
+    try { voiceRecognition?.stop(); } catch {}
+  }
+  setVoiceState(false, message);
+}
+
+function initializeVoiceInput() {
+  const Recognition = globalThis.SpeechRecognition || globalThis.webkitSpeechRecognition;
+  const button = $("#voice-input");
+  if (!Recognition) {
+    button.addEventListener("click", () => setVoiceState(false, "이 브라우저에서는 음성 입력을 지원하지 않습니다."));
+    button.title = "이 브라우저에서는 음성 입력을 지원하지 않습니다";
+    return;
+  }
+  voiceRecognition = new Recognition();
+  voiceRecognition.lang = "ko-KR";
+  voiceRecognition.continuous = true;
+  voiceRecognition.interimResults = true;
+  voiceRecognition.maxAlternatives = 1;
+  voiceRecognition.onstart = () => setVoiceState(true, "듣고 있습니다");
+  voiceRecognition.onresult = event => {
+    let interim = "";
+    for (let index = event.resultIndex; index < event.results.length; index += 1) {
+      const transcript = event.results[index][0]?.transcript || "";
+      if (event.results[index].isFinal) voiceFinalText += transcript;
+      else interim += transcript;
+    }
+    const spoken = `${voiceFinalText}${interim}`.trim();
+    $("#message").value = [voiceBaseText, spoken].filter(Boolean).join(voiceBaseText && spoken ? " " : "");
+    $("#message").dispatchEvent(new Event("input", { bubbles:true }));
+    $("#voice-status").textContent = interim ? "듣고 있습니다" : "음성을 입력했습니다";
+  };
+  voiceRecognition.onerror = event => {
+    const copy = { "not-allowed":"마이크 권한을 확인해 주세요.", "audio-capture":"사용할 마이크를 찾지 못했습니다.", "no-speech":"음성이 들리지 않았습니다.", network:"음성 입력 연결을 확인해 주세요." };
+    setVoiceState(false, copy[event.error] || "음성 입력을 끝냈습니다.");
+  };
+  voiceRecognition.onend = () => {
+    if (voiceListening) setVoiceState(false, voiceFinalText ? "음성을 입력했습니다" : "음성 입력을 끝냈습니다");
+  };
+  button.addEventListener("click", () => {
+    if (voiceListening) return stopVoiceInput("음성 입력을 끝냈습니다");
+    voiceBaseText = $("#message").value.trimEnd();
+    voiceFinalText = "";
+    $("#voice-status").textContent = "마이크를 시작하고 있습니다";
+    try { voiceRecognition.start(); }
+    catch { setVoiceState(false, "음성 입력을 다시 시작해 주세요."); }
+  });
 }
 async function request(path, init = {}) {
   const response = await fetch(path, { credentials:"same-origin", ...init, headers: { "content-type":"application/json", ...(init.headers || {}) } });
@@ -481,6 +583,7 @@ function updateComposerModelLabel(connections) {
   const selected = connections.defaultSelection;
   const selectedProvider = connections.providers.find(provider => provider.id === selected?.preferredProviderId);
   $("#composer-model-label").textContent = selected?.preferredModelId ? `${providerName(selectedProvider || { display:{ name:selected.preferredProviderId } })} · ${selected.preferredModelId}` : ready[0] ? `${providerName(ready[0].provider)} · ${ready[0].model.id}` : "AI 연결 필요";
+  updateContextUsage();
 }
 function toolOverview(cells) {
   const list = cells?.cells || [];
@@ -1128,6 +1231,7 @@ $("#cancel-turn").addEventListener("click", async () => {
 });
 $("#composer").addEventListener("submit", async event => {
   event.preventDefault(); const input = $("#message").value.trim(); if (!input) return;
+  stopVoiceInput();
   const session = active(); session.messages ||= []; session.messages.push({ role:"user", text:input }); $("#message").value=""; render();
   if (state.activeKind === "messenger") {
     session.messages.pop(); state.pendingChannelSend = { sessionId:session.sessionId, text:input };
@@ -1185,6 +1289,7 @@ $("#confirm-channel-send").addEventListener("click", async () => {
   finally { $("#confirm-channel-send").disabled = false; }
 });
 applyRailPreference();
+initializeVoiceInput();
 refreshSessions().catch(() => createSession()).then(() => { refreshHealth(); refreshOperations(); });
 const syncViewportHeight = () => document.documentElement.style.setProperty("--visual-viewport-height", `${window.visualViewport?.height || window.innerHeight}px`);
 window.visualViewport?.addEventListener("resize", syncViewportHeight);

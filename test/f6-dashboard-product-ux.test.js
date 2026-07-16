@@ -35,6 +35,9 @@ test("F6 dashboard is a conversation-first workspace with session-scoped assista
     assert.match(html, /id="settings-dialog"/);
     assert.match(html, /id="rail-collapse"/);
     assert.match(html, /id="composer-settings"/);
+    assert.match(html, /id="voice-input"/);
+    assert.match(html, /id="voice-status"/);
+    assert.match(html, /id="context-usage"/);
     assert.doesNotMatch(html, /GPAO-T3 운영 상태|schema|replay|raw receipt|stack trace|evidence|WP 검증/i);
     assert.doesNotMatch(html, /token|authorization|credentialRef/i);
 
@@ -49,6 +52,10 @@ test("F6 dashboard is a conversation-first workspace with session-scoped assista
     assert.match(app, /data-session-menu/);
     assert.match(app, /gpao-t3:rail-collapsed/);
     assert.match(app, /function applyRailPreference/);
+    assert.match(app, /function initializeVoiceInput/);
+    assert.match(app, /webkitSpeechRecognition/);
+    assert.match(app, /function updateContextUsage/);
+    assert.match(app, /현재 대화 텍스트 기준 추정치/);
     assert.match(app, /renderSessions\(\)/);
     assert.match(app, /ArrowDown/);
     assert.match(app, /aria-modal/);
@@ -66,6 +73,9 @@ test("F6 dashboard is a conversation-first workspace with session-scoped assista
     assert.match(css, /\.workbench\.panel-open/);
     assert.match(css, /position:fixed; z-index:30/);
     assert.match(css, /height:100vh; max-height:none/);
+    assert.match(css, /\.message\.assistant > \.response-prose/);
+    assert.match(css, /\.voice-input\.listening/);
+    assert.match(css, /\.context-meter/);
 
     const logo = await fetch(`${base}/assets/gpao-t3-logo.jpeg`);
     assert.equal(logo.status, 200);

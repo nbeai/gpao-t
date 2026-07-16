@@ -60,10 +60,11 @@
               <button type="button" class="composer-icon" id="composer-add" aria-label="도구와 연결" title="도구와 연결"><i data-lucide="plus" aria-hidden="true"></i></button>
               <label class="sr-only" for="message">GPAO-T3에 메시지 입력</label>
               <textarea id="message" rows="1" placeholder="GPAO-T3에 메시지 입력" required></textarea>
+              <button type="button" class="voice-input" id="voice-input" aria-label="음성 입력 시작" title="음성 입력 시작" aria-pressed="false"><i data-lucide="mic" aria-hidden="true"></i></button>
               <button type="button" id="cancel-turn" aria-label="응답 중단" title="응답 중단" hidden><i data-lucide="square" aria-hidden="true"></i></button>
               <button type="submit" id="send" aria-label="메시지 보내기" title="메시지 보내기"><i data-lucide="arrow-up" aria-hidden="true"></i></button>
             </div>
-            <div class="composer-meta"><button type="button" class="composer-icon" id="composer-settings" aria-label="대화 설정" title="대화 설정"><i data-lucide="sliders-horizontal" aria-hidden="true"></i></button><button type="button" id="composer-model"><span id="composer-model-label">AI 연결 확인 중</span><i data-lucide="chevron-down" aria-hidden="true"></i></button></div>
+            <div class="composer-meta"><button type="button" class="composer-icon" id="composer-settings" aria-label="대화 설정" title="대화 설정"><i data-lucide="sliders-horizontal" aria-hidden="true"></i></button><span class="voice-status" id="voice-status" aria-live="polite"></span><span class="context-usage" id="context-usage" role="status" aria-label="현재 대화 컨텍스트 사용량"><span class="context-meter" aria-hidden="true"></span><span id="context-usage-label">컨텍스트 확인 중</span></span><button type="button" id="composer-model"><span id="composer-model-label">AI 연결 확인 중</span><i data-lucide="chevron-down" aria-hidden="true"></i></button></div>
           </form>
           <p class="quiet-status" id="turn-status"></p>
         </div>
