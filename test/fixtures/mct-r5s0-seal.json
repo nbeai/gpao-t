@@ -1,0 +1,70 @@
+{
+  "schema": "gpao_t3.mct_r5s0_seal.v1",
+  "status": "contract_frozen_pending_clean_checkpoint",
+  "approvedPlan": "GPAO-T3-SEMANTIC-POM-COGROWTH-MASTER-DEVELOPMENT-PLAN-v0.1-ko.md",
+  "sourceInputBaselineCommit": "66bec59d8d895d534f56c048e37d56739fcaccc3",
+  "contractDigestDomain": "gpao_t3.semantic_runtime_contract.v1",
+  "contractDigest": "sha256:f653b4d452a0870c67673c7675f2898904d5cac6a280d1f837da696763e3efe5",
+  "candidateMatrixDigestDomain": "gpao_t3.mct_r5s0_model_candidate_matrix.v1",
+  "candidateMatrixDigest": "sha256:76a48e45c3e02df54e242e67f37b406ff05031d6d2c367209d8a7f704ab9b39f",
+  "inheritedCorpus": {
+    "schema": "gpao_t3.mct_r0_seal.v1",
+    "records": 10000,
+    "canonicalDigest": "sha256:2e305840347926f6217d1cf76d0f8d8372b91bfaf979b7a6d1ecd07e7c0b014b"
+  },
+  "referenceEnvironments": [
+    {
+      "id": "macos_reference",
+      "os": "macOS",
+      "minimumOsVersion": "15.0",
+      "cpuClass": "Apple Silicon 8-core or greater",
+      "memoryGb": 16,
+      "storage": "local SSD",
+      "nodeVersion": "24.14.0",
+      "nativeSmokeRequired": true,
+      "receiptMustCaptureExactEnvironment": true
+    },
+    {
+      "id": "windows_reference",
+      "os": "Windows 11",
+      "minimumOsVersion": "23H2",
+      "cpuClass": "x64 8-core or greater",
+      "memoryGb": 16,
+      "storage": "local SSD",
+      "nodeVersion": "24.14.0",
+      "nativeSmokeRequired": true,
+      "receiptMustCaptureExactEnvironment": true
+    }
+  ],
+  "datasetPolicy": {
+    "developmentMayInformImplementation": true,
+    "evaluationMayInformThresholdsBeforeFreeze": true,
+    "independentHoldoutGeneratedAfterSourceFreeze": true,
+    "independentHoldoutStoredInImplementationRepository": false,
+    "holdoutAuthorMayInspectImplementation": false,
+    "implementationAuthorMayInspectHoldout": false,
+    "singleQualificationRunWithoutPostResultTuning": true
+  },
+  "approvalPolicy": {
+    "automaticLocalRetrieval": "A0",
+    "backgroundStatusNotice": "A1",
+    "externalRawContentPath": "A2",
+    "productionAssetSelection": "A2",
+    "approvalDecisionsPerTaskMax": 1,
+    "duplicateApprovalRequestsMax": 0
+  },
+  "failurePolicy": {
+    "normalChatContinuesOnSemanticFailure": true,
+    "lexicalFallbackPreservesScopeAndAuthority": true,
+    "partialIndexNeverBecomesActive": true,
+    "lastVerifiedIndexRetainedUntilAtomicSwap": true,
+    "corruptOrUnverifiedAssetQuarantined": true
+  },
+  "entryDecision": {
+    "nextStage": "MCT-R5S1",
+    "requiresSameSourceShaRegression": true,
+    "requiresCleanCheckpoint": true,
+    "modelSelected": false,
+    "modelDownloaded": false
+  }
+}

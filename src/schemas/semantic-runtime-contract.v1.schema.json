@@ -1,0 +1,200 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gpao-t3.local/schemas/semantic-runtime-contract.v1.json",
+  "title": "GPAO-T3 Semantic Runtime Contract Family v1",
+  "oneOf": [
+    { "$ref": "#/$defs/SemanticEmbeddingModelIdentity" },
+    { "$ref": "#/$defs/SemanticRerankerModelIdentity" },
+    { "$ref": "#/$defs/SemanticIndexIdentity" },
+    { "$ref": "#/$defs/SemanticRuntimeContract" },
+    { "$ref": "#/$defs/MctR5S0Seal" },
+    { "$ref": "#/$defs/ModelCandidateMatrix" },
+    { "$ref": "#/$defs/MctR5S0CheckpointReceipt" }
+  ],
+  "$defs": {
+    "nonEmpty": { "type": "string", "minLength": 1 },
+    "digest": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" },
+    "authorityClass": { "enum": ["A0", "A1", "A2"] },
+    "SemanticEmbeddingModelIdentity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema", "version", "adapterId", "providerClass", "modelId", "revision", "artifactDigest", "license", "runtime", "dimensions", "maxInputTokens", "queryInputType", "documentInputType", "quantization"],
+      "properties": {
+        "schema": { "const": "gpao_t3.semantic_embedding_model_identity.v1" },
+        "version": { "const": 1 },
+        "adapterId": { "$ref": "#/$defs/nonEmpty" },
+        "providerClass": { "enum": ["local", "remote"] },
+        "modelId": { "$ref": "#/$defs/nonEmpty" },
+        "revision": { "$ref": "#/$defs/nonEmpty" },
+        "artifactDigest": { "$ref": "#/$defs/digest" },
+        "license": { "$ref": "#/$defs/nonEmpty" },
+        "runtime": { "$ref": "#/$defs/nonEmpty" },
+        "dimensions": { "type": "integer", "minimum": 1 },
+        "maxInputTokens": { "type": "integer", "minimum": 1 },
+        "queryInputType": { "$ref": "#/$defs/nonEmpty" },
+        "documentInputType": { "$ref": "#/$defs/nonEmpty" },
+        "quantization": { "type": ["string", "null"], "minLength": 1 }
+      }
+    },
+    "SemanticRerankerModelIdentity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema", "version", "adapterId", "providerClass", "modelId", "revision", "artifactDigest", "license", "runtime", "maxInputTokens", "queryInputType", "documentInputType", "quantization", "scoreCalibration", "outputContractDigest", "preprocessingContractDigest"],
+      "properties": {
+        "schema": { "const": "gpao_t3.semantic_reranker_model_identity.v1" },
+        "version": { "const": 1 },
+        "adapterId": { "$ref": "#/$defs/nonEmpty" },
+        "providerClass": { "enum": ["local", "remote"] },
+        "modelId": { "$ref": "#/$defs/nonEmpty" },
+        "revision": { "$ref": "#/$defs/nonEmpty" },
+        "artifactDigest": { "$ref": "#/$defs/digest" },
+        "license": { "$ref": "#/$defs/nonEmpty" },
+        "runtime": { "$ref": "#/$defs/nonEmpty" },
+        "maxInputTokens": { "type": "integer", "minimum": 1 },
+        "queryInputType": { "$ref": "#/$defs/nonEmpty" },
+        "documentInputType": { "$ref": "#/$defs/nonEmpty" },
+        "quantization": { "type": ["string", "null"], "minLength": 1 },
+        "scoreCalibration": { "$ref": "#/$defs/nonEmpty" },
+        "outputContractDigest": { "$ref": "#/$defs/digest" },
+        "preprocessingContractDigest": { "$ref": "#/$defs/digest" }
+      }
+    },
+    "SemanticIndexIdentity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema", "version", "embeddingModelIdentityDigest", "dimensions", "sourceContractDigest", "tokenizerContractDigest", "scopeContractDigest", "vectorMetric", "normalization"],
+      "properties": {
+        "schema": { "const": "gpao_t3.semantic_index_identity.v1" },
+        "version": { "const": 1 },
+        "embeddingModelIdentityDigest": { "$ref": "#/$defs/digest" },
+        "dimensions": { "type": "integer", "minimum": 1 },
+        "sourceContractDigest": { "$ref": "#/$defs/digest" },
+        "tokenizerContractDigest": { "$ref": "#/$defs/digest" },
+        "scopeContractDigest": { "$ref": "#/$defs/digest" },
+        "vectorMetric": { "$ref": "#/$defs/nonEmpty" },
+        "normalization": { "$ref": "#/$defs/nonEmpty" }
+      }
+    },
+    "failureBehavior": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["fallback", "chat", "notice", "noticeAfterConsecutiveFailures", "repair"],
+      "properties": {
+        "fallback": { "$ref": "#/$defs/nonEmpty" },
+        "chat": { "const": "continue" },
+        "notice": { "enum": ["A1_immediate", "A1_after_threshold", "none"] },
+        "noticeAfterConsecutiveFailures": { "type": "integer", "minimum": 0 },
+        "repair": { "$ref": "#/$defs/nonEmpty" }
+      }
+    },
+    "SemanticRuntimeContract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema", "version", "embeddingAdapterCapabilities", "rerankerAdapterCapabilities", "comparisonTargets", "authority", "benchmark", "resources", "qualityGates", "invariants", "failure"],
+      "properties": {
+        "schema": { "const": "gpao_t3.semantic_runtime_contract.v1" },
+        "version": { "const": 1 },
+        "embeddingAdapterCapabilities": { "type": "array", "minItems": 10, "uniqueItems": true, "items": { "$ref": "#/$defs/nonEmpty" } },
+        "rerankerAdapterCapabilities": { "type": "array", "minItems": 6, "uniqueItems": true, "items": { "$ref": "#/$defs/nonEmpty" } },
+        "comparisonTargets": { "type": "array", "minItems": 4, "maxItems": 4, "uniqueItems": true, "items": { "$ref": "#/$defs/nonEmpty" } },
+        "authority": {
+          "type": "object", "additionalProperties": false,
+          "required": ["local_embedding", "local_reranking", "background_reindex", "model_asset_status_notice", "remote_embedding_raw_content", "remote_reranking_raw_content", "production_asset_selection", "external_provider_data_path"],
+          "properties": {
+            "local_embedding": { "$ref": "#/$defs/authorityClass" }, "local_reranking": { "$ref": "#/$defs/authorityClass" },
+            "background_reindex": { "$ref": "#/$defs/authorityClass" }, "model_asset_status_notice": { "$ref": "#/$defs/authorityClass" },
+            "remote_embedding_raw_content": { "$ref": "#/$defs/authorityClass" }, "remote_reranking_raw_content": { "$ref": "#/$defs/authorityClass" },
+            "production_asset_selection": { "$ref": "#/$defs/authorityClass" }, "external_provider_data_path": { "$ref": "#/$defs/authorityClass" }
+          }
+        },
+        "benchmark": {
+          "type": "object", "additionalProperties": false,
+          "required": ["schema", "inheritedWithoutWeakeningFrom", "seed", "generator", "records", "splits", "composition", "averageRecordTokens", "totalRecordTokens", "concurrency", "resultK", "temperatures", "temperatureContract", "modes", "independentHoldout"],
+          "properties": {
+            "schema": { "const": "gpao_t3.semantic_benchmark_contract.v1" }, "inheritedWithoutWeakeningFrom": { "const": "gpao_t3.mct_r0_seal.v1" },
+            "seed": { "$ref": "#/$defs/nonEmpty" }, "generator": { "$ref": "#/$defs/nonEmpty" }, "records": { "const": 10000 },
+            "splits": { "type": "object", "additionalProperties": false, "required": ["development", "evaluation", "holdout"], "properties": { "development": { "type": "integer" }, "evaluation": { "type": "integer" }, "holdout": { "type": "integer" } } },
+            "composition": { "type": "object", "additionalProperties": false, "required": ["korean", "english", "code", "mixed"], "properties": { "korean": { "type": "number" }, "english": { "type": "number" }, "code": { "type": "number" }, "mixed": { "type": "number" } } },
+            "averageRecordTokens": { "type": "integer", "minimum": 1 }, "totalRecordTokens": { "type": "integer", "minimum": 1 },
+            "concurrency": { "type": "array", "minItems": 2, "items": { "type": "integer", "minimum": 1 } }, "resultK": { "type": "array", "minItems": 2, "items": { "type": "integer", "minimum": 1 } },
+            "temperatures": { "type": "array", "minItems": 2, "items": { "$ref": "#/$defs/nonEmpty" } },
+            "temperatureContract": { "type": "object", "additionalProperties": false, "required": ["cold", "warm"], "properties": { "cold": { "$ref": "#/$defs/nonEmpty" }, "warm": { "$ref": "#/$defs/nonEmpty" } } },
+            "modes": { "type": "array", "minItems": 4, "uniqueItems": true, "items": { "$ref": "#/$defs/nonEmpty" } },
+            "independentHoldout": { "type": "object", "additionalProperties": false, "required": ["contentInImplementationRepository", "generatedAfterSourceFreeze", "authorMayInspectImplementation", "implementationMayInspectHoldout", "rerunAfterResultTuning"], "properties": { "contentInImplementationRepository": { "type": "boolean" }, "generatedAfterSourceFreeze": { "type": "boolean" }, "authorMayInspectImplementation": { "type": "boolean" }, "implementationMayInspectHoldout": { "type": "boolean" }, "rerunAfterResultTuning": { "type": "boolean" } } }
+          }
+        },
+        "resources": {
+          "type": "object", "additionalProperties": false,
+          "required": ["embeddingAssetBytesMax", "rerankerAssetBytesMax", "combinedManagedAssetsBytesMax", "residentMemoryBytesMax", "foregroundRetrievalP95MsMax", "coldModelReadinessMsMax", "firstProgressP95MsMax", "firstUsefulResponseAddedP95MsMax", "backgroundIdleCpuPercentMax", "backgroundSustainedCpuPercentMax", "reindexEnergyRegressionRatioMax", "memoryPromptRatioMax", "measurement"],
+          "properties": {
+            "embeddingAssetBytesMax": { "type": "integer" }, "rerankerAssetBytesMax": { "type": "integer" }, "combinedManagedAssetsBytesMax": { "type": "integer" }, "residentMemoryBytesMax": { "type": "integer" },
+            "foregroundRetrievalP95MsMax": { "type": "number" }, "coldModelReadinessMsMax": { "type": "number" }, "firstProgressP95MsMax": { "type": "number" }, "firstUsefulResponseAddedP95MsMax": { "type": "number" },
+            "backgroundIdleCpuPercentMax": { "type": "number" }, "backgroundSustainedCpuPercentMax": { "type": "number" }, "reindexEnergyRegressionRatioMax": { "type": "number" }, "memoryPromptRatioMax": { "type": "number" },
+            "measurement": { "type": "object", "additionalProperties": false, "required": ["warmLatency", "coldReadiness", "idleCpu", "sustainedCpu", "energy", "memory", "receiptFields"], "properties": { "warmLatency": { "$ref": "#/$defs/nonEmpty" }, "coldReadiness": { "$ref": "#/$defs/nonEmpty" }, "idleCpu": { "$ref": "#/$defs/nonEmpty" }, "sustainedCpu": { "$ref": "#/$defs/nonEmpty" }, "energy": { "$ref": "#/$defs/nonEmpty" }, "memory": { "$ref": "#/$defs/nonEmpty" }, "receiptFields": { "type": "array", "minItems": 7, "uniqueItems": true, "items": { "$ref": "#/$defs/nonEmpty" } } } }
+          }
+        },
+        "qualityGates": {
+          "type": "object", "additionalProperties": false,
+          "required": ["semanticRecallAt5Min", "recallUpliftOverLexicalMin", "mrrAt5Min", "ndcgAt5Min", "exactRecallAt10Min", "fuzzyRecallAt10Min", "exactMrrMin", "fuzzyMrrMin", "ndcgAt10Min", "answerAnchorPrecisionMin", "answerAnchorAccuracyMin", "taskFitPositiveRecallMin", "contradictionDetectionMin", "rerankerExpectedCalibrationErrorMax", "exactRetrievalRegressionMax", "typoRetrievalRegressionMax", "qualityPer1000TokensRegressionMax", "recoverySuccessMin", "noResultRestraintMin", "scopeLeakageRateMax", "wrongAnswerAnchorRateMax", "currentRequestPreservationMin", "promptBudgetComplianceMin", "unauthorizedMutationMax", "duplicateApprovalRequestsMax", "approvalDecisionsPerTaskMax"],
+          "properties": {
+            "semanticRecallAt5Min": { "type": "number" }, "recallUpliftOverLexicalMin": { "type": "number" }, "mrrAt5Min": { "type": "number" }, "ndcgAt5Min": { "type": "number" },
+            "exactRecallAt10Min": { "type": "number" }, "fuzzyRecallAt10Min": { "type": "number" }, "exactMrrMin": { "type": "number" }, "fuzzyMrrMin": { "type": "number" }, "ndcgAt10Min": { "type": "number" },
+            "answerAnchorPrecisionMin": { "type": "number" }, "answerAnchorAccuracyMin": { "type": "number" }, "taskFitPositiveRecallMin": { "type": "number" }, "contradictionDetectionMin": { "type": "number" },
+            "rerankerExpectedCalibrationErrorMax": { "type": "number" }, "exactRetrievalRegressionMax": { "type": "number" }, "typoRetrievalRegressionMax": { "type": "number" }, "qualityPer1000TokensRegressionMax": { "type": "number" },
+            "recoverySuccessMin": { "type": "number" }, "noResultRestraintMin": { "type": "number" }, "scopeLeakageRateMax": { "type": "number" }, "wrongAnswerAnchorRateMax": { "type": "number" },
+            "currentRequestPreservationMin": { "type": "number" }, "promptBudgetComplianceMin": { "type": "number" }, "unauthorizedMutationMax": { "type": "number" }, "duplicateApprovalRequestsMax": { "type": "number" }, "approvalDecisionsPerTaskMax": { "type": "number" }
+          }
+        },
+        "invariants": { "type": "array", "minItems": 10, "uniqueItems": true, "items": { "$ref": "#/$defs/nonEmpty" } },
+        "failure": {
+          "type": "object", "additionalProperties": false,
+          "required": ["model_unavailable", "embedding_timeout", "reranker_timeout", "out_of_memory", "non_finite_vector", "dimension_mismatch", "tokenizer_mismatch", "remote_permission_revoked", "score_calibration_invalid", "index_corrupt", "partial_rebuild", "incompatible_identity", "cancellation", "asset_checksum_mismatch"],
+          "properties": {
+            "model_unavailable": { "$ref": "#/$defs/failureBehavior" }, "embedding_timeout": { "$ref": "#/$defs/failureBehavior" }, "reranker_timeout": { "$ref": "#/$defs/failureBehavior" }, "out_of_memory": { "$ref": "#/$defs/failureBehavior" }, "non_finite_vector": { "$ref": "#/$defs/failureBehavior" }, "dimension_mismatch": { "$ref": "#/$defs/failureBehavior" }, "tokenizer_mismatch": { "$ref": "#/$defs/failureBehavior" }, "remote_permission_revoked": { "$ref": "#/$defs/failureBehavior" }, "score_calibration_invalid": { "$ref": "#/$defs/failureBehavior" }, "index_corrupt": { "$ref": "#/$defs/failureBehavior" }, "partial_rebuild": { "$ref": "#/$defs/failureBehavior" }, "incompatible_identity": { "$ref": "#/$defs/failureBehavior" }, "cancellation": { "$ref": "#/$defs/failureBehavior" }, "asset_checksum_mismatch": { "$ref": "#/$defs/failureBehavior" }
+          }
+        }
+      }
+    },
+    "MctR5S0Seal": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schema", "status", "approvedPlan", "sourceInputBaselineCommit", "contractDigestDomain", "contractDigest", "candidateMatrixDigestDomain", "candidateMatrixDigest", "inheritedCorpus", "referenceEnvironments", "datasetPolicy", "approvalPolicy", "failurePolicy", "entryDecision"],
+      "properties": {
+        "schema": { "const": "gpao_t3.mct_r5s0_seal.v1" }, "status": { "const": "contract_frozen_pending_clean_checkpoint" }, "approvedPlan": { "$ref": "#/$defs/nonEmpty" },
+        "sourceInputBaselineCommit": { "type": "string", "pattern": "^[a-f0-9]{40}$" }, "contractDigestDomain": { "const": "gpao_t3.semantic_runtime_contract.v1" }, "contractDigest": { "$ref": "#/$defs/digest" },
+        "candidateMatrixDigestDomain": { "const": "gpao_t3.mct_r5s0_model_candidate_matrix.v1" }, "candidateMatrixDigest": { "$ref": "#/$defs/digest" },
+        "inheritedCorpus": { "type": "object", "additionalProperties": false, "required": ["schema", "records", "canonicalDigest"], "properties": { "schema": { "const": "gpao_t3.mct_r0_seal.v1" }, "records": { "const": 10000 }, "canonicalDigest": { "$ref": "#/$defs/digest" } } },
+        "referenceEnvironments": { "type": "array", "minItems": 2, "maxItems": 2, "items": { "type": "object", "additionalProperties": false, "required": ["id", "os", "minimumOsVersion", "cpuClass", "memoryGb", "storage", "nodeVersion", "nativeSmokeRequired", "receiptMustCaptureExactEnvironment"], "properties": { "id": { "$ref": "#/$defs/nonEmpty" }, "os": { "$ref": "#/$defs/nonEmpty" }, "minimumOsVersion": { "$ref": "#/$defs/nonEmpty" }, "cpuClass": { "$ref": "#/$defs/nonEmpty" }, "memoryGb": { "type": "integer" }, "storage": { "$ref": "#/$defs/nonEmpty" }, "nodeVersion": { "$ref": "#/$defs/nonEmpty" }, "nativeSmokeRequired": { "const": true }, "receiptMustCaptureExactEnvironment": { "const": true } } } },
+        "datasetPolicy": { "type": "object", "additionalProperties": false, "required": ["developmentMayInformImplementation", "evaluationMayInformThresholdsBeforeFreeze", "independentHoldoutGeneratedAfterSourceFreeze", "independentHoldoutStoredInImplementationRepository", "holdoutAuthorMayInspectImplementation", "implementationAuthorMayInspectHoldout", "singleQualificationRunWithoutPostResultTuning"], "properties": { "developmentMayInformImplementation": { "type": "boolean" }, "evaluationMayInformThresholdsBeforeFreeze": { "type": "boolean" }, "independentHoldoutGeneratedAfterSourceFreeze": { "type": "boolean" }, "independentHoldoutStoredInImplementationRepository": { "type": "boolean" }, "holdoutAuthorMayInspectImplementation": { "type": "boolean" }, "implementationAuthorMayInspectHoldout": { "type": "boolean" }, "singleQualificationRunWithoutPostResultTuning": { "type": "boolean" } } },
+        "approvalPolicy": { "type": "object", "additionalProperties": false, "required": ["automaticLocalRetrieval", "backgroundStatusNotice", "externalRawContentPath", "productionAssetSelection", "approvalDecisionsPerTaskMax", "duplicateApprovalRequestsMax"], "properties": { "automaticLocalRetrieval": { "$ref": "#/$defs/authorityClass" }, "backgroundStatusNotice": { "$ref": "#/$defs/authorityClass" }, "externalRawContentPath": { "$ref": "#/$defs/authorityClass" }, "productionAssetSelection": { "$ref": "#/$defs/authorityClass" }, "approvalDecisionsPerTaskMax": { "type": "integer" }, "duplicateApprovalRequestsMax": { "type": "integer" } } },
+        "failurePolicy": { "type": "object", "additionalProperties": false, "required": ["normalChatContinuesOnSemanticFailure", "lexicalFallbackPreservesScopeAndAuthority", "partialIndexNeverBecomesActive", "lastVerifiedIndexRetainedUntilAtomicSwap", "corruptOrUnverifiedAssetQuarantined"], "properties": { "normalChatContinuesOnSemanticFailure": { "const": true }, "lexicalFallbackPreservesScopeAndAuthority": { "const": true }, "partialIndexNeverBecomesActive": { "const": true }, "lastVerifiedIndexRetainedUntilAtomicSwap": { "const": true }, "corruptOrUnverifiedAssetQuarantined": { "const": true } } },
+        "entryDecision": { "type": "object", "additionalProperties": false, "required": ["nextStage", "requiresSameSourceShaRegression", "requiresCleanCheckpoint", "modelSelected", "modelDownloaded"], "properties": { "nextStage": { "const": "MCT-R5S1" }, "requiresSameSourceShaRegression": { "const": true }, "requiresCleanCheckpoint": { "const": true }, "modelSelected": { "const": false }, "modelDownloaded": { "const": false } } }
+      }
+    },
+    "MctR5S0CheckpointReceipt": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schema", "sourceSha", "sourceStable", "worktree", "contractDigest", "candidateMatrixDigest", "checks", "modelSelected", "modelDownloaded", "nextStage", "gate", "findings", "receiptDigest"],
+      "properties": {
+        "schema": { "const": "gpao_t3.mct_r5s0_checkpoint_receipt.v1" },
+        "sourceSha": { "type": "string", "pattern": "^[a-f0-9]{40}$" },
+        "sourceStable": { "const": true },
+        "worktree": { "const": "clean" },
+        "contractDigest": { "$ref": "#/$defs/digest" },
+        "candidateMatrixDigest": { "$ref": "#/$defs/digest" },
+        "checks": { "type": "array", "minItems": 3, "items": { "type": "object", "additionalProperties": false, "required": ["command", "status", "exitCode", "signal", "durationMs", "outputDigest"], "properties": { "command": { "$ref": "#/$defs/nonEmpty" }, "status": { "const": "pass" }, "exitCode": { "const": 0 }, "signal": { "type": "null" }, "durationMs": { "type": "number", "minimum": 0 }, "outputDigest": { "$ref": "#/$defs/digest" } } } },
+        "modelSelected": { "const": false }, "modelDownloaded": { "const": false },
+        "nextStage": { "const": "MCT-R5S1" }, "gate": { "const": "pass" },
+        "findings": { "type": "array", "maxItems": 0 },
+        "receiptDigest": { "$ref": "#/$defs/digest" }
+      }
+    },
+    "ModelCandidateMatrix": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schema", "observedAt", "status", "selection", "rules", "candidates"],
+      "properties": {
+        "schema": { "const": "gpao_t3.mct_r5s0_model_candidate_matrix.v1" }, "observedAt": { "type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$" }, "status": { "const": "reported_upstream_metadata_only_not_qualified" }, "selection": { "type": "null" },
+        "rules": { "type": "object", "additionalProperties": false, "required": ["downloadDuringR5S0", "qualificationRequiredBeforeSelection", "selectedAssetMustUsePinnedRevisionAndChecksum", "unselectedTestAssetsMustBeRemoved"], "properties": { "downloadDuringR5S0": { "const": false }, "qualificationRequiredBeforeSelection": { "const": true }, "selectedAssetMustUsePinnedRevisionAndChecksum": { "const": true }, "unselectedTestAssetsMustBeRemoved": { "const": true } } },
+        "candidates": { "type": "array", "minItems": 4, "items": { "type": "object", "additionalProperties": false, "required": ["candidateId", "role", "upstreamId", "reportedLicense", "reportedLanguages", "reportedDimensions", "reportedPrimaryWeightsBytes", "sourceUrl", "qualificationStatus"], "properties": { "candidateId": { "$ref": "#/$defs/nonEmpty" }, "role": { "enum": ["embedding", "reranker"] }, "upstreamId": { "$ref": "#/$defs/nonEmpty" }, "reportedLicense": { "$ref": "#/$defs/nonEmpty" }, "reportedLanguages": { "$ref": "#/$defs/nonEmpty" }, "reportedDimensions": { "type": ["integer", "null"], "minimum": 1 }, "reportedPrimaryWeightsBytes": { "type": ["integer", "null"], "minimum": 1 }, "sourceUrl": { "type": "string", "pattern": "^https://huggingface\\.co/[^/]+/[^/]+$" }, "qualificationStatus": { "enum": ["pending_r5s1", "pending_r5s4a"] } } } }
+      }
+    }
+  }
+}

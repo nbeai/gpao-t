@@ -1,0 +1,58 @@
+{
+  "schema": "gpao_t3.mct_r5s0_model_candidate_matrix.v1",
+  "observedAt": "2026-07-16",
+  "status": "reported_upstream_metadata_only_not_qualified",
+  "selection": null,
+  "rules": {
+    "downloadDuringR5S0": false,
+    "qualificationRequiredBeforeSelection": true,
+    "selectedAssetMustUsePinnedRevisionAndChecksum": true,
+    "unselectedTestAssetsMustBeRemoved": true
+  },
+  "candidates": [
+    {
+      "candidateId": "embedding-intfloat-multilingual-e5-small",
+      "role": "embedding",
+      "upstreamId": "intfloat/multilingual-e5-small",
+      "reportedLicense": "mit",
+      "reportedLanguages": "94 languages",
+      "reportedDimensions": 384,
+      "reportedPrimaryWeightsBytes": 471000000,
+      "sourceUrl": "https://huggingface.co/intfloat/multilingual-e5-small",
+      "qualificationStatus": "pending_r5s1"
+    },
+    {
+      "candidateId": "embedding-baai-bge-m3",
+      "role": "embedding",
+      "upstreamId": "BAAI/bge-m3",
+      "reportedLicense": "mit",
+      "reportedLanguages": "multilingual",
+      "reportedDimensions": 1024,
+      "reportedPrimaryWeightsBytes": null,
+      "sourceUrl": "https://huggingface.co/BAAI/bge-m3",
+      "qualificationStatus": "pending_r5s1"
+    },
+    {
+      "candidateId": "reranker-cross-encoder-mmarco-minilm-l12",
+      "role": "reranker",
+      "upstreamId": "cross-encoder/mmarco-mMiniLMv2-L12-H384-v1",
+      "reportedLicense": "apache-2.0",
+      "reportedLanguages": "15 languages",
+      "reportedDimensions": null,
+      "reportedPrimaryWeightsBytes": null,
+      "sourceUrl": "https://huggingface.co/cross-encoder/mmarco-mMiniLMv2-L12-H384-v1",
+      "qualificationStatus": "pending_r5s4a"
+    },
+    {
+      "candidateId": "reranker-baai-bge-reranker-v2-m3",
+      "role": "reranker",
+      "upstreamId": "BAAI/bge-reranker-v2-m3",
+      "reportedLicense": "apache-2.0",
+      "reportedLanguages": "multilingual",
+      "reportedDimensions": null,
+      "reportedPrimaryWeightsBytes": 2270000000,
+      "sourceUrl": "https://huggingface.co/BAAI/bge-reranker-v2-m3",
+      "qualificationStatus": "pending_r5s4a"
+    }
+  ]
+}
