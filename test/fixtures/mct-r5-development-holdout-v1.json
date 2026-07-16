@@ -1,0 +1,31 @@
+{
+  "schema": "gpao_t3.mct_r5_development_holdout.v1",
+  "origin": "independent_holdout_attempt_1_hold",
+  "sourceDigest": "sha256:de3b742f725a1aa34e0355f04d9c1d11e6d37f9b7ac5508feb32e02c4d1c9f9c",
+  "records": [
+    { "index": 201, "text": "자작나무문서함의 월간정산 마감은 매월 마지막 영업일이다", "sessionId": "session-a" },
+    { "index": 202, "text": "은하수연구노트의 최종 확인자는 민재다", "sessionId": "session-a" },
+    { "index": 203, "text": "백설항구재고표는 목요일 아침에 갱신한다", "sessionId": "session-a" },
+    { "index": 204, "text": "황금연필계약서는 동관 이층 기록실에 보관한다", "sessionId": "session-a" },
+    { "index": 205, "text": "복잡한 설명은 핵심 결론을 먼저 제시한 뒤 세부 근거를 덧붙인다", "sessionId": "session-a" },
+    { "index": 206, "text": "외부 공유 전에는 문서에서 개인을 식별할 수 있는 정보를 제거한다", "sessionId": "session-a" },
+    { "index": 207, "text": "진달래보관함의 복구문구는 새벽별이다", "sessionId": "session-b" },
+    { "index": 208, "text": "검은파도일지의 열람 책임자는 도윤이다", "sessionId": "session-b" },
+    { "index": 209, "text": "구름다리요청함의 긴급문의 책임자는 하린이다", "sessionId": "session-a" },
+    { "index": 210, "text": "노을기차점검표는 격주 수요일에 확인한다", "sessionId": "session-a" }
+  ],
+  "cases": [
+    { "id": "sealed-natural-exact-201", "kind": "korean_exact", "query": "자작나무문서함 월간정산 마감일", "expectedMarker": "r5rec0201", "sessionId": "session-a", "shouldFind": true },
+    { "id": "sealed-natural-exact-202", "kind": "korean_exact", "query": "은하수연구노트 최종 확인자", "expectedMarker": "r5rec0202", "sessionId": "session-a", "shouldFind": true },
+    { "id": "sealed-natural-exact-209", "kind": "korean_exact", "query": "구름다리요청함 긴급문의 책임자", "expectedMarker": "r5rec0209", "sessionId": "session-a", "shouldFind": true },
+    { "id": "sealed-natural-typo-203", "kind": "korean_typo", "query": "백설항구제고표 갱신 요일", "expectedMarker": "r5rec0203", "sessionId": "session-a", "shouldFind": true },
+    { "id": "sealed-natural-typo-204", "kind": "korean_typo", "query": "황금연필게약서 보관 장소", "expectedMarker": "r5rec0204", "sessionId": "session-a", "shouldFind": true },
+    { "id": "sealed-natural-typo-210", "kind": "korean_typo", "query": "노을기차점검푤 확인 주기", "expectedMarker": "r5rec0210", "sessionId": "session-a", "shouldFind": true },
+    { "id": "sealed-semantic-paraphrase-205", "kind": "semantic_paraphrase", "query": "상세한 이유를 설명하기 전에 요점을 앞에 배치한다", "expectedMarker": "r5rec0205", "sessionId": "session-a", "shouldFind": true },
+    { "id": "sealed-semantic-paraphrase-206", "kind": "semantic_paraphrase", "query": "자료를 밖으로 보내기 전에 누구인지 알아볼 수 있는 내용을 지운다", "expectedMarker": "r5rec0206", "sessionId": "session-a", "shouldFind": true },
+    { "id": "sealed-common-no-result-1", "kind": "common_no_result", "query": "문서 일정 책임자와 확인 기록을 찾아줘", "expectedMarker": null, "sessionId": "session-a", "shouldFind": false },
+    { "id": "sealed-number-no-result-1", "kind": "numeric_collision_no_result", "query": "정산 규칙 4821번 기록을 찾아줘", "expectedMarker": null, "sessionId": "session-a", "shouldFind": false },
+    { "id": "sealed-cross-session-207", "kind": "cross_session", "query": "진달래보관함 복구문구", "expectedMarker": "r5rec0207", "sessionId": "session-a", "shouldFind": false },
+    { "id": "sealed-cross-session-208", "kind": "cross_session", "query": "검은파도일지 열람 책임자", "expectedMarker": "r5rec0208", "sessionId": "session-a", "shouldFind": false }
+  ]
+}

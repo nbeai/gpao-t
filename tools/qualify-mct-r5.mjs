@@ -20,10 +20,12 @@ const openClawBin = "/Users/jyp/.local/bin/openclaw";
 const evidenceDir = path.resolve(process.argv[2] || "../engineering/evidence/mct-r5-comparison-2026-07-16");
 const sealedHoldoutPath = path.resolve(process.argv[3] || process.env.MCT_R5_SEALED_HOLDOUT || "");
 if (!process.argv[3] && !process.env.MCT_R5_SEALED_HOLDOUT) throw new Error("A separately generated sealed holdout JSON path is required");
+const priorDevelopmentPath = path.join(root, "test/fixtures/mct-r5-development-holdout-v1.json");
+const priorDevelopment = JSON.parse(fs.readFileSync(priorDevelopmentPath, "utf8"));
 const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "gpao-t3-mct-r5-"));
 const implementationFreeze = Object.freeze({
-  commit:"abd29e6771d52a06603164790d42ae9651ba6cb9",
-  storeDigest:"sha256:a1a6a2b9ef764ce0048c6ad41291c399c1a75e6790efd6026d3dd4f87bf07500"
+  commit:"e47eeb536d883172b7e70e7b9f61301ae8ceceb1",
+  storeDigest:"sha256:8c35e37ff7660e7feb6669b988b426de5d55e18b3752adbd10312ad373c3ec8a"
 });
 const sealedHoldout = JSON.parse(fs.readFileSync(sealedHoldoutPath, "utf8"));
 if (sealedHoldout.schema !== "gpao_t3.mct_r5_sealed_holdout.v1") throw new Error("Unsupported sealed holdout schema");
@@ -43,6 +45,7 @@ if (holdoutCases.some(item => "target" in item || "product" in item)) throw new 
 const thresholds = Object.freeze({ recallGainMinimum:0.15, semanticRecallBaselineRatioMinimum:1, noResultRestraintMinimum:1, crossSessionLeakageMaximum:0, crossSessionFalseRecallMaximum:0, retrievalP95MaximumMs:250, retrievalEfficiencyBaselineRatioMinimum:0.9, answerAnchorAccuracyMinimum:1, promptBudgetComplianceMinimum:1, currentRequestPreservationMinimum:1, taskFlowP95MaximumMs:250, recoveryCompletenessMinimum:1 });
 const metricDefinitions = Object.freeze({
   recallAt5:"gate-positive cases with expected marker in first five results / gate-positive cases",
+  semanticRecallAt5:"gate-positive cases whose kind contains semantic and expected marker appears in first five results / semantic cases",
   noResultRestraint:"no-result cases returning zero marked records / no-result cases",
   crossSessionLeakageRate:"cross-session cases returning the forbidden expected marker / cross-session cases",
   correctRetrievalsPer1000ContextTokens:"correct gate-positive retrievals / estimated UTF-8 retrieval-context tokens x 1000; includes context returned on negative cases",
@@ -51,8 +54,8 @@ const metricDefinitions = Object.freeze({
   recoveryCompleteness:"projection corruption repaired, parity restored, correct retrieval survives restart"
 });
 const sealedHoldoutDigest = sha256File(sealedHoldoutPath);
-const contract = { schema:"gpao_t3.mct_r5_comparison_contract.v4", corpusSize:corpus.length, topK:MCT_R5_TOP_K, developmentCases:MCT_R5_DEVELOPMENT_CASES, holdoutCases, sealedHoldoutDigest, holdoutGeneratedAfterFreeze:sealedHoldout.generatedAfterFreeze, implementationFreeze, thresholds, metricDefinitions, lane:"offline_local_no_provider_no_network", baselineCommit:MCT_R5_BASELINE_COMMIT };
-const contractDigest = canonicalDigest("gpao_t3.mct_r5_comparison_contract.v4", { corpus, ...contract });
+const contract = { schema:"gpao_t3.mct_r5_comparison_contract.v5", corpusSize:corpus.length, topK:MCT_R5_TOP_K, developmentCases:[...MCT_R5_DEVELOPMENT_CASES, ...priorDevelopment.cases], priorDevelopmentRecords:priorDevelopment.records, priorHoldoutSourceDigest:priorDevelopment.sourceDigest, holdoutCases, sealedHoldoutDigest, holdoutGeneratedAfterFreeze:sealedHoldout.generatedAfterFreeze, implementationFreeze, thresholds, metricDefinitions, lane:"offline_local_no_provider_no_network", baselineCommit:MCT_R5_BASELINE_COMMIT };
+const contractDigest = canonicalDigest("gpao_t3.mct_r5_comparison_contract.v5", { corpus, ...contract });
 
 function run(command, args, options = {}) {
   const result = spawnSync(command, args, { encoding:"utf8", maxBuffer:32 * 1024 * 1024, ...options });
@@ -212,7 +215,7 @@ function sourceManifest() {
     schema:"gpao_t3.mct_r5_source_manifest.v1", contractDigest,
     environment:{ platform:process.platform, arch:process.arch, node:process.version },
     targets:{
-      gpaoT3Reinforced:{ commit:run("git", ["rev-parse", "HEAD"], { cwd:root }), sourceDirty:run("git", ["status", "--porcelain"], { cwd:root }).length > 0, implementationCommit:implementationFreeze.commit, source:sha256File(path.join(root, "src/core/store.js")), scorer:sha256File(path.join(root, "src/core/mct-comparison.js")), developmentFixture:sha256File(path.join(root, "test/fixtures/mct-r5-cases.js")), sealedHoldout:sealedHoldoutDigest, qualifier:sha256File(path.join(root, "tools/qualify-mct-r5.mjs")) },
+      gpaoT3Reinforced:{ commit:run("git", ["rev-parse", "HEAD"], { cwd:root }), sourceDirty:run("git", ["status", "--porcelain"], { cwd:root }).length > 0, implementationCommit:implementationFreeze.commit, source:sha256File(path.join(root, "src/core/store.js")), scorer:sha256File(path.join(root, "src/core/mct-comparison.js")), developmentFixtures:[sha256File(path.join(root, "test/fixtures/mct-r5-cases.js")), sha256File(priorDevelopmentPath)], sealedHoldout:sealedHoldoutDigest, qualifier:sha256File(path.join(root, "tools/qualify-mct-r5.mjs")) },
       gpaoT3PreMct:{ commit:run("git", ["rev-parse", MCT_R5_BASELINE_COMMIT], { cwd:root }), source:canonicalDigest("gpao_t3.mct_r5_baseline_source.v1", run("git", ["show", `${MCT_R5_BASELINE_COMMIT}:src/core/local-memory.js`], { cwd:root })) },
       gpaoT:{ sourceCommit:run("git", ["rev-parse", "HEAD"], { cwd:gpaoRoot }), sourceDirty:run("git", ["status", "--porcelain"], { cwd:gpaoRoot }).length > 0, liveTarget, source:sha256File(path.join(gpaoRoot, "src/core/memory-search.js")) },
       openClaw:{ version:run(openClawBin, ["--version"], { env:{ ...process.env, HOME:path.join(tempRoot, "version-home"), OPENCLAW_STATE_DIR:path.join(tempRoot, "version-state") } }), package:sha256File(path.join(openClawRoot, "package.json")), entrypoint:sha256File(path.join(openClawRoot, "openclaw.mjs")), memoryBundles:sha256Files(openClawMemoryBundles) }
@@ -249,7 +252,7 @@ try {
       && manifest.targets.openClaw.memoryBundles === originalFingerprints.openClawMemoryBundles
       && manifest.targets.gpaoT.liveTarget === originalFingerprints.liveTarget
   };
-  const qualification = { schema:"gpao_t3.mct_r5_comparative_qualification.v3", verdict:Object.values(gateChecks).every(Boolean) ? "pass" : "hold", contractDigest, gateChecks, measured:{ retrieval:targets, admission:{ target:"gpao_t3_reinforced", ...admission }, taskPacketFlow, recovery }, tradeoffs:{ reinforcedContextTokensChange:(reinforced.summary.retrievedContextTokens / baseline.summary.retrievedContextTokens) - 1, reinforcedRecallChange:reinforced.summary.recallAt5 - baseline.summary.recallAt5, reinforcedRetrievalEfficiencyChange:(reinforced.summary.correctRetrievalsPer1000ContextTokens / baseline.summary.correctRetrievalsPer1000ContextTokens) - 1 }, limits:{ generalModelAnswerQuality:"not_measured; deterministic answer-anchor extraction measures Task Packet influence only", providerReportedTokens:"not_measured_no_provider; exact composed prompt is measured with sealed UTF-8 estimator", openClawLatency:"cold CLI process latency; not comparable to in-process T3/GPAO-T latency", openClawAdmission:"no equivalent public per-hit admission surface", gpaoTSessionIsolation:"search API has no session filter", semantic:"no external or downloaded embedding model used; no semantic superiority claim" }, manifest };
+  const qualification = { schema:"gpao_t3.mct_r5_comparative_qualification.v4", verdict:Object.values(gateChecks).every(Boolean) ? "pass" : "hold", contractDigest, gateChecks, measured:{ retrieval:targets, admission:{ target:"gpao_t3_reinforced", ...admission }, taskPacketFlow, recovery }, tradeoffs:{ reinforcedContextTokensChange:(reinforced.summary.retrievedContextTokens / baseline.summary.retrievedContextTokens) - 1, reinforcedRecallChange:reinforced.summary.recallAt5 - baseline.summary.recallAt5, reinforcedRetrievalEfficiencyChange:(reinforced.summary.correctRetrievalsPer1000ContextTokens / baseline.summary.correctRetrievalsPer1000ContextTokens) - 1 }, limits:{ generalModelAnswerQuality:"not_measured; deterministic answer-anchor extraction measures Task Packet influence only", providerReportedTokens:"not_measured_no_provider; exact composed prompt is measured with sealed UTF-8 estimator", openClawLatency:"cold CLI process latency; not comparable to in-process T3/GPAO-T latency", openClawAdmission:"no equivalent public per-hit admission surface", gpaoTSessionIsolation:"search API has no session filter", semantic:"bounded Korean work-concept fallback only; no external embedding or general semantic superiority claim" }, manifest };
   fs.mkdirSync(evidenceDir, { recursive:true });
   fs.writeFileSync(path.join(evidenceDir, "contract.json"), `${JSON.stringify(contract, null, 2)}\n`);
   fs.writeFileSync(path.join(evidenceDir, "source-manifest.json"), `${JSON.stringify(manifest, null, 2)}\n`);
