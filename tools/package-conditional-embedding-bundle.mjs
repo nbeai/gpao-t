@@ -23,7 +23,13 @@ if (!modelRoot || !outputDir) throw new Error("Usage: node tools/package-conditi
 const qualification = JSON.parse(fs.readFileSync(new URL("../test/fixtures/mct-r5s1-qualification.json", import.meta.url), "utf8"));
 const candidate = qualification.candidates.find(item => item.candidateId === qualification.recommendation.candidateId);
 if (!candidate || qualification.recommendation.selected) throw new Error("The R5S1 fixture does not permit conditional bundle creation");
-const manifest = conditionalEmbeddingAssetManifest({ modelRoot, candidate, sourceCommit: values.get("--source-commit") || null });
+const root = path.resolve(new URL("..", import.meta.url).pathname);
+const sourceCommit = spawnSync("git", ["rev-parse", "HEAD"], { cwd: root, encoding: "utf8" });
+const sourceStatus = spawnSync("git", ["status", "--porcelain"], { cwd: root, encoding: "utf8" });
+if (sourceCommit.status !== 0 || sourceStatus.status !== 0 || sourceStatus.stdout.trim()) throw new Error("Conditional embedding bundles require a clean source checkpoint");
+const resolvedCommit = sourceCommit.stdout.trim();
+if (values.get("--source-commit") && values.get("--source-commit") !== resolvedCommit) throw new Error("Conditional embedding bundle source commit does not match HEAD");
+const manifest = conditionalEmbeddingAssetManifest({ modelRoot, candidate, sourceCommit: resolvedCommit });
 const destination = path.resolve(outputDir);
 fs.mkdirSync(destination, { recursive: true, mode: 0o700 });
 const staging = fs.mkdtempSync(path.join(os.tmpdir(), "gpao-t3-conditional-embedding-"));

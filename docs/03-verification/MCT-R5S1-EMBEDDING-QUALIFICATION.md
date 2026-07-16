@@ -89,6 +89,12 @@ a normalized 384-dimension result. Windows repeats this exact bundle with
 `tools/qualify-mct-r5s1-windows-smoke.ps1`; a macOS pass never substitutes for
 the Windows native result.
 
+`tools/qualify-mct-r5s1-distribution.mjs` binds the conditional bundle, macOS
+offline smoke, release checksum, package contents, and state-preserving
+update/rollback smoke to one clean-source receipt. It fails if a model file leaks
+into the normal T3 package, a bundle is marked production-ready, or a supplied
+bundle source commit differs from the actual clean `HEAD`.
+
 Official references observed on 2026-07-16:
 
 - https://huggingface.co/intfloat/multilingual-e5-small
