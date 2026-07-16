@@ -18,7 +18,7 @@
     "SemanticEmbeddingModelIdentity": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["schema", "version", "adapterId", "providerClass", "modelId", "revision", "artifactDigest", "license", "runtime", "dimensions", "maxInputTokens", "queryInputType", "documentInputType", "quantization"],
+      "required": ["schema", "version", "adapterId", "providerClass", "modelId", "revision", "artifactDigest", "license", "runtime", "dimensions", "maxInputTokens", "queryInputType", "documentInputType", "quantization", "tokenizerDigest", "preprocessingContractDigest", "runtimeDigest", "pooling", "normalization"],
       "properties": {
         "schema": { "const": "gpao_t3.semantic_embedding_model_identity.v1" },
         "version": { "const": 1 },
@@ -33,7 +33,12 @@
         "maxInputTokens": { "type": "integer", "minimum": 1 },
         "queryInputType": { "$ref": "#/$defs/nonEmpty" },
         "documentInputType": { "$ref": "#/$defs/nonEmpty" },
-        "quantization": { "type": ["string", "null"], "minLength": 1 }
+        "quantization": { "type": ["string", "null"], "minLength": 1 },
+        "tokenizerDigest": { "$ref": "#/$defs/digest" },
+        "preprocessingContractDigest": { "$ref": "#/$defs/digest" },
+        "runtimeDigest": { "$ref": "#/$defs/digest" },
+        "pooling": { "enum": ["mean", "cls"] },
+        "normalization": { "const": "l2" }
       }
     },
     "SemanticRerankerModelIdentity": {

@@ -176,7 +176,8 @@ const NON_EMPTY = value => typeof value === "string" && value.length > 0;
 const EMBEDDING_IDENTITY_KEYS = Object.freeze([
   "schema", "version", "adapterId", "providerClass", "modelId", "revision",
   "artifactDigest", "license", "runtime", "dimensions", "maxInputTokens",
-  "queryInputType", "documentInputType", "quantization"
+  "queryInputType", "documentInputType", "quantization", "tokenizerDigest",
+  "preprocessingContractDigest", "runtimeDigest", "pooling", "normalization"
 ]);
 const RERANKER_IDENTITY_KEYS = Object.freeze([
   "schema", "version", "adapterId", "providerClass", "modelId", "revision",
@@ -227,10 +228,15 @@ export function embeddingModelIdentityFindings(identity) {
     if (!NON_EMPTY(identity[key])) findings.push(`invalid:${key}`);
   }
   if (!SHA256_PATTERN.test(identity.artifactDigest || "")) findings.push("invalid:artifactDigest");
+  for (const key of ["tokenizerDigest", "preprocessingContractDigest", "runtimeDigest"]) {
+    if (!SHA256_PATTERN.test(identity[key] || "")) findings.push(`invalid:${key}`);
+  }
   if (!["local", "remote"].includes(identity.providerClass)) findings.push("invalid:providerClass");
   if (!Number.isInteger(identity.dimensions) || identity.dimensions <= 0) findings.push("invalid:dimensions");
   if (!Number.isInteger(identity.maxInputTokens) || identity.maxInputTokens <= 0) findings.push("invalid:maxInputTokens");
   if (!(identity.quantization === null || NON_EMPTY(identity.quantization))) findings.push("invalid:quantization");
+  if (!["mean", "cls"].includes(identity.pooling)) findings.push("invalid:pooling");
+  if (identity.normalization !== "l2") findings.push("invalid:normalization");
   return findings;
 }
 
@@ -258,7 +264,12 @@ export function createEmbeddingModelIdentity(input) {
     maxInputTokens: input?.maxInputTokens,
     queryInputType: input?.queryInputType,
     documentInputType: input?.documentInputType,
-    quantization: input?.quantization ?? null
+    quantization: input?.quantization ?? null,
+    tokenizerDigest: input?.tokenizerDigest,
+    preprocessingContractDigest: input?.preprocessingContractDigest,
+    runtimeDigest: input?.runtimeDigest,
+    pooling: input?.pooling,
+    normalization: input?.normalization
   });
   const findings = embeddingModelIdentityFindings(identity);
   if (findings.length) {

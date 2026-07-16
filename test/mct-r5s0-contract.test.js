@@ -89,7 +89,12 @@ test("embedding, reranker, and index identities are canonical and role-separated
     maxInputTokens: 512,
     queryInputType: "query_prefixed_utf8_nfc",
     documentInputType: "passage_prefixed_utf8_nfc",
-    quantization: "int8"
+    quantization: "int8",
+    tokenizerDigest: digest(30),
+    preprocessingContractDigest: digest(31),
+    runtimeDigest: digest(32),
+    pooling: "mean",
+    normalization: "l2"
   };
   const model = createEmbeddingModelIdentity(modelInput);
   const rerankerInput = {

@@ -1,0 +1,102 @@
+{
+  "schema": "gpao_t3.mct_r5s1_embedding_qualification.v1",
+  "observedAt": "2026-07-16",
+  "runtime": {
+    "package": "@huggingface/transformers",
+    "version": "4.2.0",
+    "license": "Apache-2.0",
+    "onnxRuntimeNodeVersion": "1.24.3",
+    "cpuPlatformSupport": ["macos_arm64", "macos_x64", "windows_x64", "windows_arm64", "linux_x64", "linux_arm64"]
+  },
+  "evaluationContract": {
+    "candidateLaneOnly": true,
+    "records": 56,
+    "developmentCases": 16,
+    "evaluationCases": 16,
+    "semanticRecallAt5Min": 0.85,
+    "mrrMin": 0.8,
+    "warmQueryP95MsMax": 250,
+    "assetBytesMax": 800000000,
+    "residentMemoryBytesMax": 2000000000,
+    "noResultAndAnswerAnchorDeferredTo": ["MCT-R5S3", "MCT-R5S4", "MCT-R5S5"]
+  },
+  "candidates": [
+    {
+      "candidateId": "embedding-intfloat-multilingual-e5-small-fp32",
+      "upstreamId": "intfloat/multilingual-e5-small",
+      "upstreamRevision": "614241f622f53c4eeff9890bdc4f31cfecc418b3",
+      "license": "mit",
+      "dimensions": 384,
+      "modelArtifactSha256": "ca456c06b3a9505ddfd9131408916dd79290368331e7d76bb621f1cba6bc8665",
+      "tokenizerSha256": "0b44a9d7b51c3c62626640cda0e2c2f70fdacdc25bbbd68038369d14ebdf4c39",
+      "preprocessingContractDigest": "sha256:dc50726eead2ba4848c4558d240e375ef60d5a1dc9dad908a75193182edd09d1",
+      "runtimeDigest": "sha256:e189a6ae6a3810bd3777e7acbd635002a84cf5df703c6b6a638b8c2c58f4b2b5",
+      "pooling": "mean",
+      "normalization": "l2",
+      "cacheBytes": 487352338,
+      "residentMemoryBytes": 1311129600,
+      "cachedModelLoadMs": 1374.436125,
+      "warmQueryP95Ms": 6.238708,
+      "rawRecallAt5": 1,
+      "rawMrr": 0.8541666666666667,
+      "singleGlobalNoResultThresholdSeparable": false,
+      "status": "qualified_candidate_requires_a2_selection"
+    },
+    {
+      "candidateId": "embedding-paraphrase-multilingual-minilm-qint8-arm64",
+      "upstreamId": "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2",
+      "upstreamRevision": "e8f8c211226b894fcb81acc59f3b34ba3efd5f42",
+      "license": "apache-2.0",
+      "dimensions": 384,
+      "modelArtifactSha256": "783fea82d71a58179b830a4dbd2d58447e640609e98eedf9ffa12622d375a672",
+      "tokenizerSha256": "2c3387be76557bd40970cec13153b3bbf80407865484b209e655e5e4729076b8",
+      "cacheBytes": 127495087,
+      "residentMemoryBytes": 874168320,
+      "warmQueryP95Ms": 4.436458,
+      "rawRecallAt5": 0.75,
+      "rawMrr": 0.7053571428571428,
+      "singleGlobalNoResultThresholdSeparable": false,
+      "status": "rejected_quality_below_gate"
+    },
+    {
+      "candidateId": "embedding-baai-bge-m3",
+      "upstreamId": "BAAI/bge-m3",
+      "upstreamRevision": "unqualified",
+      "license": "mit",
+      "dimensions": 1024,
+      "reportedPrimaryWeightsBytes": 2270000000,
+      "downloaded": false,
+      "status": "rejected_pre_download_asset_budget"
+    }
+  ],
+  "platformQualification": {
+    "macosArm64NativeExecution": "pass",
+    "windowsCpuRuntimeOfficialSupport": true,
+    "windowsNativeSmoke": "pending_after_a2_asset_selection",
+    "productionAssetSelected": false
+  },
+  "testAssetLifecycle": {
+    "temporaryRoot": "/private/tmp/gpao-t3-r5s1-qualification",
+    "evidenceCopied": true,
+    "temporaryPackagesDeleted": true,
+    "temporaryModelsDeleted": true,
+    "deletionVerified": true
+  },
+  "evidenceBinding": {
+    "e5ReceiptSha256": "b6d3883f8cc082e069af03930f3a5e642ca9dbf8ce8d09785850d0475dfb216f",
+    "minilmReceiptSha256": "aa65d1538ed98d9a1670ea216afd5a4b30671f62737e4d801cc44875ea11d1cb",
+    "qualifierScriptSha256": "131c9ce3e551a7ac417f946a641730a06848ecf747adab45d1d935d35632c093",
+    "executedPlatform": "darwin_arm64",
+    "nodeVersion": "24.14.0"
+  },
+  "recommendation": {
+    "candidateId": "embedding-intfloat-multilingual-e5-small-fp32",
+    "decisionClass": "A2",
+    "decisionType": "conditional_shortlist_for_windows_native_qualification",
+    "reason": "only_candidate_meeting_frozen_candidate_lane_quality_latency_asset_and_memory_gates",
+    "selected": false,
+    "productionSelectionRequires": ["windows_native_smoke", "offline_bundle_checksum", "update_rollback_smoke", "second_a2_owner_decision"]
+  },
+  "qualificationDigestDomain": "gpao_t3.mct_r5s1_embedding_qualification.v1",
+  "qualificationDigest": "sha256:afbe89a5bca779f91da480929e83c6dd307c048d17e79f0e2293e983afc170ae"
+}
