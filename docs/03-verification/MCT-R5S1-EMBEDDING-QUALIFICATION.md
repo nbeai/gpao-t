@@ -81,6 +81,14 @@ remain owned by R5S3, R5S4, and R5S5.
 - product dependency and asset bundle: not added;
 - production model selection: not performed.
 
+The conditional bundle is a reproducible verification artifact, not a product
+dependency or default. It contains the checksum-bound model files plus a manifest
+that rejects production selection or default activation. The offline smoke uses
+`allowRemoteModels=false`, checks the unpacked ONNX/tokenizer hashes, and requires
+a normalized 384-dimension result. Windows repeats this exact bundle with
+`tools/qualify-mct-r5s1-windows-smoke.ps1`; a macOS pass never substitutes for
+the Windows native result.
+
 Official references observed on 2026-07-16:
 
 - https://huggingface.co/intfloat/multilingual-e5-small
