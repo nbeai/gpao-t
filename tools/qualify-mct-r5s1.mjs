@@ -42,7 +42,7 @@ if (fileSha256("minilm-receipt.json") !== fixture.evidenceBinding.minilmReceiptS
 if (fileSha256("qualify-e5.mjs") !== fixture.evidenceBinding.qualifierScriptSha256) findings.push("qualifier_script_digest_mismatch");
 if (fs.existsSync(fixture.testAssetLifecycle.temporaryRoot)) findings.push("temporary_test_assets_remain");
 if (fixture.recommendation.selected || fixture.platformQualification.productionAssetSelected) findings.push("production_selection_boundary_violated");
-if (fixture.platformQualification.windowsNativeSmoke !== "pending_after_a2_asset_selection") findings.push("windows_boundary_drift");
+if (fixture.platformQualification.windowsNativeSmoke !== "pending_external_windows_host") findings.push("windows_boundary_drift");
 
 const checks = [];
 if (!findings.length) {
@@ -67,7 +67,7 @@ const payload = {
   conditionalShortlist: findings.length ? null : fixture.recommendation.candidateId,
   productionAssetSelected: false,
   windowsNativeSmoke: fixture.platformQualification.windowsNativeSmoke,
-  nextAuthorityBoundary: findings.length ? null : "A2_conditional_shortlist_for_windows_native_qualification",
+  nextAuthorityBoundary: findings.length ? null : "Windows_native_host_execution",
   gate: findings.length ? "hold" : "pass",
   findings
 };

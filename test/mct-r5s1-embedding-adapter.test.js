@@ -198,7 +198,7 @@ test("R5S1 candidate evidence selects nothing and preserves reranker and Windows
   assert.ok(bge.reportedPrimaryWeightsBytes > contract.assetBytesMax);
   assert.equal(qualification.platformQualification.macosArm64NativeExecution, "pass");
   assert.equal(qualification.platformQualification.windowsCpuRuntimeOfficialSupport, true);
-  assert.equal(qualification.platformQualification.windowsNativeSmoke, "pending_after_a2_asset_selection");
+  assert.equal(qualification.platformQualification.windowsNativeSmoke, "pending_external_windows_host");
   assert.equal(qualification.platformQualification.productionAssetSelected, false);
   assert.equal(qualification.recommendation.decisionClass, "A2");
   assert.equal(qualification.recommendation.decisionType, "conditional_shortlist_for_windows_native_qualification");

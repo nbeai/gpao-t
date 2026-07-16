@@ -72,7 +72,7 @@
   "platformQualification": {
     "macosArm64NativeExecution": "pass",
     "windowsCpuRuntimeOfficialSupport": true,
-    "windowsNativeSmoke": "pending_after_a2_asset_selection",
+    "windowsNativeSmoke": "pending_external_windows_host",
     "productionAssetSelected": false
   },
   "testAssetLifecycle": {
@@ -98,5 +98,5 @@
     "productionSelectionRequires": ["windows_native_smoke", "offline_bundle_checksum", "update_rollback_smoke", "second_a2_owner_decision"]
   },
   "qualificationDigestDomain": "gpao_t3.mct_r5s1_embedding_qualification.v1",
-  "qualificationDigest": "sha256:afbe89a5bca779f91da480929e83c6dd307c048d17e79f0e2293e983afc170ae"
+  "qualificationDigest": "sha256:65de7d443079eb31c1e06044bfa5dc0be71b5ccaa1787da63f56fc2983386f4a"
 }

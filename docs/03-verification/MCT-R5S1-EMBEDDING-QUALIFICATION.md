@@ -77,7 +77,7 @@ remain owned by R5S3, R5S4, and R5S5.
 - macOS arm64 native candidate execution: pass;
 - ONNX Runtime Node CPU official platform support includes Windows x64/arm64 and
   macOS x64/arm64;
-- Windows native smoke: pending after production asset selection;
+- Windows native smoke: pending on an external Windows host after conditional shortlist approval;
 - product dependency and asset bundle: not added;
 - production model selection: not performed.
 
