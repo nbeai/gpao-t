@@ -523,8 +523,9 @@ export class NativeRuntime {
     return true;
   }
 
-  contextInfluenceStatus() {
-    return this.contextInfluence.snapshot();
+  contextInfluenceStatus(principalId = null) {
+    const userId = principalId ? String(principalId).split(":conversation:")[0] : null;
+    return this.contextInfluence.snapshot({ userId });
   }
 
   async addMemoryObservation(input) {
@@ -621,6 +622,11 @@ export class NativeRuntime {
 
   listMemoryWiki(input = {}) { return this.writer.call("listMemory", input); }
   async reviewMemory(memoryId, decision, authority = null) { const entry = await this.writer.call("reviewMemory", { memoryId, decision, authority }); this.memory.review?.(memoryId, decision === "reviewed"); return entry; }
+  async updateMemoryScope(memoryId, input = {}) {
+    const entry = await this.writer.call("updateMemoryScope", { memoryId, ...input });
+    this.memory.hydrate?.((await this.writer.call("listMemory", { allOwners: true, limit: this.memory.maxEntries || 500 })).entries);
+    return entry;
+  }
   createWorkspace(input) { return this.writer.call("createWorkspace", input); }
   listWorkspaces(principalId, options = {}) { return this.writer.call("listWorkspaces", { principalId, ...options }); }
   getWorkspace(principalId, sessionId) { return this.writer.call("getWorkspace", { principalId, sessionId }); }
@@ -642,8 +648,9 @@ export class NativeRuntime {
     return this.contextInfluence.rollback(id, { reason });
   }
 
-  async rollbackContextInfluenceDurable(id, reason) {
-    const result = await this.writer.call("rollbackContextInfluence", { influenceId: id, reason });
+  async rollbackContextInfluenceDurable(id, reason, principalId = null) {
+    const ownerId = principalId ? String(principalId).split(":conversation:")[0] : null;
+    const result = await this.writer.call("rollbackContextInfluence", { influenceId: id, reason, ownerId });
     this.contextInfluence.hydrate?.(await this.writer.call("listContextInfluences"));
     return { schema: "gpao_t3.context_influence_rollback.v1", ...result };
   }
@@ -652,11 +659,24 @@ export class NativeRuntime {
     assertPayloadHasNoSecrets(input);
     const proposal = createGrowthProposal({ ...input, ownerId: principalId });
     const saved = await this.writer.call("saveGrowthProposal", { bundle: proposal });
-    return { schema: "gpao_t3.growth_proposal_receipt.v1", proposal: saved.record, detail: saved.detail, surface: { type: "growth.proposed", payload: { proposalId: saved.record.id, scope: saved.record.scope.level, approvalState: saved.record.status } } };
+    const surface = await this.appendAuxiliarySurfaceEvent(principalId, saved.record.scope, "growth.proposed", { proposalId: saved.record.id, scope: saved.record.scope.level, approvalState: saved.record.status });
+    return { schema: "gpao_t3.growth_proposal_receipt.v1", proposal: saved.record, detail: saved.detail, surface };
   }
 
   listGrowth(principalId, options = {}) {
     return this.writer.call("listGrowthProposals", { ownerId: principalId, ...options });
+  }
+
+  async growthSurfaceStatus(principalId, options = {}) {
+    const expired = await this.writer.call("expireGrowthMutations", { now: Date.now() });
+    this.activeGrowthMutations = (await this.writer.call("listGrowthMutations", { ownerId: null, activeOnly: true, limit: 500 })).mutations;
+    await this.finalizeGrowthRollbacks(expired.receipts);
+    return this.writer.call("growthSurfaceStatus", { ownerId: principalId, ...options });
+  }
+
+  appendAuxiliarySurfaceEvent(principalId, scope, type, payload) {
+    const identity = payload.proposalId || payload.mutationId || crypto.randomUUID();
+    return this.writer.call("appendAuxiliarySurfaceEvent", { principalId, event: { turnId: `aux_${identity}`, sessionId: scope.sessionId || `scope_${scope.level}`, type, payload, terminal: false } });
   }
 
   async replayGrowth(principalId, proposalId, datasetSplit = "evaluation") {
@@ -665,7 +685,8 @@ export class NativeRuntime {
     const baselinePolicy = projectGrowthAdmissionPolicy(this.activeGrowthMutations, proposal.record.scope).policy;
     const result = evaluateGrowthReplay({ proposal: proposal.record, detail: proposal.detail, datasetSplit, baselinePolicy });
     const saved = await this.writer.call("saveGrowthReplayResult", { bundle: result });
-    return { schema: "gpao_t3.growth_replay_receipt.v1", replayResult: saved.record, metrics: saved.detail.metrics, surface: { type: "growth.replayed", payload: { proposalId, replayResultId: saved.record.id, passed: saved.record.passed } } };
+    const surface = await this.appendAuxiliarySurfaceEvent(principalId, proposal.record.scope, "growth.replayed", { proposalId, replayResultId: saved.record.id, passed: saved.record.passed });
+    return { schema: "gpao_t3.growth_replay_receipt.v1", replayResult: saved.record, metrics: saved.detail.metrics, surface };
   }
 
   async reviewGrowth(principalId, proposalId, approved) {
@@ -683,7 +704,8 @@ export class NativeRuntime {
     const snapshotDigest = canonicalDigest("gpao_t3.growth_policy_snapshot.v1", baseline.policy);
     const result = await this.writer.call("applyGrowthMutation", { proposalId, replayResultId, ownerId: principalId, ttlMs, snapshotDigest, snapshotPolicy: baseline.policy });
     this.activeGrowthMutations = (await this.writer.call("listGrowthMutations", { ownerId: null, activeOnly: true, limit: 500 })).mutations;
-    return { schema: "gpao_t3.growth_application_receipt.v1", mutation: result.mutation.record, rollbackReceipt: result.rollbackReceipt.record, deduplicated: result.deduplicated, surface: { type: "growth.applied", payload: { mutationId: result.mutation.record.id, scope: result.mutation.record.scope.level, expiresAt: result.mutation.record.expiresAt, rollbackReceiptId: result.rollbackReceipt.record.id } } };
+    const surface = await this.appendAuxiliarySurfaceEvent(principalId, result.mutation.record.scope, "growth.applied", { mutationId: result.mutation.record.id, scope: result.mutation.record.scope.level, expiresAt: result.mutation.record.expiresAt, rollbackReceiptId: result.rollbackReceipt.record.id });
+    return { schema: "gpao_t3.growth_application_receipt.v1", mutation: result.mutation.record, rollbackReceipt: result.rollbackReceipt.record, deduplicated: result.deduplicated, surface };
   }
 
   async listGrowthMutations(principalId, options = {}) {
@@ -697,7 +719,8 @@ export class NativeRuntime {
     const result = await this.writer.call("rollbackGrowthMutation", { mutationId, ownerId: principalId, reason });
     this.activeGrowthMutations = (await this.writer.call("listGrowthMutations", { ownerId: null, activeOnly: true, limit: 500 })).mutations;
     const [verified] = await this.finalizeGrowthRollbacks([result]);
-    return { schema: "gpao_t3.growth_rollback_receipt.v1", mutation: result.mutation.record, rollbackReceipt: verified.record, surface: { type: "growth.rolled_back", payload: { mutationId, rollbackReceiptId: verified.record.id, verified: verified.record.verified } } };
+    const surface = await this.appendAuxiliarySurfaceEvent(principalId, result.mutation.record.scope, "growth.rolled_back", { mutationId, rollbackReceiptId: verified.record.id, verified: verified.record.verified });
+    return { schema: "gpao_t3.growth_rollback_receipt.v1", mutation: result.mutation.record, rollbackReceipt: verified.record, surface };
   }
 
   async finalizeGrowthRollbacks(results = []) {
@@ -1100,13 +1123,13 @@ export class NativeRuntime {
     return publicHealth;
   }
 
-  async doctor() {
+  async doctor(principalId = null) {
     const provider = this.providerStatus();
     const health = { ...this.health(), ownerTokenMode: "0600" };
     const connectionCells = this.connectionCellStatus();
     const localSessions = this.localSessions?.snapshot();
     const integrity = await this.writer.call("verifyIntegrity");
-    const contextInfluence = this.contextInfluenceStatus();
+    const contextInfluence = this.contextInfluenceStatus(principalId);
     const stateIdentity = await this.writer.call("identitySnapshot");
     const stateOwnership = await this.writer.call("stateOwnership");
     const worker = Boolean(this.worker && this.worker.connected);

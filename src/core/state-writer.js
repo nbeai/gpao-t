@@ -54,6 +54,8 @@ function execute(op, args) {
       return store.getResponseDocument(args.responseDocumentId, args.principalId);
     case "appendSurfaceEvent":
       return store.transaction(() => store.appendSurfaceEvent(args.principalId, args.event));
+    case "appendAuxiliarySurfaceEvent":
+      return store.transaction(() => store.appendAuxiliarySurfaceEvent(args.principalId, args.event));
     case "replaySurfaceEvents":
       return store.replaySurfaceEvents(args.principalId, args.turnId, args.afterSequence, args.limit);
     case "getSurfaceTurnSummary":
@@ -166,16 +168,20 @@ function execute(op, args) {
       return store.transaction(() => store.deleteMemory(args.memoryId));
     case "reviewMemory":
       return store.transaction(() => store.reviewMemory(args.memoryId, args.decision, args.authority));
+    case "updateMemoryScope":
+      return store.transaction(() => store.updateMemoryScope(args.memoryId, args));
     case "promoteMemory":
       return store.transaction(() => store.promoteMemory(args.memoryId, args));
     case "listContextInfluences":
-      return store.listContextInfluences();
+      return store.listContextInfluences(args.ownerId || null);
     case "rollbackContextInfluence":
-      return store.transaction(() => store.rollbackContextInfluence(args.influenceId, args.reason));
+      return store.transaction(() => store.rollbackContextInfluence(args.influenceId, args.reason, args.ownerId || null));
     case "saveGrowthProposal":
       return store.transaction(() => store.saveGrowthProposal(args.bundle));
     case "listGrowthProposals":
       return store.listGrowthProposals(args.ownerId, args);
+    case "growthSurfaceStatus":
+      return store.growthSurfaceStatus(args.ownerId, args);
     case "getGrowthProposal":
       return store.getGrowthProposal(args.proposalId);
     case "getGrowthProposalBundle":

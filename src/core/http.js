@@ -98,8 +98,8 @@ export function createHttpServer(runtime, { host = "127.0.0.1", port = 18899 } =
         : null;
       if (bearer(request) !== runtime.ownerToken && !session) throw new RuntimeError("unauthorized", "Owner authentication required", 401);
       const principalId = session?.principalId || "owner:local";
-      if (request.method === "GET" && url.pathname === "/v1/doctor") return send(response, 200, await runtime.doctor());
-      if (request.method === "GET" && url.pathname === "/v1/recovery") return send(response, 200, (await runtime.doctor()).recovery);
+      if (request.method === "GET" && url.pathname === "/v1/doctor") return send(response, 200, await runtime.doctor(principalId));
+      if (request.method === "GET" && url.pathname === "/v1/recovery") return send(response, 200, (await runtime.doctor(principalId)).recovery);
       if (request.method === "GET" && url.pathname === "/v1/providers") return send(response, 200, runtime.providerStatus());
       if (request.method === "GET" && url.pathname === "/v1/connection-center") return send(response, 200, await runtime.connectionCenterStatus());
       if (request.method === "GET" && url.pathname === "/v1/connectors") return send(response, 200, runtime.connectorStatus());
@@ -128,14 +128,15 @@ export function createHttpServer(runtime, { host = "127.0.0.1", port = 18899 } =
         assertTrustedLocalMutation(request, session, host, port);
         return send(response, 200, await runtime.pollChannel(channelPollMatch[1], await readJson(request)));
       }
-      if (request.method === "GET" && url.pathname === "/v1/context-influence") return send(response, 200, runtime.contextInfluenceStatus());
+      if (request.method === "GET" && url.pathname === "/v1/context-influence") return send(response, 200, runtime.contextInfluenceStatus(principalId));
       const influenceRollbackMatch = url.pathname.match(/^\/v1\/context-influence\/([^/]+)\/rollback$/);
       if (request.method === "POST" && influenceRollbackMatch) {
         assertTrustedLocalMutation(request, session, host, port);
         const body = await readJson(request);
-        return send(response, 200, await runtime.rollbackContextInfluenceDurable(influenceRollbackMatch[1], body.reason || "local_dashboard_requested"));
+        return send(response, 200, await runtime.rollbackContextInfluenceDurable(influenceRollbackMatch[1], body.reason || "local_dashboard_requested", principalId));
       }
       if (request.method === "GET" && url.pathname === "/v1/growth/proposals") return send(response, 200, await runtime.listGrowth(principalId, { status: url.searchParams.get("status") || null, limit: Number(url.searchParams.get("limit") || 100) }));
+      if (request.method === "GET" && url.pathname === "/v1/growth/surface") return send(response, 200, await runtime.growthSurfaceStatus(principalId, { limit: Number(url.searchParams.get("limit") || 100) }));
       if (request.method === "POST" && url.pathname === "/v1/growth/proposals") {
         assertTrustedLocalMutation(request, session, host, port);
         return send(response, 201, await runtime.proposeGrowth(principalId, await readJson(request)));
@@ -194,6 +195,12 @@ export function createHttpServer(runtime, { host = "127.0.0.1", port = 18899 } =
         assertTrustedLocalMutation(request, session, host, port);
         const body = await readJson(request);
         return send(response, 200, await runtime.reviewMemory(memoryReviewMatch[1], body.decision, { durablePromotion: body.durablePromotion === true, decisionClass: body.durablePromotion === true ? "A2" : "A0", principalId }));
+      }
+      const memoryScopeMatch = url.pathname.match(/^\/v1\/memory-wiki\/([^/]+)\/scope$/);
+      if (request.method === "PATCH" && memoryScopeMatch) {
+        assertTrustedLocalMutation(request, session, host, port);
+        const body = await readJson(request);
+        return send(response, 200, await runtime.updateMemoryScope(memoryScopeMatch[1], { ownerId: principalId, scopeLevel: body.scopeLevel, sessionId: body.sessionId || null, projectId: body.projectId || null, approved: body.approved === true }));
       }
       if (request.method === "POST" && url.pathname === "/v1/connection-cells/plan") {
         const body = await readJson(request);

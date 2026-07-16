@@ -147,8 +147,8 @@ export class ContextInfluenceLedger {
     return { schema: "gpao_t3.context_influence_rollback.v1", rolledBack: true, entry: this.publicEntry(entry) };
   }
 
-  snapshot() {
-    const entries = [...this.entries.values()].map(entry => this.publicEntry(entry));
+  snapshot({ userId = null } = {}) {
+    const entries = [...this.entries.values()].filter(entry => !userId || entry.scope.userId === userId).map(entry => this.publicEntry(entry));
     return {
       schema: "gpao_t3.context_influence_ledger.v1",
       activeCount: entries.filter(entry => entry.state === "applied").length,

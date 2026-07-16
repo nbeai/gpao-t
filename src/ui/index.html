@@ -97,8 +97,10 @@
           <section class="panel-view" data-panel-content="memory" hidden>
             <div class="panel-section"><h3>기억</h3>
               <button class="status-row" id="memory-card" type="button"><span><small>사용 중인 기억</small><strong id="memory-summary">확인 중</strong></span><span id="memory-detail">기억 상태를 불러오고 있습니다</span></button>
+              <div class="answer-provenance" id="answer-provenance" hidden><h4>이 답변에서 참고함</h4><div id="answer-provenance-list"></div></div>
               <button class="wide-action" id="memory" type="button">기억 확인</button>
             </div>
+            <div class="panel-section growth-panel-section"><div class="section-inline-heading"><h3>배우려는 원리</h3><span id="growth-attention" class="notice-text"></span></div><div id="growth-panel-list" class="growth-list"></div><p id="growth-panel-status" class="form-status" aria-live="polite"></p></div>
           </section>
           <section class="panel-view" data-panel-content="authority" hidden>
             <div class="panel-section"><h3>권한과 승인</h3><p class="panel-copy">읽기는 권한 안에서 자동으로 진행하고, 외부 전송·쓰기·삭제는 실행 전에 확인합니다.</p><div id="authority-state" class="authority-state" aria-live="polite"></div><button class="wide-action" id="open-authority-tools" type="button">도구 권한 확인</button></div>
@@ -135,7 +137,13 @@
   <dialog class="memory-dialog" id="memory-dialog" aria-labelledby="memory-title">
     <header class="dialog-header"><div><span class="eyebrow">GPAO-T3 기억</span><h2 id="memory-title">기억과 영향</h2></div><button class="icon-button" id="close-memory" type="button" aria-label="닫기"><i data-lucide="x" aria-hidden="true"></i></button></header>
     <p class="dialog-intro">대화에 영향을 준 맥락과 되돌릴 수 있는 항목을 확인합니다. 승인되지 않은 기억은 답변 기준으로 쓰지 않습니다.</p>
-    <div class="ledger-summary" id="ledger-summary"></div><section class="memory-candidates" aria-labelledby="memory-candidates-title"><h3 id="memory-candidates-title">기억 후보</h3><div id="memory-candidate-list" class="ledger-list"></div></section><h3 class="ledger-heading">사용 중인 기억</h3><div class="ledger-list" id="ledger-list" aria-label="기억 영향 목록"></div><p id="memory-status" class="form-status" aria-live="polite"></p>
+    <div class="ledger-summary" id="ledger-summary"></div><section class="memory-candidates" aria-labelledby="memory-candidates-title"><h3 id="memory-candidates-title">기억한 내용</h3><p class="section-help">검토 전에는 답변 기준으로 사용하지 않습니다.</p><div id="memory-candidate-list" class="ledger-list"></div></section><h3 class="ledger-heading">사용 중인 영향</h3><div class="ledger-list" id="ledger-list" aria-label="기억 영향 목록"></div><h3 class="ledger-heading">배우려는 원리</h3><div id="growth-dialog-list" class="growth-list"></div><p id="memory-status" class="form-status" aria-live="polite"></p>
+  </dialog>
+  <dialog class="session-dialog" id="memory-scope-dialog" aria-labelledby="memory-scope-title">
+    <header class="dialog-header"><div><span class="eyebrow">기억 범위 확인</span><h2 id="memory-scope-title">기억 범위를 넓힐까요?</h2></div></header><p class="dialog-intro" id="memory-scope-detail"></p><div class="session-dialog-actions"><button id="cancel-memory-scope" type="button">취소</button><button id="confirm-memory-scope" type="button">이 범위로 변경</button></div><p id="memory-scope-status" class="form-status" aria-live="polite"></p>
+  </dialog>
+  <dialog class="session-dialog" id="growth-approval-dialog" aria-labelledby="growth-approval-title">
+    <header class="dialog-header"><div><span class="eyebrow">제한 적용 승인</span><h2 id="growth-approval-title">검증된 개선을 적용할까요?</h2></div></header><p class="dialog-intro" id="growth-approval-detail"></p><div class="approval-summary"><p><span>적용 범위</span><strong id="growth-approval-scope"></strong></p><p><span>관찰 기간</span><strong>24시간</strong></p><p><span>복구</span><strong>언제든 되돌릴 수 있음</strong></p></div><div class="session-dialog-actions"><button id="cancel-growth-approval" type="button">취소</button><button id="confirm-growth-approval" type="button">제한 적용 승인</button></div><p id="growth-approval-status" class="form-status" aria-live="polite"></p>
   </dialog>
   <dialog class="recovery-dialog" id="recovery-dialog" aria-labelledby="recovery-title">
     <header class="dialog-header"><div><span class="eyebrow">GPAO-T3 복구</span><h2 id="recovery-title">문제 해결</h2></div><button class="icon-button" id="close-recovery" type="button" aria-label="닫기"><i data-lucide="x" aria-hidden="true"></i></button></header>

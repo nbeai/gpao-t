@@ -188,8 +188,8 @@ try {
     const panel = document.querySelector(".assistant-panel").getBoundingClientRect();
     return { conversationRight:conversation.right, panelLeft:panel.left, scrollWidth:document.documentElement.scrollWidth, width:innerWidth };
   });
-  assert.ok(desktopBoxes.conversationRight <= desktopBoxes.panelLeft + 1);
-  assert.ok(desktopBoxes.scrollWidth <= desktopBoxes.width);
+  assert.ok(desktopBoxes.conversationRight <= desktopBoxes.panelLeft + 1, JSON.stringify(desktopBoxes));
+  assert.ok(desktopBoxes.scrollWidth <= desktopBoxes.width, JSON.stringify(desktopBoxes));
 
   const intermediate = await browser.newPage({ viewport:{ width:900, height:800 } });
   intermediate.on("console", message => { if (message.type() === "error") consoleErrors.push(`intermediate-900:${message.text()}`); });

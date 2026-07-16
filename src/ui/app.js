@@ -1,4 +1,4 @@
-const state = { sessions: [], messengerSessions: [], activeId: null, activeKind: "workspace", sessionAction: null, sessionMenuId: null, sessionSearch: "", pendingChannelSend: null, activeTurn: null, surfaceEventIds:new Set(), streamText:new Map(), panelProjections:new Map(), connections: null, channels: null, connectionCells: null, tools: null, influence: null, memoryWiki: null, doctor: null, panel: { sessionId:null, open:false, userClosed:false, view:"activity", notices:0 } };
+const state = { sessions: [], messengerSessions: [], activeId: null, activeKind: "workspace", sessionAction: null, sessionMenuId: null, sessionSearch: "", pendingChannelSend: null, activeTurn: null, surfaceEventIds:new Set(), streamText:new Map(), panelProjections:new Map(), connections: null, channels: null, connectionCells: null, tools: null, influence: null, memoryWiki: null, growth: null, selectedProvenance: null, pendingMemoryScope: null, pendingGrowthApproval: null, growthReplayInflight:new Set(), doctor: null, panel: { sessionId:null, open:false, userClosed:false, view:"activity", notices:0 } };
 const $ = selector => document.querySelector(selector);
 function refreshIcons(root = document) { globalThis.lucide?.createIcons?.({ root, attrs:{ "stroke-width":1.8 } }); }
 const localConnector = connector => (connector.compatibility?.transport || connector.transport) === "builtin";
@@ -56,6 +56,8 @@ function restorePanelForSession(sessionId) {
   const saved = readPanelState(sessionId);
   const projection = panelProjection(sessionId);
   state.panel = { sessionId, open:saved.open === true, userClosed:saved.userClosed === true, view:panelTitles[saved.view] ? saved.view : "activity", notices:projection.notices };
+  state.selectedProvenance = null;
+  renderAnswerProvenance();
   renderPanelProjection(sessionId);
   renderPanelState();
   if (state.panel.open && window.innerWidth <= 980) {
@@ -100,6 +102,14 @@ const SURFACE_EVENT_COPY = {
   "tool.completed":["도구 완료", "도구 결과를 답변에 반영했습니다."],
   "tool.failed":["도구 확인 필요", "문제를 진단하고 복구 방법을 준비했습니다."],
   "memory.referenced":["기억 확인", "승인된 기억과 맥락을 참고했습니다."],
+  "memory.retrieved":["기억 찾기", "현재 요청과 관련된 기억을 확인했습니다."],
+  "memory.admitted":["기억 선택", "현재 요청에 도움이 되는 기억만 골랐습니다."],
+  "memory.rejected":["기억 제외", "맞지 않거나 권한이 없는 기억은 사용하지 않았습니다."],
+  "memory.influenced":["기억 반영", "승인된 기억이 답변에 반영됐습니다."],
+  "growth.proposed":["개선 후보 발견", "반복된 교정이나 실패에서 배울 원리를 찾았습니다."],
+  "growth.replayed":["개선 검증", "기존 방식과 비교해 실제 개선 여부를 확인했습니다."],
+  "growth.applied":["제한 적용", "승인된 개선을 되돌릴 수 있는 범위에서 적용했습니다."],
+  "growth.rolled_back":["개선 되돌림", "적용 전 상태로 안전하게 복구했습니다."],
   "text.delta":["답변 작성", "답변을 작성하고 있습니다."],
   "text.complete":["답변 정리", "최종 답변을 안전하게 확정했습니다."],
   "stream.reconnecting":["연결 복구", "진행 상태를 다시 연결하고 있습니다."],
@@ -111,20 +121,20 @@ const SURFACE_EVENT_COPY = {
   "turn.cancelled":["작업 중단", "요청한 작업을 중단했습니다."]
 };
 
-function showSurfaceEvent(event) {
+function showSurfaceEvent(event, { displaySessionId = event.sessionId } = {}) {
   if (state.surfaceEventIds.has(event.eventId)) return;
   state.surfaceEventIds.add(event.eventId);
   const copy = SURFACE_EVENT_COPY[event.type] || ["진행", "작업 상태가 갱신됐습니다."];
-  const projection = panelProjection(event.sessionId);
+  const projection = panelProjection(displaySessionId);
   projection.title = copy[0]; projection.detail = copy[1];
   projection.events.push({ eventId:event.eventId, terminal:event.terminal, title:copy[0], detail:copy[1] });
   if (projection.events.length > 30) projection.events.shift();
   if (event.type === "text.delta") renderStreamingDelta(event);
-  if (event.sessionId !== state.activeId) { projection.notices += 1; return; }
+  if (displaySessionId !== state.activeId) { projection.notices += 1; return; }
   if (!state.panel.open) projection.notices += 1;
   state.panel.notices = projection.notices;
-  state.panel.view = event.type.includes("failed") || event.type.startsWith("recovery.") ? "recovery" : "activity";
-  renderPanelProjection(event.sessionId);
+  state.panel.view = event.type.includes("failed") || event.type.startsWith("recovery.") ? "recovery" : event.type.startsWith("memory.") || event.type.startsWith("growth.") ? "memory" : "activity";
+  renderPanelProjection(displaySessionId);
   savePanelState(); renderPanelState();
 }
 
@@ -322,6 +332,19 @@ function renderMarkdown(markdown) {
   return content;
 }
 
+const MEMORY_SCOPE_LABELS = { session:"이 대화", project:"이 프로젝트", user_global:"모든 대화" };
+const MEMORY_SOURCE_LABELS = { owner:"직접 알려준 내용", conversation:"이전 대화", document:"문서와 도구 결과", memory:"저장된 기억" };
+const MEMORY_ROLE_LABELS = { answer_anchor:"답변 기준", supporting_context:"참고 맥락" };
+const MEMORY_SCOPE_RANK = { session:0, project:1, user_global:2 };
+function renderAnswerProvenance() {
+  const wrap = $("#answer-provenance");
+  const provenance = state.selectedProvenance;
+  if (!wrap) return;
+  wrap.hidden = !provenance?.sources?.length;
+  if (!provenance?.sources?.length) { $("#answer-provenance-list").replaceChildren(); return; }
+  $("#answer-provenance-list").innerHTML = provenance.sources.map(source => `<div class="provenance-row"><span>${escape(MEMORY_SOURCE_LABELS[source.sourceKind] || "검토된 맥락")}</span><small>${escape(MEMORY_SCOPE_LABELS[source.scope] || "현재 범위")} · ${escape(MEMORY_ROLE_LABELS[source.role] || "참고")}</small></div>`).join("");
+}
+
 function renderMessages(messages, session, messenger) {
   messages.replaceChildren();
   if (!session.messages?.length) {
@@ -339,7 +362,23 @@ function renderMessages(messages, session, messenger) {
     who.className = "who";
     who.textContent = item.role === "user" ? (messenger ? "상대방" : "나") : "GPAO-T3";
     article.append(who);
-    if (item.role === "assistant") article.append(renderMarkdown(item.text));
+    if (item.role === "assistant") {
+      article.append(renderMarkdown(item.text));
+      if (item.provenance?.usedCount > 0) {
+        const provenance = document.createElement("button");
+        provenance.type = "button";
+        provenance.className = "provenance-trigger";
+        provenance.setAttribute("aria-label", `이 답변에서 참고한 기억 ${item.provenance.usedCount}개 보기`);
+        provenance.innerHTML = `<i data-lucide="brain" aria-hidden="true"></i><span>기억 ${escape(item.provenance.usedCount)}개 참고</span>`;
+        provenance.addEventListener("click", () => {
+          state.selectedProvenance = item.provenance;
+          renderAnswerProvenance();
+          setPanelView("memory");
+          setPanelOpen(true);
+        });
+        article.append(provenance);
+      }
+    }
     else {
       const body = document.createElement("div");
       body.className = "message-plain";
@@ -473,12 +512,13 @@ function recoveryOverview(doctor) {
 async function refreshOperations() {
   const channelsRequest = request("/v1/channels").catch(() => null);
   try {
-    const [connections, cells, tools, influence, memoryWiki, doctor] = await Promise.all([
+    const [connections, cells, tools, influence, memoryWiki, growth, doctor] = await Promise.all([
       request("/v1/connection-center"),
       request("/v1/connection-cells"),
       request("/v1/tools"),
       request("/v1/context-influence"),
       request("/v1/memory-wiki"),
+      request("/v1/growth/surface"),
       request("/v1/doctor")
     ]);
     state.connections = connections;
@@ -486,6 +526,7 @@ async function refreshOperations() {
     state.tools = tools;
     state.influence = influence;
     state.memoryWiki = memoryWiki;
+    state.growth = growth;
     state.doctor = doctor;
     updateComposerModelLabel(connections);
     setCard("model", connectionOverview(connections));
@@ -493,6 +534,8 @@ async function refreshOperations() {
     setCard("memory", memoryOverview(influence));
     setCard("recovery", recoveryOverview(doctor));
     renderAuthorityPanel();
+    renderGrowthSurface(growth);
+    ensurePendingGrowthReplays(growth);
     $("#runtime-state").textContent = doctor.status === "ready" ? "런타임 준비됨" : "런타임 확인 필요";
   } catch {
     setCard("model", { tone:"warn", summary:"확인 필요", detail:"연결 상태를 불러오지 못했습니다" });
@@ -592,9 +635,7 @@ function connectionProposalText(proposals) {
 }
 async function proposeConnection(input) {
   const proposal = await request("/v1/connection-proposals", { method:"POST", body:JSON.stringify({ input }) });
-  if (proposal.status === "not_supported") {
-    return { text:"아직 지원되는 연결 항목에서 찾지 못했습니다. AI 연결에서 현재 연결할 수 있는 항목을 확인해 주세요.", proposal, openDialog:false };
-  }
+  if (proposal.status === "not_supported") return null;
   if (proposal.status === "rejected" && proposal.reason === "secret_like_input") {
     return { text:"연결 정보는 대화에 입력하지 마세요. AI 연결 화면에서 안전하게 입력해 주세요.", proposal, openDialog:true };
   }
@@ -706,27 +747,112 @@ function renderMemoryLedger(influence) {
   const entries = influence.entries || [];
   $("#ledger-list").innerHTML = entries.length ? entries.map(entry => {
     const active = entry.state === "applied";
-    return `<article class="ledger-row"><div><strong>${escape(entry.useState === "answer_anchor" ? "답변 기준 영향" : "검토된 맥락")}</strong><p>${escape(entry.traceRef || entry.taskPacketId || entry.id)}</p></div><div class="ledger-actions"><span class="state-pill ${active ? "ok" : "warn"}">${escape(active ? "적용 중" : "되돌림")}</span>${active ? `<button class="rollback-button" type="button" data-rollback="${escape(entry.id)}">되돌리기</button>` : ""}</div></article>`;
+    return `<article class="ledger-row"><div><strong>${escape(entry.useState === "answer_anchor" ? "답변 기준으로 사용" : "참고 맥락으로 사용")}</strong><p>${escape(active ? "승인된 범위에서 다음 행동에 영향을 줍니다." : "다음 행동에 더 이상 사용하지 않습니다.")}</p></div><div class="ledger-actions"><span class="state-pill ${active ? "ok" : "warn"}">${escape(active ? "사용 중" : "되돌림")}</span>${active ? `<button class="rollback-button" type="button" data-rollback="${escape(entry.id)}">되돌리기</button>` : ""}</div></article>`;
   }).join("") : `<p class="empty-ledger">아직 다음 행동에 영향을 주는 승인된 맥락이 없습니다.</p>`;
   $("#ledger-list").querySelectorAll("button[data-rollback]").forEach(button => button.addEventListener("click", () => rollbackInfluence(button.dataset.rollback)));
 }
 function renderMemoryCandidates(memoryWiki) {
   const entries = memoryWiki?.entries || [];
-  $("#memory-candidate-list").innerHTML = entries.length ? entries.map(entry => `<article class="ledger-row"><div><strong>${escape(entry.text.slice(0, 120))}</strong><p>${escape(entry.reviewState === "candidate" ? "검토 전 · 행동 영향 없음" : entry.reviewState === "reviewed" ? "검토됨 · 다음 사용 전 안전 확인" : "사용하지 않음")}</p></div><div class="ledger-actions"><span class="state-pill ${entry.reviewState === "reviewed" ? "ok" : "review"}">${escape(entry.reviewState === "candidate" ? "검토 필요" : entry.reviewState === "reviewed" ? "검토됨" : "거절됨")}</span>${entry.reviewState === "candidate" ? `<div><button class="rollback-button" type="button" data-memory-review="${escape(entry.id)}" data-decision="reviewed">승인</button> <button class="rollback-button" type="button" data-memory-review="${escape(entry.id)}" data-decision="rejected">거절</button></div>` : ""}</div></article>`).join("") : `<p class="empty-ledger">아직 검토할 기억 후보가 없습니다.</p>`;
+  $("#memory-candidate-list").innerHTML = entries.length ? entries.map(entry => {
+    const projectId = entry.projectId || active()?.projectId || "";
+    const candidate = entry.reviewState === "candidate";
+    const options = [`<option value="session" ${entry.scopeLevel === "session" ? "selected" : ""}>이 대화에서만</option>`, projectId ? `<option value="project" ${entry.scopeLevel === "project" ? "selected" : ""}>이 프로젝트에서</option>` : "", `<option value="user_global" ${entry.scopeLevel === "user_global" ? "selected" : ""}>모든 대화에서</option>`].join("");
+    const stateLabel = candidate ? "확인 필요" : entry.reviewState === "reviewed" ? "승인됨" : "사용 안 함";
+    const detail = candidate ? "아직 답변 기준으로 사용하지 않습니다." : entry.reviewState === "reviewed" ? `${MEMORY_SCOPE_LABELS[entry.scopeLevel] || "승인된 범위"}에서 안전 확인 후 사용합니다.` : "다음 행동에 사용하지 않습니다.";
+    return `<article class="ledger-row memory-candidate-row"><div><strong>${escape(entry.text.slice(0, 160))}</strong><p>${escape(detail)}</p>${candidate ? `<label class="scope-control"><span>기억 범위</span><select data-memory-scope="${escape(entry.id)}" data-current-scope="${escape(entry.scopeLevel)}" data-project-id="${escape(projectId)}">${options}</select></label>` : ""}</div><div class="ledger-actions"><span class="state-pill ${entry.reviewState === "reviewed" ? "ok" : "review"}">${escape(stateLabel)}</span>${candidate ? `<div class="ledger-button-row"><button class="rollback-button" type="button" data-memory-review="${escape(entry.id)}" data-decision="reviewed">이 범위로 기억 승인</button><button class="rollback-button subtle-action" type="button" data-memory-review="${escape(entry.id)}" data-decision="rejected">사용하지 않음</button></div>` : ""}</div></article>`;
+  }).join("") : `<p class="empty-ledger">아직 확인할 기억이 없습니다.</p>`;
   $("#memory-candidate-list").querySelectorAll("button[data-memory-review]").forEach(button => button.addEventListener("click", () => reviewMemoryCandidate(button.dataset.memoryReview, button.dataset.decision)));
+  $("#memory-candidate-list").querySelectorAll("select[data-memory-scope]").forEach(select => select.addEventListener("change", () => requestMemoryScopeChange(select)));
+}
+async function persistMemoryScope(pending, approved) {
+  const body = { scopeLevel:pending.scopeLevel, approved, sessionId:pending.scopeLevel === "session" ? state.activeId : null, projectId:pending.scopeLevel === "project" ? pending.projectId : null };
+  await request(`/v1/memory-wiki/${encodeURIComponent(pending.memoryId)}/scope`, { method:"PATCH", body:JSON.stringify(body) });
+}
+async function requestMemoryScopeChange(select) {
+  const pending = { memoryId:select.dataset.memoryScope, currentScope:select.dataset.currentScope, scopeLevel:select.value, projectId:select.dataset.projectId || null };
+  if (pending.scopeLevel === pending.currentScope) return;
+  if (MEMORY_SCOPE_RANK[pending.scopeLevel] > MEMORY_SCOPE_RANK[pending.currentScope]) {
+    state.pendingMemoryScope = pending;
+    $("#memory-scope-detail").textContent = `${MEMORY_SCOPE_LABELS[pending.currentScope]}에만 쓰던 기억을 ${MEMORY_SCOPE_LABELS[pending.scopeLevel]}에서 참고할 수 있게 합니다. 범위를 넓혀도 현재 요청보다 우선하지 않습니다.`;
+    $("#memory-scope-status").textContent = "";
+    $("#memory-scope-dialog").showModal();
+    return;
+  }
+  $("#memory-status").textContent = "기억 범위를 좁히고 있습니다.";
+  try { await persistMemoryScope(pending, false); $("#memory-status").textContent = `${MEMORY_SCOPE_LABELS[pending.scopeLevel]}에서만 사용하도록 변경했습니다.`; await refreshMemoryLedger(); }
+  catch { $("#memory-status").textContent = "기억 범위를 변경하지 못했습니다."; renderMemoryCandidates(state.memoryWiki); }
 }
 async function reviewMemoryCandidate(id, decision) {
-  $("#memory-status").textContent = "기억 후보의 사용 경계를 저장하고 있습니다.";
+  $("#memory-status").textContent = "기억의 사용 범위를 저장하고 있습니다.";
   try { await request(`/v1/memory-wiki/${encodeURIComponent(id)}/review`, { method:"POST", body:JSON.stringify({ decision, durablePromotion: decision === "reviewed" }) }); $("#memory-status").textContent = decision === "reviewed" ? "승인했습니다. 관련 대화에서 안전성이 확인된 뒤 사용됩니다." : "이 후보는 다음 행동에 사용하지 않습니다."; await refreshMemoryLedger(); }
-  catch { $("#memory-status").textContent = "기억 후보 상태를 저장하지 못했습니다."; }
+  catch { $("#memory-status").textContent = "기억 상태를 저장하지 못했습니다."; }
 }
 async function refreshMemoryLedger() {
-  const [influence, memoryWiki] = await Promise.all([request("/v1/context-influence"), request("/v1/memory-wiki")]);
+  const [influence, memoryWiki, growth] = await Promise.all([request("/v1/context-influence"), request("/v1/memory-wiki"), request("/v1/growth/surface")]);
   state.influence = influence;
   state.memoryWiki = memoryWiki;
+  state.growth = growth;
   renderMemoryLedger(influence);
   renderMemoryCandidates(memoryWiki);
+  renderGrowthSurface(growth);
   setCard("memory", memoryOverview(influence));
+  ensurePendingGrowthReplays(growth);
+}
+
+const GROWTH_STATE_LABELS = { checking:"안전 검증 중", ready_for_approval:"검증 통과", ready_to_apply:"적용 대기", observing:"제한 적용 중", not_improved:"개선 확인 안 됨", rejected:"사용하지 않음", rolled_back:"되돌림" };
+function growthActionMarkup(item) {
+  if (item.state === "ready_for_approval" || item.state === "ready_to_apply") return `<button class="rollback-button" type="button" data-growth-approve="${escape(item.proposalId)}">${item.state === "ready_to_apply" ? "적용 재개" : "검토"}</button>${item.state === "ready_for_approval" ? `<button class="rollback-button subtle-action" type="button" data-growth-reject="${escape(item.proposalId)}">사용하지 않음</button>` : ""}`;
+  if (item.state === "observing" && item.mutationId) return `<button class="rollback-button" type="button" data-growth-rollback="${escape(item.mutationId)}">되돌리기</button>`;
+  return "";
+}
+function growthRowMarkup(item) {
+  const detail = item.state === "observing" && item.expiresAt ? `${item.reason} ${new Date(item.expiresAt).toLocaleString("ko-KR")}까지 관찰합니다.` : item.reason;
+  return `<article class="growth-row"><div><strong>${escape(item.title)}</strong><p>${escape(detail)}</p><small>${escape(MEMORY_SCOPE_LABELS[item.scope] || "제한된 범위")}</small></div><div class="growth-actions"><span class="state-pill ${["ready_for_approval","ready_to_apply","observing"].includes(item.state) ? "ok" : "review"}">${escape(GROWTH_STATE_LABELS[item.state] || "확인 중")}</span>${growthActionMarkup(item)}</div></article>`;
+}
+function bindGrowthActions(root) {
+  root.querySelectorAll("[data-growth-approve]").forEach(button => button.addEventListener("click", () => openGrowthApproval(button.dataset.growthApprove)));
+  root.querySelectorAll("[data-growth-reject]").forEach(button => button.addEventListener("click", () => rejectGrowth(button.dataset.growthReject)));
+  root.querySelectorAll("[data-growth-rollback]").forEach(button => button.addEventListener("click", () => rollbackGrowth(button.dataset.growthRollback)));
+}
+function renderGrowthSurface(growth = state.growth) {
+  const items = growth?.items || [];
+  const markup = items.length ? items.map(growthRowMarkup).join("") : `<p class="empty-ledger">아직 검토할 개선 원리가 없습니다.</p>`;
+  $("#growth-panel-list").innerHTML = markup;
+  $("#growth-dialog-list").innerHTML = markup;
+  const attention = items.filter(item => ["ready_for_approval","ready_to_apply"].includes(item.state)).length;
+  $("#growth-attention").textContent = attention ? `확인 ${attention}개` : "";
+  bindGrowthActions($("#growth-panel-list"));
+  bindGrowthActions($("#growth-dialog-list"));
+}
+function ensurePendingGrowthReplays(growth = state.growth) {
+  for (const item of growth?.items || []) {
+    if (item.state !== "checking" || state.growthReplayInflight.has(item.proposalId)) continue;
+    state.growthReplayInflight.add(item.proposalId);
+    request(`/v1/growth/proposals/${encodeURIComponent(item.proposalId)}/replay`, { method:"POST", body:"{}" })
+      .then(result => { if (result.surface) showSurfaceEvent(result.surface, { displaySessionId:state.activeId }); return request("/v1/growth/surface"); })
+      .then(next => { state.growth = next; renderGrowthSurface(next); })
+      .catch(() => { $("#growth-panel-status").textContent = "개선 여부를 다시 확인할 예정입니다."; })
+      .finally(() => state.growthReplayInflight.delete(item.proposalId));
+  }
+}
+function openGrowthApproval(proposalId) {
+  const item = state.growth?.items?.find(entry => entry.proposalId === proposalId);
+  if (!item) return;
+  state.pendingGrowthApproval = item;
+  $("#growth-approval-detail").textContent = `${item.title} 원리를 검증된 범위에서만 적용하고 24시간 동안 관찰합니다.`;
+  $("#growth-approval-scope").textContent = MEMORY_SCOPE_LABELS[item.scope] || "제한된 범위";
+  $("#growth-approval-status").textContent = "";
+  $("#growth-approval-dialog").showModal();
+}
+async function rejectGrowth(proposalId) {
+  $("#growth-panel-status").textContent = "이 개선 원리를 사용하지 않도록 저장하고 있습니다.";
+  try { await request(`/v1/growth/proposals/${encodeURIComponent(proposalId)}/review`, { method:"POST", body:JSON.stringify({ approved:false }) }); await refreshMemoryLedger(); $("#growth-panel-status").textContent = "이 개선 원리는 적용하지 않습니다."; }
+  catch { $("#growth-panel-status").textContent = "변경을 저장하지 못했습니다."; }
+}
+async function rollbackGrowth(mutationId) {
+  $("#growth-panel-status").textContent = "적용 전 상태로 되돌리고 있습니다.";
+  try { const result = await request(`/v1/growth/mutations/${encodeURIComponent(mutationId)}/rollback`, { method:"POST", body:JSON.stringify({ approved:true, reason:"user_requested_from_surface" }) }); if (result.surface) showSurfaceEvent(result.surface, { displaySessionId:state.activeId }); await refreshMemoryLedger(); $("#growth-panel-status").textContent = "적용 전 상태로 안전하게 되돌렸습니다."; }
+  catch { $("#growth-panel-status").textContent = "되돌림을 완료하지 못했습니다. 복구 화면에서 다시 확인해 주세요."; }
 }
 async function rollbackInfluence(id) {
   $("#memory-status").textContent = "영향을 되돌리고 있습니다.";
@@ -847,6 +973,44 @@ $("#memory").addEventListener("click", async () => {
 });
 $("#memory-card").addEventListener("click", () => $("#memory").click());
 $("#close-memory").addEventListener("click", () => $("#memory-dialog").close());
+$("#cancel-memory-scope").addEventListener("click", () => { state.pendingMemoryScope = null; $("#memory-scope-dialog").close(); renderMemoryCandidates(state.memoryWiki); });
+$("#confirm-memory-scope").addEventListener("click", async () => {
+  const pending = state.pendingMemoryScope;
+  if (!pending) return;
+  $("#confirm-memory-scope").disabled = true;
+  $("#memory-scope-status").textContent = "기억 범위를 변경하고 있습니다.";
+  try {
+    await persistMemoryScope(pending, true);
+    $("#memory-scope-dialog").close();
+    state.pendingMemoryScope = null;
+    await refreshMemoryLedger();
+    $("#memory-status").textContent = `${MEMORY_SCOPE_LABELS[pending.scopeLevel]}에서 참고할 수 있도록 변경했습니다. 사용 전 승인은 다시 확인합니다.`;
+  } catch { $("#memory-scope-status").textContent = "범위를 변경하지 못했습니다."; }
+  finally { $("#confirm-memory-scope").disabled = false; }
+});
+$("#cancel-growth-approval").addEventListener("click", () => { state.pendingGrowthApproval = null; $("#growth-approval-dialog").close(); });
+$("#confirm-growth-approval").addEventListener("click", async () => {
+  const item = state.pendingGrowthApproval;
+  if (!item) return;
+  const button = $("#confirm-growth-approval");
+  button.disabled = true;
+  $("#growth-approval-status").textContent = "승인된 범위에 적용하고 있습니다.";
+  try {
+    if (item.proposalStatus === "review_required") await request(`/v1/growth/proposals/${encodeURIComponent(item.proposalId)}/review`, { method:"POST", body:JSON.stringify({ approved:true }) });
+    const result = await request(`/v1/growth/proposals/${encodeURIComponent(item.proposalId)}/apply`, { method:"POST", body:JSON.stringify({ approved:true, replayResultId:item.replayResultId, ttlMs:86400000 }) });
+    if (result.surface) showSurfaceEvent(result.surface, { displaySessionId:state.activeId });
+    $("#growth-approval-dialog").close();
+    state.pendingGrowthApproval = null;
+    await refreshMemoryLedger();
+    $("#growth-panel-status").textContent = "제한된 범위에 적용했습니다. 언제든 되돌릴 수 있습니다.";
+  } catch (error) {
+    if (error.code === "growth_replay_baseline_changed") {
+      $("#growth-approval-status").textContent = "작업 환경이 달라져 개선 여부를 다시 확인하고 있습니다.";
+      state.growthReplayInflight.delete(item.proposalId);
+      ensurePendingGrowthReplays({ items:[{ ...item, state:"checking" }] });
+    } else $("#growth-approval-status").textContent = error.message || "적용하지 못했습니다.";
+  } finally { button.disabled = false; }
+});
 $("#status").addEventListener("click", async () => {
   $("#recovery-dialog").showModal();
   $("#recovery-status").textContent = "";

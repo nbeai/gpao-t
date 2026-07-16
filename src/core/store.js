@@ -8,6 +8,7 @@ import { channelIdentityDigest, messengerSessionKind, normalizeChannelIdentity }
 import { verifyResponseDocument } from "./response-document.js";
 import { createSurfaceEvent } from "./surface-event.js";
 import { approveGrowthProposal, createCanaryMutation, requestCanaryRollback, verifyCanaryRollback } from "./growth-engine.js";
+import { MEMORY_SCOPE_ORDER } from "./mct-contract.js";
 
 const CURRENT_SCHEMA_VERSION = 14;
 const LEGACY_DATABASE_FILES = ["runtime.sqlite"];
@@ -15,6 +16,24 @@ const TELEMETRY_STAGES = new Set(["accepted", "dispatching", "responding", "comp
 
 function digest(value) {
   return crypto.createHash("sha256").update(value).digest("hex");
+}
+
+function publicMemorySourceKind(source) {
+  const value = String(source || "").toLowerCase();
+  if (/(?:owner|user|explicit)/.test(value)) return "owner";
+  if (/(?:conversation|workspace|session|chat)/.test(value)) return "conversation";
+  if (/(?:document|file|tool|web)/.test(value)) return "document";
+  return "memory";
+}
+
+function publicGrowthTitle(detail = {}) {
+  const keys = Object.keys(detail.proposedChange || {});
+  const capacity = keys.some(key => ["maxAnchors", "maxSupporting"].includes(key));
+  const relevance = keys.some(key => ["relevanceThreshold", "anchorThreshold"].includes(key));
+  if (capacity && relevance) return "기억 선택 기준을 더 정확하게 조정";
+  if (capacity) return "답변에 사용하는 기억의 양을 조정";
+  if (relevance) return "관련성이 낮은 기억을 더 엄격하게 제외";
+  return "반복된 작업 원리를 안전하게 개선";
 }
 
 function json(value) {
@@ -614,7 +633,26 @@ export class StateStore {
   getWorkspace(sessionId, principalId) {
     const row = this.db.prepare("SELECT * FROM session_workspaces WHERE session_id = ? AND principal_id = ? AND deleted = 0").get(sessionId, principalId);
     if (!row) return null;
-    const messages = this.db.prepare("SELECT message_id, role, text, trace_ref, created_at FROM workspace_messages WHERE session_id = ? ORDER BY rowid").all(sessionId).map(message => ({ messageId: message.message_id, role: message.role, text: message.text, traceRef: message.trace_ref, createdAt: message.created_at }));
+    const provenanceQuery = this.db.prepare(`
+      SELECT i.response_document_id, i.role, w.source, w.scope_level
+      FROM mct_response_influences i
+      JOIN mct_admission_decisions d ON d.decision_id = i.decision_id
+      LEFT JOIN memory_wiki w ON w.memory_id = d.source_candidate_id
+      WHERE d.task_packet_id = ?
+      ORDER BY i.created_at, i.influence_id
+    `);
+    const messages = this.db.prepare("SELECT message_id, role, text, trace_ref, created_at FROM workspace_messages WHERE session_id = ? ORDER BY rowid").all(sessionId).map(message => {
+      const provenanceRows = message.role === "assistant" && message.trace_ref ? provenanceQuery.all(message.trace_ref) : [];
+      const sources = provenanceRows.map(item => ({ sourceKind: publicMemorySourceKind(item.source), scope: item.scope_level || "session", role: item.role }));
+      return {
+        messageId: message.message_id,
+        role: message.role,
+        text: message.text,
+        traceRef: message.trace_ref,
+        createdAt: message.created_at,
+        provenance: sources.length ? { responseDocumentId: provenanceRows[0].response_document_id, usedCount: sources.length, sources } : null
+      };
+    });
     return { schema: "gpao_t3.session_workspace.v1", ...this.workspaceRecord(row), messages };
   }
 
@@ -852,6 +890,26 @@ export class StateStore {
     return this.getMemoryRecord(memoryId);
   }
 
+  updateMemoryScope(memoryId, { ownerId, scopeLevel, sessionId = null, projectId = null, approved = false } = {}) {
+    const memory = this.getMemoryRecord(memoryId);
+    if (!memory || memory.userId !== ownerId) throw new RuntimeError("memory_not_found", "범위를 바꿀 기억 후보를 찾을 수 없습니다.", 404);
+    if (memory.promotionState !== "candidate") throw new RuntimeError("memory_scope_change_blocked", "이미 사용 중인 기억은 먼저 영향을 되돌려야 범위를 바꿀 수 있습니다.", 409);
+    if (!["session", "project", "user_global"].includes(scopeLevel)) throw new RuntimeError("memory_scope_invalid", "기억 범위가 올바르지 않습니다.", 400);
+    const currentRank = MEMORY_SCOPE_ORDER.indexOf(memory.scopeLevel);
+    const nextRank = MEMORY_SCOPE_ORDER.indexOf(scopeLevel);
+    if (nextRank > currentRank && approved !== true) throw new RuntimeError("memory_scope_approval_required", "기억 범위를 넓히려면 사용자의 명시적 승인이 필요합니다.", 409);
+    if (scopeLevel === "session" && !sessionId) throw new RuntimeError("memory_scope_required", "대화 범위에는 현재 대화가 필요합니다.", 400);
+    if (scopeLevel === "project" && !projectId) throw new RuntimeError("memory_scope_required", "프로젝트 범위에는 프로젝트가 필요합니다.", 400);
+    const now = Date.now();
+    this.db.prepare(`
+      UPDATE memory_wiki
+      SET scope_level = ?, session_id = ?, project_id = ?, review_state = 'candidate', replay_state = 'pending',
+          authority_decision_id = NULL, authority_decision_class = NULL, authority_principal_id = NULL, authority_scope = NULL, updated_at = ?
+      WHERE memory_id = ?
+    `).run(scopeLevel, scopeLevel === "session" ? sessionId : null, scopeLevel === "project" ? projectId : null, now, memoryId);
+    return this.getMemoryRecord(memoryId);
+  }
+
   promoteMemory(memoryId, { replayPassed, replayScore = 1 } = {}) {
     const memory = this.getMemoryRecord(memoryId);
     if (!memory) throw new RuntimeError("memory_not_found", "승격할 기억 후보를 찾을 수 없습니다.", 404);
@@ -868,12 +926,18 @@ export class StateStore {
     return { id: row.influence_id, state: row.state, sourceCandidateId: row.source_memory_id, text: row.text, traceRef: row.trace_ref, scope: { level: row.scope_level, sessionId: row.session_id || null, projectId: row.project_id, userId: row.user_id, channelId: row.channel_id }, authorityDecisionId: row.authority_decision_id, sourceResolved: Boolean(row.source_exists) && row.source_invalidated_at == null, sourceInvalidated: row.source_invalidated_at != null, replayScore: row.replay_score, rollbackToken: row.rollback_token, createdAt: row.created_at, appliedAt: row.applied_at, rolledBackAt: row.rolled_back_at, rollbackReason: row.rollback_reason };
   }
 
-  listContextInfluences() { return this.db.prepare("SELECT c.*, w.memory_id AS source_exists, w.invalidated_at AS source_invalidated_at FROM context_influences c LEFT JOIN memory_wiki w ON w.memory_id = c.source_memory_id ORDER BY c.applied_at DESC").all().map(row => this.contextInfluenceRecord(row)); }
+  listContextInfluences(ownerId = null) {
+    const base = "SELECT c.*, w.memory_id AS source_exists, w.invalidated_at AS source_invalidated_at FROM context_influences c LEFT JOIN memory_wiki w ON w.memory_id = c.source_memory_id";
+    const rows = ownerId ? this.db.prepare(`${base} WHERE c.user_id = ? ORDER BY c.applied_at DESC`).all(ownerId) : this.db.prepare(`${base} ORDER BY c.applied_at DESC`).all();
+    return rows.map(row => this.contextInfluenceRecord(row));
+  }
 
-  rollbackContextInfluence(influenceId, reason) {
+  rollbackContextInfluence(influenceId, reason, ownerId = null) {
     const now = Date.now();
-    const changed = this.db.prepare("UPDATE context_influences SET state = 'rolled_back', rolled_back_at = ?, rollback_reason = ? WHERE influence_id = ? AND state = 'applied'").run(now, reason, influenceId);
-    const row = this.db.prepare("SELECT * FROM context_influences WHERE influence_id = ?").get(influenceId);
+    const changed = ownerId
+      ? this.db.prepare("UPDATE context_influences SET state = 'rolled_back', rolled_back_at = ?, rollback_reason = ? WHERE influence_id = ? AND user_id = ? AND state = 'applied'").run(now, reason, influenceId, ownerId)
+      : this.db.prepare("UPDATE context_influences SET state = 'rolled_back', rolled_back_at = ?, rollback_reason = ? WHERE influence_id = ? AND state = 'applied'").run(now, reason, influenceId);
+    const row = ownerId ? this.db.prepare("SELECT * FROM context_influences WHERE influence_id = ? AND user_id = ?").get(influenceId, ownerId) : this.db.prepare("SELECT * FROM context_influences WHERE influence_id = ?").get(influenceId);
     if (changed.changes === 1 && row) this.db.prepare("UPDATE memory_wiki SET promotion_state = 'rolled_back', updated_at = ? WHERE memory_id = ?").run(now, row.source_memory_id);
     return { rolledBack: changed.changes === 1, entry: row ? this.contextInfluenceRecord(this.db.prepare("SELECT * FROM context_influences WHERE influence_id = ?").get(influenceId)) : null };
   }
@@ -902,6 +966,40 @@ export class StateStore {
       ? this.db.prepare("SELECT proposal_json FROM mct_growth_proposals WHERE owner_id = ? AND status = ? ORDER BY updated_at DESC LIMIT ?").all(ownerId, status, Math.min(100, limit))
       : this.db.prepare("SELECT proposal_json FROM mct_growth_proposals WHERE owner_id = ? ORDER BY updated_at DESC LIMIT ?").all(ownerId, Math.min(100, limit));
     return { schema: "gpao_t3.growth_proposals.v1", proposals: rows.map(row => JSON.parse(row.proposal_json).record) };
+  }
+
+  growthSurfaceStatus(ownerId, { limit = 100 } = {}) {
+    const rows = this.db.prepare("SELECT proposal_json FROM mct_growth_proposals WHERE owner_id = ? ORDER BY updated_at DESC LIMIT ?").all(ownerId, Math.min(100, limit));
+    const replayQuery = this.db.prepare("SELECT result_json FROM mct_replay_results WHERE proposal_id = ? ORDER BY created_at DESC, rowid DESC LIMIT 1");
+    const mutationQuery = this.db.prepare("SELECT mutation_json FROM mct_mutation_ledger WHERE proposal_id = ? ORDER BY created_at DESC, rowid DESC LIMIT 1");
+    const items = rows.map(row => {
+      const proposal = JSON.parse(row.proposal_json);
+      const replayRow = replayQuery.get(proposal.record.id);
+      const replay = replayRow ? JSON.parse(replayRow.result_json) : null;
+      const mutationRow = mutationQuery.get(proposal.record.id);
+      const mutation = mutationRow ? JSON.parse(mutationRow.mutation_json) : null;
+      const receipt = mutation ? this.getRollbackReceiptBundle(mutation.record.rollbackReceiptId) : null;
+      const mutationState = mutation?.record?.state || null;
+      const state = mutationState === "canary" ? "observing"
+        : mutationState === "rolled_back" ? "rolled_back"
+          : proposal.record.status === "rejected" ? "rejected"
+            : replay?.record?.passed === true ? (proposal.record.status === "approved" ? "ready_to_apply" : "ready_for_approval")
+              : replay ? "not_improved" : "checking";
+      return {
+        proposalId: proposal.record.id,
+        title: publicGrowthTitle(proposal.detail),
+        reason: `같은 교정이나 실패가 ${proposal.detail.recurrenceCount}번 확인되었습니다.`,
+        scope: proposal.record.scope.level,
+        proposalStatus: proposal.record.status,
+        state,
+        replayResultId: replay?.record?.id || null,
+        replayPassed: replay?.record?.passed === true,
+        mutationId: mutation?.record?.id || null,
+        expiresAt: mutation?.record?.expiresAt || null,
+        rollbackVerified: receipt?.record?.verified === true
+      };
+    });
+    return { schema: "gpao_t3.growth_surface.v1", items };
   }
 
   saveGrowthReplayResult(bundle) {
@@ -1343,6 +1441,13 @@ export class StateStore {
       throw new RuntimeError("surface_event_sequence_conflict", "Surface event sequence already refers to a different event", 409);
     }
     return { eventId: event.eventId, cursor: `${event.turnId}:${event.sequence}`, deduplicated: false };
+  }
+
+  appendAuxiliarySurfaceEvent(principalId, input) {
+    const sequence = (this.db.prepare("SELECT MAX(turn_sequence) AS value FROM surface_event_journal WHERE principal_id = ? AND turn_id = ?").get(principalId, input.turnId)?.value || 0) + 1;
+    const event = createSurfaceEvent({ ...input, sequence, correlationId: input.correlationId || input.turnId });
+    this.appendSurfaceEvent(principalId, event);
+    return event;
   }
 
   replaySurfaceEvents(principalId, turnId, afterSequence = 0, limit = 256) {
