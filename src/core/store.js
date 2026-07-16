@@ -86,6 +86,31 @@ function cosine(left, right) {
   return left.reduce((sum, number, index) => sum + number * (right[index] || 0), 0);
 }
 
+const KOREAN_WORK_CONCEPTS = Object.freeze({
+  core_first: ["핵심", "요점", "결론", "먼저", "앞에", "우선"],
+  detail_reason: ["세부", "상세", "근거", "이유", "설명"],
+  external_share: ["외부", "밖으로", "공유", "보내기", "전송"],
+  personal_identity: ["개인", "사람", "식별", "알아볼", "누구인지"],
+  remove_redact: ["제거", "지운", "삭제", "가림", "비식별"],
+  approval_permission: ["승인", "허가", "동의", "확인받"],
+  restore_recover: ["복구", "되돌", "회복", "롤백"],
+  preserve_store: ["보존", "보관", "저장", "남겨"]
+});
+
+function koreanWorkConcepts(value) {
+  const normalized = searchText(value).replaceAll(" ", "");
+  return Object.entries(KOREAN_WORK_CONCEPTS)
+    .filter(([, variants]) => variants.some(variant => normalized.includes(variant.replaceAll(" ", ""))))
+    .map(([concept]) => concept);
+}
+
+function koreanConceptScore(query, text) {
+  const queryConcepts = koreanWorkConcepts(query);
+  if (!queryConcepts.length) return 0;
+  const textConcepts = new Set(koreanWorkConcepts(text));
+  return queryConcepts.filter(concept => textConcepts.has(concept)).length / queryConcepts.length;
+}
+
 function editDistance(left, right) {
   const previous = Array.from({ length: right.length + 1 }, (_, index) => index);
   const beforePrevious = [...previous];
@@ -748,7 +773,7 @@ export class StateStore {
     const queryVector = localVector(query);
     const candidates = new Map();
     const collect = (rows, key, valueFor = (_, index) => 1 / (index + 1)) => rows.forEach((row, index) => {
-      const current = candidates.get(row.memory_id) || { row, lexical: 0, fuzzy: 0, vector: 0 };
+      const current = candidates.get(row.memory_id) || { row, lexical: 0, fuzzy: 0, vector: 0, concept: 0 };
       current[key] = valueFor(row, index);
       candidates.set(row.memory_id, current);
     });
@@ -762,18 +787,30 @@ export class StateStore {
       const sql = `SELECT w.*, p.vector_json, bm25(memory_vector_fts) AS rank FROM memory_vector_fts JOIN memory_wiki w ON w.memory_id = memory_vector_fts.memory_id JOIN memory_vector_projection p ON p.memory_id = w.memory_id WHERE memory_vector_fts MATCH ? ${scopeSql} ORDER BY rank LIMIT ?`;
       const rows = this.db.prepare(sql).all(vectorQuery, ...scopeArgs, candidateLimit);
       rows.forEach((row, index) => {
-        const current = candidates.get(row.memory_id) || { row, lexical: 0, fuzzy: 0, vector: 0 };
+        const current = candidates.get(row.memory_id) || { row, lexical: 0, fuzzy: 0, vector: 0, concept: 0 };
         current.fuzzy = Math.max((1 / (index + 1)) * 0.25, fuzzyTokenScore(query, row.text));
         current.vector = Math.max(0, cosine(queryVector, JSON.parse(row.vector_json)));
         candidates.set(row.memory_id, current);
       });
     }
+    const queryConcepts = koreanWorkConcepts(query);
+    if (queryConcepts.length && performance.now() - started <= budgetMs) {
+      const variants = [...new Set(queryConcepts.flatMap(concept => KOREAN_WORK_CONCEPTS[concept]))];
+      const clauses = variants.map(() => "lower(w.text) LIKE ?").join(" OR ");
+      const rows = this.db.prepare(`SELECT w.* FROM memory_wiki w WHERE (${clauses}) ${scopeSql} ORDER BY w.updated_at DESC LIMIT ?`)
+        .all(...variants.map(variant => `%${variant.toLowerCase()}%`), ...scopeArgs, candidateLimit);
+      rows.forEach(row => {
+        const current = candidates.get(row.memory_id) || { row, lexical: 0, fuzzy: 0, vector: 0, concept: 0 };
+        current.concept = Math.max(current.concept, koreanConceptScore(query, row.text));
+        candidates.set(row.memory_id, current);
+      });
+    }
     const now = Date.now();
-    const ranked = [...candidates.values()].map(({ row, lexical, fuzzy, vector }) => {
+    const ranked = [...candidates.values()].map(({ row, lexical, fuzzy, vector, concept }) => {
       const reviewed = row.review_state === "reviewed" ? 1 : 0;
       const freshness = Math.max(0, 1 - ((now - row.updated_at) / (365 * 24 * 60 * 60 * 1000)));
       const coverage = lexicalCoverage(query, row.text);
-      const score = lexical * 0.42 + coverage * 0.18 + fuzzy * 0.25 + vector * 0.08 + reviewed * 0.04 + freshness * 0.03;
+      const score = Math.min(1, lexical * 0.3 + coverage * 0.14 + fuzzy * 0.16 + vector * 0.04 + concept * 0.5 + reviewed * 0.04 + freshness * 0.03);
       const scope = row.scope_level === "project"
         ? { level: "project", turnId: null, sessionId: null, projectId: row.project_id, userId: null }
         : row.scope_level === "user_global"
@@ -789,7 +826,7 @@ export class StateStore {
       };
       return {
         id: row.memory_id, source: row.source, text: row.text.slice(0, 600), score, confidence: score,
-        scores: { lexical, lexicalCoverage: coverage, fuzzy, localVector: vector, reviewed: reviewed * 0.04, freshness: freshness * 0.03, combined: score },
+        scores: { lexical, lexicalCoverage: coverage, fuzzy, localVector: vector, localConcept: concept, reviewed: reviewed * 0.04, freshness: freshness * 0.03, combined: score },
         reason: "sqlite_fts5_hybrid", traceRef: row.trace_ref, sessionId: row.session_id, scopeLevel: row.scope_level, projectId: row.project_id, userId: row.user_id, channelId: row.channel_id,
         contradictionGroup: row.contradiction_group, supersedesMemoryId: row.supersedes_memory_id, invalidatedAt: row.invalidated_at,
         reviewed: Boolean(reviewed), allowedUse: reviewed ? "supporting_context" : "candidate_only", createdAt: row.created_at, updatedAt: row.updated_at,
@@ -803,26 +840,29 @@ export class StateStore {
     const numericFragments = String(query || "").match(/\d{3,}/g) || [];
     const topPreservesDistinctiveFragment = numericFragments.some(fragment => top?.text.toLowerCase().includes(fragment.toLowerCase()));
     const topHasRankingMargin = !runnerUp || top.score >= runnerUp.score * 1.08;
-    const selectionConfidence = item => item ? item.scores.lexicalCoverage * 0.5 + item.scores.fuzzy * 0.25 + item.scores.localVector * 0.25 : 0;
+    const selectionConfidence = item => item ? item.scores.lexicalCoverage * 0.45 + item.scores.fuzzy * 0.2 + item.scores.localVector * 0.15 + item.scores.localConcept * 0.2 : 0;
     const topSelectionConfidence = selectionConfidence(top);
     const topHasSemanticMargin = !runnerUp || topSelectionConfidence >= selectionConfidence(runnerUp) * 1.15;
+    const topHasConceptMargin = !runnerUp || top.scores.localConcept >= runnerUp.scores.localConcept + 0.2;
     const reviewedMatches = ranked.filter(item => item.reviewed && item.scores.lexicalCoverage >= 0.6);
     const selected = top?.scores.lexical > 0
       ? top.scores.lexicalCoverage >= 0.9
         ? ranked.filter(item => item.scores.lexical > 0 && (item.scores.lexicalCoverage >= 0.9 || reviewedMatches.some(reviewed => reviewed.id === item.id)))
         : top.scores.lexicalCoverage >= 0.6 && ranked.length <= 3
           ? [top, ...reviewedMatches.filter(item => item.id !== top.id)]
-          : numericFragments.length === 0 && topSelectionConfidence >= 0.28 && topHasSemanticMargin
+          : numericFragments.length === 0 && top.scores.localConcept >= 0.6 && (topHasConceptMargin || topHasSemanticMargin)
             ? [top, ...reviewedMatches.filter(item => item.id !== top.id)]
             : reviewedMatches
-      : top?.scores.fuzzy >= 0.75 && (topPreservesDistinctiveFragment || topHasRankingMargin)
+      : top?.scores.localConcept >= 0.6 && (topHasConceptMargin || topHasSemanticMargin)
+        ? [top]
+      : top?.scores.fuzzy >= 0.75 && (topPreservesDistinctiveFragment || (top.scores.lexicalCoverage >= 0.5 && topHasRankingMargin))
         ? [top]
         : [];
     const elapsedMs = performance.now() - started;
     return {
       schema: "gpao_t3.memory_search_result.v1", results: selected.slice(0, boundedLimit),
       degraded: elapsedMs > budgetMs ? "latency_budget_exceeded" : null, elapsedMs,
-      receipt: { mode: "sqlite_fts5_lexical_fuzzy_local_vector", semanticAvailable: false, vectorAlgorithm: "char_trigram_hash_v1", vectorDimensions: 64, lexicalCandidates: [...candidates.values()].filter(value => value.lexical > 0).length, fuzzyCandidates: [...candidates.values()].filter(value => value.fuzzy > 0).length, localVectorCandidates: [...candidates.values()].filter(value => value.vector > 0).length, candidateCount: candidates.size, selectedCount:selected.length, selection: { topScores:top?.scores || null, topConfidence:topSelectionConfidence, runnerConfidence:selectionConfidence(runnerUp), semanticMargin:topHasSemanticMargin }, limit: boundedLimit }
+      receipt: { mode: "sqlite_fts5_lexical_fuzzy_local_vector", semanticAvailable: false, semanticFallback: "korean_work_concepts_v1", vectorAlgorithm: "char_trigram_hash_v1", vectorDimensions: 64, lexicalCandidates: [...candidates.values()].filter(value => value.lexical > 0).length, fuzzyCandidates: [...candidates.values()].filter(value => value.fuzzy > 0).length, localVectorCandidates: [...candidates.values()].filter(value => value.vector > 0).length, localConceptCandidates: [...candidates.values()].filter(value => value.concept > 0).length, candidateCount: candidates.size, selectedCount:selected.length, selection: { topScores:top?.scores || null, topConfidence:topSelectionConfidence, runnerConfidence:selectionConfidence(runnerUp), semanticMargin:topHasSemanticMargin }, limit: boundedLimit }
     };
   }
 

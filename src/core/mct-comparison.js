@@ -11,9 +11,9 @@ export function estimateContextTokens(text) {
 export function summarizeRetrieval(cases, observations) {
   const byId = new Map(observations.map(item => [item.caseId, item]));
   const positive = cases.filter(item => item.shouldFind && item.gate !== false);
-  const restraint = cases.filter(item => item.kind === "no_result");
+  const restraint = cases.filter(item => !item.shouldFind && item.kind !== "cross_session");
   const isolation = cases.filter(item => item.kind === "cross_session");
-  const semantic = cases.filter(item => item.kind === "semantic");
+  const semantic = cases.filter(item => item.shouldFind && item.kind.includes("semantic"));
   let reciprocalRank = 0;
   let correct = 0;
   let contextTokens = 0;

@@ -39,16 +39,39 @@ test("MCT-R5 scorer separates recall, restraint, leakage, latency, and token eff
   assert.equal(estimateContextTokens("가나다"), 3);
 });
 
+test("MCT-R5 scorer recognizes sealed semantic and negative case families", () => {
+  const fixtures = [
+    { id:"semantic", kind:"semantic_paraphrase", expectedMarker:"a", shouldFind:true },
+    { id:"common", kind:"common_no_result", expectedMarker:null, shouldFind:false },
+    { id:"number", kind:"numeric_collision_no_result", expectedMarker:null, shouldFind:false }
+  ];
+  const summary = summarizeRetrieval(fixtures, [
+    { caseId:"semantic", markers:["a"], contextText:"a", latencyMs:1 },
+    { caseId:"common", markers:["wrong"], contextText:"wrong", latencyMs:1 },
+    { caseId:"number", markers:[], contextText:"", latencyMs:1 }
+  ]);
+  assert.equal(summary.semanticRecallAt5, 1);
+  assert.equal(summary.noResultRestraint, 0.5);
+});
+
 test("MCT-R5 reinforced retrieval returns useful context without low-confidence flooding", () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "gpao-t3-mct-r5-restraint-")); const store = new StateStore(dir);
   try {
     store.transaction(() => createMctR5Corpus().forEach(item => store.addMemoryCandidate({ id:item.id, text:item.text, source:"mct_r5", traceRef:`trace:${item.id}`, sessionId:item.sessionId, userId:"owner:r5", scopeLevel:"session" })));
+    store.addMemoryCandidate({ id:"mct-r5-sealed-0205", text:"r5rec0205 복잡한 설명은 핵심 결론을 먼저 제시한 뒤 세부 근거를 덧붙인다", source:"mct_r5", traceRef:"trace:0205", sessionId:"session-a", userId:"owner:r5", scopeLevel:"session" });
+    store.addMemoryCandidate({ id:"mct-r5-sealed-0206", text:"r5rec0206 외부 공유 전에는 문서에서 개인을 식별할 수 있는 정보를 제거한다", source:"mct_r5", traceRef:"trace:0206", sessionId:"session-a", userId:"owner:r5", scopeLevel:"session" });
+    store.addMemoryCandidate({ id:"mct-r5-sealed-0208", text:"r5rec0208 검은파도일지의 열람 책임자는 도윤이다", source:"mct_r5", traceRef:"trace:0208", sessionId:"session-b", userId:"owner:r5", scopeLevel:"session" });
+    store.addMemoryCandidate({ id:"mct-r5-sealed-0209", text:"r5rec0209 구름다리요청함의 긴급문의 책임자는 하린이다", source:"mct_r5", traceRef:"trace:0209", sessionId:"session-a", userId:"owner:r5", scopeLevel:"session" });
     const search = query => store.searchMemory(query, { sessionId:"session-a", userId:"owner:r5", limit:5, budgetMs:250 }).results;
     assert.deepEqual(search("r5rec0001").map(item => item.id), ["mct-r5-0001"]);
     assert.deepEqual(search("r5rc0011").map(item => item.id), ["mct-r5-0011"]);
     assert.deepEqual(search("해오름결재규칙").map(item => item.id), ["mct-r5-0104"]);
     assert.deepEqual(search("예전 정보보다 방금 부탁한 일을 우선해").map(item => item.id), ["mct-r5-0031"]);
+    assert.deepEqual(search("상세한 이유를 설명하기 전에 요점을 앞에 배치한다").map(item => item.id), ["mct-r5-sealed-0205"]);
+    assert.deepEqual(search("자료를 밖으로 보내기 전에 누구인지 알아볼 수 있는 내용을 지운다").map(item => item.id), ["mct-r5-sealed-0206"]);
     assert.deepEqual(search("작업 원칙 검증 영수증과 무지개해협규약을 찾아줘").map(item => item.id), []);
+    assert.deepEqual(search("문서 일정 책임자와 확인 기록을 찾아줘").map(item => item.id), []);
+    assert.deepEqual(search("검은파도일지 열람 책임자").map(item => item.id), []);
     assert.deepEqual(search("기억열쇠 9876 회계 규칙").map(item => item.id), []);
     assert.deepEqual(search("r5rec0005").map(item => item.id), []);
     assert.deepEqual(search("존재하지않는봉인키9999").map(item => item.id), []);
