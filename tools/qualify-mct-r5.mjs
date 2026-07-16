@@ -20,7 +20,7 @@ const openClawBin = "/Users/jyp/.local/bin/openclaw";
 const evidenceDir = path.resolve(process.argv[2] || "../engineering/evidence/mct-r5-comparison-2026-07-16");
 const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "gpao-t3-mct-r5-"));
 const corpus = createMctR5Corpus();
-const thresholds = Object.freeze({ recallGainMinimum:0.15, noResultRestraintMinimum:1, crossSessionLeakageMaximum:0, crossSessionFalseRecallMaximum:0, retrievalP95MaximumMs:250, retrievalEfficiencyBaselineRatioMinimum:0.9, answerAnchorAccuracyMinimum:1, promptBudgetComplianceMinimum:1, currentRequestPreservationMinimum:1, taskFlowP95MaximumMs:250, recoveryCompletenessMinimum:1 });
+const thresholds = Object.freeze({ recallGainMinimum:0.15, semanticRecallBaselineRatioMinimum:1, noResultRestraintMinimum:1, crossSessionLeakageMaximum:0, crossSessionFalseRecallMaximum:0, retrievalP95MaximumMs:250, retrievalEfficiencyBaselineRatioMinimum:0.9, answerAnchorAccuracyMinimum:1, promptBudgetComplianceMinimum:1, currentRequestPreservationMinimum:1, taskFlowP95MaximumMs:250, recoveryCompletenessMinimum:1 });
 const metricDefinitions = Object.freeze({
   recallAt5:"gate-positive cases with expected marker in first five results / gate-positive cases",
   noResultRestraint:"no-result cases returning zero marked records / no-result cases",
@@ -30,8 +30,8 @@ const metricDefinitions = Object.freeze({
   measuredPromptTokens:"ceil UTF-8 bytes / 4 for the exact composed provider input",
   recoveryCompleteness:"projection corruption repaired, parity restored, correct retrieval survives restart"
 });
-const contract = { schema:"gpao_t3.mct_r5_comparison_contract.v2", corpusSize:corpus.length, topK:MCT_R5_TOP_K, developmentCases:MCT_R5_DEVELOPMENT_CASES, holdoutCases:MCT_R5_HOLDOUT_CASES, thresholds, metricDefinitions, lane:"offline_local_no_provider_no_network", baselineCommit:MCT_R5_BASELINE_COMMIT };
-const contractDigest = canonicalDigest("gpao_t3.mct_r5_comparison_contract.v2", { corpus, ...contract });
+const contract = { schema:"gpao_t3.mct_r5_comparison_contract.v3", corpusSize:corpus.length, topK:MCT_R5_TOP_K, developmentCases:MCT_R5_DEVELOPMENT_CASES, holdoutCases:MCT_R5_HOLDOUT_CASES, thresholds, metricDefinitions, lane:"offline_local_no_provider_no_network", baselineCommit:MCT_R5_BASELINE_COMMIT };
+const contractDigest = canonicalDigest("gpao_t3.mct_r5_comparison_contract.v3", { corpus, ...contract });
 
 function run(command, args, options = {}) {
   const result = spawnSync(command, args, { encoding:"utf8", maxBuffer:32 * 1024 * 1024, ...options });
@@ -199,6 +199,7 @@ try {
   const manifest = sourceManifest();
   const gateChecks = {
     reinforcedImprovesRecall:reinforced.summary.recallAt5 - baseline.summary.recallAt5 >= thresholds.recallGainMinimum,
+    reinforcedSemanticNonRegression:reinforced.summary.semanticRecallAt5 >= baseline.summary.semanticRecallAt5 * thresholds.semanticRecallBaselineRatioMinimum,
     reinforcedRestraint:reinforced.summary.noResultRestraint >= thresholds.noResultRestraintMinimum,
     reinforcedIsolation:reinforced.summary.crossSessionLeakageRate <= thresholds.crossSessionLeakageMaximum,
     reinforcedNoWrongScopeFallback:reinforced.summary.crossSessionFalseRecallRate <= thresholds.crossSessionFalseRecallMaximum,

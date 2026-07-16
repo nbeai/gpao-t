@@ -17,7 +17,7 @@ test("MCT-R5 freezes one target-neutral offline comparison contract", () => {
   assert.deepEqual([...new Set(MCT_R5_HOLDOUT_CASES.map(item => item.kind))].sort(), ["cross_session", "natural_exact", "natural_typo", "no_result", "semantic"]);
   assert.equal([...MCT_R5_DEVELOPMENT_CASES, ...MCT_R5_HOLDOUT_CASES].some(item => "target" in item || "product" in item), false);
   assert.equal(MCT_R5_HOLDOUT_CASES.some(item => /^r5rec\d+$/u.test(item.query)), false);
-  assert.match(canonicalDigest("gpao_t3.mct_r5_contract.v2", { corpus, developmentCases:MCT_R5_DEVELOPMENT_CASES, holdoutCases:MCT_R5_HOLDOUT_CASES, topK:MCT_R5_TOP_K }), /^sha256:[a-f0-9]{64}$/);
+  assert.match(canonicalDigest("gpao_t3.mct_r5_contract.v3", { corpus, developmentCases:MCT_R5_DEVELOPMENT_CASES, holdoutCases:MCT_R5_HOLDOUT_CASES, topK:MCT_R5_TOP_K }), /^sha256:[a-f0-9]{64}$/);
 });
 
 test("MCT-R5 scorer separates recall, restraint, leakage, latency, and token efficiency", () => {
@@ -47,6 +47,7 @@ test("MCT-R5 reinforced retrieval returns useful context without low-confidence 
     assert.deepEqual(search("r5rec0001").map(item => item.id), ["mct-r5-0001"]);
     assert.deepEqual(search("r5rc0011").map(item => item.id), ["mct-r5-0011"]);
     assert.deepEqual(search("해오름결재규칙").map(item => item.id), ["mct-r5-0104"]);
+    assert.deepEqual(search("예전 정보보다 방금 부탁한 일을 우선해").map(item => item.id), ["mct-r5-0031"]);
     assert.deepEqual(search("작업 원칙 검증 영수증과 무지개해협규약을 찾아줘").map(item => item.id), []);
     assert.deepEqual(search("기억열쇠 9876 회계 규칙").map(item => item.id), []);
     assert.deepEqual(search("r5rec0005").map(item => item.id), []);

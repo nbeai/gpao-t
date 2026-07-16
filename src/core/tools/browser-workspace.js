@@ -5,6 +5,16 @@ import { chromium } from "playwright-core";
 import { RuntimeError } from "../errors.js";
 import { safeWebUrl } from "./web-access.js";
 
+async function boundedClose(operation, timeoutMs = 2_000) {
+  let timer;
+  try {
+    await Promise.race([
+      Promise.resolve().then(operation).catch(() => {}),
+      new Promise(resolve => { timer = setTimeout(resolve, timeoutMs); })
+    ]);
+  } finally { clearTimeout(timer); }
+}
+
 export class BrowserWorkspace {
   constructor({ executablePath = process.platform === "darwin" ? "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" : undefined, evidenceDir, allowLocal = false } = {}) {
     this.executablePath = executablePath; this.evidenceDir = evidenceDir; this.allowLocal = allowLocal; this.sessions = new Map();
@@ -60,9 +70,17 @@ export class BrowserWorkspace {
   async close(args) {
     const session = this.require(args.sessionId);
     this.sessions.delete(args.sessionId);
-    await session.browser.close();
+    await boundedClose(() => session.context.close());
+    await boundedClose(() => session.browser.close());
     return { sessionId: args.sessionId, state: "closed" };
   }
 
-  async stop() { const sessions = [...this.sessions.values()]; this.sessions.clear(); await Promise.allSettled(sessions.map(session => session.browser.close())); }
+  async stop() {
+    const sessions = [...this.sessions.values()];
+    this.sessions.clear();
+    await Promise.all(sessions.map(async session => {
+      await boundedClose(() => session.context.close());
+      await boundedClose(() => session.browser.close());
+    }));
+  }
 }

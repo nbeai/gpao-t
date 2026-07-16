@@ -803,13 +803,18 @@ export class StateStore {
     const numericFragments = String(query || "").match(/\d{3,}/g) || [];
     const topPreservesDistinctiveFragment = numericFragments.some(fragment => top?.text.toLowerCase().includes(fragment.toLowerCase()));
     const topHasRankingMargin = !runnerUp || top.score >= runnerUp.score * 1.08;
+    const selectionConfidence = item => item ? item.scores.lexicalCoverage * 0.5 + item.scores.fuzzy * 0.25 + item.scores.localVector * 0.25 : 0;
+    const topSelectionConfidence = selectionConfidence(top);
+    const topHasSemanticMargin = !runnerUp || topSelectionConfidence >= selectionConfidence(runnerUp) * 1.15;
     const reviewedMatches = ranked.filter(item => item.reviewed && item.scores.lexicalCoverage >= 0.6);
     const selected = top?.scores.lexical > 0
       ? top.scores.lexicalCoverage >= 0.9
         ? ranked.filter(item => item.scores.lexical > 0 && (item.scores.lexicalCoverage >= 0.9 || reviewedMatches.some(reviewed => reviewed.id === item.id)))
         : top.scores.lexicalCoverage >= 0.6 && ranked.length <= 3
           ? [top, ...reviewedMatches.filter(item => item.id !== top.id)]
-          : reviewedMatches
+          : numericFragments.length === 0 && topSelectionConfidence >= 0.28 && topHasSemanticMargin
+            ? [top, ...reviewedMatches.filter(item => item.id !== top.id)]
+            : reviewedMatches
       : top?.scores.fuzzy >= 0.75 && (topPreservesDistinctiveFragment || topHasRankingMargin)
         ? [top]
         : [];
@@ -817,7 +822,7 @@ export class StateStore {
     return {
       schema: "gpao_t3.memory_search_result.v1", results: selected.slice(0, boundedLimit),
       degraded: elapsedMs > budgetMs ? "latency_budget_exceeded" : null, elapsedMs,
-      receipt: { mode: "sqlite_fts5_lexical_fuzzy_local_vector", semanticAvailable: false, vectorAlgorithm: "char_trigram_hash_v1", vectorDimensions: 64, lexicalCandidates: [...candidates.values()].filter(value => value.lexical > 0).length, fuzzyCandidates: [...candidates.values()].filter(value => value.fuzzy > 0).length, localVectorCandidates: [...candidates.values()].filter(value => value.vector > 0).length, candidateCount: candidates.size, selectedCount:selected.length, limit: boundedLimit }
+      receipt: { mode: "sqlite_fts5_lexical_fuzzy_local_vector", semanticAvailable: false, vectorAlgorithm: "char_trigram_hash_v1", vectorDimensions: 64, lexicalCandidates: [...candidates.values()].filter(value => value.lexical > 0).length, fuzzyCandidates: [...candidates.values()].filter(value => value.fuzzy > 0).length, localVectorCandidates: [...candidates.values()].filter(value => value.vector > 0).length, candidateCount: candidates.size, selectedCount:selected.length, selection: { topScores:top?.scores || null, topConfidence:topSelectionConfidence, runnerConfidence:selectionConfidence(runnerUp), semanticMargin:topHasSemanticMargin }, limit: boundedLimit }
     };
   }
 
