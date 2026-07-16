@@ -76,7 +76,7 @@ const metricDefinitions = Object.freeze({
   recoveryCompleteness:"all lexical, fuzzy, semantic, and vector projections repaired; parity restored; correct retrieval survives restart"
 });
 const sealedHoldoutDigest = sha256File(sealedHoldoutPath);
-const contract = { schema:"gpao_t3.mct_r5_comparison_contract.v6", corpusSize:corpus.length, topK:MCT_R5_TOP_K, developmentCases:[...MCT_R5_DEVELOPMENT_CASES, ...priorDevelopment.flatMap(item => item.cases)], priorDevelopmentRecords:priorDevelopment.flatMap(item => item.records), priorHoldoutSourceDigests:priorDevelopment.map(item => item.sourceDigest), holdoutCases, admissionProbes:sealedHoldout.admissionProbes, sealedHoldoutDigest, holdoutGeneratedAfterFreeze:sealedHoldout.generatedAfterFreeze, implementationFreeze, thresholds, metricDefinitions, lane:"offline_local_no_provider_no_network", baselineCommit:MCT_R5_BASELINE_COMMIT };
+const contract = { schema:"gpao_t3.mct_r5_comparison_contract.v6", corpusSize:corpus.length, topK:MCT_R5_TOP_K, developmentCases:[...MCT_R5_DEVELOPMENT_CASES, ...priorDevelopment.flatMap(item => item.cases)], priorDevelopmentRecords:priorDevelopment.flatMap(item => item.records), priorHoldoutSourceDigests:priorDevelopment.map((item, index) => item.sourceDigest || sha256File(priorDevelopmentPaths[index])), holdoutCases, admissionProbes:sealedHoldout.admissionProbes, sealedHoldoutDigest, holdoutGeneratedAfterFreeze:sealedHoldout.generatedAfterFreeze, implementationFreeze, thresholds, metricDefinitions, lane:"offline_local_no_provider_no_network", baselineCommit:MCT_R5_BASELINE_COMMIT };
 const contractDigest = canonicalDigest("gpao_t3.mct_r5_comparison_contract.v6", { corpus, ...contract });
 
 function run(command, args, options = {}) {
